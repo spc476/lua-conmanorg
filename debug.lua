@@ -5,7 +5,7 @@ EDITOR = os.getenv("EDITOR") or "/bin/vi"
 
 -- *********************************************************************
 
-function create()
+local function create()
   local name = os.tmpname()
   local src
   local f
