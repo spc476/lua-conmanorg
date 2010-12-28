@@ -1,5 +1,12 @@
 
-module("org.conman.table",package.seeall)
+local pairs    = pairs
+local math     = math
+local tostring = tostring
+local string   = string
+local type     = type
+local print    = print
+
+module("org.conman.table")
 
 function show(l)
   local l = l or _G
@@ -30,7 +37,6 @@ function show(l)
   maxkeylen = math.min(30,maxkeylen)
   maxvallen = math.min(77 - maxkeylen,maxvallen)
   
-
   local format = string.format("%%-%ds %%-%ds",maxkeylen + 1,maxvallen + 1)
   
   for k,v in pairs(l)
