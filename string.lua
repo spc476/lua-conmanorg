@@ -2,6 +2,7 @@
 module("org.conman.string",package.seeall)
 
 trim = require "org.conman.string.trim"
+wrap = require "org.conman.string.wrap"
 
 function split(s,delim)
   local results = {}
