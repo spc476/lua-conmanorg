@@ -8,6 +8,10 @@
 
 #include <syslog.h>
 
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
+
 struct strintmap
 {
   const char *const name;
@@ -78,7 +82,7 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
   int b;
   
   lua_getfield(L,3,field);
-  b = lua_toboolean(L,-1);
+  b = lua_toboolean(L,index);
   lua_pop(L,1);
   if (b)
     return def;
@@ -132,7 +136,7 @@ static int syslog_open(lua_State *L)
 
 /***********************************************************************/
 
-static int syslog_close(lua_State *L)
+static int syslog_close(lua_State *L __attribute__((unused)))
 {
   closelog();
   return 0;
