@@ -21,7 +21,7 @@
 ########################################################################
 
 CC     = gcc -std=c99
-CFLAGS = -g -Wall -Wextra -pedantic 
+CFLAGS = -g -Wall -Wextra -pedantic -fPIC
 LFLAGS = -shared 
 
 LUALUA = /usr/local/share/lua/5.1
@@ -35,7 +35,8 @@ all : lib/env.so	\
 	lib/math.so	\
 	lib/syslog.so	\
 	lib/trim.so	\
-	lib/wrap.so
+	lib/wrap.so	\
+	lib/iconv.so
 	
 lib/env.so : src/env.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
@@ -57,6 +58,9 @@ lib/trim.so : src/trim.c
 	
 lib/wrap.so : src/wrap.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+
+lib/iconv.so : src/iconv.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 	
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~
@@ -74,6 +78,7 @@ install : all
 	install lib/syslog.so $(LUALIB)/org/conman
 	install lib/trim.so   $(LUALIB)/org/conman/string
 	install lib/wrap.so   $(LUALIB)/org/conman/string
+	install lib/iconv.so  $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
