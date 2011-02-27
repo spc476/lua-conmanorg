@@ -250,17 +250,17 @@ int luaopen_org_conman_syslog(lua_State *L)
   }
   lua_settable(L,-3);
 
-  lua_pushliteral(L,"COPYRIGHT");
   lua_pushliteral(L,"Copyright 2011 by Sean Conner.  All Rights Reserved.");
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"_COPYRIGHT");
   
-  lua_pushliteral(L,"DESCRIPTION");
+  lua_pushliteral(L,"GNU-GPL 3");
+  lua_setfield(L,-2,"_LICENSE");
+  
   lua_pushliteral(L,"Interface to Unix syslog");
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"VERSION");
   lua_pushliteral(L,"1.0.0");
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"_VERSION");
 
   return 1;
 }

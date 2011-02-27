@@ -537,17 +537,18 @@ int luaopen_org_conman_fsys(lua_State *L)
 {
   luaL_register(L,"org.conman.fsys",reg_fsys);
   
-  lua_pushliteral(L,"_COPYRIGHT");
   lua_pushliteral(L,"Copyright 2010 by Sean Conner.  All Rights Reserved.");
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"_COPYRIGHT");
+
+  lua_pushliteral(L,"GNU-GPL 3");
+  lua_setfield(L,-2,"_LICENSE");
   
-  lua_pushliteral(L,"_DESCRIPTION");
   lua_pushliteral(L,"Useful file manipulation functions available under Unix.");
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"_VERSION");
   lua_pushliteral(L,"0.3.0");
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"_VERSION");
+
   return 1;
 }
 
