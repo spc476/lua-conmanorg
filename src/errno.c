@@ -561,5 +561,6 @@ const struct strint m_errors[] =
 #ifdef EXFULL
     { "EXFULL" , EXFULL } ,
 #endif
+    { NULL , NULL }
 };
 
