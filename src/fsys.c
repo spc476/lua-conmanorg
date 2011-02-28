@@ -24,6 +24,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 #include <lua.h>
@@ -303,9 +304,25 @@ static int fsys_lstat(lua_State *L)
 
 static int fsys_chmod(lua_State *L)
 {
-  lua_pushboolean(L,false);
-  lua_pushinteger(L,ENOSYS);
-  return 2;
+  const char        *fname;
+  const char        *tmode;
+  mode_t             mode;
+  
+  fname = luaL_checkstring(L,1);
+  tmode = luaL_checkstring(L,2);
+  mode  = strtoul(tmode,NULL,8);
+  
+  if (chmod(fname,mode) < 0)
+  {
+    int err = errno;
+    
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  lua_pushboolean(L,true);
+  return 1;
 }
 
 /***********************************************************************/
