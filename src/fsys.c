@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <libgen.h>
 
 /*************************************************************************/
 
@@ -527,6 +528,56 @@ static int fsys__safename(lua_State *L)
  
 /**********************************************************************/
 
+static int fsys_basename(lua_State *L)
+{
+  char        name[FILENAME_MAX];
+  const char *path;
+  size_t      size;
+  
+  path = luaL_checklstring(L,1,&size);
+  if (size >= FILENAME_MAX - 1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,ENAMETOOLONG);
+    return 2;
+  }
+  
+  /*---------------------------------------------------------------------
+  ; POSIX states that basename() modifies its arguemnts, so pass in a copy
+  ;-----------------------------------------------------------------------*/
+  
+  memcpy(name,path,size + 1);
+  lua_pushstring(L,basename(name));
+  return 1;  
+}
+
+/**********************************************************************/
+
+static int fsys_dirname(lua_State *L)
+{
+  char        name[FILENAME_MAX];
+  const char *path;
+  size_t      size;
+  
+  path = luaL_checklstring(L,1,&size);
+  if (size >= FILENAME_MAX - 1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,ENAMETOOLONG);
+    return 2;
+  }
+  
+  /*----------------------------------------------------------------------
+  ; POSIX states that dirname() modifies its arguemnt, so pass in a copy
+  ;-----------------------------------------------------------------------*/
+  
+  memcpy(name,path,size + 1);
+  lua_pushstring(L,dirname(name));
+  return 1;
+}
+
+/***********************************************************************/
+
 static const struct luaL_reg reg_fsys[] = 
 {
   { "symlink"	, fsys_symlink 	} ,
@@ -547,6 +598,8 @@ static const struct luaL_reg reg_fsys[] =
   { "getcwd"	, fsys_getcwd   } ,
   { "dir"	, fsys_dir	} ,
   { "_safename"	, fsys__safename} ,
+  { "basename"	, fsys_basename	} ,
+  { "dirname"	, fsys_dirname	} ,
   { NULL	, NULL		}
 };
 
@@ -563,7 +616,7 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_pushliteral(L,"Useful file manipulation functions available under Unix.");
   lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"0.3.0");
+  lua_pushliteral(L,"0.4.0");
   lua_setfield(L,-2,"_VERSION");
 
   return 1;
