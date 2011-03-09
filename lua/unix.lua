@@ -37,9 +37,8 @@ local function etcpasswd()
   local SHELL  = 7
   
   local users = {}
-  local f     = io.open("/etc/passwd","r")
-  
-  for line in f:lines() do
+
+  for line in io.lines('/etc/passwd') do
     local fields = str.split(line)
     local user   = {}
 
@@ -54,7 +53,6 @@ local function etcpasswd()
     users[user.uid]    = user
   end
   
-  f:close()
   return users
 end
 
@@ -67,9 +65,8 @@ local function etcgroup()
   local USERS = 4
   
   local groups = {}
-  local f      = io.open("/etc/group","r")
-  
-  for line in f:lines() do
+
+  for line in io.lines('/etc/group') do
     local fields = str.split(line)
     local group  = {}
     
@@ -86,7 +83,6 @@ local function etcgroup()
     groups[group.gid]  = group
   end
   
-  f:close()
   return groups
 end
 
