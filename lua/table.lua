@@ -19,14 +19,20 @@
 --
 -- ********************************************************************
 
-local pairs    = pairs
-local math     = math
-local tostring = tostring
-local string   = string
-local type     = type
-local print    = print
+local pairs        = pairs
+local math         = math
+local tostring     = tostring
+local string       = string
+local type         = type
+local print        = print
+
+local type         = type
+local pcall        = pcall
+local getmetatable = getmetatable
 
 module("org.conman.table")
+
+-- *******************************************************************
 
 function show(l)
   local l = l or _G
@@ -75,3 +81,87 @@ function show(l)
   end
 end
 
+-- *************************************************************
+
+local marked = {}
+
+function dump_value(name,value,path,level)
+
+  local function conv_cntl(s)
+    if s == "\n" then
+      return "\\n"
+    else
+      return "\\?"
+    end
+  end
+
+  local path  = path  or ""
+  local level = level or 0
+  local lead  = string.rep(" ",level)
+  
+  if type(name) == "nil" then
+    return ""
+  elseif type(name) == "number" then
+    name = string.format("[%d]",name)
+  end
+  
+  if type(value) == "nil" then 
+    return "" 
+  elseif type(value) == "boolean" then
+    return string.format("%s%s = %s,\n",lead,name,tostring(value))
+  elseif type(value) == "number" then
+    return string.format("%s%s = %f,\n",lead,name,value)
+  elseif type(value) == "string" then
+    value = string.gsub(value,"%c",conv_cntl)
+    return string.format("%s%s = %q,\n",lead,name,value)
+  elseif type(value) == "table" then
+  
+    if marked[tostring(value)] ~= nil then 
+      return string.format("%s%s = %s,\n",lead,name,marked[tostring(value)])
+    else
+      if path == "" then
+        marked[tostring(value)] = name
+      else
+        marked[tostring(value)] = path .. "." .. name
+      end
+    end
+    
+    local s = string.format("%s%s =\n%s{\n",lead,name,lead)
+    
+    for k,v in pairs(value) do
+      s = s .. dump_value(k,v,marked[tostring(value)],level + 2)
+    end
+    
+    s = s .. string.format("%s}",lead)
+    if level > 0 then s = s .. string.format(",") end
+    
+    if getmetatable(value) ~= nil then
+      s = s .. string.format("--METATABLE\n",lead)
+    else
+      s = s .. string.format("\n",lead)
+    end
+    return s
+
+  elseif type(value) == "function" then
+    local err,func = pcall(string.dump,value)
+    if err == false then
+      return ""
+    else
+      return string.format("%s%s = loadstring(%q),\n",lead,name,func)
+    end    
+  elseif type(value) == "thread" then
+      return ""
+  elseif type(value) == "userdata" then
+    if getmetatable(value) ~= nil then
+        return ""
+    else
+        return ""
+    end
+  else
+    error("unsupported data type!")
+  end
+end
+
+function dump_reset() marked = {} end
+
+-- **********************************************************
