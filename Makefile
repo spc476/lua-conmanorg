@@ -36,7 +36,9 @@ all : lib/env.so	\
 	lib/syslog.so	\
 	lib/trim.so	\
 	lib/wrap.so	\
-	lib/iconv.so
+	lib/iconv.so	\
+	lib/crc.so	\
+	lib/hash.so
 	
 lib/env.so : src/env.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
@@ -61,7 +63,13 @@ lib/wrap.so : src/wrap.c
 
 lib/iconv.so : src/iconv.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+
+lib/crc.so : src/crc.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 	
+lib/hash.so : src/hash.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lcrypto
+
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~
 	/bin/rm -rf lib/*
@@ -79,6 +87,8 @@ install : all
 	install lib/trim.so   $(LUALIB)/org/conman/string
 	install lib/wrap.so   $(LUALIB)/org/conman/string
 	install lib/iconv.so  $(LUALIB)/org/conman
+	install lib/crc.so    $(LUALIB)/org/conman
+	install lib/hash.so   $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
