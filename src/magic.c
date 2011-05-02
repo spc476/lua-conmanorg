@@ -291,14 +291,14 @@ static const struct luaL_reg mmagic_reg_meta[] =
 
 /*************************************************************************/
 
-int luaopen_org_conman_magic(lua_State *const L)
+int luaopen_org_conman_fsys_magic(lua_State *const L)
 {
   assert(L != NULL);
   
   luaL_newmetatable(L,MAGIC_TYPE);
   luaL_register(L,NULL,mmagic_reg_meta);
   
-  luaL_register(L,"org.conman.magic",mmagic_reg);
+  luaL_register(L,"org.conman.fsys.magic",mmagic_reg);
   lua_pushvalue(L,-1);
   lua_setfield(L,-3,"__index");
   

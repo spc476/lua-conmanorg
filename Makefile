@@ -83,6 +83,7 @@ install : all
 	install lua/*.lua $(LUALUA)/org/conman	
 	install -d $(LUALIB)/org/conman
 	install -d $(LUALIB)/org/conman/string
+	install -d $(LUALIB)/org/conman/fsys
 	install lib/env.so    $(LUALIB)/org/conman
 	install lib/errno.so  $(LUALIB)/org/conman
 	install lib/fsys.so   $(LUALIB)/org/conman
@@ -93,7 +94,7 @@ install : all
 	install lib/iconv.so  $(LUALIB)/org/conman
 	install lib/crc.so    $(LUALIB)/org/conman
 	install lib/hash.so   $(LUALIB)/org/conman
-	install lib/magic.so  $(LUALIB)/org/conman
+	install lib/magic.so  $(LUALIB)/org/conman/fsys
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
