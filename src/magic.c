@@ -112,14 +112,11 @@ static int magiclua_setflags(lua_State *const L)
   rc    = 0;
   
   if (top)
-  {
-    int rc;
-    
-    for (int i = i ; i <= top ; i++)
+    for (int i = 2 ; i <= top ; i++)
       flags |= m_magic_flags[luaL_checkoption(L,i,NULL,m_magic_options)];
-    rc = magic_setflags(*pm,flags);
-  }
   
+  rc = magic_setflags(*pm,flags);
+
   if (rc != 0)
   {
     lua_pushboolean(L,false);
