@@ -38,7 +38,8 @@ all : lib/env.so	\
 	lib/wrap.so	\
 	lib/iconv.so	\
 	lib/crc.so	\
-	lib/hash.so
+	lib/hash.so	\
+	lib/magic.so
 	
 lib/env.so : src/env.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
@@ -70,6 +71,9 @@ lib/crc.so : src/crc.c
 lib/hash.so : src/hash.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lcrypto
 
+lib/magic.so : src/magic.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lmagic
+
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~
 	/bin/rm -rf lib/*
@@ -89,6 +93,7 @@ install : all
 	install lib/iconv.so  $(LUALIB)/org/conman
 	install lib/crc.so    $(LUALIB)/org/conman
 	install lib/hash.so   $(LUALIB)/org/conman
+	install lib/magic.so  $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
