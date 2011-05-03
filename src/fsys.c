@@ -433,23 +433,33 @@ static int fsys_readdir(lua_State *L)
   dir = lua_touserdata(L,1);
   lua_pop(L,1);
   
-  errno = 0;
-  entry = readdir(dir);
-  if (entry == NULL)
+  while(true)
   {
-    int e = errno;
-    lua_pushnil(L);
-    if (e == 0)
+    errno = 0;
+    entry = readdir(dir);
+    
+    if (entry == NULL)
     {
-      lua_pushboolean(L,1);
-      return 2;
+      int e = errno;
+      lua_pushnil(L);
+      if (e == 0)
+      {
+        lua_pushboolean(L,1);
+        return 2;
+      }
+      else
+      {
+        lua_pushboolean(L,0);
+        lua_pushinteger(L,e);
+        return 3;
+      }
     }
-    else
-    {
-      lua_pushboolean(L,0);
-      lua_pushinteger(L,e);
-      return 3;
-    }
+    
+    if (
+            (strcmp(entry->d_name,".")  != 0) 
+         && (strcmp(entry->d_name,"..") != 0)
+       )
+      break;
   }
   
   lua_pushstring(L,entry->d_name);
