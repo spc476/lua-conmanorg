@@ -83,9 +83,7 @@ end
 
 -- *************************************************************
 
-local marked = {}
-
-function dump_value(name,value,path,level)
+function dump_value(name,value,path,level,marked)
 
   local function conv_cntl(s)
     if s == "\n" then
@@ -95,9 +93,10 @@ function dump_value(name,value,path,level)
     end
   end
 
-  local path  = path  or ""
-  local level = level or 0
-  local lead  = string.rep(" ",level)
+  local path   = path   or ""
+  local level  = level  or 0
+  local marked = marked or {}
+  local lead   = string.rep(" ",level)
   
   if type(name) == "nil" then
     return ""
@@ -129,7 +128,7 @@ function dump_value(name,value,path,level)
     local s = string.format("%s%s =\n%s{\n",lead,name,lead)
     
     for k,v in pairs(value) do
-      s = s .. dump_value(k,v,marked[tostring(value)],level + 2)
+      s = s .. dump_value(k,v,marked[tostring(value)],level + 2,marked)
     end
     
     s = s .. string.format("%s}",lead)
@@ -161,7 +160,5 @@ function dump_value(name,value,path,level)
     error("unsupported data type!")
   end
 end
-
-function dump_reset() marked = {} end
 
 -- **********************************************************
