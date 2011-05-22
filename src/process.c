@@ -30,6 +30,8 @@ static int	proclua_exit		(lua_State *const);
 static int	proclua_fork		(lua_State *const);
 static int	proclua_wait		(lua_State *const);
 static int	proclua_waitusage	(lua_State *const);
+static int	proclua___index		(lua_State *const);
+static int	proclua___newindex	(lua_State *const);
 static bool	mlimit_trans		(int *const restrict,const char *const restrict);
 static bool	mlimit_valid_suffix	(lua_Integer *const restrict,const int,const char *const restrict);
 static int	mhlimitlua___index	(lua_State *const);
@@ -46,6 +48,13 @@ static const struct luaL_reg mprocess_reg[] =
   { "wait"	, proclua_wait		} ,
   { "waitusage"	, proclua_waitusage	} ,
   { NULL	, NULL			} 
+};
+
+static const struct luaL_reg mprocess_meta[] =
+{
+  { "__index"		, proclua___index	} ,
+  { "__newindex"	, proclua___newindex	} ,
+  { NULL		, NULL			}
 };
 
 static const struct luaL_reg mhlimit_reg[] =
@@ -241,6 +250,50 @@ static int proclua_waitusage(lua_State *const L)
 }
 
 /**********************************************************************/
+
+static int proclua___index(lua_State *const L)
+{
+  const char *idx;
+  
+  assert(L != NULL);
+  
+  idx = luaL_checkstring(L,2);
+  if (strcmp(idx,"PID") == 0)
+    lua_pushinteger(L,getpid());
+  else if (strcmp(idx,"PRI") == 0)
+    lua_pushinteger(L,getpriority(PRIO_PROCESS,0));
+  else
+    lua_pushnil(L);
+  return 1;
+}
+
+/*********************************************************************/
+
+static int proclua___newindex(lua_State *const L)
+{
+  const char *idx;
+  
+  assert(L != NULL);
+  
+  idx = luaL_checkstring(L,2);
+  if (strcmp(idx,"PID") == 0)
+    lua_pushnil(L);
+  else if (strcmp(idx,"PRI") == 0)
+  {
+    int rc;
+    
+    rc = setpriority(PRIO_PROCESS,0,luaL_checkinteger(L,3));
+    if (rc == -1)
+      lua_pushnil(L);
+    else
+      lua_pushinteger(L,rc);
+  }
+  else
+    lua_pushnil(L);
+  return 1;
+}
+
+/*********************************************************************/
 
 static bool mlimit_trans(
 	int        *const restrict pret,
@@ -522,8 +575,9 @@ int luaopen_org_conman_process(lua_State *const L)
   
   lua_setfield(L,-2,"limits");
   
-  lua_pushinteger(L,getpid());
-  lua_setfield(L,-2,"PID");
+  lua_createtable(L,0,0);
+  luaL_register(L,NULL,mprocess_meta);
+  lua_setmetatable(L,-2);
   
   return 1;
 }
