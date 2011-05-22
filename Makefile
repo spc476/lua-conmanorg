@@ -39,7 +39,8 @@ all : lib/env.so	\
 	lib/iconv.so	\
 	lib/crc.so	\
 	lib/hash.so	\
-	lib/magic.so
+	lib/magic.so	\
+	lib/process.so
 	
 lib/env.so : src/env.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
@@ -74,6 +75,9 @@ lib/hash.so : src/hash.c
 lib/magic.so : src/magic.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lmagic
 
+lib/process.so : src/process.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
+
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~
 	/bin/rm -rf lib/*
@@ -84,17 +88,18 @@ install : all
 	install -d $(LUALIB)/org/conman
 	install -d $(LUALIB)/org/conman/string
 	install -d $(LUALIB)/org/conman/fsys
-	install lib/env.so    $(LUALIB)/org/conman
-	install lib/errno.so  $(LUALIB)/org/conman
-	install lib/fsys.so   $(LUALIB)/org/conman
-	install lib/math.so   $(LUALIB)/org/conman
-	install lib/syslog.so $(LUALIB)/org/conman
-	install lib/trim.so   $(LUALIB)/org/conman/string
-	install lib/wrap.so   $(LUALIB)/org/conman/string
-	install lib/iconv.so  $(LUALIB)/org/conman
-	install lib/crc.so    $(LUALIB)/org/conman
-	install lib/hash.so   $(LUALIB)/org/conman
-	install lib/magic.so  $(LUALIB)/org/conman/fsys
+	install lib/env.so     $(LUALIB)/org/conman
+	install lib/errno.so   $(LUALIB)/org/conman
+	install lib/fsys.so    $(LUALIB)/org/conman
+	install lib/math.so    $(LUALIB)/org/conman
+	install lib/syslog.so  $(LUALIB)/org/conman
+	install lib/trim.so    $(LUALIB)/org/conman/string
+	install lib/wrap.so    $(LUALIB)/org/conman/string
+	install lib/iconv.so   $(LUALIB)/org/conman
+	install lib/crc.so     $(LUALIB)/org/conman
+	install lib/hash.so    $(LUALIB)/org/conman
+	install lib/magic.so   $(LUALIB)/org/conman/fsys
+	install lib/process.so $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
