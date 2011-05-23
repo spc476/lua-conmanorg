@@ -21,6 +21,7 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/times.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -37,6 +38,7 @@ static int	proclua_sleep		(lua_State *const);
 static int	proclua_sleepres	(lua_State *const);
 static int	proclua_kill		(lua_State *const);
 static int	proclua_exec		(lua_State *const);
+static int	proclua_times		(lua_State *const);
 static int	proclua___index		(lua_State *const);
 static int	proclua___newindex	(lua_State *const);
 static bool	mlimit_trans		(int *const restrict,const char *const restrict);
@@ -58,6 +60,7 @@ static const struct luaL_reg mprocess_reg[] =
   { "sleepres"	, proclua_sleepres	} ,
   { "kill"	, proclua_kill		} ,
   { "exec"	, proclua_exec		} ,
+  { "times"	, proclua_times		} ,
   { NULL	, NULL			} 
 };
 
@@ -439,6 +442,35 @@ static int proclua_exec(lua_State *const L)
   err = errno;
   proc_execfree(argv,envp,envc);
   lua_pushinteger(L,err);
+  return 1;
+}
+
+/*********************************************************************/
+
+static int proclua_times(lua_State *const L)
+{
+  struct tms tms;
+  
+  assert(L != NULL);
+  
+  if (times(&tms) == (clock_t)-1)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+
+  lua_createtable(L,0,4);
+  lua_pushinteger(L,tms.tms_utime);
+  lua_setfield(L,-2,"utime");
+  lua_pushinteger(L,tms.tms_stime);
+  lua_setfield(L,-2,"stime");
+  lua_pushinteger(L,tms.tms_cutime);
+  lua_setfield(L,-2,"cutime"); 
+  lua_pushinteger(L,tms.tms_cstime);
+  lua_setfield(L,-2,"cstime");
+  
   return 1;
 }
 
