@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
+#include <math.h>
 #include <ctype.h>
 #include <assert.h>
 
@@ -30,6 +32,8 @@ static int	proclua_exit		(lua_State *const);
 static int	proclua_fork		(lua_State *const);
 static int	proclua_wait		(lua_State *const);
 static int	proclua_waitusage	(lua_State *const);
+static int	proclua_sleep		(lua_State *const);
+static int	proclua_sleepres	(lua_State *const);
 static int	proclua___index		(lua_State *const);
 static int	proclua___newindex	(lua_State *const);
 static bool	mlimit_trans		(int *const restrict,const char *const restrict);
@@ -47,6 +51,8 @@ static const struct luaL_reg mprocess_reg[] =
   { "fork"	, proclua_fork		} ,
   { "wait"	, proclua_wait		} ,
   { "waitusage"	, proclua_waitusage	} ,
+  { "sleep"	, proclua_sleep		} ,
+  { "sleepres"	, proclua_sleepres	} ,
   { NULL	, NULL			} 
 };
 
@@ -247,6 +253,49 @@ static int proclua_waitusage(lua_State *const L)
   lua_setfield(L,-2,"preemptcs");
   
   return 2;
+}
+
+/**********************************************************************/
+
+static int proclua_sleep(lua_State *const L)
+{
+  struct timespec interval;
+  struct timespec left;
+  double          param;
+  double          seconds;
+  double          fract;
+  
+  assert(L != NULL);
+  
+  param            = luaL_checknumber(L,1);
+  fract            = modf(param,&seconds);
+  interval.tv_sec  = (time_t)seconds;
+  interval.tv_nsec = (long)(fract * 1000000000.0);
+  
+  if (nanosleep(&interval,&left) < 0)
+  {
+    int err = errno;
+    lua_pushnumber(L,param);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  lua_pushnumber(L,(double)left.tv_sec + (((double)left.tv_nsec) / 1000000000.0));
+  lua_pushinteger(L,0);
+  return 2;    
+}
+
+/***********************************************************************/
+
+static int proclua_sleepres(lua_State *const L)
+{
+  struct timespec res;
+
+  assert(L != NULL);
+  
+  clock_getres(CLOCK_REALTIME,&res);
+  lua_pushnumber(L,(double)res.tv_sec + (((double)res.tv_nsec) / 1000000000.0));
+  return 1;  
 }
 
 /**********************************************************************/
