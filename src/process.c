@@ -9,6 +9,7 @@
 #include <time.h>
 #include <math.h>
 #include <ctype.h>
+#include <signal.h>
 #include <assert.h>
 
 #include <lua.h>
@@ -34,6 +35,8 @@ static int	proclua_wait		(lua_State *const);
 static int	proclua_waitusage	(lua_State *const);
 static int	proclua_sleep		(lua_State *const);
 static int	proclua_sleepres	(lua_State *const);
+static int	proclua_kill		(lua_State *const);
+static int	proclua_exec		(lua_State *const);
 static int	proclua___index		(lua_State *const);
 static int	proclua___newindex	(lua_State *const);
 static bool	mlimit_trans		(int *const restrict,const char *const restrict);
@@ -53,6 +56,8 @@ static const struct luaL_reg mprocess_reg[] =
   { "waitusage"	, proclua_waitusage	} ,
   { "sleep"	, proclua_sleep		} ,
   { "sleepres"	, proclua_sleepres	} ,
+  { "kill"	, proclua_kill		} ,
+  { "exec"	, proclua_exec		} ,
   { NULL	, NULL			} 
 };
 
@@ -299,6 +304,145 @@ static int proclua_sleepres(lua_State *const L)
 }
 
 /**********************************************************************/
+
+static int proclua_kill(lua_State *const L)
+{
+  pid_t child;
+  int   sig;
+  
+  assert(L != NULL);
+
+  child = luaL_checkinteger(L,1);
+  sig   = luaL_optint(L,2,SIGTERM);
+  
+  if (kill(child,sig) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  lua_pushboolean(L,1);
+  return 1;
+}
+
+/*********************************************************************/
+
+static int proc_execfree(char **argv,char **envp,size_t envc)
+{
+  for (size_t i = 0 ; i < envc ; i++)
+    free(envp[i]);
+  
+  free(envp);
+  free(argv);
+  
+  return ENOMEM;
+}
+
+/********************************************************************/
+
+static bool proc_growenvp(char ***penvp,size_t *psize)
+{
+  char   **new;
+  size_t   nsize;
+  
+  assert(penvp != NULL);
+  assert(psize != NULL);
+  
+  nsize = *psize + 64;
+  new   = realloc(*penvp,nsize * sizeof(char *));
+  
+  if (new == NULL)
+    return false;
+  
+  *penvp = new;
+  *psize = nsize;
+  return true;
+}
+
+/******************************************************************/  
+
+static int proclua_exec(lua_State *const L)
+{
+  const char  *binary;
+  char       **argv;
+  size_t       argc;
+  char       **envp;
+  size_t       envc;
+  size_t       envm;
+  int          err;
+  
+  binary = luaL_checkstring(L,1);
+  luaL_checktype(L,2,LUA_TTABLE);
+  luaL_checktype(L,3,LUA_TTABLE);
+  
+  argc = lua_objlen(L,2) + 2;
+  argv = malloc(argc * sizeof(char *));
+  if (argv == NULL)
+  {
+    lua_pushinteger(L,ENOMEM);
+    return 1;
+  }
+  
+  argv[0] = basename(binary);
+  for (size_t i = 1 ; i < argc - 1 ; i++)
+  {
+    lua_pushinteger(L,i);
+    lua_gettable(L,2);
+    argv[i] = (char *)lua_tostring(L,-1);
+    lua_pop(L,1);
+  }
+  argv[argc - 1] = NULL;
+  
+  envp = NULL;
+  envc = 0;
+  envm = 0;
+  
+  lua_pushnil(L);
+  while(lua_next(L,3) != 0)
+  {
+    const char *name;
+    size_t      nsize;
+    const char *value;
+    size_t      vsize;
+    
+    name  = lua_tolstring(L,-2,&nsize);
+    value = lua_tolstring(L,-1,&vsize);
+    
+    if ((envc == envm) && !proc_growenvp(&envp,&envm))
+    {
+      lua_pushinteger(L,proc_execfree(argv,envp,envc));
+      return 1;
+    }
+
+    envp[envc] = malloc(nsize + vsize + 3);
+    if (envp[envc] == NULL)
+    {
+      lua_pushinteger(L,proc_execfree(argv,envp,envc));
+      return 1;
+    }
+    
+    sprintf(envp[envc++],"%s=%s",name,value);
+    lua_pop(L,1);
+  }
+  
+  if ((envc == envm) && !proc_growenvp(&envp,&envm))
+  {
+    lua_pushinteger(L,proc_execfree(argv,envp,envc));
+    return 1;
+  }
+    
+  envp[envc++] = NULL;
+
+  execve(binary,argv,envp);
+  err = errno;
+  proc_execfree(argv,envp,envc);
+  lua_pushinteger(L,err);
+  return 1;
+}
+
+/*********************************************************************/
 
 static int proclua___index(lua_State *const L)
 {

@@ -76,7 +76,7 @@ lib/magic.so : src/magic.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lmagic
 
 lib/process.so : src/process.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lrt
 
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~
