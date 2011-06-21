@@ -30,6 +30,10 @@
 
 /*************************************************************************/
 
+static int	proclua_getuid		(lua_State *const);
+static int	proclua_getgid		(lua_State *const);
+static int	proclua_setuid		(lua_State *const);
+static int	proclua_setgid		(lua_State *const);
 static int	proclua_exit		(lua_State *const);
 static int	proclua_fork		(lua_State *const);
 static int	proclua_wait		(lua_State *const);
@@ -52,6 +56,10 @@ static int	mslimitlua___newindex	(lua_State *const);
 
 static const struct luaL_reg mprocess_reg[] =
 {
+  { "getuid"	, proclua_getuid	} ,
+  { "getgid"	, proclua_getgid	} ,
+  { "setuid"	, proclua_setuid	} ,
+  { "setgid"	, proclua_setgid	} ,
   { "exit"	, proclua_exit		} ,
   { "fork"	, proclua_fork		} ,
   { "wait"	, proclua_wait		} ,
@@ -86,6 +94,74 @@ static const struct luaL_reg mslimit_reg[] =
 };
 
 /*************************************************************************/
+
+static int proclua_getuid(lua_State *const L)
+{
+  uid_t uid;
+  uid_t euid;
+  uid_t suid;
+
+  getresuid(&uid,&euid,&suid);
+  lua_pushinteger(L,uid);
+  lua_pushinteger(L,euid);
+  lua_pushinteger(L,suid);
+  return 3;
+}
+
+/************************************************************************/
+
+static int proclua_getgid(lua_State *const L)
+{
+  gid_t gid;
+  gid_t egid;
+  gid_t sgid;
+  
+  getresgid(&gid,&egid,&sgid);  
+  lua_pushinteger(L,gid);
+  lua_pushinteger(L,egid);
+  lua_pushinteger(L,sgid);
+  return 3;
+}
+
+/********************************************************************/
+
+static int proclua_setuid(lua_State *const L)
+{
+  uid_t uid;
+  uid_t euid;
+  uid_t suid;
+  
+  uid  = luaL_checkinteger(L,1);
+  euid = luaL_optinteger(L,2,-1);
+  suid = luaL_optinteger(L,3,-1);
+  
+  if (setresuid(uid,euid,suid) < 0)
+    lua_pushinteger(L,errno);
+  else
+    lua_pushinteger(L,0);
+  return 1;
+}
+
+/*************************************************************************/
+
+static int proclua_setgid(lua_State *const L)
+{
+  gid_t gid;
+  gid_t egid;
+  gid_t sgid;
+  
+  gid  = luaL_checkinteger(L,1);
+  egid = luaL_optinteger(L,2,-1);
+  sgid = luaL_optinteger(L,3,-1);
+  
+  if (setresgid(gid,egid,sgid) < 0)
+    lua_pushinteger(L,errno);
+  else
+    lua_pushinteger(L,0);
+  return 1;
+}
+
+/************************************************************************/
 
 static int proclua_exit(lua_State *const L)
 {
