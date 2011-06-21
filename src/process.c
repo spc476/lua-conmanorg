@@ -450,17 +450,17 @@ static bool proc_growenvp(char ***penvp,size_t *psize)
 
 static int proclua_exec(lua_State *const L)
 {
-  const char  *binary;
-  char       **argv;
-  size_t       argc;
-  char       **envp;
-  size_t       envc;
-  size_t       envm;
-  int          err;
+  extern char **environ;
+  const char   *binary;
+  char        **argv;
+  size_t        argc;
+  char        **envp;
+  size_t        envc;
+  size_t        envm;
+  int           err;
   
   binary = luaL_checkstring(L,1);
   luaL_checktype(L,2,LUA_TTABLE);
-  luaL_checktype(L,3,LUA_TTABLE);
   
   argc = lua_objlen(L,2) + 2;
   argv = malloc(argc * sizeof(char *));
@@ -480,49 +480,59 @@ static int proclua_exec(lua_State *const L)
   }
   argv[argc - 1] = NULL;
   
-  envp = NULL;
-  envc = 0;
-  envm = 0;
-  
-  lua_pushnil(L);
-  while(lua_next(L,3) != 0)
+  if (lua_isnoneornil(L,3))
+    envp = environ;
+  else
   {
-    const char *name;
-    size_t      nsize;
-    const char *value;
-    size_t      vsize;
+    envp = NULL;
+    envc = 0;
+    envm = 0;
+  
+    luaL_checktype(L,3,LUA_TTABLE);
+
+    lua_pushnil(L);
+    while(lua_next(L,3) != 0)
+    {
+      const char *name;
+      size_t      nsize;
+      const char *value;
+      size_t      vsize;
     
-    name  = lua_tolstring(L,-2,&nsize);
-    value = lua_tolstring(L,-1,&vsize);
+      name  = lua_tolstring(L,-2,&nsize);
+      value = lua_tolstring(L,-1,&vsize);
     
+      if ((envc == envm) && !proc_growenvp(&envp,&envm))
+      {
+        proc_execfree(argv,envp,envc);
+        lua_pushinteger(L,ENOMEM);
+        return 1;
+      }
+
+      envp[envc] = malloc(nsize + vsize + 3);
+      if (envp[envc] == NULL)
+      {
+        proc_execfree(argv,envp,envc);
+        lua_pushinteger(L,ENOMEM);
+        return 1;
+      }
+    
+      sprintf(envp[envc++],"%s=%s",name,value);
+      lua_pop(L,1);
+    }
+  
     if ((envc == envm) && !proc_growenvp(&envp,&envm))
     {
-      lua_pushinteger(L,proc_execfree(argv,envp,envc));
-      return 1;
-    }
-
-    envp[envc] = malloc(nsize + vsize + 3);
-    if (envp[envc] == NULL)
-    {
-      lua_pushinteger(L,proc_execfree(argv,envp,envc));
+      proc_execfree(argv,envp,envc);
+      lua_pushinteger(L,ENOMEM);
       return 1;
     }
     
-    sprintf(envp[envc++],"%s=%s",name,value);
-    lua_pop(L,1);
+    envp[envc++] = NULL;
   }
   
-  if ((envc == envm) && !proc_growenvp(&envp,&envm))
-  {
-    lua_pushinteger(L,proc_execfree(argv,envp,envc));
-    return 1;
-  }
-    
-  envp[envc++] = NULL;
-
   execve(binary,argv,envp);
   err = errno;
-  proc_execfree(argv,envp,envc);
+  if (envp != environ) proc_execfree(argv,envp,envc);
   lua_pushinteger(L,err);
   return 1;
 }
