@@ -221,6 +221,9 @@ static int proclua_wait(lua_State *const L)
   }
   
   lua_createtable(L,0,0);
+  lua_pushinteger(L,rc);
+  lua_setfield(L,-2,"pid");
+  
   if (WIFEXITED(status))
   {
     lua_pushinteger(L,WEXITSTATUS(status));
@@ -265,6 +268,9 @@ static int proclua_waitusage(lua_State *const L)
   }
   
   lua_createtable(L,0,0);
+  lua_pushinteger(L,rc);
+  lua_setfield(L,-2,"pid");
+  
   if (WIFEXITED(status))
   {
     lua_pushinteger(L,WEXITSTATUS(status));
