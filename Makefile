@@ -36,6 +36,7 @@ all : lib/env.so	\
 	lib/syslog.so	\
 	lib/trim.so	\
 	lib/wrap.so	\
+	lib/remchar.so	\
 	lib/iconv.so	\
 	lib/crc.so	\
 	lib/hash.so	\
@@ -63,6 +64,9 @@ lib/trim.so : src/trim.c
 lib/wrap.so : src/wrap.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
+lib/remchar.so : src/remchar.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+	
 lib/iconv.so : src/iconv.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
@@ -95,6 +99,7 @@ install : all
 	install lib/syslog.so  $(LUALIB)/org/conman
 	install lib/trim.so    $(LUALIB)/org/conman/string
 	install lib/wrap.so    $(LUALIB)/org/conman/string
+	install lib/remchar.so $(LUALIB)/org/conman/string
 	install lib/iconv.so   $(LUALIB)/org/conman
 	install lib/crc.so     $(LUALIB)/org/conman
 	install lib/hash.so    $(LUALIB)/org/conman

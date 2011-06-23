@@ -21,8 +21,9 @@
 
 module("org.conman.string",package.seeall)
 
-trim = require "org.conman.string.trim"
-wrap = require "org.conman.string.wrap"
+trim    = require "org.conman.string.trim"
+wrap    = require "org.conman.string.wrap"
+remchar = require "org.conman.string.remchar"
 
 function split(s,delim)
   local results = {}
