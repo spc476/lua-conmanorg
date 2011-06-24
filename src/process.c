@@ -99,7 +99,10 @@ static const struct luaL_reg mslimit_reg[] =
 
 static int proclua_ignorechild(lua_State *const L __attribute__((unused)))
 {
-  signal(SIGCHLD,SIG_IGN);
+  if (lua_isnoneornil(L,1))
+    signal(SIGCHLD,SIG_IGN);
+  else
+    signal(SIGCHLD,SIG_DFL);
   return 0;
 }
 
