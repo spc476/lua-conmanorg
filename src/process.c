@@ -30,6 +30,7 @@
 
 /*************************************************************************/
 
+static int	proclua_ignorechild	(lua_State *const);
 static int	proclua_getuid		(lua_State *const);
 static int	proclua_getgid		(lua_State *const);
 static int	proclua_setuid		(lua_State *const);
@@ -56,20 +57,21 @@ static int	mslimitlua___newindex	(lua_State *const);
 
 static const struct luaL_reg mprocess_reg[] =
 {
-  { "getuid"	, proclua_getuid	} ,
-  { "getgid"	, proclua_getgid	} ,
-  { "setuid"	, proclua_setuid	} ,
-  { "setgid"	, proclua_setgid	} ,
-  { "exit"	, proclua_exit		} ,
-  { "fork"	, proclua_fork		} ,
-  { "wait"	, proclua_wait		} ,
-  { "waitusage"	, proclua_waitusage	} ,
-  { "sleep"	, proclua_sleep		} ,
-  { "sleepres"	, proclua_sleepres	} ,
-  { "kill"	, proclua_kill		} ,
-  { "exec"	, proclua_exec		} ,
-  { "times"	, proclua_times		} ,
-  { NULL	, NULL			} 
+  { "ignorechild"	, proclua_ignorechild	} ,
+  { "getuid"		, proclua_getuid	} ,
+  { "getgid"		, proclua_getgid	} ,
+  { "setuid"		, proclua_setuid	} ,
+  { "setgid"		, proclua_setgid	} ,
+  { "exit"		, proclua_exit		} ,
+  { "fork"		, proclua_fork		} ,
+  { "wait"		, proclua_wait		} ,
+  { "waitusage"		, proclua_waitusage	} ,
+  { "sleep"		, proclua_sleep		} ,
+  { "sleepres"		, proclua_sleepres	} ,
+  { "kill"		, proclua_kill		} ,
+  { "exec"		, proclua_exec		} ,
+  { "times"		, proclua_times		} ,
+  { NULL		, NULL			} 
 };
 
 static const struct luaL_reg mprocess_meta[] =
@@ -94,6 +96,14 @@ static const struct luaL_reg mslimit_reg[] =
 };
 
 /*************************************************************************/
+
+static int proclua_ignorechild(lua_State *const L __attribute__((unused)))
+{
+  signal(SIGCHLD,SIG_IGN);
+  return 0;
+}
+
+/************************************************************************/
 
 static int proclua_getuid(lua_State *const L)
 {
