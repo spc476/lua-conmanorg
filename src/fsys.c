@@ -20,6 +20,7 @@
 *********************************************************************/
 
 #define _BSD_SOURCE
+#define _POSIX_SOURCE
 
 #include <string.h>
 #include <errno.h>
@@ -258,21 +259,41 @@ static void impl_dumpstat(lua_State *L,struct stat *status)
 
 static int fsys_stat(lua_State *L)
 {
-  const char  *fname;
-  struct stat  status;
-  int          rc;
+  struct stat status;
+  int         err;
   
-  fname = luaL_checkstring(L,1);
-  errno = 0;
-  rc    = stat(fname,&status);
-  if (rc == -1)
+  if (lua_isnumber(L,1))
   {
-    int e = errno;
-    lua_pushnil(L);
-    lua_pushinteger(L,e);
-    return 2;
+    if (fstat(lua_tointeger(L,1),&status) < 0)
+    {
+      err = errno;
+      lua_pushnil(L);
+      lua_pushinteger(L,err);
+      return 2;
+    }
   }
-  
+  else if (lua_isstring(L,1))
+  {
+    if (stat(lua_tostring(L,1),&status) < 0)
+    {
+      err = errno;
+      lua_pushnil(L);
+      lua_pushinteger(L,err);
+      return 2;
+    }
+  }
+  else if (lua_isuserdata(L,1))
+  {
+    FILE **pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
+    if (fstat(fileno(*pfp),&status) < 0)
+    {
+      err = errno;
+      lua_pushnil(L);
+      lua_pushinteger(L,err);
+      return 2;
+    }
+  }
+
   impl_dumpstat(L,&status);  
   return 1;
 }
