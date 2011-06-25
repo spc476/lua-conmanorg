@@ -41,7 +41,8 @@ all : lib/env.so	\
 	lib/crc.so	\
 	lib/hash.so	\
 	lib/magic.so	\
-	lib/process.so
+	lib/process.so	\
+	lib/net.so
 	
 lib/env.so : src/env.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
@@ -82,6 +83,9 @@ lib/magic.so : src/magic.c
 lib/process.so : src/process.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lrt
 
+lib/net.so : src/net.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
+	
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~
 	/bin/rm -rf lib/*
@@ -105,6 +109,7 @@ install : all
 	install lib/hash.so    $(LUALIB)/org/conman
 	install lib/magic.so   $(LUALIB)/org/conman/fsys
 	install lib/process.so $(LUALIB)/org/conman
+	install lib/net.so     $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
