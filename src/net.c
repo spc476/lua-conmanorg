@@ -19,6 +19,10 @@
 *
 *************************************************************************/
 
+#ifndef __GNU__
+#  define __attribute__(x)
+#endif
+
 #define _BSD_SOURCE
 
 #include <string.h>
@@ -746,7 +750,7 @@ int luaopen_org_conman_net(lua_State *const L)
   luaL_newmetatable(L,NET_ADDR);
   luaL_register(L,NULL,maddr_regmeta);
   
-  luaL_register(L,"conman.org.net",mnet_reg);
+  luaL_register(L,"org.conman.net",mnet_reg);
   return 1;
 }
 
