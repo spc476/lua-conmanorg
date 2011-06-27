@@ -39,75 +39,74 @@
 #include <dirent.h>
 #include <libgen.h>
 
+#define FSYS_FD		"fsys:fd"
+
+/*************************************************************************/
+
+typedef struct filedescr
+{
+  int fh;
+} fd__t;
+
 /*************************************************************************/
 
 static int fsys_chdir(lua_State *L)
 {
-  const char *dir;
-  int         rc;
-  
-  dir = luaL_checkstring(L,1);
-  rc  = chdir(dir);
-  if (rc == -1)
+  if (chdir(luaL_checkstring(L,1)) < 0)
   {
     int err = errno;
     lua_pushboolean(L,false);
     lua_pushinteger(L,err);
-    return 2;
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
   }
   
-  lua_pushboolean(L,true);
-  return 1;
+  return 2;
 }
 
 /*************************************************************************/
 
 static int fsys_symlink(lua_State *L)
 {
-  const char *old;
-  const char *new;
-  int         rc;
+  const char *old = luaL_checkstring(L,1);
+  const char *new = luaL_checkstring(L,2);
   
-  old = luaL_checkstring(L,1);
-  new = luaL_checkstring(L,2);
-  lua_pop(L,2);
-  
-  rc = symlink(old,new);
-  if (rc == -1)
+  if (symlink(old,new) < 0)
   {
-    int e = errno;
+    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,e);
-    return 2;
+    lua_pushinteger(L,err);
   }
-  
-  lua_pushboolean(L,true);
-  return 1;
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
 }
 
 /*************************************************************************/
 
 static int fsys_link(lua_State *L)
 {
-  const char *old;
-  const char *new;
-  int         rc;
+  const char *old = luaL_checkstring(L,1);
+  const char *new = luaL_checkstring(L,2);
   
-  old = luaL_checkstring(L,1);
-  new = luaL_checkstring(L,2);
-  lua_pop(L,2);
-  
-  rc = link(old,new);
-  if (rc == -1)
+  if (link(old,new) < 0)
   {
-    int e = errno;
+    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,e);
-    return 2;
+    lua_pushinteger(L,err);
   }
-  
-  lua_pushboolean(L,true);
-  return 1;
+  else
+  {
+    lua_pushboolean(L,true)
+    lua_pushinteger(L,0);
+  }
+  return 2;
 }
 
 /**********************************************************************/
@@ -132,46 +131,36 @@ static int fsys_mkfifo(lua_State *L)
 
 static int fsys_mkdir(lua_State *L)
 {
-  const char *dname;
-  int         rc;
-  
-  dname = luaL_checkstring(L,1);
-  lua_pop(L,1);
-  errno = 0;
-  rc = mkdir(dname,0777);
-  if (rc == -1)
+  if (mkdir(luaL_checkstring(L,1),0777) < 0)
   {
-    int e = errno;
+    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,e);
-    return 2;
+    lua_pushinteger(L,err);
   }
-  
-  lua_pushboolean(L,true);
-  return 1;
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
 }
 
 /***********************************************************************/
 
 static int fsys_rmdir(lua_State *L)
 {
-  const char *dname;
-  int         rc;
-  
-  dname = luaL_checkstring(L,1);
-  lua_pop(L,1);
-  errno = 0;
-  rc = rmdir(dname);
-  if (rc == -1)
+  if (rmdir(luaL_checkstring(L,1)) < 0)
   {
-    int e = errno;
+    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,e);
-    return 2;
+    lua_pushinteger(L,err);
   }
-  
-  lua_pushboolean(L,true);
-  return 1;
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
 }
 
 /************************************************************************/
@@ -295,7 +284,8 @@ static int fsys_stat(lua_State *L)
   }
 
   impl_dumpstat(L,&status);  
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /**********************************************************************/
@@ -307,7 +297,6 @@ static int fsys_lstat(lua_State *L)
   int          rc;
   
   fname = luaL_checkstring(L,1);
-  errno = 0;
   rc    = lstat(fname,&status);
   if (rc == -1)
   {
@@ -319,7 +308,8 @@ static int fsys_lstat(lua_State *L)
   }
   
   impl_dumpstat(L,&status);
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /*************************************************************************/
@@ -329,33 +319,68 @@ static int fsys_chmod(lua_State *L)
   const char        *fname;
   const char        *tmode;
   mode_t             mode;
+  mode_t             bit;
   
   fname = luaL_checkstring(L,1);
   tmode = luaL_checkstring(L,2);
-  mode  = strtoul(tmode,NULL,8);
+  bit   = 0400;
+  mode  = 0;
   
+  for ( ; *value ; bit >> 1 , value++)
+    if (*value != '-')
+      mode |= bit;
+
   if (chmod(fname,mode) < 0)
   {
     int err = errno;
-    
     lua_pushboolean(L,false);
     lua_pushinteger(L,err);
-    return 2;
   }
-  
-  lua_pushboolean(L,true);
-  return 1;
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
 }
 
 /***********************************************************************/
+
+static int fsys_umask(lua_State *L)
+{
+  const char *value;
+  mode_t      mask;
+  mode_t      bit;
+  
+  value = luaL_checkstring(L,1);
+  bit   = 0400;
+  mask  = 0;
+  
+  for ( ; *value ; bit >> 1 , value++)
+    if (*value != '-')
+      mask |= bit;
+
+  if (umask(mask) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
+}
+
+/**********************************************************************/
 
 static int fsys_access(lua_State *L)
 {
   const char *fname  = luaL_checkstring(L,1);
   const char *tmode  = luaL_checkstring(L,2);
   int         mode   = 0;
-  int         rc;
-  int         e;
   
   for (int i = 0 ; tmode[i] != '\0'; i++)
   {
@@ -369,13 +394,17 @@ static int fsys_access(lua_State *L)
     }
   }
   
-  errno = 0;
-  rc    = access(fname,mode);
-  e     = errno;
-  
-  lua_pushboolean(L,rc != -1);
-  lua_pushinteger(L,e);
-
+  if (access(fname,mode) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
   return 2;
 }
 
@@ -384,20 +413,20 @@ static int fsys_access(lua_State *L)
 static int fsys_getcwd(lua_State *L)
 {
   char cwd[FILENAME_MAX];
-  char *p;
   
-  p = getcwd(cwd,sizeof(cwd));
-  if (p == NULL)
+  if (getcwd(cwd,sizeof(cwd)) == NULL)
   {
-    int e = errno;
-    
+    int e = errno;    
     lua_pushnil(L);
     lua_pushinteger(L,e);
-    return 2;
   }
-
-  lua_pushstring(L,cwd);
-  return 1;
+  else
+  {
+    lua_pushstring(L,cwd);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
 }
 
 /************************************************************************/
@@ -579,7 +608,8 @@ static int fsys_basename(lua_State *L)
   
   memcpy(name,path,size + 1);
   lua_pushstring(L,basename(name));
-  return 1;  
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /**********************************************************************/
@@ -604,10 +634,21 @@ static int fsys_dirname(lua_State *L)
   
   memcpy(name,path,size + 1);
   lua_pushstring(L,dirname(name));
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /***********************************************************************/
+
+static int fsys_open(lua_State *L)
+{
+}
+
+/***********************************************************************/
+
+
+
+
 
 static const struct luaL_reg reg_fsys[] = 
 {
@@ -619,6 +660,7 @@ static const struct luaL_reg reg_fsys[] =
   { "rmdir"	, fsys_rmdir	} ,
   { "stat"	, fsys_stat	} ,
   { "lstat"	, fsys_lstat	} ,
+  { "umask"	, fsys_umask	} ,
   { "chmod"	, fsys_chmod	} ,
   { "access"	, fsys_access	} ,
   { "opendir"	, fsys_opendir	} ,
@@ -631,11 +673,30 @@ static const struct luaL_reg reg_fsys[] =
   { "_safename"	, fsys__safename} ,
   { "basename"	, fsys_basename	} ,
   { "dirname"	, fsys_dirname	} ,
+  { "open"	, fsys_open	} ,
+  { "pipe"	, fsys_pipe	} ,
+  { "dup"	, fsys_dup	} ,
+  { "isfile"	, fsys_isfile	} ,
+  { "fdopen"	, fsys_fdopen	} ,
   { NULL	, NULL		}
+};
+
+static const luaL_reg mfio_regmeta[] =
+{
+  { "__gc"	, fiolua_close	} ,
+  { "read"	, fiolua_read	} ,
+  { "write"	, fiolua_write	} ,
+  { "close"	, fiolua_close	} ,
+  { "fd"	, fiolua_fd	} ,
 };
 
 int luaopen_org_conman_fsys(lua_State *L)
 {
+  luaL_newmetatable(L,FSYS_FD);
+  luaL_register(L,NULL,mfio_regmeta);
+  lua_pushvalue(L,-1);
+  lua_setfield(L,-2,"__index");
+  
   luaL_register(L,"org.conman.fsys",reg_fsys);
   
   lua_pushliteral(L,"Copyright 2010 by Sean Conner.  All Rights Reserved.");
@@ -647,7 +708,7 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_pushliteral(L,"Useful file manipulation functions available under Unix.");
   lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"0.4.0");
+  lua_pushliteral(L,"0.5.0");
   lua_setfield(L,-2,"_VERSION");
 
   return 1;
