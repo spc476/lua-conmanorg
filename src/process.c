@@ -44,6 +44,7 @@ static int	proclua_sleepres	(lua_State *const);
 static int	proclua_kill		(lua_State *const);
 static int	proclua_exec		(lua_State *const);
 static int	proclua_times		(lua_State *const);
+static int	proclua_getrusage	(lua_State *const);
 static int	proclua___index		(lua_State *const);
 static int	proclua___newindex	(lua_State *const);
 static bool	mlimit_trans		(int *const restrict,const char *const restrict);
@@ -52,6 +53,8 @@ static int	mhlimitlua___index	(lua_State *const);
 static int	mhlimitlua___newindex	(lua_State *const);
 static int	mslimitlua___index	(lua_State *const);
 static int	mslimitlua___newindex	(lua_State *const);
+static void	proc_pushstatus		(lua_State *const,const pid_t,int);
+static void	proc_pushrusage		(lua_State *const restrict,struct rusage *const restrict);
 
 /************************************************************************/
 
@@ -71,6 +74,7 @@ static const struct luaL_reg mprocess_reg[] =
   { "kill"		, proclua_kill		} ,
   { "exec"		, proclua_exec		} ,
   { "times"		, proclua_times		} ,
+  { "getrusage"		, proclua_getrusage	} ,
   { NULL		, NULL			} 
 };
 
@@ -233,30 +237,7 @@ static int proclua_wait(lua_State *const L)
     return 2;
   }
   
-  lua_createtable(L,0,0);
-  lua_pushinteger(L,rc);
-  lua_setfield(L,-2,"pid");
-  
-  if (WIFEXITED(status))
-  {
-    lua_pushinteger(L,WEXITSTATUS(status));
-    lua_setfield(L,-2,"rc");
-    lua_pushliteral(L,"normal");
-    lua_setfield(L,-2,"status");
-  }
-  else if (WIFSIGNALED(status))
-  {
-    lua_pushinteger(L,WTERMSIG(status));
-    lua_setfield(L,-2,"signal");
-    lua_pushstring(L,strsignal(WTERMSIG(status)));
-    lua_setfield(L,-2,"description");
-    lua_pushliteral(L,"terminated");
-    lua_setfield(L,-2,"status");
-#ifdef WCOREDUMP
-    lua_pushboolean(L,WCOREDUMP(status));
-    lua_setfield(L,-2,"core");
-#endif
-  }
+  proc_pushstatus(L,rc,status);
   return 1;
 }
 
@@ -280,82 +261,42 @@ static int proclua_waitusage(lua_State *const L)
     return 2;
   }
   
-  lua_createtable(L,0,0);
-  lua_pushinteger(L,rc);
-  lua_setfield(L,-2,"pid");
-  
-  if (WIFEXITED(status))
-  {
-    lua_pushinteger(L,WEXITSTATUS(status));
-    lua_setfield(L,-2,"rc");
-    lua_pushliteral(L,"normal");
-    lua_setfield(L,-2,"status");
-  }
-  else if (WIFSIGNALED(status))
-  {
-    lua_pushinteger(L,WTERMSIG(status));
-    lua_setfield(L,-2,"signal");
-    lua_pushstring(L,strsignal(WTERMSIG(status)));
-    lua_setfield(L,-2,"description");
-    lua_pushliteral(L,"terminated");
-    lua_setfield(L,-2,"status");
-#ifdef WCOREDUMP
-    lua_pushboolean(L,WCOREDUMP(status));
-    lua_setfield(L,-2,"core");
-#endif
-  }
-  
-  lua_createtable(L,0,0);
-  
-  lua_pushnumber(L,usage.ru_utime.tv_sec + ((double)usage.ru_utime.tv_usec / 1000000.0));
-  lua_setfield(L,-2,"utime");
-  
-  lua_pushnumber(L,usage.ru_stime.tv_sec + ((double)usage.ru_stime.tv_usec / 1000000.0));
-  lua_setfield(L,-2,"stime");
-  
-  lua_pushnumber(L,usage.ru_maxrss);
-  lua_setfield(L,-2,"maxrss");
-  
-  lua_pushnumber(L,usage.ru_ixrss);
-  lua_setfield(L,-2,"text");
-  
-  lua_pushnumber(L,usage.ru_idrss);
-  lua_setfield(L,-2,"data");
-  
-  lua_pushnumber(L,usage.ru_isrss);
-  lua_setfield(L,-2,"stack");
-  
-  lua_pushnumber(L,usage.ru_minflt);
-  lua_setfield(L,-2,"softfaults");
-  
-  lua_pushnumber(L,usage.ru_majflt);
-  lua_setfield(L,-2,"hardfaults");
-
-  lua_pushnumber(L,usage.ru_nswap);
-  lua_setfield(L,-2,"swapped");
-  
-  lua_pushnumber(L,usage.ru_inblock);
-  lua_setfield(L,-2,"inblock");
-  
-  lua_pushnumber(L,usage.ru_oublock);
-  lua_setfield(L,-2,"outblock");
-  
-  lua_pushnumber(L,usage.ru_msgsnd);
-  lua_setfield(L,-2,"ipcsend");
-  
-  lua_pushnumber(L,usage.ru_msgrcv);
-  lua_setfield(L,-2,"ipcreceive");
-  
-  lua_pushnumber(L,usage.ru_nsignals);
-  lua_setfield(L,-2,"signals");
-  
-  lua_pushnumber(L,usage.ru_nvcsw);
-  lua_setfield(L,-2,"coopcs");
-  
-  lua_pushnumber(L,usage.ru_nivcsw);
-  lua_setfield(L,-2,"preemptcs");
-  
+  proc_pushstatus(L,rc,status);
+  proc_pushrusage(L,&usage);  
   return 2;
+}
+
+/**********************************************************************/
+
+static int proclua_getrusage(lua_State *const L)
+{
+  struct rusage  usage;
+  const char    *twho;
+  int            who;
+  
+  twho = luaL_optstring(L,1,"self");
+  
+  if (strcmp(twho,"self") == 0)
+    who = RUSAGE_SELF;
+  else if ((strcmp(twho,"children") == 0) || (strcmp(twho,"child") == 0))
+    who = RUSAGE_CHILDREN;
+  else
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,EINVAL);
+    return 2;
+  }
+  
+  if (getrusage(who,&usage) < 0)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  proc_pushrusage(L,&usage);
+  return 1;
 }
 
 /**********************************************************************/
@@ -567,13 +508,13 @@ static int proclua_times(lua_State *const L)
   }
 
   lua_createtable(L,0,4);
-  lua_pushinteger(L,tms.tms_utime);
+  lua_pushnumber(L,tms.tms_utime);
   lua_setfield(L,-2,"utime");
-  lua_pushinteger(L,tms.tms_stime);
+  lua_pushnumber(L,tms.tms_stime);
   lua_setfield(L,-2,"stime");
-  lua_pushinteger(L,tms.tms_cutime);
+  lua_pushnumber(L,tms.tms_cutime);
   lua_setfield(L,-2,"cutime"); 
-  lua_pushinteger(L,tms.tms_cstime);
+  lua_pushnumber(L,tms.tms_cstime);
   lua_setfield(L,-2,"cstime");
   
   return 1;
@@ -910,6 +851,98 @@ int luaopen_org_conman_process(lua_State *const L)
   lua_setmetatable(L,-2);
   
   return 1;
+}
+
+/************************************************************************/
+
+static void proc_pushstatus(
+	lua_State *const L,
+	const pid_t      pid,
+	int              status
+)
+{
+  lua_createtable(L,0,0);
+  lua_pushinteger(L,pid);
+  lua_setfield(L,-2,"pid");
+  
+  if (WIFEXITED(status))
+  {
+    lua_pushinteger(L,WEXITSTATUS(status));
+    lua_setfield(L,-2,"rc");
+    lua_pushliteral(L,"normal");
+    lua_setfield(L,-2,"status");
+  }
+  else if (WIFSIGNALED(status))
+  {
+    lua_pushinteger(L,WTERMSIG(status));
+    lua_setfield(L,-2,"signal");
+    lua_pushstring(L,strsignal(WTERMSIG(status)));
+    lua_setfield(L,-2,"description");
+    lua_pushliteral(L,"terminated");
+    lua_setfield(L,-2,"status");
+#ifdef WCOREDUMP
+    lua_pushboolean(L,WCOREDUMP(status));
+    lua_setfield(L,-2,"core");
+#endif
+  }
+}
+
+/************************************************************************/
+
+static void proc_pushrusage(
+	lua_State     *const restrict L,
+	struct rusage *const restrict usage
+)
+{
+  lua_createtable(L,0,0);
+  
+  lua_pushnumber(L,usage->ru_utime.tv_sec + ((double)usage->ru_utime.tv_usec / 1000000.0));
+  lua_setfield(L,-2,"utime");
+  
+  lua_pushnumber(L,usage->ru_stime.tv_sec + ((double)usage->ru_stime.tv_usec / 1000000.0));
+  lua_setfield(L,-2,"stime");
+  
+  lua_pushnumber(L,usage->ru_maxrss);
+  lua_setfield(L,-2,"maxrss");
+  
+  lua_pushnumber(L,usage->ru_ixrss);
+  lua_setfield(L,-2,"text");
+  
+  lua_pushnumber(L,usage->ru_idrss);
+  lua_setfield(L,-2,"data");
+  
+  lua_pushnumber(L,usage->ru_isrss);
+  lua_setfield(L,-2,"stack");
+  
+  lua_pushnumber(L,usage->ru_minflt);
+  lua_setfield(L,-2,"softfaults");
+  
+  lua_pushnumber(L,usage->ru_majflt);
+  lua_setfield(L,-2,"hardfaults");
+
+  lua_pushnumber(L,usage->ru_nswap);
+  lua_setfield(L,-2,"swapped");
+  
+  lua_pushnumber(L,usage->ru_inblock);
+  lua_setfield(L,-2,"inblock");
+  
+  lua_pushnumber(L,usage->ru_oublock);
+  lua_setfield(L,-2,"outblock");
+  
+  lua_pushnumber(L,usage->ru_msgsnd);
+  lua_setfield(L,-2,"ipcsend");
+  
+  lua_pushnumber(L,usage->ru_msgrcv);
+  lua_setfield(L,-2,"ipcreceive");
+  
+  lua_pushnumber(L,usage->ru_nsignals);
+  lua_setfield(L,-2,"signals");
+  
+  lua_pushnumber(L,usage->ru_nvcsw);
+  lua_setfield(L,-2,"coopcs");
+  
+  lua_pushnumber(L,usage->ru_nivcsw);
+  lua_setfield(L,-2,"preemptcs");
 }
 
 /************************************************************************/
