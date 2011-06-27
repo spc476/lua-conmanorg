@@ -92,7 +92,9 @@ clean:
 
 install : all
 	install -d $(LUALUA)/org/conman	
+	install -d $(LUALUA)/org/conman/dns
 	install lua/*.lua $(LUALUA)/org/conman	
+	install lua/dns/*.lua $(LUALUA)/org/conman/dns
 	install -d $(LUALIB)/org/conman
 	install -d $(LUALIB)/org/conman/string
 	install -d $(LUALIB)/org/conman/fsys
