@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include <luaconf.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -47,6 +48,12 @@ typedef struct filedescr
 {
   int fh;
 } fd__t;
+
+typedef struct fileptr
+{
+  FILE *fp;
+  int   ref;
+} fp__t;
 
 /*************************************************************************/
 
@@ -103,7 +110,7 @@ static int fsys_link(lua_State *L)
   }
   else
   {
-    lua_pushboolean(L,true)
+    lua_pushboolean(L,true);
     lua_pushinteger(L,0);
   }
   return 2;
@@ -317,16 +324,16 @@ static int fsys_lstat(lua_State *L)
 static int fsys_chmod(lua_State *L)
 {
   const char        *fname;
-  const char        *tmode;
+  const char        *value;
   mode_t             mode;
   mode_t             bit;
   
   fname = luaL_checkstring(L,1);
-  tmode = luaL_checkstring(L,2);
+  value = luaL_checkstring(L,2);
   bit   = 0400;
   mode  = 0;
   
-  for ( ; *value ; bit >> 1 , value++)
+  for ( ; *value ; bit >>= 1 , value++)
     if (*value != '-')
       mode |= bit;
 
@@ -348,6 +355,7 @@ static int fsys_chmod(lua_State *L)
 
 static int fsys_umask(lua_State *L)
 {
+  char        perms[9];
   const char *value;
   mode_t      mask;
   mode_t      bit;
@@ -356,22 +364,23 @@ static int fsys_umask(lua_State *L)
   bit   = 0400;
   mask  = 0;
   
-  for ( ; *value ; bit >> 1 , value++)
+  for ( ; *value ; bit >>= 1 , value++)
     if (*value != '-')
       mask |= bit;
 
-  if (umask(mask) < 0)
-  {
-    int err = errno;
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
-  return 2;
+  mask     = umask(mask);
+  perms[0] = (mask & S_IRUSR) ? 'r' : '-';
+  perms[1] = (mask & S_IWUSR) ? 'w' : '-';
+  perms[2] = (mask & S_IXUSR) ? 'x' : '-';
+  perms[3] = (mask & S_IRGRP) ? 'r' : '-';
+  perms[4] = (mask & S_IWGRP) ? 'w' : '-';
+  perms[5] = (mask & S_IXGRP) ? 'x' : '-';
+  perms[6] = (mask & S_IROTH) ? 'r' : '-';
+  perms[7] = (mask & S_IWOTH) ? 'w' : '-';
+  perms[8] = (mask & S_IXOTH) ? 'x' : '-';
+
+  lua_pushlstring(L,perms,9);
+  return 1;
 }
 
 /**********************************************************************/
@@ -641,14 +650,402 @@ static int fsys_dirname(lua_State *L)
 /***********************************************************************/
 
 static int fsys_open(lua_State *L)
-{
+{ 
+  fd__t      *fd;
+  const char *fname;
+  const char *flags;
+  int         oflags;
+  
+  fname = luaL_checkstring(L,1);
+  flags = luaL_checkstring(L,2);
+  
+  if (flags[0] == 'r')
+    oflags = (flags[1] == '+')
+    	? O_RDWR
+    	: O_RDONLY;
+  else if (flags[0] == 'w')
+    oflags = (flags[1] == '+')
+    	? O_CREAT | O_RDWR
+    	: O_CREAT | O_WRONLY | O_TRUNC;
+  else if (flags[0] == 'a')
+    oflags = (flags[1] == '+')
+    	? O_RDWR   | O_APPEND
+    	: O_WRONLY | O_APPEND;
+  else
+    luaL_error(L,"illegal flag: %s",flags);
+  
+  fd = lua_newuserdata(L,sizeof(fd__t));
+  luaL_getmetatable(L,FSYS_FD);
+  lua_setmetatable(L,-2);
+  
+  fd->fh = open(fname,oflags,0666);
+  if (fd->fh == -1)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+  }
+  else
+    lua_pushinteger(L,0);
+  
+  return 2;
 }
 
 /***********************************************************************/
 
+static int fsys_openfd(lua_State *L)
+{
+  int    fh;
+  fd__t *fd;
+  
+  fh = luaL_checkint(L,1);
+  fd = lua_newuserdata(L,sizeof(fd__t));
+  luaL_getmetatable(L,FSYS_FD);
+  lua_setmetatable(L,-2);
+  fd->fh = fh;
+  return 1;
+}
 
+/***********************************************************************/
 
+static int fsys_pipe(lua_State *L)
+{
+  fd__t *read;
+  fd__t *write;
+  int    fh[2];
+  
+  if (pipe(fh) < 0)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  lua_createtable(L,0,2);
+  
+  read = lua_newuserdata(L,sizeof(fd__t));
+  read->fh = fh[0];
+  luaL_getmetatable(L,FSYS_FD);
+  lua_setmetatable(L,-2);
+  lua_setfield(L,-2,"read");
+  
+  write = lua_newuserdata(L,sizeof(fd__t));
+  write->fh = fh[1];
+  luaL_getmetatable(L,FSYS_FD);
+  lua_setmetatable(L,-2);
+  lua_setfield(L,-2,"write");
+  
+  lua_pushinteger(L,0);
+  return 2;
+}
 
+/***********************************************************************/
+
+static void *ifsys_checkudata(lua_State *L,int idx,const char *tname)
+{
+  /*------------------------------------------------------------------------
+  ; XXX---gross hack to check the userdata type without erroring out.  Uses
+  ; internals of Lua implementation.
+  ;-----------------------------------------------------------------------*/
+  
+  void *p = lua_touserdata(L,idx);
+  
+  if (p != NULL)
+  {
+    if (lua_getmetatable(L,idx))
+    {
+      lua_getfield(L,LUA_REGISTRYINDEX,tname);
+      if (lua_rawequal(L,-1,-2))
+      {
+        lua_pop(L,2);
+        return p;
+      }
+    }
+  }
+  return NULL;
+}
+
+/********************************************************************/
+
+static int fsys_dup(lua_State *L)
+{
+  int orig;
+  int copy;
+  
+  if (lua_isnumber(L,1))
+    orig = lua_tointeger(L,1);
+  else
+  {
+    FILE **pfp = ifsys_checkudata(L,1,LUA_FILEHANDLE);
+    if (pfp)
+      orig = fileno(*pfp);
+    else
+    {
+      lua_getfield(L,1,"fd");
+      lua_pushvalue(L,1);
+      lua_call(L,1,1);
+      orig = luaL_checkint(L,-1);
+    }
+  }
+  
+  if (lua_isnumber(L,2))
+    copy = lua_tointeger(L,2);
+  else
+  {
+    FILE **pfp = ifsys_checkudata(L,1,LUA_FILEHANDLE);
+    if (pfp)
+      copy = fileno(*pfp);
+    else
+    {
+      lua_getfield(L,2,"fd"); 
+      lua_pushvalue(L,1);
+      lua_call(L,1,1);
+      copy = luaL_checkint(L,-1);
+    }
+  }
+  
+  if (dup2(orig,copy) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/**************************************************************************/  
+
+static int fsys_fdopen(lua_State *L)
+{
+  fp__t *fp;
+  int    fh;
+  int    ref;
+  
+  if (lua_isnumber(L,1))
+  {
+    fh = lua_tointeger(L,1);
+    ref = LUA_NOREF;
+  }
+  else
+  {
+    lua_getfield(L,1,"fd");
+    lua_pushvalue(L,1);
+    lua_call(L,1,1);
+    fh  = luaL_checkint(L,-1);
+    lua_pushvalue(L,1);
+    ref = luaL_ref(L,LUA_REGISTRYINDEX);
+  }
+  
+  fp      = lua_newuserdata(L,sizeof(fp__t));
+  fp->fp  = NULL;
+  fp->ref = LUA_NOREF;
+  
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_setmetatable(L,-2);
+  
+  fp->ref = ref;
+  fp->fp  = fdopen(fh,luaL_checkstring(L,2));
+  if (fp->fp == NULL)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  return 1;
+}
+
+/************************************************************************/  
+
+static int fsys_close(lua_State *L)
+{
+  if (lua_isnumber(L,1))
+  {
+    if (close(lua_tointeger(L,1)) < 0)
+    {
+      int err = errno;
+      lua_pushboolean(L,false);
+      lua_pushinteger(L,err);
+      return 2;
+    }
+    else
+    {
+      lua_pushboolean(L,true);
+      lua_pushinteger(L,0);
+      return 2;
+    }
+  }
+  else
+  {
+    lua_getfield(L,1,"close");
+    lua_pushvalue(L,1);
+    lua_call(L,1,1);
+    return 2;
+  }
+}
+
+/**********************************************************************/
+    
+static int fiolua___close(lua_State *L)
+{
+  fp__t *fp;
+  
+  fp = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  fclose(fp->fp);
+  fp->fp = NULL;
+  luaL_unref(L,LUA_REGISTRYINDEX,fp->ref);
+  lua_pushboolean(L,true);
+  return 1;
+}
+
+/************************************************************************/
+
+static int fiolua___tostring(lua_State *L)
+{
+  fd__t *fd;
+  
+  fd = luaL_checkudata(L,1,FSYS_FD);
+  lua_pushfstring(L,"FILE:%d",fd->fh);
+  return 1;
+}
+
+/************************************************************************/
+
+static int fiolua_read(lua_State *L)
+{
+  char    buffer[LUAL_BUFFERSIZE];
+  ssize_t bytes;
+  int     fh;
+  
+  if (lua_isnumber(L,1))
+    fh = lua_tointeger(L,1);
+  else
+  {
+    lua_getfield(L,1,"fd");
+    lua_pushvalue(L,1);
+    lua_call(L,1,1);
+    fh = luaL_checkint(L,-1);
+  }
+  
+  bytes = read(fh,buffer,sizeof(buffer));
+  if (bytes < 0)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushlstring(L,buffer,bytes);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/************************************************************************/
+
+static int fiolua_write(lua_State *L)
+{
+  int         fh;
+  const char *data;
+  size_t      size;
+  ssize_t     bytes;
+  int         err;
+  
+  if (lua_isnumber(L,1))
+    fh = lua_tonumber(L,1);
+  else
+  {
+    lua_getfield(L,1,"fd");
+    lua_pushvalue(L,1);
+    lua_call(L,1,1);
+    fh = luaL_checkint(L,1);
+  }
+  
+  data  = luaL_checklstring(L,2,&size);
+  errno = 0;
+  bytes = write(fh,data,size);
+  err   = errno;
+  lua_pushinteger(L,bytes);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/************************************************************************/
+
+static int fiolua_isfile(lua_State *L)
+{
+  int fh;
+  
+  if (lua_isnumber(L,1))
+    fh = lua_tonumber(L,1);
+  else
+  {
+    lua_getfield(L,1,"fd");
+    lua_pushvalue(L,1);
+    lua_call(L,1,1);
+    fh = luaL_checkint(L,-1);
+  }
+  
+  if (isatty(fh) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
+}
+
+/************************************************************************/
+
+static int fiolua_close(lua_State *L)
+{
+  fd__t *fd;
+  
+  fd = luaL_checkudata(L,1,FSYS_FD);
+
+  if (fd->fh >= 0)
+  {
+    if (close(fd->fh) < 0)
+    {
+      int err = errno;
+      lua_pushboolean(L,false);
+      lua_pushinteger(L,err);
+      return 2;
+    }
+  }
+  
+  lua_pushboolean(L,true);
+  lua_pushinteger(L,0);
+  return 2;
+}
+
+/************************************************************************/
+
+static int fiolua_fd(lua_State *L)
+{
+  fd__t *fd;
+  
+  fd = luaL_checkudata(L,1,FSYS_FD);
+  lua_pushinteger(L,fd->fh);
+  return 1;
+}
+
+/************************************************************************/
 
 static const struct luaL_reg reg_fsys[] = 
 {
@@ -674,20 +1071,24 @@ static const struct luaL_reg reg_fsys[] =
   { "basename"	, fsys_basename	} ,
   { "dirname"	, fsys_dirname	} ,
   { "open"	, fsys_open	} ,
+  { "close"	, fsys_close	} ,
+  { "openfd"	, fsys_openfd	} ,
   { "pipe"	, fsys_pipe	} ,
   { "dup"	, fsys_dup	} ,
-  { "isfile"	, fsys_isfile	} ,
   { "fdopen"	, fsys_fdopen	} ,
   { NULL	, NULL		}
 };
 
 static const luaL_reg mfio_regmeta[] =
 {
-  { "__gc"	, fiolua_close	} ,
-  { "read"	, fiolua_read	} ,
-  { "write"	, fiolua_write	} ,
-  { "close"	, fiolua_close	} ,
-  { "fd"	, fiolua_fd	} ,
+  { "__tostring", fiolua___tostring	} ,
+  { "__gc"	, fiolua_close		} ,
+  { "read"	, fiolua_read		} ,
+  { "write"	, fiolua_write		} ,
+  { "isfile"	, fiolua_isfile		} ,
+  { "close"	, fiolua_close		} ,
+  { "fd"	, fiolua_fd		} ,
+  { NULL	, NULL			}
 };
 
 int luaopen_org_conman_fsys(lua_State *L)
@@ -698,6 +1099,21 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_setfield(L,-2,"__index");
   
   luaL_register(L,"org.conman.fsys",reg_fsys);
+  
+  /*----------------------------------------------------------------------
+  ; there's no API to manipulate LUA_FILEHANDLEs safely, so we kind of have
+  ; to hack our way in there.  We need to define a "__close()" function
+  ; associated with the function used to create the LUA_FILEHANDLE.  This is
+  ; a gross hack and deals with Lua internals that aren't really well
+  ; documented.  We may have to reinvestigate this for Lua 5.2.
+  ;------------------------------------------------------------------------*/
+  
+  lua_getfield(L,-1,"fdopen");
+  lua_createtable(L,0,1);
+  lua_pushcfunction(L,fiolua___close);
+  lua_setfield(L,-2,"__close");
+  lua_setfenv(L,-2);
+  lua_pop(L,1);
   
   lua_pushliteral(L,"Copyright 2010 by Sean Conner.  All Rights Reserved.");
   lua_setfield(L,-2,"_COPYRIGHT");
@@ -715,3 +1131,4 @@ int luaopen_org_conman_fsys(lua_State *L)
 }
 
 /*******************************************************************/
+
