@@ -83,6 +83,7 @@ static int	addrlua___tostring	(lua_State *const) __attribute__((nonnull));
 static int	addrlua___eq		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___lt		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___le		(lua_State *const) __attribute__((nonnull));
+static int	addrlua___len		(lua_State *const) __attribute__((nonnull));
 
 /*************************************************************************/
 
@@ -117,6 +118,7 @@ static const luaL_reg maddr_regmeta[] =
   { "__eq"		, addrlua___eq		} ,
   { "__lt"		, addrlua___lt		} ,
   { "__le"		, addrlua___le		} ,
+  { "__len"		, addrlua___len		} ,
   { NULL		, NULL			}
 };
 
@@ -839,6 +841,14 @@ static int addrlua___le(lua_State *const L)
     
 /**********************************************************************/
 
+static int addrlua___len(lua_State *const L)
+{
+  lua_pushinteger(L,Inet_len(luaL_checkudata(L,1,NET_ADDR)));
+  return 1;
+}
+
+/*********************************************************************/
+  
 int luaopen_org_conman_net(lua_State *const L)
 {
   luaL_newmetatable(L,NET_SOCK);
