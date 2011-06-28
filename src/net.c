@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -79,6 +80,9 @@ static int	socklua_close		(lua_State *const) __attribute__((nonnull));
 static int	socklua_fd		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___index		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___tostring	(lua_State *const) __attribute__((nonnull));
+static int	addrlua___eq		(lua_State *const) __attribute__((nonnull));
+static int	addrlua___lt		(lua_State *const) __attribute__((nonnull));
+static int	addrlua___le		(lua_State *const) __attribute__((nonnull));
 
 /*************************************************************************/
 
@@ -110,6 +114,9 @@ static const luaL_reg maddr_regmeta[] =
 {
   { "__index"		, addrlua___index	} ,
   { "__tostring"	, addrlua___tostring	} ,
+  { "__eq"		, addrlua___eq		} ,
+  { "__lt"		, addrlua___lt		} ,
+  { "__le"		, addrlua___le		} ,
   { NULL		, NULL			}
 };
 
@@ -199,6 +206,20 @@ static inline const char *Inet_addr(
     case AF_INET:  return inet_ntop(AF_INET, &addr->sin.sin_addr.s_addr,   dest,INET6_ADDRSTRLEN);
     case AF_INET6: return inet_ntop(AF_INET6,&addr->sin6.sin6_addr.s6_addr,dest,INET6_ADDRSTRLEN);
     case AF_UNIX:  return addr->sun.sun_path;
+    default:       assert(0); return NULL;
+  }
+}
+
+/*------------------------------------------------------------------------*/
+
+static inline void *Inet_address(sockaddr_all__t *const addr)
+{
+  assert(addr != NULL);
+  switch(addr->sa.sa_family)
+  {
+    case AF_INET:  return &addr->sin.sin_addr.s_addr;
+    case AF_INET6: return &addr->sin6.sin6_addr.s6_addr;
+    case AF_UNIX:  return &addr->sun.sun_path;
     default:       assert(0); return NULL;
   }
 }
@@ -738,6 +759,84 @@ static int addrlua___tostring(lua_State *const L)
   return 1;
 }
 
+/**********************************************************************/
+
+static int addrlua___eq(lua_State *const L)
+{
+  sockaddr_all__t *a;
+  sockaddr_all__t *b;
+  
+  a = luaL_checkudata(L,1,NET_ADDR);
+  b = luaL_checkudata(L,2,NET_ADDR);
+  
+  if (a->sa.sa_family != b->sa.sa_family)
+  {
+    lua_pushboolean(L,false);
+    return 1;
+  }
+  
+  if (memcmp(Inet_address(a),Inet_address(b),Inet_len(a)) != 0)
+  {
+    lua_pushboolean(L,false);
+    return 1;
+  }
+  
+  lua_pushboolean(L,Inet_port(a) == Inet_port(b));
+  return 1;
+}
+
+/**********************************************************************/
+
+static int addrlua___lt(lua_State *const L)
+{
+  sockaddr_all__t *a;
+  sockaddr_all__t *b;
+  
+  a = luaL_checkudata(L,1,NET_ADDR);
+  b = luaL_checkudata(L,2,NET_ADDR);
+  
+  if (a->sa.sa_family < b->sa.sa_family)
+  {
+    lua_pushboolean(L,true);
+    return 1;
+  }
+  
+  if (memcmp(Inet_address(a),Inet_address(b),Inet_len(a)) < 0)
+  {
+    lua_pushboolean(L,true);
+    return 1;
+  }
+  
+  lua_pushboolean(L,Inet_port(a) < Inet_port(b));
+  return 1;
+}
+
+/**********************************************************************/
+
+static int addrlua___le(lua_State *const L)
+{
+  sockaddr_all__t *a;
+  sockaddr_all__t *b;
+  
+  a = luaL_checkudata(L,1,NET_ADDR);
+  b = luaL_checkudata(L,2,NET_ADDR);
+  
+  if (a->sa.sa_family <= b->sa.sa_family)
+  {
+    lua_pushboolean(L,true);
+    return 1;
+  }
+  
+  if (memcmp(Inet_address(a),Inet_address(b),Inet_len(a)) <= 0)
+  {
+    lua_pushboolean(L,true);
+    return 1;
+  }
+  
+  lua_pushboolean(L,Inet_port(a) <= Inet_port(b));
+  return 1;
+}
+    
 /**********************************************************************/
 
 int luaopen_org_conman_net(lua_State *const L)
