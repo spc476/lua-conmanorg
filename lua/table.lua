@@ -24,7 +24,8 @@ local math         = math
 local tostring     = tostring
 local string       = string
 local type         = type
-local print        = print
+local io           = io
+--local print        = print
 
 local type         = type
 local pcall        = pcall
@@ -34,8 +35,9 @@ module("org.conman.table")
 
 -- *******************************************************************
 
-function show(l)
-  local l = l or _G
+function show(l,fout)
+  local l    = l or _G
+  local fout = fout or io.stdout
   local maxkeylen = 0
   local maxvallen = 0
   
@@ -77,7 +79,7 @@ function show(l)
     
     vt = string.gsub(vt,"%c",conv_cntl)
     vt = string.sub(vt,1,maxvallen)
-    print(string.format(format,tostring(k),vt))
+    fout:write(string.format(format,tostring(k),vt),"\n")
   end
 end
 
