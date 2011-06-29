@@ -129,10 +129,27 @@ static const int         m_nettype[]       = { SOCK_STREAM , SOCK_DGRAM , SOCK_R
 
 /************************************************************************/
 
-static inline socklen_t   Inet_len    (sockaddr_all__t *const)                               __attribute__((nonnull));
-static inline int         Inet_port   (sockaddr_all__t *const)                               __attribute__((nonnull));
-static inline void        Inet_setport(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1)));
-static inline const char *Inet_addr   (sockaddr_all__t *const restrict,char *const restrict) __attribute__((nonnull));
+static inline size_t	  Inet_addrlen	(sockaddr_all__t *const)                               __attribute__((nonnull));
+static inline socklen_t   Inet_len    	(sockaddr_all__t *const)                               __attribute__((nonnull));
+static inline int         Inet_port   	(sockaddr_all__t *const)                               __attribute__((nonnull));
+static inline void        Inet_setport	(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1)));
+static inline void	  Inet_setportn	(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1)));
+static inline const char *Inet_addr   	(sockaddr_all__t *const restrict,char *const restrict) __attribute__((nonnull));
+static inline void	 *Inet_address	(sockaddr_all__t *const)                               __attribute__((nonnull));
+
+/*-----------------------------------------------------------------------*/
+
+static inline size_t Inet_addrlen(sockaddr_all__t *const addr)
+{
+  assert(addr != NULL);
+  switch(addr->sa.sa_family)
+  {
+    case AF_INET:  return sizeof(addr->sin.sin_addr.s_addr);
+    case AF_INET6: return sizeof(addr->sin6.sin6_addr.s6_addr);
+    case AF_UNIX:  return strlen(addr->sun.sun_path);
+    default:       assert(0); return 0;
+  }
+}
 
 /*-----------------------------------------------------------------------*/
 
@@ -843,7 +860,7 @@ static int addrlua___le(lua_State *const L)
 
 static int addrlua___len(lua_State *const L)
 {
-  lua_pushinteger(L,Inet_len(luaL_checkudata(L,1,NET_ADDR)));
+  lua_pushinteger(L,Inet_addrlen(luaL_checkudata(L,1,NET_ADDR)));
   return 1;
 }
 
