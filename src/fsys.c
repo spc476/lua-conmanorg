@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <utime.h>
 
 #define FSYS_FD		"fsys:fd"
 
@@ -139,6 +140,31 @@ static int fsys_mkfifo(lua_State *L)
 static int fsys_mkdir(lua_State *L)
 {
   if (mkdir(luaL_checkstring(L,1),0777) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
+}
+
+/***********************************************************************/
+
+static int fsys_utime(lua_State *L)
+{
+  const char     *path;
+  struct utimbuf  when;
+  
+  path         = luaL_checkstring(L,1);
+  when.modtime = luaL_checknumber(L,2);
+  when.actime  = luaL_optnumber(L,3,when.modtime);
+  
+  if (utime(path,&when) < 0)
   {
     int err = errno;
     lua_pushboolean(L,false);
@@ -1055,6 +1081,7 @@ static const struct luaL_reg reg_fsys[] =
   { "mkfifo"	, fsys_mkfifo	} ,
   { "mkdir"	, fsys_mkdir	} ,
   { "rmdir"	, fsys_rmdir	} ,
+  { "utime"	, fsys_utime	} ,
   { "stat"	, fsys_stat	} ,
   { "lstat"	, fsys_lstat	} ,
   { "umask"	, fsys_umask	} ,
