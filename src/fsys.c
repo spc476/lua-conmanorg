@@ -1151,7 +1151,7 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_pushliteral(L,"Useful file manipulation functions available under Unix.");
   lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"0.5.0");
+  lua_pushliteral(L,"0.6.0");
   lua_setfield(L,-2,"_VERSION");
 
   return 1;
