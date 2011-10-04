@@ -24,8 +24,10 @@
 #endif
 
 #define _BSD_SOURCE
+#define _FORTIFY_SOURCE 0
 
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <errno.h>
