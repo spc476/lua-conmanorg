@@ -42,8 +42,12 @@ all : lib/env.so	\
 	lib/hash.so	\
 	lib/magic.so	\
 	lib/process.so	\
-	lib/net.so
-	
+	lib/net.so	\
+	build/bin2c
+
+build/bin2c : build/bin2c.c
+	$(CC) $(CFLAGS) -o $@ $<
+
 lib/env.so : src/env.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
@@ -89,6 +93,7 @@ lib/net.so : src/net.c
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~
 	/bin/rm -rf lib/*
+	/bin/rm -rf build/bin2c
 
 install : all
 	install -d $(LUALUA)/org/conman	
