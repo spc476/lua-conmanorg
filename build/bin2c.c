@@ -41,7 +41,7 @@ void process(FILE *fpin,FILE *fpout,const char *tag)
   fprintf(
   	fpout,
   	"#include <stddef.h>\n"
-  	"const char g_%s[] =\n"
+  	"const unsigned char g_%s[] =\n"
   	"{"
   	"",
   	tag
