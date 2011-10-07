@@ -41,7 +41,7 @@ void process(FILE *fpin,FILE *fpout,const char *tag)
   fprintf(
   	fpout,
   	"#include <stddef.h>\n"
-  	"const unsigned char g_%s[] =\n"
+  	"const unsigned char c_%s[] =\n"
   	"{"
   	"",
   	tag
@@ -60,7 +60,7 @@ void process(FILE *fpin,FILE *fpout,const char *tag)
     bytes++;
   }
   
-  fprintf(fpout,"\n};\n\n#define BINSIZE_%s %lu\n",tag,(unsigned long)bytes);
+  fprintf(fpout,"\n};\n\nconst size_t c_%s_size = %lu;\n",tag,(unsigned long)bytes);
 }
 
 /**************************************************************************/
