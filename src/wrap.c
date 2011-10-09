@@ -35,7 +35,7 @@
 static bool find_break_point(
 	size_t     *const restrict pidx,
 	const char *const restrict txt,
-	const size_t               max
+	const size_t               max __attribute__((unused))
 )
 {
   size_t idx;
