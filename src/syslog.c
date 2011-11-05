@@ -218,6 +218,14 @@ static int syslog_log(lua_State *L)
 
 /***********************************************************************/
 
+static int syslog___call(lua_State *L)
+{
+  lua_remove(L,1);	/* remove table */
+  return syslog_log(L);
+}
+
+/**********************************************************************/
+
 static const struct luaL_reg reg_syslog[] =
 {
   { "open"	, syslog_open   } ,
@@ -259,8 +267,13 @@ int luaopen_org_conman_syslog(lua_State *L)
   lua_pushliteral(L,"Interface to Unix syslog");
   lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"1.0.0");
+  lua_pushliteral(L,"1.1.0");
   lua_setfield(L,-2,"_VERSION");
+  
+  lua_newtable(L);
+  lua_pushcfunction(L,syslog___call);
+  lua_setfield(L,-2,"__call");
+  lua_setmetatable(L,-2);
 
   return 1;
 }

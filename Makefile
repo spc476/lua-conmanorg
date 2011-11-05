@@ -21,7 +21,7 @@
 ########################################################################
 
 CC     = gcc -std=c99
-CFLAGS = -g -Wall -Wextra -pedantic -fPIC
+CFLAGS = -g -Wall -Wextra -pedantic -fPIC -DNDEBUG -O3
 LFLAGS = -shared 
 
 LUALUA = /usr/local/share/lua/5.1
