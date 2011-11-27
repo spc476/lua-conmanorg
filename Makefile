@@ -91,7 +91,7 @@ lib/net.so : src/net.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
 	
 clean:
-	/bin/rm -rf *~ lua/*~ src/*~
+	/bin/rm -rf *~ lua/*~ src/*~ build/*~
 	/bin/rm -rf lib/*
 	/bin/rm -rf build/bin2c
 
