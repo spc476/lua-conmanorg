@@ -712,7 +712,9 @@ static int mhlimitlua___newindex(lua_State *const L)
   if (!mlimit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
 
-  if (lua_isstring(L,3))
+  if (lua_isnumber(L,3))
+    ival = lua_tointeger(L,3);
+  else if (lua_isstring(L,3))
   {
     const char *tval;
     const char *unit;
@@ -723,8 +725,6 @@ static int mhlimitlua___newindex(lua_State *const L)
     if (!mlimit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
   } 
-  else if (lua_isnumber(L,3))
-    ival = lua_tointeger(L,3);
   else
     return luaL_error(L,"Non-supported type");
 
@@ -790,7 +790,9 @@ static int mslimitlua___newindex(lua_State *const L)
   if (!mlimit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
 
-  if (lua_isstring(L,3))
+  if (lua_isnumber(L,3))
+    ival = lua_tointeger(L,3);
+  else if (lua_isstring(L,3))
   {
     const char *tval;
     const char *unit;
@@ -801,8 +803,6 @@ static int mslimitlua___newindex(lua_State *const L)
     if (!mlimit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
   } 
-  else if (lua_isnumber(L,3))
-    ival = lua_tointeger(L,3);
   else
     return luaL_error(L,"Non-supported type");
 
