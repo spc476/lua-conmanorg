@@ -66,6 +66,7 @@ static int	siglua_caught		(lua_State *const);
 static int	siglua_catch		(lua_State *const);
 static int	siglua_ignore		(lua_State *const);
 static int	siglua_default		(lua_State *const);
+static int	siglua_strsignal	(lua_State *const);
 static void	proc_pushstatus		(lua_State *const,const pid_t,int);
 static void	proc_pushrusage		(lua_State *const restrict,struct rusage *const restrict);
 static void	signal_handler		(int);
@@ -120,6 +121,7 @@ static const struct luaL_reg msig_reg[] =
   { "catch"	, siglua_catch		} ,
   { "ignore"	, siglua_ignore		} ,
   { "default"	, siglua_default	} ,
+  { "strsignal"	, siglua_strsignal	} ,
   { NULL	, NULL			}
 };
 
@@ -995,6 +997,15 @@ int siglua_default(lua_State *const L)
       luaL_error(L,"expected number or table");
   }
   return 0;
+}
+
+/**********************************************************************/
+
+int siglua_strsignal(lua_State *const L)
+{
+  assert(L != NULL);
+  lua_pushstring(L,strsignal(luaL_checkinteger(L,1)));
+  return 1;
 }
 
 /**********************************************************************/

@@ -43,6 +43,7 @@ all : lib/env.so	\
 	lib/magic.so	\
 	lib/process.so	\
 	lib/net.so	\
+	lib/tty.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -89,6 +90,10 @@ lib/process.so : src/process.c
 
 lib/net.so : src/net.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
+
+lib/tty.so : src/tty.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+
 	
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
@@ -117,6 +122,7 @@ install : all
 	install lib/magic.so   $(LUALIB)/org/conman/fsys
 	install lib/process.so $(LUALIB)/org/conman
 	install lib/net.so     $(LUALIB)/org/conman
+	install lib/tty.so     $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
