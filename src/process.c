@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <signal.h>
 #include <time.h>
 #include <math.h>
 #include <ctype.h>
@@ -27,6 +28,14 @@
 
 #define SYS_LIMIT_HARD	"rlimit_hard"
 #define SYS_LIMIT_SOFT	"rlimit_soft"
+
+/**********************************************************************/
+
+struct strint
+{
+  const char *const text;
+  const int         value;
+};
 
 /*************************************************************************/
 
@@ -53,8 +62,14 @@ static int	mhlimitlua___index	(lua_State *const);
 static int	mhlimitlua___newindex	(lua_State *const);
 static int	mslimitlua___index	(lua_State *const);
 static int	mslimitlua___newindex	(lua_State *const);
+static int	siglua_caught		(lua_State *const);
+static int	siglua_catch		(lua_State *const);
+static int	siglua_ignore		(lua_State *const);
+static int	siglua_default		(lua_State *const);
 static void	proc_pushstatus		(lua_State *const,const pid_t,int);
 static void	proc_pushrusage		(lua_State *const restrict,struct rusage *const restrict);
+static void	signal_handler		(int);
+static int	set_signal_handler	(int,void (*)(int));
 
 /************************************************************************/
 
@@ -98,6 +113,56 @@ static const struct luaL_reg mslimit_reg[] =
   { "__newindex"	, mslimitlua___newindex	} ,
   { NULL		, NULL			}
 };
+
+static const struct luaL_reg msig_reg[] =
+{
+  { "caught"	, siglua_caught		} ,
+  { "catch"	, siglua_catch		} ,
+  { "ignore"	, siglua_ignore		} ,
+  { "default"	, siglua_default	} ,
+  { NULL	, NULL			}
+};
+
+static const struct strint m_sigs[] =
+{
+  { "HUP"	, SIGHUP	} ,
+  { "INT"	, SIGINT	} ,
+  { "QUIT"	, SIGQUIT	} ,
+  { "ILL"	, SIGILL	} ,
+  { "TRAP"	, SIGTRAP	} ,
+  { "ABRT"	, SIGABRT	} ,
+  { "IOT"	, SIGIOT	} ,
+  { "BUS"	, SIGBUS	} ,
+  { "FPE"	, SIGFPE	} ,
+  { "KILL"	, SIGKILL	} ,
+  { "USR1"	, SIGUSR1	} ,
+  { "SEGV"	, SIGSEGV	} ,
+  { "USR2"	, SIGUSR2	} ,
+  { "PIPE"	, SIGPIPE	} ,
+  { "ALRM"	, SIGALRM	} ,
+  { "TERM"	, SIGTERM	} ,
+  { "STKFLT"	, SIGSTKFLT	} ,
+  { "CHLD"	, SIGCHLD	} ,
+  { "CONT"	, SIGCONT	} ,
+  { "STOP"	, SIGSTOP	} ,
+  { "TSTP"	, SIGTSTP	} ,
+  { "TTIN"	, SIGTTIN	} ,
+  { "TTOU"	, SIGTTOU	} ,
+  { "SIGURG"	, SIGURG	} ,
+  { "XCPU"	, SIGXCPU	} ,
+  { "XFSZ"	, SIGXFSZ	} ,
+  { "VTALRM"	, SIGVTALRM	} ,
+  { "PROF"	, SIGPROF	} ,
+  { "WINCH"	, SIGWINCH	} ,
+  { "IO"	, SIGIO		} ,
+  { "POLL"	, SIGPOLL	} ,
+  { "PWR"	, SIGPWR	} ,
+  { "SYS"	, SIGSYS	} ,
+  { NULL	, 0		}
+};
+
+static volatile sig_atomic_t m_caught;
+static volatile sig_atomic_t m_signal[32];
 
 /*************************************************************************/
 
@@ -819,6 +884,121 @@ static int mslimitlua___newindex(lua_State *const L)
 
 /***********************************************************************/
 
+static int siglua_caught(lua_State *const L)
+{
+  int sig;
+  
+  assert(L != NULL);
+  
+  if (lua_isnoneornil(L,1))
+  {
+    lua_pushboolean(L,m_caught);
+    m_caught = 0;
+    return 1;
+  }
+  
+  sig = luaL_checkint(L,1);
+  if (sig < 32)
+  {
+    lua_pushboolean(L,m_signal[sig]);
+    m_signal[sig] = 0;
+  }
+  else
+    lua_pushboolean(L,false);
+  m_caught = 0;
+  return 1;
+}
+
+/**********************************************************************/
+
+static void sig_table(lua_State *const L,int idx,void (*handler)(int))
+{
+  size_t max;
+  size_t i;
+  
+  assert(L   != NULL);
+  assert(idx != 0);
+  assert(handler);
+  
+  idx = (idx < 0) 
+  	? lua_gettop(L) + idx + 1
+  	: idx;
+	
+  max = lua_objlen(L,idx);
+  for (i = 1 ; i <= max ; i++)
+  {
+    lua_pushinteger(L,i);
+    lua_gettable(L,idx);
+    if (lua_isnumber(L,-1))
+      set_signal_handler(lua_tointeger(L,-1),handler);
+    else if (lua_istable(L,-1))
+      sig_table(L,-1,handler);
+    lua_pop(L,1);
+  }
+}
+
+/************************************************************************/
+
+static int siglua_catch(lua_State *const L)
+{
+  int top = lua_gettop(L);
+  
+  assert(L != NULL);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      set_signal_handler(lua_tointeger(L,i),signal_handler);
+    else if (lua_istable(L,i))
+      sig_table(L,i,signal_handler);
+    else
+      luaL_error(L,"expected number or table");
+  }  
+  return 0;
+}
+
+/**********************************************************************/
+
+int siglua_ignore(lua_State *const L)
+{
+  int top = lua_gettop(L);
+  
+  assert(L != NULL);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      set_signal_handler(lua_tointeger(L,i),SIG_IGN);
+    else if (lua_istable(L,i))
+      sig_table(L,i,SIG_IGN);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  return 0;
+}
+
+/**********************************************************************/
+
+int siglua_default(lua_State *const L)
+{
+  int top = lua_gettop(L);
+  
+  assert(L != NULL);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      set_signal_handler(lua_tointeger(L,i),SIG_DFL);
+    else if (lua_istable(L,i))
+      sig_table(L,i,SIG_DFL);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  return 0;
+}
+
+/**********************************************************************/
+
 int luaopen_org_conman_process(lua_State *const L)
 {
   void *udata;
@@ -832,8 +1012,17 @@ int luaopen_org_conman_process(lua_State *const L)
   luaL_register(L,NULL,mslimit_reg);
   
   luaL_register(L,"org.conman.process",mprocess_reg);
-  lua_createtable(L,0,2);
+
+  lua_createtable(L,0,0);
+  luaL_register(L,NULL,msig_reg);
+  for (size_t i = 0 ; m_sigs[i].text != NULL ; i++)
+  {
+    lua_pushinteger(L,m_sigs[i].value);
+    lua_setfield(L,-2,m_sigs[i].text);
+  }
+  lua_setfield(L,-2,"sig");
   
+  lua_createtable(L,0,2);
   udata = lua_newuserdata(L,sizeof(int));
   luaL_getmetatable(L,SYS_LIMIT_HARD);
   lua_setmetatable(L,-2);
@@ -943,6 +1132,31 @@ static void proc_pushrusage(
   
   lua_pushnumber(L,usage->ru_nivcsw);
   lua_setfield(L,-2,"preemptcs");
+}
+
+/************************************************************************/
+
+static void signal_handler(int sig)
+{
+  m_caught = 1;
+  if (sig < 32)
+    m_signal[sig] = 1;
+}
+
+/************************************************************************/
+
+static int set_signal_handler(int sig,void (*handler)(int))
+{
+  struct sigaction act;
+  struct sigaction oact;
+  
+  sigemptyset(&act.sa_mask);
+  act.sa_handler = handler;
+  act.sa_flags   = 0;
+  
+  if (sigaction(sig,&act,&oact) == -1)
+    return errno;
+  return 0;
 }
 
 /************************************************************************/
