@@ -1,4 +1,6 @@
 
+#define _POSIX_SOURCE
+#define _SVID_SOURCE
 #define _GNU_SOURCE
 
 #include <stddef.h>
@@ -48,6 +50,7 @@ static int	proclua_exit		(lua_State *const);
 static int	proclua_fork		(lua_State *const);
 static int	proclua_wait		(lua_State *const);
 static int	proclua_waitusage	(lua_State *const);
+static int	proclua_waitid		(lua_State *const);
 static int	proclua_sleep		(lua_State *const);
 static int	proclua_sleepres	(lua_State *const);
 static int	proclua_kill		(lua_State *const);
@@ -85,6 +88,7 @@ static const struct luaL_reg mprocess_reg[] =
   { "fork"		, proclua_fork		} ,
   { "wait"		, proclua_wait		} ,
   { "waitusage"		, proclua_waitusage	} ,
+  { "waitid"		, proclua_waitid	} ,
   { "sleep"		, proclua_sleep		} ,
   { "sleepres"		, proclua_sleepres	} ,
   { "kill"		, proclua_kill		} ,
@@ -353,6 +357,66 @@ static int proclua_waitusage(lua_State *const L)
 }
 
 /**********************************************************************/
+
+static int proclua_waitid(lua_State *const L)
+{
+  siginfo_t info;
+  pid_t     child;
+  idtype_t  idtype;
+  int       flag;
+  
+  child = luaL_checkinteger(L,1);
+  flag  = lua_toboolean(L,2) 
+  	? WEXITED | WSTOPPED | WCONTINUED | WNOHANG
+  	: WEXITED | WSTOPPED | WCONTINUED;
+  idtype = (child == 0) ? P_ALL : P_PID;
+  
+  memset(&info,0,sizeof(info));
+  if (waitid(idtype,child,&info,flag) == -1)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  lua_createtable(L,0,6);
+  lua_pushinteger(L,info.si_pid);
+  lua_setfield(L,-2,"pid");
+  lua_pushinteger(L,info.si_uid);
+  lua_setfield(L,-2,"uid");
+  
+  if (info.si_code == CLD_EXITED)
+  {
+    lua_pushliteral(L,"exit");
+    lua_setfield(L,-2,"state");
+    lua_pushinteger(L,info.si_status);
+    lua_setfield(L,-2,"status");
+  }
+  else
+  {
+    switch(info.si_code)
+    {
+      case CLD_KILLED:    lua_pushliteral(L,"killed");    break;
+      case CLD_DUMPED:    lua_pushliteral(L,"core");      break;
+      case CLD_STOPPED:   lua_pushliteral(L,"stopped");   break;
+      case CLD_TRAPPED:   lua_pushliteral(L,"trapped");   break;
+      case CLD_CONTINUED: lua_pushliteral(L,"continued"); break;
+      default: assert(0); lua_pushliteral(L,"(unknown)"); break;
+    }
+    lua_setfield(L,-2,"state");
+    lua_pushinteger(L,info.si_status);
+    lua_setfield(L,-2,"signal");
+    lua_pushstring(L,strsignal(info.si_status));
+    lua_setfield(L,-2,"description");
+    lua_pushboolean(L,info.si_code == CLD_DUMPED);
+    lua_setfield(L,-2,"core");
+  }
+  
+  return 1;
+}
+
+/*********************************************************************/
 
 static int proclua_getrusage(lua_State *const L)
 {
