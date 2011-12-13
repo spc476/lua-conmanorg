@@ -292,10 +292,12 @@ static int proclua_wait(lua_State *const L)
 {
   pid_t child;
   int   status;
+  int   flag;
   int   rc;
   
   child = luaL_optinteger(L,1,-1);
-  rc    = waitpid(child,&status,0);
+  flag  = lua_toboolean(L,2) ? WNOHANG : 0;
+  rc    = waitpid(child,&status,flag);
   if (rc == -1)
   {
     int err = errno;
@@ -304,6 +306,13 @@ static int proclua_wait(lua_State *const L)
     return 2;
   }
   
+  if (rc == 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,0);
+    return 2;
+  }
+
   proc_pushstatus(L,rc,status);
   return 1;
 }
@@ -315,17 +324,27 @@ static int proclua_waitusage(lua_State *const L)
   struct rusage usage;
   pid_t         child;
   int           status;
+  int           flag;
   int           rc;
 
   child = luaL_optinteger(L,1,-1);
-  rc    = wait4(child,&status,0,&usage);
+  flag  = lua_toboolean(L,2) ? WNOHANG : 0;
+  rc    = wait4(child,&status,flag,&usage);
   if (rc == -1)
   {
     int err = errno;
     lua_pushnil(L);
     lua_pushnil(L);
     lua_pushinteger(L,err);
-    return 2;
+    return 3;
+  }
+  
+  if (rc == 0)
+  {
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushinteger(L,0);
+    return 3;
   }
   
   proc_pushstatus(L,rc,status);
@@ -1173,7 +1192,7 @@ static int set_signal_handler(int sig,void (*handler)(int))
   sigemptyset(&act.sa_mask);
   act.sa_handler = handler;
   act.sa_flags   = 0;
-  
+
   if (sigaction(sig,&act,&oact) == -1)
     return errno;
   return 0;
