@@ -1072,6 +1072,15 @@ static void proc_pushstatus(
     lua_pushliteral(L,"normal");
     lua_setfield(L,-2,"status");
   }
+  else if (WIFSTOPPED(status))
+  {
+    lua_pushinteger(L,WSTOPSIG(status));
+    lua_setfield(L,-2,"signal");
+    lua_pushstring(L,strsignal(WSTOPSIG(status)));
+    lua_setfield(L,-2,"description");
+    lua_pushliteral(L,"stopped");
+    lua_setfield(L,-2,"status");
+  }
   else if (WIFSIGNALED(status))
   {
     lua_pushinteger(L,WTERMSIG(status));
