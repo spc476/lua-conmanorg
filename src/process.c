@@ -41,7 +41,6 @@ struct strint
 
 /*************************************************************************/
 
-static int	proclua_ignorechild	(lua_State *const);
 static int	proclua_getuid		(lua_State *const);
 static int	proclua_getgid		(lua_State *const);
 static int	proclua_setuid		(lua_State *const);
@@ -79,7 +78,6 @@ static int	set_signal_handler	(int,void (*)(int));
 
 static const struct luaL_reg mprocess_reg[] =
 {
-  { "ignorechild"	, proclua_ignorechild	} ,
   { "getuid"		, proclua_getuid	} ,
   { "getgid"		, proclua_getgid	} ,
   { "setuid"		, proclua_setuid	} ,
@@ -171,17 +169,6 @@ static volatile sig_atomic_t m_caught;
 static volatile sig_atomic_t m_signal[32];
 
 /*************************************************************************/
-
-static int proclua_ignorechild(lua_State *const L __attribute__((unused)))
-{
-  if (lua_isnoneornil(L,1))
-    signal(SIGCHLD,SIG_IGN);
-  else
-    signal(SIGCHLD,SIG_DFL);
-  return 0;
-}
-
-/************************************************************************/
 
 static int proclua_getuid(lua_State *const L)
 {
