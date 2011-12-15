@@ -272,12 +272,7 @@ static int proclua_fork(lua_State *const L)
   }
   else if (child == 0)
   {
-    lua_getglobal(L,"org");
-    lua_getfield(L,-1,"conman");
-    lua_getfield(L,-1,"process");
-    lua_pushinteger(L,getpid());
-    lua_setfield(L,-2,"PID");
-    lua_pushinteger(L,child);
+    lua_pushinteger(L,0);
     return 1;
   }
   else
