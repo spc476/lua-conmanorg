@@ -471,8 +471,7 @@ static int fsys_opendir(lua_State *L)
   const char *dname;
   DIR        *dir;
   
-  dname = luaL_checkstring(L,1);
-  lua_pop(L,1);
+  dname = luaL_optstring(L,1,".");
   
   dir = opendir(dname);
   if (dir == NULL)
