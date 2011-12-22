@@ -20,9 +20,21 @@
 #
 ########################################################################
 
+UNAME := $(shell uname)
+
+ifeq ($(UNAME),Linux)
 CC     = gcc -std=c99
 CFLAGS = -g -Wall -Wextra -pedantic -fPIC -DNDEBUG -O3
 LFLAGS = -shared 
+LNET   =
+endif
+
+ifeq ($(UNAME),SunOS)
+CC     = cc -xc99
+CFLAGS =  -g -mt -m64 -xcode=pic32 -I /home/spc/source/ecid/third_party/lua-5.1.4/src -I /usr/sfw/include
+LFLAGS = -G -mt -m64 -L /usr/sfw/lib/64
+LNET   = -lsocket -lnsl
+endif
 
 LUALUA = /usr/local/share/lua/5.1
 LUALIB = /usr/local/lib/lua/5.1
