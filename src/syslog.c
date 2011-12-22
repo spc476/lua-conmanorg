@@ -45,11 +45,19 @@ const struct strintmap m_facilities[] =
   { "auth"	, LOG_AUTH	} ,
   { "auth3"	, (13 << 3)	} ,
   { "auth4"	, (14 << 3)	} ,
+#ifdef LOG_AUTHPRIV
   { "authpriv"	, LOG_AUTHPRIV	} ,
+#else
+  { "authpriv"	, (10 << 3)	} ,
+#endif
   { "cron"	, LOG_CRON	} ,
   { "cron2"	, (15 << 3)	} ,
   { "daemon"	, LOG_DAEMON	} ,
+#ifdef LOG_FTP
   { "ftp"	, LOG_FTP	} ,
+#else
+  { "ftp"	, (11 << 3)	} ,
+#endif
   { "kernel"	, ( 0 << 3)	} ,
   { "local0"	, LOG_LOCAL0	} ,
   { "local1"	, LOG_LOCAL1	} ,
