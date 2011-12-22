@@ -62,7 +62,7 @@ typedef union sockaddr_all
   struct sockaddr     sa;
   struct sockaddr_in  sin;
   struct sockaddr_in6 sin6;
-  struct sockaddr_un  sun;
+  struct sockaddr_un  ssun;
 } sockaddr_all__t;
 
 typedef struct sock
@@ -155,7 +155,7 @@ static inline size_t Inet_addrlen(sockaddr_all__t *const addr)
   {
     case AF_INET:  return sizeof(addr->sin.sin_addr.s_addr);
     case AF_INET6: return sizeof(addr->sin6.sin6_addr.s6_addr);
-    case AF_UNIX:  return strlen(addr->sun.sun_path);
+    case AF_UNIX:  return strlen(addr->ssun.sun_path);
     default:       assert(0); return 0;
   }
 }
@@ -169,7 +169,7 @@ static inline socklen_t Inet_len(sockaddr_all__t *const addr)
   {
     case AF_INET:  return sizeof(addr->sin);
     case AF_INET6: return sizeof(addr->sin6);
-    case AF_UNIX:  return SUN_LEN(&addr->sun);
+    case AF_UNIX:  return SUN_LEN(&addr->ssun);
     default:       assert(0); return 0;
   }
 }
@@ -233,7 +233,7 @@ static inline const char *Inet_addr(
   {
     case AF_INET:  return inet_ntop(AF_INET, &addr->sin.sin_addr.s_addr,   dest,INET6_ADDRSTRLEN);
     case AF_INET6: return inet_ntop(AF_INET6,&addr->sin6.sin6_addr.s6_addr,dest,INET6_ADDRSTRLEN);
-    case AF_UNIX:  return addr->sun.sun_path;
+    case AF_UNIX:  return addr->ssun.sun_path;
     default:       assert(0); return NULL;
   }
 }
@@ -247,7 +247,7 @@ static inline void *Inet_address(sockaddr_all__t *const addr)
   {
     case AF_INET:  return &addr->sin.sin_addr.s_addr;
     case AF_INET6: return &addr->sin6.sin6_addr.s6_addr;
-    case AF_UNIX:  return &addr->sun.sun_path;
+    case AF_UNIX:  return &addr->ssun.sun_path;
     default:       assert(0); return NULL;
   }
 }
@@ -352,15 +352,15 @@ static int netlua_address(lua_State *const L)
     addr->sin6.sin6_family = AF_INET6;
   else
   {
-    if (hsize > sizeof(addr->sun.sun_path) - 1)
+    if (hsize > sizeof(addr->ssun.sun_path) - 1)
     {
       lua_pushnil(L);
       lua_pushinteger(L,EINVAL);
       return 2;
     }
     
-    addr->sun.sun_family = AF_UNIX;
-    memcpy(addr->sun.sun_path,host,hsize + 1);
+    addr->ssun.sun_family = AF_UNIX;
+    memcpy(addr->ssun.sun_path,host,hsize + 1);
     luaL_getmetatable(L,NET_ADDR);
     lua_setmetatable(L,-2);
     lua_pushinteger(L,0);
