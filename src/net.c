@@ -50,6 +50,11 @@
 #define NET_SOCK	"net:sock"
 #define NET_ADDR	"net:addr"
 
+#ifdef __SunOS
+#  define AF_LOCAL	AF_UNIX
+#  define SUN_LEN(x)	sizeof(struct sockaddr_un)
+#endif
+
 /************************************************************************/
 
 typedef union sockaddr_all
