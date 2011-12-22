@@ -177,6 +177,7 @@ static volatile sig_atomic_t m_signal[32];
 
 static int proclua_getuid(lua_State *const L)
 {
+#if defined(__linux)
   uid_t uid;
   uid_t euid;
   uid_t suid;
@@ -185,6 +186,14 @@ static int proclua_getuid(lua_State *const L)
   lua_pushinteger(L,uid);
   lua_pushinteger(L,euid);
   lua_pushinteger(L,suid);
+
+#else
+
+  lua_pushinteger(L,getuid());
+  lua_pushinteger(L,geteuid());
+  lua_pushinteger(L,-1);
+
+#endif
   return 3;
 }
 
@@ -192,6 +201,7 @@ static int proclua_getuid(lua_State *const L)
 
 static int proclua_getgid(lua_State *const L)
 {
+#if defined(__linux)
   gid_t gid;
   gid_t egid;
   gid_t sgid;
@@ -200,6 +210,14 @@ static int proclua_getgid(lua_State *const L)
   lua_pushinteger(L,gid);
   lua_pushinteger(L,egid);
   lua_pushinteger(L,sgid);
+
+#else
+
+  lua_pushinteger(L,getgid());
+  lua_pushinteger(L,getegid());
+  lua_pushinteger(L,-1);
+
+#endif
   return 3;
 }
 
@@ -207,6 +225,7 @@ static int proclua_getgid(lua_State *const L)
 
 static int proclua_setuid(lua_State *const L)
 {
+#if defined(__linux)
   uid_t uid;
   uid_t euid;
   uid_t suid;
@@ -220,12 +239,35 @@ static int proclua_setuid(lua_State *const L)
   else
     lua_pushinteger(L,0);
   return 1;
+#else
+  uid_t uid;
+  uid_t euid;
+
+  uid  = luaL_checkinteger(L,1);
+  euid = luaL_optinteger(L,2,-1);
+
+  if (setuid(uid) < 0)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+
+  if (seteuid(uid) < 0)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+
+  lua_pushinteger(L,0);
+  return 1;
+#endif
 }
 
 /*************************************************************************/
 
 static int proclua_setgid(lua_State *const L)
 {
+#if defined(__linux)
   gid_t gid;
   gid_t egid;
   gid_t sgid;
@@ -239,6 +281,28 @@ static int proclua_setgid(lua_State *const L)
   else
     lua_pushinteger(L,0);
   return 1;
+#else
+  gid_t gid;
+  gid_t egid;
+
+  gid  = luaL_checkinteger(L,1);
+  egid = luaL_optinteger(L,2,-1);
+
+  if (setgid(gid) < 0)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+
+  if (setegid(egid) < 0)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+
+  lua_pushinteger(L,0);
+  return 1;
+#endif
 }
 
 /************************************************************************/
