@@ -147,7 +147,9 @@ static const struct strint m_sigs[] =
   { "PIPE"	, SIGPIPE	} ,
   { "ALRM"	, SIGALRM	} ,
   { "TERM"	, SIGTERM	} ,
+#ifdef STKFLT
   { "STKFLT"	, SIGSTKFLT	} ,
+#endif
   { "CHLD"	, SIGCHLD	} ,
   { "CONT"	, SIGCONT	} ,
   { "STOP"	, SIGSTOP	} ,
