@@ -22,6 +22,7 @@
 #include <lauxlib.h>
 
 #include <syslog.h>
+#include <libgen.h>
 
 #include <sys/resource.h>
 #include <sys/types.h>
@@ -560,7 +561,7 @@ static int proclua_exec(lua_State *const L)
     return 1;
   }
   
-  argv[0] = basename(binary);
+  argv[0] = basename((char *)binary);
   for (size_t i = 1 ; i < argc - 1 ; i++)
   {
     lua_pushinteger(L,i);
