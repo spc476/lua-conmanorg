@@ -1,7 +1,9 @@
 
-#define _POSIX_SOURCE
-#define _SVID_SOURCE
-#define _GNU_SOURCE
+#ifdef __linux
+#  define _POSIX_SOURCE
+#  define _SVID_SOURCE
+#  define _GNU_SOURCE
+#endif
 
 #include <stddef.h>
 #include <errno.h>

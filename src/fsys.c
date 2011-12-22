@@ -19,8 +19,10 @@
 *
 *********************************************************************/
 
-#define _BSD_SOURCE
-#define _POSIX_SOURCE
+#ifdef __linux
+#  define _BSD_SOURCE
+#  define _POSIX_SOURCE
+#endif
 
 #include <string.h>
 #include <errno.h>
