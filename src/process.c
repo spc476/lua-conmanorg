@@ -132,41 +132,50 @@ static const struct luaL_reg msig_reg[] =
 
 static const struct strint m_sigs[] =
 {
-  { "HUP"	, SIGHUP	} ,
-  { "INT"	, SIGINT	} ,
-  { "QUIT"	, SIGQUIT	} ,
-  { "ILL"	, SIGILL	} ,
-  { "TRAP"	, SIGTRAP	} ,
+  /*--------------------------------
+  ; signals defined in C89
+  ;---------------------------------*/
+  
   { "ABRT"	, SIGABRT	} ,
-  { "IOT"	, SIGIOT	} ,
-  { "BUS"	, SIGBUS	} ,
   { "FPE"	, SIGFPE	} ,
-  { "KILL"	, SIGKILL	} ,
-  { "USR1"	, SIGUSR1	} ,
+  { "ILL"	, SIGILL	} ,
+  { "INT"	, SIGINT	} ,
   { "SEGV"	, SIGSEGV	} ,
-  { "USR2"	, SIGUSR2	} ,
-  { "PIPE"	, SIGPIPE	} ,
-  { "ALRM"	, SIGALRM	} ,
   { "TERM"	, SIGTERM	} ,
-#ifdef STKFLT
-  { "STKFLT"	, SIGSTKFLT	} ,
-#endif
+  
+  /*-----------------------------
+  ; other possible signals
+  ;------------------------------*/
+
+  { "ALRM"	, SIGALRM	} ,
+  { "BUS"	, SIGBUS	} ,
   { "CHLD"	, SIGCHLD	} ,
   { "CONT"	, SIGCONT	} ,
+  { "HUP"	, SIGHUP	} ,
+  { "IO"	, SIGIO		} ,
+  { "IOT"	, SIGIOT	} ,
+  { "KILL"	, SIGKILL	} ,
+  { "PIPE"	, SIGPIPE	} ,
+  { "POLL"	, SIGPOLL	} ,
+  { "PROF"	, SIGPROF	} ,
+  { "PWR"	, SIGPWR	} ,
+  { "QUIT"	, SIGQUIT	} ,
+  { "SIGURG"	, SIGURG	} ,
+#ifdef SIGSTKFLT
+  { "STKFLT"	, SIGSTKFLT	} ,
+#endif
   { "STOP"	, SIGSTOP	} ,
+  { "SYS"	, SIGSYS	} ,
+  { "TRAP"	, SIGTRAP	} ,
   { "TSTP"	, SIGTSTP	} ,
   { "TTIN"	, SIGTTIN	} ,
   { "TTOU"	, SIGTTOU	} ,
-  { "SIGURG"	, SIGURG	} ,
+  { "USR1"	, SIGUSR1	} ,
+  { "USR2"	, SIGUSR2	} ,
+  { "VTALRM"	, SIGVTALRM	} ,
+  { "WINCH"	, SIGWINCH	} ,
   { "XCPU"	, SIGXCPU	} ,
   { "XFSZ"	, SIGXFSZ	} ,
-  { "VTALRM"	, SIGVTALRM	} ,
-  { "PROF"	, SIGPROF	} ,
-  { "WINCH"	, SIGWINCH	} ,
-  { "IO"	, SIGIO		} ,
-  { "POLL"	, SIGPOLL	} ,
-  { "PWR"	, SIGPWR	} ,
-  { "SYS"	, SIGSYS	} ,
   { NULL	, 0		}
 };
 
