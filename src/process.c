@@ -874,14 +874,13 @@ static bool mlimit_valid_suffix(
 static int mhlimitlua___index(lua_State *const L)
 {
   struct rlimit  limit;
-  void          *ud;
   const char    *tkey;
   int            key;
   int            rc;
   
   assert(L != NULL);
   
-  ud   = luaL_checkudata(L,1,SYS_LIMIT_HARD);
+  luaL_checkudata(L,1,SYS_LIMIT_HARD);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -909,14 +908,13 @@ static int mhlimitlua___index(lua_State *const L)
 static int mhlimitlua___newindex(lua_State *const L)
 {
   struct rlimit  limit;
-  void          *ud;
   const char    *tkey;
   int            key;
   lua_Integer    ival;
 
   assert(L != NULL);
   
-  ud   = luaL_checkudata(L,1,SYS_LIMIT_HARD);
+  luaL_checkudata(L,1,SYS_LIMIT_HARD);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -950,14 +948,13 @@ static int mhlimitlua___newindex(lua_State *const L)
 static int mslimitlua___index(lua_State *const L)
 {
   struct rlimit  limit;
-  void          *ud;
   const char    *tkey;
   int            key;
   int            rc;
   
   assert(L != NULL);
   
-  ud   = luaL_checkudata(L,1,SYS_LIMIT_SOFT);
+  luaL_checkudata(L,1,SYS_LIMIT_SOFT);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -986,7 +983,6 @@ static int mslimitlua___newindex(lua_State *const L)
 {
   struct rlimit  climit;
   struct rlimit  limit;
-  void          *ud;
   const char    *tkey;
   int            key;
   lua_Integer    ival;
@@ -994,7 +990,7 @@ static int mslimitlua___newindex(lua_State *const L)
   
   assert(L != NULL);
   
-  ud   = luaL_checkudata(L,1,SYS_LIMIT_SOFT);
+  luaL_checkudata(L,1,SYS_LIMIT_SOFT);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -1155,8 +1151,6 @@ int siglua_strsignal(lua_State *const L)
 
 int luaopen_org_conman_process(lua_State *const L)
 {
-  void *udata;
-  
   assert(L != NULL);
   
   luaL_newmetatable(L,SYS_LIMIT_HARD);
@@ -1177,12 +1171,12 @@ int luaopen_org_conman_process(lua_State *const L)
   lua_setfield(L,-2,"sig");
   
   lua_createtable(L,0,2);
-  udata = lua_newuserdata(L,sizeof(int));
+  lua_newuserdata(L,sizeof(int));
   luaL_getmetatable(L,SYS_LIMIT_HARD);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"hard");
   
-  udata = lua_newuserdata(L,sizeof(int));
+  lua_newuserdata(L,sizeof(int));
   luaL_getmetatable(L,SYS_LIMIT_SOFT);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"soft");

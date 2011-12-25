@@ -986,7 +986,6 @@ static int fiolua_write(lua_State *L)
   const char *data;
   size_t      size;
   ssize_t     bytes;
-  int         err;
   
   if (lua_isnumber(L,1))
     fh = lua_tonumber(L,1);
@@ -1001,7 +1000,6 @@ static int fiolua_write(lua_State *L)
   data  = luaL_checklstring(L,2,&size);
   errno = 0;
   bytes = write(fh,data,size);
-  err   = errno;
   lua_pushinteger(L,bytes);
   lua_pushinteger(L,errno);
   return 2;

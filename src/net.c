@@ -389,7 +389,6 @@ static int netlua_address(lua_State *const L)
       struct protoent  result;
       struct protoent *presult;
       char             tmp[BUFSIZ];
-      int              rc;
 
 #ifdef __SunOS
       presult = getprotobyname_r(serv,&result,tmp,sizeof(tmp));
@@ -401,7 +400,7 @@ static int netlua_address(lua_State *const L)
         return 2;
       }
 #else           
-      rc = getprotobyname_r(serv,&result,tmp,sizeof(tmp),&presult);
+      int rc = getprotobyname_r(serv,&result,tmp,sizeof(tmp),&presult);
       if (rc != 0)
       {
         lua_pushnil(L);
@@ -427,7 +426,6 @@ static int netlua_address(lua_State *const L)
     struct servent  result;
     struct servent *presult;
     char            tmp[BUFSIZ];
-    int             rc;
 
 #ifdef __SunOS
     presult = getservbyname_r(serv,type,&result,tmp,sizeof(tmp));
@@ -439,7 +437,7 @@ static int netlua_address(lua_State *const L)
       return 2;
     }
 #else    
-    rc = getservbyname_r(serv,type,&result,tmp,sizeof(tmp),&presult);
+    int rc = getservbyname_r(serv,type,&result,tmp,sizeof(tmp),&presult);
     if (rc != 0)
     {
       lua_pushnil(L);
