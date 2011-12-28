@@ -685,6 +685,7 @@ static int fsys_open(lua_State *L)
   
   fname = luaL_checkstring(L,1);
   flags = luaL_checkstring(L,2);
+  oflags = 0;
   
   if (flags[0] == 'r')
     oflags = (flags[1] == '+')

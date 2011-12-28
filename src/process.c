@@ -644,6 +644,9 @@ static int proclua_exec(lua_State *const L)
   }
   argv[argc - 1] = NULL;
   
+  envc = 0;
+  envm = 0;
+
   if (lua_isnoneornil(L,3))
     envp = environ;
   else
