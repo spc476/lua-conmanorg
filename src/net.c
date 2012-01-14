@@ -101,6 +101,7 @@ static const luaL_reg mnet_reg[] =
   { "socket"		, netlua_socket		} ,
   { "socketfd"		, netlua_socketfd	} ,
   { "address"		, netlua_address	} ,
+  { "peer"		, socklua_peer		} ,
   { NULL		, NULL			}
 };
 
