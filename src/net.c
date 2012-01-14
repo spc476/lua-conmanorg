@@ -470,7 +470,7 @@ static int socklua___tostring(lua_State *const L)
 
 /*********************************************************************
 *
-*	addr,err = sock:addr()
+*	addr,err = sock:peer(sock | integer)
 *
 *	sock = net.socket(...)
 ********************************************************************/
@@ -478,14 +478,21 @@ static int socklua___tostring(lua_State *const L)
 static int socklua_peer(lua_State *const L)
 {
   sockaddr_all__t *addr;
-  sock__t         *sock;
   socklen_t        len;
+  int              s;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
+  if (lua_isuserdata(L,1))
+  {
+    sock__t *sock = luaL_checkudata(L,1,NET_SOCK);
+    s = sock->fh;
+  }
+  else
+    s = lua_tointeger(L,1);
+
   len  = sizeof(sockaddr_all__t);
   addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
   
-  if (getpeername(sock->fh,&addr->sa,&len) < 0)
+  if (getpeername(s,&addr->sa,&len) < 0)
   {
     int err = errno;
     lua_pushnil(L);
