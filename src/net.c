@@ -76,7 +76,7 @@ static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int	socklua___tostring	(lua_State *const) __attribute__((nonnull));
-static int      socklua_addr		(lua_State *const) __attribute__((nonnull));
+static int      socklua_peer		(lua_State *const) __attribute__((nonnull));
 static int	socklua_bind		(lua_State *const) __attribute__((nonnull));
 static int	socklua_connect		(lua_State *const) __attribute__((nonnull));
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
@@ -108,7 +108,7 @@ static const luaL_reg msock_regmeta[] =
 {
   { "__tostring"	, socklua___tostring	} ,
   { "__gc"		, socklua_close		} ,
-  { "addr"		, socklua_addr		} ,
+  { "peer"		, socklua_peer		} ,
   { "bind"		, socklua_bind		} ,
   { "connect"		, socklua_connect	} ,
   { "listen"		, socklua_listen	} ,
@@ -475,7 +475,7 @@ static int socklua___tostring(lua_State *const L)
 *	sock = net.socket(...)
 ********************************************************************/
 
-static int socklua_addr(lua_State *const L)
+static int socklua_peer(lua_State *const L)
 {
   sockaddr_all__t *addr;
   sock__t         *sock;
