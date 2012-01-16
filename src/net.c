@@ -894,7 +894,7 @@ static int addrlua___eq(lua_State *const L)
     return 1;
   }
   
-  if (memcmp(Inet_address(a),Inet_address(b),Inet_len(a)) != 0)
+  if (memcmp(Inet_address(a),Inet_address(b),Inet_addrlen(a)) != 0)
   {
     lua_pushboolean(L,false);
     return 1;
@@ -920,7 +920,7 @@ static int addrlua___lt(lua_State *const L)
     return 1;
   }
   
-  if (memcmp(Inet_address(a),Inet_address(b),Inet_len(a)) < 0)
+  if (memcmp(Inet_address(a),Inet_address(b),Inet_addrlen(a)) < 0)
   {
     lua_pushboolean(L,true);
     return 1;
@@ -946,7 +946,7 @@ static int addrlua___le(lua_State *const L)
     return 1;
   }
   
-  if (memcmp(Inet_address(a),Inet_address(b),Inet_len(a)) <= 0)
+  if (memcmp(Inet_address(a),Inet_address(b),Inet_addrlen(a)) <= 0)
   {
     lua_pushboolean(L,true);
     return 1;
