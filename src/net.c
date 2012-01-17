@@ -24,6 +24,7 @@
 #endif
 
 #define _BSD_SOURCE
+#define _POSIX_SOURCE
 #define _FORTIFY_SOURCE 0
 
 #include <string.h>
@@ -74,6 +75,7 @@ typedef struct sock
 
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
+static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int	socklua___tostring	(lua_State *const) __attribute__((nonnull));
 static int      socklua_peer		(lua_State *const) __attribute__((nonnull));
@@ -100,6 +102,7 @@ static const luaL_reg mnet_reg[] =
 {
   { "socket"		, netlua_socket		} ,
   { "socketfd"		, netlua_socketfd	} ,
+  { "address2"		, netlua_address2	} ,
   { "address"		, netlua_address	} ,
   { "peer"		, socklua_peer		} ,
   { NULL		, NULL			}
@@ -171,6 +174,20 @@ static inline socklen_t Inet_len(sockaddr_all__t *const addr)
     case AF_INET:  return sizeof(addr->sin);
     case AF_INET6: return sizeof(addr->sin6);
     case AF_UNIX:  return SUN_LEN(&addr->ssun);
+    default:       assert(0); return 0;
+  }
+}
+
+/*----------------------------------------------------------------------*/
+
+static inline socklen_t Inet_lensa(struct sockaddr *const addr)
+{
+  assert(addr != NULL);
+  switch(addr->sa_family)
+  {
+    case AF_INET: return sizeof(struct sockaddr_in);
+    case AF_INET6: return sizeof(struct sockaddr_in6);
+    case AF_LOCAL: return sizeof(struct sockaddr_un);
     default:       assert(0); return 0;
   }
 }
@@ -326,6 +343,110 @@ static int netlua_socketfd(lua_State *const L)
   sock->fh = luaL_checkinteger(L,1);
   luaL_getmetatable(L,NET_SOCK);
   lua_setmetatable(L,-2);
+  lua_pushinteger(L,0);
+  return 2;
+}
+
+/***********************************************************************
+* 
+* XXX Experimental
+*
+***********************************************************************/
+
+static int netlua_address2(lua_State *const L)
+{
+  struct addrinfo  hints;
+  struct addrinfo *results;
+  const char      *hostname;
+  const char      *service;
+  
+  hostname = luaL_checkstring(L,1);
+  service  = lua_tostring(L,2);
+  results  = NULL;
+  memset(&hints,0,sizeof(hints));
+  
+  if (!lua_isnoneornil(L,3))
+  {
+    const char *flags = lua_tostring(L,3);
+    if (strcmp(flags,"passive") == 0)
+      hints.ai_flags = AI_PASSIVE;
+    else if (strcmp(flags,"canonname") == 0)
+      hints.ai_flags = AI_CANONNAME;
+    else if (strcmp(flags,"numerichost") == 0)
+      hints.ai_flags = AI_NUMERICHOST;
+    else if (strcmp(flags,"v4mapped") == 0)
+      hints.ai_flags = AI_V4MAPPED;
+    else if (strcmp(flags,"all") == 0)
+      hints.ai_flags = AI_ALL;
+    else if (strcmp(flags,"addrconfig") == 0)
+      hints.ai_flags = AI_ADDRCONFIG;
+    else
+      hints.ai_flags =0;
+  }
+  
+  if (!lua_isnoneornil(L,4))
+    hints.ai_family = m_netfamily[luaL_checkoption(L,4,NULL,m_netfamilytext)];
+  
+  if (!lua_isnoneornil(L,5))
+  {
+    const char *type = lua_tostring(L,5);
+    if (strcmp(type,"stream") == 0)
+      hints.ai_socktype = SOCK_STREAM;
+    else if (strcmp(type,"dgram") == 0)
+      hints.ai_socktype = SOCK_DGRAM;
+    else if (strcmp(type,"raw") == 0)
+      hints.ai_socktype = SOCK_RAW;
+    else
+      hints.ai_socktype = 0;
+  }
+  
+  if (!lua_isnoneornil(L,6))
+  {
+    struct protoent *e = getprotobyname(lua_tostring(L,6));
+    if (e == NULL)
+      hints.ai_protocol = 0;
+    else
+      hints.ai_protocol = e->p_proto;
+  }
+  
+  if (getaddrinfo(hostname,service,&hints,&results) < 0)
+  {
+    int err = errno;
+    freeaddrinfo(results);
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  if (results == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,0);
+    return 2;
+  }
+  
+  if (results->ai_next == NULL)
+  {
+    sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+    memcpy(&addr->sa,results->ai_addr,Inet_lensa(results->ai_addr));
+    luaL_getmetatable(L,NET_ADDR);
+    lua_setmetatable(L,-2);
+    lua_pushinteger(L,0);
+    return 2;
+  }
+  
+  lua_createtable(L,0,0);
+  for (int i = 1 ; results != NULL ; i++)
+  {
+    lua_pushinteger(L,i);
+    sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+    luaL_getmetatable(L,NET_ADDR);
+    lua_setmetatable(L,-2);
+    memcpy(&addr->sa,results->ai_addr,Inet_lensa(results->ai_addr));
+    lua_settable(L,-3);
+    results = results->ai_next;
+  }
+  
   lua_pushinteger(L,0);
   return 2;
 }
