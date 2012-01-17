@@ -136,8 +136,6 @@ static const luaL_reg maddr_regmeta[] =
 
 static const char *const m_netfamilytext[] = { "ip"    , "ip6"    , "unix" };
 static const int         m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
-static const char *const m_nettypetext[]   = { "tcp"       , "udp"      , "raw" };
-static const int         m_nettype[]       = { SOCK_STREAM , SOCK_DGRAM , SOCK_RAW };
 
 /************************************************************************/
 
@@ -257,57 +255,61 @@ static inline void *Inet_address(sockaddr_all__t *const addr)
 
 /**********************************************************************
 *
-*	sock,err = net.socket(family,type[,proto = 0])
+*	sock,err = net.socket(family,proto)
 *
-*	family = 'ip'   | 'ip6' | 'unix'
-*	type   = 'tcp'  | 'udp' | 'raw'
-*	proto  = number | string
+*	family = 'ip'  | 'ipv6' | 'unix'
+*	proto  = string | number
 *
 **********************************************************************/
 
 static int netlua_socket(lua_State *const L)
 {
-  sock__t *sock;
   int      family;
-  int      type;
   int      proto;
-  
-  assert(L != NULL);
-  
+  int      type;
+  sock__t *sock;
+
   family = m_netfamily[luaL_checkoption(L,1,NULL,m_netfamilytext)];
-  type   = m_nettype  [luaL_checkoption(L,2,NULL,m_nettypetext)];
   
-  if (lua_isnoneornil(L,3))
-    proto = 0;
-  else
+  if (lua_isnumber(L,2))
+    proto = lua_tointeger(L,2);
+  else if (lua_isstring(L,2))
   {
-    if (lua_isnumber(L,3))
-      proto = lua_tointeger(L,3);
-    else if (lua_isstring(L,3))
-      proto = strtoul(lua_tostring(L,3),NULL,10);
-    else
-      return luaL_error(L,"invalid protocol number");
+    struct protoent *e = getprotobyname(lua_tostring(L,2));
+    if (e == NULL)
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,ENOPROTOOPT);
+      return 2;
+    }
+    proto = e->p_proto;
   }
   
-  if ((proto < 0) || (proto > 65535))
-    return luaL_error(L,"invalid protocol number");
+  if (proto == IPPROTO_TCP)
+    type = SOCK_STREAM;
+  else if (proto == IPPROTO_UDP)
+    type = SOCK_DGRAM;
+  else
+    type = SOCK_RAW;
 
-  sock = lua_newuserdata(L,sizeof(sock__t));
+  sock     = lua_newuserdata(L,sizeof(sock__t));
   sock->fh = socket(family,type,proto);
   if (sock->fh == -1)
   {
     int err = errno;
     lua_pushnil(L);
     lua_pushinteger(L,err);
-    return 2;
   }
-  
-  luaL_getmetatable(L,NET_SOCK);
-  lua_setmetatable(L,-2);
-  lua_pushinteger(L,0);
+  else
+  {
+    luaL_getmetatable(L,NET_SOCK);
+    lua_setmetatable(L,-2);
+    lua_pushinteger(L,0);
+  }
+
   return 2;
 }
-
+  
 /*******************************************************************
 *
 *	sock,err = net.socketfd(fd)
