@@ -137,7 +137,7 @@ static const luaL_reg maddr_regmeta[] =
   { NULL		, NULL			}
 };
 
-static const char *const m_netfamilytext[] = { "ip"    , "ip6"    , "unix" };
+static const char *const m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
 static const int         m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
 
 /************************************************************************/
@@ -308,6 +308,9 @@ static int netlua_socket(lua_State *const L)
     type = SOCK_DGRAM;
   else
     type = SOCK_RAW;
+
+  if (family == AF_LOCAL)
+    proto = 0;
 
   sock     = lua_newuserdata(L,sizeof(sock__t));
   sock->fh = socket(family,type,proto);
