@@ -52,7 +52,6 @@
 #define NET_ADDR	"net:addr"
 
 #ifdef __SunOS
-#  define AF_LOCAL	AF_UNIX
 #  define SUN_LEN(x)	sizeof(struct sockaddr_un)
 #endif
 
@@ -138,7 +137,7 @@ static const luaL_reg maddr_regmeta[] =
 };
 
 static const char *const m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
-static const int         m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
+static const int         m_netfamily[]     = { AF_INET , AF_INET6 , AF_LOCAL };
 
 /************************************************************************/
 
@@ -159,7 +158,7 @@ static inline size_t Inet_addrlen(sockaddr_all__t *const addr)
   {
     case AF_INET:  return sizeof(addr->sin.sin_addr.s_addr);
     case AF_INET6: return sizeof(addr->sin6.sin6_addr.s6_addr);
-    case AF_UNIX:  return strlen(addr->ssun.sun_path);
+    case AF_LOCAL: return strlen(addr->ssun.sun_path);
     default:       assert(0); return 0;
   }
 }
@@ -173,7 +172,7 @@ static inline socklen_t Inet_len(sockaddr_all__t *const addr)
   {
     case AF_INET:  return sizeof(addr->sin);
     case AF_INET6: return sizeof(addr->sin6);
-    case AF_UNIX:  return SUN_LEN(&addr->ssun);
+    case AF_LOCAL: return SUN_LEN(&addr->ssun);
     default:       assert(0); return 0;
   }
 }
@@ -185,7 +184,7 @@ static inline socklen_t Inet_lensa(struct sockaddr *const addr)
   assert(addr != NULL);
   switch(addr->sa_family)
   {
-    case AF_INET: return sizeof(struct sockaddr_in);
+    case AF_INET:  return sizeof(struct sockaddr_in);
     case AF_INET6: return sizeof(struct sockaddr_in6);
     case AF_LOCAL: return sizeof(struct sockaddr_un);
     default:       assert(0); return 0;
@@ -201,7 +200,7 @@ static inline int Inet_port(sockaddr_all__t *const addr)
   {
     case AF_INET:  return ntohs(addr->sin.sin_port);
     case AF_INET6: return ntohs(addr->sin6.sin6_port);
-    case AF_UNIX:  return 0;
+    case AF_LOCAL: return 0;
     default:       assert(0); return 0;
   }
 }
@@ -251,7 +250,7 @@ static inline const char *Inet_addr(
   {
     case AF_INET:  return inet_ntop(AF_INET, &addr->sin.sin_addr.s_addr,   dest,INET6_ADDRSTRLEN);
     case AF_INET6: return inet_ntop(AF_INET6,&addr->sin6.sin6_addr.s6_addr,dest,INET6_ADDRSTRLEN);
-    case AF_UNIX:  return addr->ssun.sun_path;
+    case AF_LOCAL: return addr->ssun.sun_path;
     default:       assert(0); return NULL;
   }
 }
@@ -265,7 +264,7 @@ static inline void *Inet_address(sockaddr_all__t *const addr)
   {
     case AF_INET:  return &addr->sin.sin_addr.s_addr;
     case AF_INET6: return &addr->sin6.sin6_addr.s6_addr;
-    case AF_UNIX:  return &addr->ssun.sun_path;
+    case AF_LOCAL: return &addr->ssun.sun_path;
     default:       assert(0); return NULL;
   }
 }
@@ -488,7 +487,7 @@ static int netlua_address(lua_State *const L)
       return 2;
     }
     
-    addr->ssun.sun_family = AF_UNIX;
+    addr->ssun.sun_family = AF_LOCAL;
     memcpy(addr->ssun.sun_path,host,hsize + 1);
     luaL_getmetatable(L,NET_ADDR);
     lua_setmetatable(L,-2);
@@ -968,7 +967,7 @@ static int addrlua___index(lua_State *const L)
     {
       case AF_INET:  lua_pushliteral(L,"ip");   break;
       case AF_INET6: lua_pushliteral(L,"ip6");  break;
-      case AF_UNIX:  lua_pushliteral(L,"unix"); break;
+      case AF_LOCAL: lua_pushliteral(L,"unix"); break;
       default: assert(0); lua_pushnil(L); break;
     }   
   }
@@ -994,7 +993,7 @@ static int addrlua___tostring(lua_State *const L)
     case AF_INET6:
          lua_pushfstring(L,"ip6:%s:%d",Inet_addr(addr,taddr),Inet_port(addr));
          break;
-    case AF_UNIX:
+    case AF_LOCAL:
          lua_pushfstring(L,"unix:%s",Inet_addr(addr,taddr));
          break;
     default:
