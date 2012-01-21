@@ -121,6 +121,28 @@ static int fsys_link(lua_State *L)
 
 /**********************************************************************/
 
+static int fsys_readlink(lua_State *L)
+{
+  char buffer[FILENAME_MAX];
+  int  size;
+  
+  size = readlink(luaL_checkstring(L,1),buffer,sizeof(buffer));
+  if (size == -1)
+  {
+    int err = errno;
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushlstring(L,buffer,size);
+    lua_pushinteger(L,0);
+  }
+  return 2;
+}
+
+/*********************************************************************/  
+
 static int fsys_mknod(lua_State *L)
 {
   lua_pushboolean(L,false);
@@ -1077,6 +1099,7 @@ static const struct luaL_reg reg_fsys[] =
 {
   { "symlink"	, fsys_symlink 	} ,
   { "link"	, fsys_link	} ,
+  { "readlink"	, fsys_readlink	} ,
   { "mknod"	, fsys_mknod	} ,
   { "mkfifo"	, fsys_mkfifo	} ,
   { "mkdir"	, fsys_mkdir	} ,
@@ -1158,7 +1181,7 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_pushliteral(L,"Useful file manipulation functions available under Unix.");
   lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"0.7.0");
+  lua_pushliteral(L,"0.7.1");
   lua_setfield(L,-2,"_VERSION");
 
   return 1;
