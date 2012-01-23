@@ -462,7 +462,7 @@ static int proclua_waitid(lua_State *const L)
       case CLD_STOPPED:   lua_pushliteral(L,"stopped");   break;
       case CLD_TRAPPED:   lua_pushliteral(L,"trapped");   break;
       case CLD_CONTINUED: lua_pushliteral(L,"continued"); break;
-      default: assert(0); lua_pushliteral(L,"(unknown)"); break;
+      default:            lua_pushfstring(L,"(%d)",info.si_code); break;
     }
     lua_setfield(L,-2,"state");
     lua_pushinteger(L,info.si_status);
