@@ -174,6 +174,7 @@ static const struct luaL_reg reg_iconv_meta[] =
 {
   { "iconv"		, luametaiconv_iconv		} ,
   { "close"		, luametaiconv_close		} ,
+  { "__call"		, luametaiconv_iconv		} ,
   { "__tostring"	, luametaiconv___tostring	} ,
   { "__gc"		, luametaiconv___gc		} ,
   { NULL		, NULL				}
@@ -197,7 +198,7 @@ int luaopen_org_conman_iconv(lua_State *L)
   lua_pushliteral(L,"Interface to the Iconv codeset conversion routines");
   lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"0.1.0");
+  lua_pushliteral(L,"0.1.1");
   lua_setfield(L,-2,"_VERSION");
   
   return 1;
