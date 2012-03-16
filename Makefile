@@ -24,7 +24,7 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
 CC     = gcc -std=c99
-CFLAGS = -g -Wall -Wextra -pedantic -fPIC 
+CFLAGS = -g -Wall -Wextra -pedantic -fpic
 LFLAGS = -shared 
 LNET   =
 endif
