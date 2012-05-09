@@ -160,3 +160,10 @@ function dump_value(name,value,path,level,marked)
 end
 
 -- **********************************************************
+
+function dump(name,value)
+  print(dump_value(name,value))
+end
+
+-- ***********************************************************
+
