@@ -153,7 +153,7 @@ function dump_value(name,value,path,level,marked)
   elseif type(value) == "thread" then
     return string.format("%s%s = THREAD\n",lead.name)
   elseif type(value) == "userdata" then
-    return string.format("%s%s = %s\n",lead,name,tostring(value)
+    return string.format("%s%s = %s\n",lead,name,tostring(value))
   else
     error("unsupported data type!")
   end
