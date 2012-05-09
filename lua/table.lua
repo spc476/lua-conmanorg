@@ -25,7 +25,7 @@ local tostring     = tostring
 local string       = string
 local type         = type
 local io           = io
---local print        = print
+local print        = print
 
 local type         = type
 local pcall        = pcall
