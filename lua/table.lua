@@ -151,13 +151,9 @@ function dump_value(name,value,path,level,marked)
       return string.format("%s%s = loadstring(%q),\n",lead,name,func)
     end    
   elseif type(value) == "thread" then
-      return ""
+    return string.format("%s%s = THREAD\n",lead.name)
   elseif type(value) == "userdata" then
-    if getmetatable(value) ~= nil then
-        return ""
-    else
-        return ""
-    end
+    return string.format("%s%s = %s\n",lead,name,tostring(value)
   else
     error("unsupported data type!")
   end
