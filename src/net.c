@@ -23,9 +23,11 @@
 #  define __attribute__(x)
 #endif
 
-#define _BSD_SOURCE
-#define _POSIX_SOURCE
-#define _FORTIFY_SOURCE 0
+#ifdef __linux
+#  define _BSD_SOURCE
+#  define _POSIX_SOURCE
+#  define _FORTIFY_SOURCE 0
+#endif
 
 #include <string.h>
 #include <stdio.h>
