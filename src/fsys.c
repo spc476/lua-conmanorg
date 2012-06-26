@@ -358,6 +358,8 @@ static int fsys_stat(lua_State *L)
       return 2;
     }
   }
+  else
+    return luaL_error(L,"invalid file handle");
 
   impl_dumpstat(L,&status);  
   lua_pushinteger(L,0);

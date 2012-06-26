@@ -302,6 +302,8 @@ static int netlua_socket(lua_State *const L)
     }
     proto = e->p_proto;
   }
+  else
+    return luaL_error(L,"invalid protocol");
   
   if (proto == IPPROTO_TCP)
     type = SOCK_STREAM;
