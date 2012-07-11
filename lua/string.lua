@@ -28,7 +28,7 @@ remchar = require "org.conman.string.remchar"
 function split(s,delim)
   local results = {}
   local delim   = delim or "%:"
-  local pattern = "([^" .. delim .. "]+)" .. delim .. "?"
+  local pattern = "([^" .. delim .. "]*)" .. delim .. "?"
   
   for segment in string.gmatch(s,pattern) do
     table.insert(results,segment)
