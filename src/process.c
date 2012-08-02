@@ -80,6 +80,7 @@ static int	proclua_exec		(lua_State *const);
 static int	proclua_times		(lua_State *const);
 static int	proclua_getrusage	(lua_State *const);
 static int	proclua_pause		(lua_State *const);
+static int	proclua_itimer		(lua_State *const);
 static int	proclua___index		(lua_State *const);
 static int	proclua___newindex	(lua_State *const);
 static bool	mlimit_trans		(int *const restrict,const char *const restrict);
@@ -118,6 +119,7 @@ static const struct luaL_reg mprocess_reg[] =
   { "times"		, proclua_times		} ,
   { "getrusage"		, proclua_getrusage	} ,
   { "pause"		, proclua_pause		} ,
+  { "itimer"		, proclua_itimer	} ,
   { NULL		, NULL			} 
 };
 
@@ -538,6 +540,55 @@ static int proclua_pause(lua_State *const L)
   pause();
   lua_pushinteger(L,errno);
   return 1;
+}
+
+/**********************************************************************/
+
+static int proclua_itimer(lua_State *const L)
+{
+  struct itimerval set;
+  double           interval;
+  double           seconds;
+  double           fract;
+  
+  if (lua_isnumber(L,1))
+    interval = lua_tonumber(L,1);
+  else if (lua_isstring(L,1))
+  {
+    const char *v = lua_tostring(L,1);
+    char       *p;
+    
+    interval = strtod(v,&p);
+    switch(*p)
+    {
+      case 's': break;
+      case 'm': interval *=    60.0; break;
+      case 'h': interval *=  3600.0; break;
+      case 'd': interval *= 86400.0; break;
+      default:  break;
+    }
+  }
+  else
+    interval = 0.0;
+  
+  fract = modf(interval,&seconds);
+  
+  set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
+  set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
+  
+  if (setitimer(ITIMER_REAL,&set,NULL) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
 }
 
 /**********************************************************************/
