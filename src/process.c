@@ -79,6 +79,7 @@ static int	proclua_kill		(lua_State *const);
 static int	proclua_exec		(lua_State *const);
 static int	proclua_times		(lua_State *const);
 static int	proclua_getrusage	(lua_State *const);
+static int	proclua_pause		(lua_State *const);
 static int	proclua___index		(lua_State *const);
 static int	proclua___newindex	(lua_State *const);
 static bool	mlimit_trans		(int *const restrict,const char *const restrict);
@@ -116,6 +117,7 @@ static const struct luaL_reg mprocess_reg[] =
   { "exec"		, proclua_exec		} ,
   { "times"		, proclua_times		} ,
   { "getrusage"		, proclua_getrusage	} ,
+  { "pause"		, proclua_pause		} ,
   { NULL		, NULL			} 
 };
 
@@ -526,6 +528,15 @@ static int proclua_getrusage(lua_State *const L)
   }
   
   proc_pushrusage(L,&usage);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int proclua_pause(lua_State *const L)
+{
+  pause();
+  lua_pushinteger(L,errno);
   return 1;
 }
 
