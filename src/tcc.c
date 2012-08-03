@@ -31,6 +31,9 @@
 * compilation of the normal library, but yes, it is a chore to change
 * all the required functions.
 *
+* Also, the warning about ISO C forbidding assignment between a function
+* pointer and void * is expected.  So don't freak out about it.
+*
 * You have been warned.
 *
 *************************************************************************/
