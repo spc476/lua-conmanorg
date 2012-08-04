@@ -103,7 +103,7 @@ lib/net.so : src/net.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
 
 lib/tcc.so : src/tcc.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -ltcc
 
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
