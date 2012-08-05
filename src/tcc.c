@@ -385,8 +385,13 @@ static int tcclua_get_symbol(lua_State *const L __attribute__((unused)))
   {
     if (!lua_checkstack(L,1))
       return ret;
+
     call = tcc_get_symbol(*tcc,luaL_checkstring(L,i));
-    lua_pushcfunction(L,call);
+
+    if (call == NULL)
+      lua_pushnil(L);
+    else
+      lua_pushcfunction(L,call);
     ret++;
   }
 
