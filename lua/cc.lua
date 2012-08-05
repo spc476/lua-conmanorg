@@ -157,8 +157,6 @@ const struct luaL_Reg mcc_meta[] =
 
 int luaopen_cc(lua_State *L)
 {
-  syslog(LOG_DEBUG,"Hello from %s(%d)",__FILE__,__LINE__);
-  
   luaL_newmetatable(L,CC_TYPE);
   luaL_register(L,NULL,mcc_meta);
   lua_pushvalue(L,-1);
