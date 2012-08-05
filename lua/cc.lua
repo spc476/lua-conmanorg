@@ -190,9 +190,13 @@ end
 
 _CACHE = setmetatable( {} , { __mode = "k" })
 
-function compile(fname,code,isfile)
+function compile(fname,code,isfile,defines)
+  local defines = defines or {}
   local x = tcc.new()
   
+  for def,val in pairs(defines) do
+    x:define(def,val)
+  end
   x:output_type('memory')
 
   if not x:compile(code,isfile) then
