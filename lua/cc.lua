@@ -27,7 +27,7 @@ local io           = io
 local string       = string
 local setmetatable = setmetatable
 
-module("org.conman.cc",package.seeall)
+module("org.conman.cc")
 
 package.ccpath = "/usr/loca/share/lua/5.1/?.c;/usr/local/lib/lua/5.1/?.c"
 
