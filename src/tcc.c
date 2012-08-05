@@ -345,6 +345,7 @@ static int tcclua_relocate(lua_State *const L)
   TCCState **tcc;
   void      *mem;
   int        size;
+  int        rc;
   
   tcc = luaL_checkudata(L,1,TCC_TYPE);
   size = tcc_relocate(*tcc,NULL);
@@ -355,7 +356,13 @@ static int tcclua_relocate(lua_State *const L)
   if (mem == NULL)
     return 0;
   
-  tcc_relocate(*tcc,mem);
+  rc = tcc_relocate(*tcc,mem);
+  if (rc == -1)
+  {
+    free(mem);
+    return 0;
+  }
+
   lua_pushlightuserdata(L,mem);
   return 1;
 }
