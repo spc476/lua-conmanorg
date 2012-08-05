@@ -20,9 +20,85 @@
 -- ********************************************************************
 
 local tcc          = require "org.conman.tcc"
+local package      = package
+local table        = table
+local os           = os
+local io           = io
+local string       = string
 local setmetatable = setmetatable
 
-module("org.conman.cc")
+module("org.conman.cc",package.seeall)
+
+package.ccpath = "/usr/loca/share/lua/5.1/?.c;/usr/local/lib/lua/5.1/?.c"
+
+local DIR  = package.config:sub(1,1)
+local SEP  = package.config:sub(3,3)
+local MARK = package.config:sub(5,5)
+local IGN  = package.config:sub(9,9)
+
+do
+  local ep = os.getenv("LUA_CCPATH")
+  if ep ~= nil then
+    package.ccpath = ep:gsub(";;",";" .. package.ccpath .. ";")
+  end
+  
+  local function loader(name)
+    local modulefile = name:gsub("%.",DIR)
+    local errmsg     = ""
+    local filename
+    local file
+    local entry
+    local x
+  
+    for path in package.ccpath:gmatch("[^%" .. SEP .. "]+") do
+      filename = path:gsub("[%" .. MARK .. "]",modulefile)
+      file = io.open(filename)
+      if file then break end
+      errmsg = errmsg .. "\n\tno file '" .. filename .. "'"
+    end
+  
+    if not file then
+      return errmsg
+    end
+  
+    local f,l = name:find(IGN,1,true)
+    if l then
+      entry = "luaopen_" .. name:sub(l + 1,-1):gsub("%.","_")
+    else
+      entry = "luaopen_" .. name:gsub("%.","_")
+    end
+  
+    -- ---------------------------------------------------------------------
+    -- Why not use compile() for this?  Because that caches the memory blob
+    -- returned from relocate() via the symbol we pulled out.  Lua modules
+    -- only use this function once, then it's not used, and thus, the module
+    -- we just loaded stands a chance of being flushed out of memory,
+    -- causing issues.
+    --
+    -- Doing it this way, we avoid that problem.  We still have the problem
+    -- if the module is removed from package.loaded{} and reloaded, which
+    -- will cause a memory leak, but that scenario is probably very rare. 
+    -- I'm willing to live with this for now.
+    -- ---------------------------------------------------------------------
+
+    x = tcc.new()
+    x:output_type('memory')
+    if x:compile(filename,true) then
+      x:relocate()
+      local f = x:get_symbol(entry)
+      if f then
+        return f
+      end
+      errmsg = errmsg 
+            .. string.format("\n\tno entry '%s' in file '%s'",entry,filename)
+      return errmsg
+    end
+  
+    return nil
+  end
+  
+  table.insert(package.loaders,#package.loaders,loader) 
+end    
 
 -- ********************************************************************
 
@@ -116,11 +192,11 @@ _CACHE = setmetatable( {} , { __mode = "k" })
 function compile(fname,code,isfile)
   local x = tcc.new()
   
-  if not x:output_type('memory') then
+  x:output_type('memory')
+
+  if not x:compile(code,isfile) then
     return nil
   end
-  
-  x:compile(code,isfile)
 
   local blob = x:relocate()
   local f    = x:get_symbol(fname)
