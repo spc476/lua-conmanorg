@@ -60,6 +60,8 @@ do
     if not file then
       return errmsg
     end
+    
+    file:close()
   
     local f,l = name:find(IGN,1,true)
     if l then
