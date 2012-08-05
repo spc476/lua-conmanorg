@@ -86,7 +86,10 @@ do
     x = tcc.new()
     x:define("LUA_REQUIRE","1")
     x:output_type('memory')
-    if x:compile(filename,true) then
+    if x:compile(filename,true,function(msg)
+                                 errmsg = errmsg .. "\n\t" .. msg
+                               end) 
+    then
       local blob = x:relocate()
       local f = x:get_symbol(entry)
       if f then
@@ -98,7 +101,7 @@ do
       return errmsg
     end
   
-    return nil
+    return errmsg
   end
   
   table.insert(package.loaders,#package.loaders,loader) 
