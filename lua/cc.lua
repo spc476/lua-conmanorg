@@ -84,6 +84,7 @@ do
     -- ---------------------------------------------------------------------
 
     x = tcc.new()
+    x:define("LUA_REQUIRE","1")
     x:output_type('memory')
     if x:compile(filename,true) then
       local blob = x:relocate()
