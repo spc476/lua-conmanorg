@@ -86,11 +86,12 @@ do
     x = tcc.new()
     x:output_type('memory')
     if x:compile(filename,true) then
-      x:relocate()
+      local blob = x:relocate()
       local f = x:get_symbol(entry)
       if f then
         return f
       end
+      tcc.dispose(blob)
       errmsg = errmsg 
             .. string.format("\n\tno entry '%s' in file '%s'",entry,filename)
       return errmsg
