@@ -316,9 +316,10 @@ static void error_lua_handler(
 
 static void error_c_handler(
 	void       *opaque __attribute__((unused)),
-	const char *msg    __attribute__((unused))
+	const char *msg
 )
 {
+  fprintf(stderr,"tcc: %s\n",msg);
 }
 
 /************************************************************************/
