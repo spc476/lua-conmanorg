@@ -25,6 +25,7 @@ local table        = table
 local os           = os
 local io           = io
 local string       = string
+local pairs        = pairs
 local setmetatable = setmetatable
 
 module("org.conman.cc")
