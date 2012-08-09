@@ -61,6 +61,7 @@ static int	tcclua_dispose		(lua_State *const);
 
 static int	tcclua___tostring	(lua_State *const);
 static int	tcclua___gc		(lua_State *const);
+static int	tcclua_enable_debug	(lua_State *const);
 static int	tcclua_set_warning	(lua_State *const);
 static int	tcclua_include_path	(lua_State *const);
 static int	tcclua_sysinclude_path	(lua_State *const);
@@ -93,6 +94,7 @@ static const struct luaL_Reg mtcc_meta[] =
 {
   { "__tostring"	, tcclua___tostring 		} ,
   { "__gc"		, tcclua___gc			} ,
+  { "enable_debug"	, tcclua_enable_debug		} ,
   { "set_warning"	, tcclua_set_warning		} ,
   
   { "include_path"	, tcclua_include_path		} ,
@@ -187,6 +189,14 @@ static int tcclua___gc(lua_State *const L)
 {
   syslog(LOG_DEBUG,"garbage collect TCC");
   tcc_delete(*(TCCState **)luaL_checkudata(L,1,TCC_TYPE));
+  return 0;
+}
+
+/**************************************************************************/
+
+static int tcclua_enable_debug(lua_State *const L)
+{
+  tcc_enable_debug(*(TCCState **)luaL_checkudata(L,1,TCC_TYPE));
   return 0;
 }
 
