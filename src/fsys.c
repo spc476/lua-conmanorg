@@ -32,8 +32,8 @@
 
 #include <luaconf.h>
 #include <lua.h>
-#include <lauxlib.h>
 #include <lualib.h>
+#include <lauxlib.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

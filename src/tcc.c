@@ -49,7 +49,6 @@
 #include <libtcc.h>
 
 #include <lua.h>
-#include <lualib.h>
 #include <lauxlib.h>
 
 #define TCC_TYPE	"TCC"

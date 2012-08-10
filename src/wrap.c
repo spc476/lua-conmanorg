@@ -26,7 +26,6 @@
 
 #include <lua.h>
 #include <lauxlib.h>
-#include <lualib.h>
 
 #define DEF_MARGIN	78
 

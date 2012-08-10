@@ -28,7 +28,6 @@
 
 #include <lua.h>
 #include <lauxlib.h>
-#include <lualib.h>
 
 #define HASH_TYPE	"org.conman.hash"
 

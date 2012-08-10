@@ -47,7 +47,6 @@
 #include <unistd.h>
 
 #include <lua.h>
-#include <lualib.h>
 #include <lauxlib.h>
 
 #define NET_SOCK	"net:sock"

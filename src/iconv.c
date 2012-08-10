@@ -27,7 +27,6 @@
 
 #include <lua.h>
 #include <lauxlib.h>
-#include <lualib.h>
 
 #define ICONV_TYPE	"ICONV"
 
