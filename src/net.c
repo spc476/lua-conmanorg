@@ -84,6 +84,7 @@ static int	socklua_connect		(lua_State *const) __attribute__((nonnull));
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
 static int	socklua_accept		(lua_State *const) __attribute__((nonnull));
 static int	socklua_reuse		(lua_State *const) __attribute__((nonnull));
+static int	socklua_buffer		(lua_State *const) __attribute__((nonnull));
 static int	socklua_read		(lua_State *const) __attribute__((nonnull));
 static int	socklua_write		(lua_State *const) __attribute__((nonnull));
 static int	socklua_shutdown	(lua_State *const) __attribute__((nonnull));
@@ -118,6 +119,7 @@ static const luaL_reg msock_regmeta[] =
   { "listen"		, socklua_listen	} ,
   { "accept"		, socklua_accept	} ,
   { "reuse"		, socklua_reuse		} ,
+  { "buffer"		, socklua_buffer	} ,
   { "read"		, socklua_read		} ,
   { "write"		, socklua_write		} ,
   { "shutdown"		, socklua_shutdown	} ,
@@ -773,6 +775,49 @@ static int socklua_reuse(lua_State *const L)
     lua_pushinteger(L,0);
   }
   
+  return 2;
+}
+
+/**********************************************************************
+*
+*	bool,err = sock:buffer(recvsize[,sendsize])
+*
+*	sock     = net.socket(...)
+*	recvsize = number (in bytes)
+*	sendsize = number (in bytes)
+*	err      = number
+*
+***********************************************************************/
+
+static int socklua_buffer(lua_State *const L)
+{
+  sock__t *sock;
+  int      size;
+  
+  sock = luaL_checkudata(L,1,NET_SOCK);
+  size = luaL_checkinteger(L,2);
+  if (setsockopt(sock->fh,SOL_SOCKET,SO_RCVBUF,&size,sizeof(size)) < 0)
+  {
+    int err = errno;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+    return 2;
+  }
+  
+  if (lua_isnumber(L,3))
+  {
+    size = lua_tointeger(L,3);
+    if (setsockopt(sock->fh,SOL_SOCKET,SO_SNDBUF,&size,sizeof(size)) < 0)
+    {
+      int err = errno;
+      lua_pushboolean(L,false);
+      lua_pushinteger(L,err);
+      return 2;
+    }
+  }
+  
+  lua_pushboolean(L,true);
+  lua_pushinteger(L,0);
   return 2;
 }
 
