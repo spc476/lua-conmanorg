@@ -29,6 +29,7 @@
 #  define _FORTIFY_SOURCE 0
 #endif
 
+#include <math.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,7 @@
 
 #include <syslog.h>
 
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -78,13 +80,14 @@ static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int	socklua___tostring	(lua_State *const) __attribute__((nonnull));
+static int	socklua___index		(lua_State *const) __attribute__((nonnull));
+static int	socklua___newindex	(lua_State *const) __attribute__((nonnull));
 static int      socklua_peer		(lua_State *const) __attribute__((nonnull));
 static int	socklua_bind		(lua_State *const) __attribute__((nonnull));
 static int	socklua_connect		(lua_State *const) __attribute__((nonnull));
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
 static int	socklua_accept		(lua_State *const) __attribute__((nonnull));
 static int	socklua_reuse		(lua_State *const) __attribute__((nonnull));
-static int	socklua_buffer		(lua_State *const) __attribute__((nonnull));
 static int	socklua_read		(lua_State *const) __attribute__((nonnull));
 static int	socklua_write		(lua_State *const) __attribute__((nonnull));
 static int	socklua_shutdown	(lua_State *const) __attribute__((nonnull));
@@ -113,13 +116,14 @@ static const luaL_reg msock_regmeta[] =
 {
   { "__tostring"	, socklua___tostring	} ,
   { "__gc"		, socklua_close		} ,
+  { "__index"		, socklua___index	} ,
+  { "__newindex"	, socklua___newindex	} ,
   { "peer"		, socklua_peer		} ,
   { "bind"		, socklua_bind		} ,
   { "connect"		, socklua_connect	} ,
   { "listen"		, socklua_listen	} ,
   { "accept"		, socklua_accept	} ,
   { "reuse"		, socklua_reuse		} ,
-  { "buffer"		, socklua_buffer	} ,
   { "read"		, socklua_read		} ,
   { "write"		, socklua_write		} ,
   { "shutdown"		, socklua_shutdown	} ,
@@ -599,6 +603,235 @@ static int socklua___tostring(lua_State *const L)
   return 1;
 }
 
+/***********************************************************************/
+
+typedef enum sopt
+{
+  SOPT_FLAG,
+  SOPT_INT,
+  SOPT_LINGER,
+  SOPT_TIMEVAL,
+  SOPT_FAMILY
+} sopt__t;
+
+struct sockoptions
+{
+  const char *const name;
+  const int         level;
+  const int         option;
+  const sopt__t     type;
+  const bool	    get;
+  const bool        set;
+};
+
+static const struct sockoptions m_sockoptions[] = 
+{
+  { "broadcast"		, SOL_SOCKET 	, SO_BROADCAST 		, SOPT_FLAG 	, true , true  } ,
+  { "debug"		, SOL_SOCKET 	, SO_DEBUG		, SOPT_FLAG 	, true , true  } ,
+  { "dontroute"		, SOL_SOCKET 	, SO_DONTROUTE		, SOPT_FLAG 	, true , true  } ,
+  { "error"		, SOL_SOCKET 	, SO_ERROR		, SOPT_INT  	, true , false } ,
+  { "keepalive"		, SOL_SOCKET 	, SO_KEEPALIVE		, SOPT_FLAG 	, true , true  } ,
+  { "linger"		, SOL_SOCKET 	, SO_LINGER		, SOPT_LINGER	, true , true  } ,
+  { "maxsegment"	, IPPROTO_TCP	, TCP_MAXSEG		, SOPT_INT	, true , true  } ,
+  { "nodelay"		, IPPROTO_TCP	, TCP_NODELAY		, SOPT_FLAG	, true , true  } ,
+  { "oobinline"		, SOL_SOCKET 	, SO_OOBINLINE		, SOPT_FLAG	, true , true  } ,
+  { "recvbuffer"	, SOL_SOCKET 	, SO_RCVBUF		, SOPT_INT	, true , true  } ,
+  { "recvlow"		, SOL_SOCKET 	, SO_RCVLOWAT		, SOPT_INT	, true , true  } ,
+  { "recvtimeout"	, SOL_SOCKET 	, SO_RCVTIMEO		, SOPT_INT	, true , true  } ,
+  { "reuseaddr"		, SOL_SOCKET 	, SO_REUSEADDR		, SOPT_FLAG	, true , true  } ,
+#ifdef SO_REUSEPORT  
+  { "reuseport"		, SOL_SOCKET 	, SO_REUSEPORT		, SOPT_FLAG	, true , true  } ,
+#endif
+  { "sendbuffer"	, SOL_SOCKET 	, SO_SNDBUF		, SOPT_INT	, true , true  } ,
+  { "sendlow"		, SOL_SOCKET 	, SO_SNDLOWAT		, SOPT_INT	, true , true  } ,
+  { "sendtimeout"	, SOL_SOCKET 	, SO_SNDTIMEO		, SOPT_INT	, true , true  } ,
+  { "type"		, SOL_SOCKET 	, SO_TYPE		, SOPT_INT	, true , false } ,
+#ifdef SO_USELOOPBACK
+  { "useloopback"	, SOL_SOCKET 	, SO_USELOOPBACK	, SOPT_FLAG	, true , true  } ,
+#endif
+};
+
+#define MAX_SOPTS	(sizeof(m_sockoptions) / sizeof(struct sockoptions))
+
+/*********************************************************************/
+
+static int sopt_compare(const void *needle,const void *haystack)
+{
+  const char               *const key   = needle;
+  const struct sockoptions *const value = haystack;
+  
+  return strcmp(key,value->name);
+}
+
+/*********************************************************************/
+
+static int socklua___index(lua_State *const L)
+{
+  sock__t                  *sock;
+  const char               *tkey;
+  const struct sockoptions *value;
+  int                       ivalue;
+  struct timeval            tvalue;
+  struct linger             lvalue;
+  double                    dvalue;
+  socklen_t                 len;
+  
+  sock  = luaL_checkudata(L,1,NET_SOCK);
+  tkey  = luaL_checkstring(L,2);
+  value = bsearch(tkey,m_sockoptions,MAX_SOPTS,sizeof(struct sockoptions),sopt_compare);
+
+  if (value == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,EINVAL);
+    return 2;
+  }
+  
+  if (!value->get)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,EINVAL);
+    return 2;
+  }
+  
+  switch(value->type)
+  {
+    case SOPT_FLAG:
+         len = sizeof(ivalue);
+         if (getsockopt(sock->fh,value->level,value->option,&ivalue,&len) < 0)
+         {
+           int err = errno;
+           
+           lua_pushnil(L);
+           lua_pushinteger(L,err);
+           return 2;
+         }
+         
+         lua_pushboolean(L,ivalue);
+         lua_pushinteger(L,0);
+         return 2;
+         
+    case SOPT_INT:
+         len = sizeof(ivalue);
+         if (getsockopt(sock->fh,value->level,value->option,&ivalue,&len) < 0)
+         {
+           int err = errno;
+           
+           lua_pushnil(L);
+           lua_pushinteger(L,err);
+           return 2;
+         }
+         
+         lua_pushinteger(L,ivalue);
+         lua_pushinteger(L,0);
+         return 2;
+    
+    case SOPT_LINGER:
+         len = sizeof(lvalue);
+         if (getsockopt(sock->fh,value->level,value->option,&lvalue,&len) < 0)
+         {
+           int err = errno;
+           
+           lua_pushnil(L);
+           lua_pushinteger(L,err);
+           return 2;
+         }
+         
+         lua_createtable(L,2,0);
+         lua_pushboolean(L,lvalue.l_onoff);
+         lua_setfield(L,-2,"on");
+         lua_pushinteger(L,lvalue.l_linger);
+         lua_setfield(L,-2,"linger");
+         lua_pushinteger(L,0);
+         return 2;
+
+    case SOPT_TIMEVAL:
+         len = sizeof(tvalue);
+         if (getsockopt(sock->fh,value->level,value->option,&tvalue,&len) < 0)
+         {
+           int err = errno;
+           
+           lua_pushnil(L);
+           lua_pushinteger(L,err);
+           return 2;
+         }
+         
+         dvalue = (double)tvalue.tv_sec
+                + ((double)tvalue.tv_usec / 1000000.0);
+         lua_pushnumber(L,dvalue);
+         lua_pushinteger(L,0);
+         return 2;
+
+    default:
+         assert(0);
+         return luaL_error(L,"internal error");
+  }
+}
+
+/***********************************************************************/
+
+static int socklua___newindex(lua_State *const L)
+{
+  sock__t                  *sock;
+  const char               *tkey;
+  const struct sockoptions *value;
+  int                       ivalue;
+  struct timeval            tvalue;
+  struct linger             lvalue;
+  double                    dvalue;
+  double                    seconds;
+  double                    fract;
+  
+  sock  = luaL_checkudata(L,1,NET_SOCK);
+  tkey  = luaL_checkstring(L,2);
+  value = bsearch(tkey,m_sockoptions,MAX_SOPTS,sizeof(struct sockoptions),sopt_compare);
+  
+  if (value == NULL)
+    return 0;
+  
+  if (!value->set)
+    return 0;
+  
+  switch(value->type)
+  {
+    case SOPT_FLAG:
+         ivalue = lua_toboolean(L,3);
+         if (setsockopt(sock->fh,value->level,value->option,&ivalue,sizeof(ivalue)) < 0)
+           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+         return 0;
+         
+    case SOPT_INT:
+         ivalue = lua_tointeger(L,3);
+         if (setsockopt(sock->fh,value->level,value->option,&ivalue,sizeof(ivalue)) < 0)
+           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+         return 0;
+         
+    case SOPT_LINGER:
+         luaL_checktype(L,3,LUA_TTABLE);
+         lua_getfield(L,3,"on");
+         lua_getfield(L,3,"linger");
+         
+         lvalue.l_onoff = lua_toboolean(L,-2);
+         lvalue.l_linger = lua_tointeger(L,-1);
+         if (setsockopt(sock->fh,value->level,value->option,&lvalue,sizeof(lvalue)) < 0)
+           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+         return 0;
+    
+    case SOPT_TIMEVAL:
+         dvalue         = lua_tonumber(L,3);
+         fract          = modf(dvalue,&seconds);
+         tvalue.tv_sec  = (time_t)seconds;
+         tvalue.tv_usec = (long)(fract * 1000000.0);
+         if (setsockopt(sock->fh,value->level,value->option,&tvalue,sizeof(tvalue)) < 0)
+           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+         return 0;
+         
+    default:
+         assert(0);
+         return luaL_error(L,"internal error");
+  }
+}
+
 /*********************************************************************
 *
 *	addr,err = sock:peer(sock | integer)
@@ -775,49 +1008,6 @@ static int socklua_reuse(lua_State *const L)
     lua_pushinteger(L,0);
   }
   
-  return 2;
-}
-
-/**********************************************************************
-*
-*	bool,err = sock:buffer(recvsize[,sendsize])
-*
-*	sock     = net.socket(...)
-*	recvsize = number (in bytes)
-*	sendsize = number (in bytes)
-*	err      = number
-*
-***********************************************************************/
-
-static int socklua_buffer(lua_State *const L)
-{
-  sock__t *sock;
-  int      size;
-  
-  sock = luaL_checkudata(L,1,NET_SOCK);
-  size = luaL_checkinteger(L,2);
-  if (setsockopt(sock->fh,SOL_SOCKET,SO_RCVBUF,&size,sizeof(size)) < 0)
-  {
-    int err = errno;
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
-    return 2;
-  }
-  
-  if (lua_isnumber(L,3))
-  {
-    size = lua_tointeger(L,3);
-    if (setsockopt(sock->fh,SOL_SOCKET,SO_SNDBUF,&size,sizeof(size)) < 0)
-    {
-      int err = errno;
-      lua_pushboolean(L,false);
-      lua_pushinteger(L,err);
-      return 2;
-    }
-  }
-  
-  lua_pushboolean(L,true);
-  lua_pushinteger(L,0);
   return 2;
 }
 
