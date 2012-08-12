@@ -610,8 +610,7 @@ typedef enum sopt
   SOPT_FLAG,
   SOPT_INT,
   SOPT_LINGER,
-  SOPT_TIMEVAL,
-  SOPT_FAMILY
+  SOPT_TIMEVAL
 } sopt__t;
 
 struct sockoptions
@@ -682,16 +681,16 @@ static int socklua___index(lua_State *const L)
 
   if (value == NULL)
   {
-    lua_pushnil(L);
-    lua_pushinteger(L,EINVAL);
-    return 2;
+    lua_getmetatable(L,1);
+    lua_pushvalue(L,2);
+    lua_gettable(L,-2);
+    return 1;
   }
   
   if (!value->get)
   {
     lua_pushnil(L);
-    lua_pushinteger(L,EINVAL);
-    return 2;
+    return 1;
   }
   
   switch(value->type)
@@ -699,42 +698,25 @@ static int socklua___index(lua_State *const L)
     case SOPT_FLAG:
          len = sizeof(ivalue);
          if (getsockopt(sock->fh,value->level,value->option,&ivalue,&len) < 0)
-         {
-           int err = errno;
-           
-           lua_pushnil(L);
-           lua_pushinteger(L,err);
-           return 2;
-         }
-         
-         lua_pushboolean(L,ivalue);
-         lua_pushinteger(L,0);
-         return 2;
+           lua_pushboolean(L,false);
+         else
+           lua_pushboolean(L,ivalue);
+         break;
          
     case SOPT_INT:
          len = sizeof(ivalue);
          if (getsockopt(sock->fh,value->level,value->option,&ivalue,&len) < 0)
-         {
-           int err = errno;
-           
-           lua_pushnil(L);
-           lua_pushinteger(L,err);
-           return 2;
-         }
-         
-         lua_pushinteger(L,ivalue);
-         lua_pushinteger(L,0);
-         return 2;
+           lua_pushinteger(L,-1);
+         else
+           lua_pushinteger(L,ivalue);
+         break;
     
     case SOPT_LINGER:
          len = sizeof(lvalue);
          if (getsockopt(sock->fh,value->level,value->option,&lvalue,&len) < 0)
          {
-           int err = errno;
-           
            lua_pushnil(L);
-           lua_pushinteger(L,err);
-           return 2;
+           return 1;
          }
          
          lua_createtable(L,2,0);
@@ -742,30 +724,25 @@ static int socklua___index(lua_State *const L)
          lua_setfield(L,-2,"on");
          lua_pushinteger(L,lvalue.l_linger);
          lua_setfield(L,-2,"linger");
-         lua_pushinteger(L,0);
-         return 2;
+         break;
 
     case SOPT_TIMEVAL:
          len = sizeof(tvalue);
          if (getsockopt(sock->fh,value->level,value->option,&tvalue,&len) < 0)
+           lua_pushnumber(L,-1);
+         else
          {
-           int err = errno;
-           
-           lua_pushnil(L);
-           lua_pushinteger(L,err);
-           return 2;
+           dvalue = (double)tvalue.tv_sec
+                  + ((double)tvalue.tv_usec / 1000000.0);
+           lua_pushnumber(L,dvalue);
          }
-         
-         dvalue = (double)tvalue.tv_sec
-                + ((double)tvalue.tv_usec / 1000000.0);
-         lua_pushnumber(L,dvalue);
-         lua_pushinteger(L,0);
-         return 2;
+         break;
 
     default:
          assert(0);
          return luaL_error(L,"internal error");
   }
+  return 1;
 }
 
 /***********************************************************************/
@@ -798,13 +775,13 @@ static int socklua___newindex(lua_State *const L)
          ivalue = lua_toboolean(L,3);
          if (setsockopt(sock->fh,value->level,value->option,&ivalue,sizeof(ivalue)) < 0)
            syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
-         return 0;
+         break;
          
     case SOPT_INT:
          ivalue = lua_tointeger(L,3);
          if (setsockopt(sock->fh,value->level,value->option,&ivalue,sizeof(ivalue)) < 0)
            syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
-         return 0;
+         break;
          
     case SOPT_LINGER:
          luaL_checktype(L,3,LUA_TTABLE);
@@ -815,7 +792,7 @@ static int socklua___newindex(lua_State *const L)
          lvalue.l_linger = lua_tointeger(L,-1);
          if (setsockopt(sock->fh,value->level,value->option,&lvalue,sizeof(lvalue)) < 0)
            syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
-         return 0;
+         break;
     
     case SOPT_TIMEVAL:
          dvalue         = lua_tonumber(L,3);
@@ -824,12 +801,14 @@ static int socklua___newindex(lua_State *const L)
          tvalue.tv_usec = (long)(fract * 1000000.0);
          if (setsockopt(sock->fh,value->level,value->option,&tvalue,sizeof(tvalue)) < 0)
            syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
-         return 0;
-         
+         break;
+        
     default:
          assert(0);
          return luaL_error(L,"internal error");
   }
+  
+  return 0;
 }
 
 /*********************************************************************
@@ -1333,9 +1312,7 @@ int luaopen_org_conman_net(lua_State *const L)
 {
   luaL_newmetatable(L,NET_SOCK);
   luaL_register(L,NULL,msock_regmeta);
-  lua_pushvalue(L,-1);
-  lua_setfield(L,-2,"__index");
-  
+
   luaL_newmetatable(L,NET_ADDR);
   luaL_register(L,NULL,maddr_regmeta);
   
