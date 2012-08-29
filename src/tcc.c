@@ -134,7 +134,7 @@ int luaopen_org_conman_tcc(lua_State *const L)
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
   
-  luaL_register(L,"tcc",mtcc_reg);
+  luaL_register(L,"org.conman.tcc",mtcc_reg);
   return 1;
 }
 
