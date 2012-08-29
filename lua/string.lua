@@ -19,6 +19,8 @@
 --
 -- ********************************************************************
 
+local string = require "string"
+
 module("org.conman.string",package.seeall)
 
 trim    = require "org.conman.string.trim"
@@ -35,5 +37,22 @@ function split(s,delim)
   end
   
   return results
+end
+
+function template(temp,callbacks,data)
+  local function cmd(tag)
+    local word = string.sub(tag,3,-3)
+    
+    if type(callbacks[word]) == 'string' then
+      return callbacks[word]
+    elseif type(callbacks[word]) == 'function' then
+      return callbacks[word](data)
+    else
+      return tostring(callbacks[word])
+    end
+  end
+  
+  local s = string.gsub(temp,"%%{[%w%.]+}%%",cmd)
+  return s
 end
 
