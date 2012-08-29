@@ -39,10 +39,10 @@
 
 #include <syslog.h>
 
-#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <sys/un.h>
 #include <sys/poll.h>
 #include <netdb.h>
