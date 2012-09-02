@@ -404,7 +404,7 @@ static int tcclua_relocate(lua_State *const L)
   int        rc;
   
   tcc = luaL_checkudata(L,1,TCC_TYPE);
-  size = tcc_relocate_ex(*tcc,NULL);
+  size = tcc_relocate(*tcc,NULL);
   if (size == -1)
     return 0;
   
@@ -412,7 +412,7 @@ static int tcclua_relocate(lua_State *const L)
   if (mem == NULL)
     return 0;
   
-  rc = tcc_relocate_ex(*tcc,mem);
+  rc = tcc_relocate(*tcc,mem);
   if (rc == -1)
   {
     free(mem);
