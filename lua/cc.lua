@@ -213,7 +213,7 @@ function compile(fname,code,isfile,defines)
   
   if f then
     _CACHE[f] = encap(blob)
-    return f
+    return f,blob
   end
   
   return nil
