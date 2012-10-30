@@ -23,6 +23,20 @@
 #  define _GNU_SOURCE
 #endif
 
+#if defined(__sparc)
+#  define CPU "sparc"
+#elif defined(__sparcv9)
+#  define CPU "sparcv9"
+#elif defined(__x86)
+#  define CPU "x86"
+#elif defined(__i386)
+#  define CPU "x86"
+#elif defined(__x86_64)
+#  define CPU "x86_64"
+#else
+#  error Define your CPU please
+#endif
+
 #include <sys/utsname.h>
 
 #include <lua.h>
@@ -58,6 +72,8 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_pushstring(L,buffer.domainname);
   lua_setfield(L,-2,"_DOMAINNAME");
 #endif
+  lua_pushstring(L,CPU);
+  lua_setfield(L,-2,"_CPU");
   return 1;
 }
 
