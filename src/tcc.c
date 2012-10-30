@@ -67,6 +67,8 @@ static int	tcclua_sysinclude_path	(lua_State *const);
 static int	tcclua_define		(lua_State *const);
 static int	tcclua_undef		(lua_State *const);
 static int	tcclua_compile		(lua_State *const);
+static int	tcclua_add_file		(lua_State *const);
+static int	tcclua_add_string	(lua_State *const);
 static int	tcclua_output_type	(lua_State *const);
 static int	tcclua_library_path	(lua_State *const);
 static int	tcclua_library		(lua_State *const);
@@ -102,6 +104,8 @@ static const struct luaL_Reg mtcc_meta[] =
   { "undef"		, tcclua_undef			} ,
   
   { "compile"		, tcclua_compile		} ,
+  { "add_file"		, tcclua_add_file		} ,
+  { "add_string"	, tcclua_add_string		} ,
 
   { "output_type"	, tcclua_output_type		} ,
   { "library_path"	, tcclua_library_path		} ,
@@ -304,6 +308,64 @@ static int tcclua_compile(lua_State *const L)
 }
 
 /**************************************************************************/
+
+static int tcclua_add_file(lua_State *const L)
+{
+  TCCState          **tcc = luaL_checkudata(L,1,TCC_TYPE);
+  const char         *file = luaL_checkstring(L,2);
+  struct error_data   errdata;
+  
+  if (lua_isfunction(L,3))
+  {
+    errdata.tcc = *tcc;
+    errdata.L   = L;
+    
+    lua_pushlightuserdata(L,*tcc);
+    lua_pushvalue(L,3);
+    lua_settable(L,LUA_REGISTRYINDEX);
+    tcc_set_error_func(*tcc,&errdata,error_lua_handler);
+  }
+  
+  lua_pushboolean(L,tcc_add_file(*tcc,file) == 0);
+  
+  tcc_set_error_func(*tcc,NULL,error_c_handler);
+  lua_pushlightuserdata(L,*tcc);
+  lua_pushnil(L);
+  lua_settable(L,LUA_REGISTRYINDEX);
+  
+  return 1;
+}
+
+/************************************************************************/
+
+static int tcclua_add_string(lua_State *const L)
+{
+  TCCState          **tcc = luaL_checkudata(L,1,TCC_TYPE);
+  const char         *file = luaL_checkstring(L,2);
+  struct error_data   errdata;
+  
+  if (lua_isfunction(L,3))
+  {
+    errdata.tcc = *tcc;
+    errdata.L   = L;
+    
+    lua_pushlightuserdata(L,*tcc);
+    lua_pushvalue(L,3);
+    lua_settable(L,LUA_REGISTRYINDEX);
+    tcc_set_error_func(*tcc,&errdata,error_lua_handler);
+  }
+  
+  lua_pushboolean(L,tcc_compile_string(*tcc,file) == 0);
+  
+  tcc_set_error_func(*tcc,NULL,error_c_handler);
+  lua_pushlightuserdata(L,*tcc);
+  lua_pushnil(L);
+  lua_settable(L,LUA_REGISTRYINDEX);
+  
+  return 1;
+}
+
+/*************************************************************************/
 
 static void error_lua_handler(
 	void       *opaque,
