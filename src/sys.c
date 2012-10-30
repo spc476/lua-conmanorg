@@ -52,6 +52,8 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_setfield(L,-2,"_RELEASE");
   lua_pushstring(L,buffer.version);
   lua_setfield(L,-2,"_VERSION");
+  lua_pushstring(L,buffer.machine);
+  lua_setfield(L,-2,"_MACHINE");
 #ifdef _GNU_SOURCE
   lua_pushstring(L,buffer.domainname);
   lua_setfield(L,-2,"_DOMAINNAME");
