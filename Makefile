@@ -55,6 +55,7 @@ all : lib/env.so	\
 	lib/process.so	\
 	lib/net.so	\
 	lib/tcc.so	\
+	lib/sys.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -105,6 +106,9 @@ lib/net.so : src/net.c
 lib/tcc.so : src/tcc.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -ltcc
 
+lib/sys.so : src/sys.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
 	/bin/rm -rf lib/*
@@ -133,6 +137,7 @@ install : all
 	install lib/process.so $(LUALIB)/org/conman
 	install lib/net.so     $(LUALIB)/org/conman
 	install lib/tcc.so     $(LUALIB)/org/conman
+	install lib/sys.so     $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
