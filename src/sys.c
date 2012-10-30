@@ -23,10 +23,10 @@
 #  define _GNU_SOURCE
 #endif
 
-#if defined(__sparc)
-#  define CPU "sparc"
-#elif defined(__sparcv9)
+#if defined(__sparcv9)
 #  define CPU "sparcv9"
+#elif defined(__sparc)
+#  define CPU "sparc"
 #elif defined(__x86)
 #  define CPU "x86"
 #elif defined(__i386)
