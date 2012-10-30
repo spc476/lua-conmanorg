@@ -19,7 +19,9 @@
 *
 *************************************************************************/
 
-#define _GNU_SOURCE
+#ifdef __linux
+#  define _GNU_SOURCE
+#endif
 
 #include <sys/utsname.h>
 
