@@ -38,15 +38,21 @@
 #endif
 
 #include <sys/utsname.h>
+#include <sys/time.h>
 
 #include <lua.h>
 #include <lauxlib.h>
 
 /*************************************************************************/
 
+static int	sys_gettimeofday	(lua_State *const);
+
+/*************************************************************************/
+
 static const struct luaL_Reg msys_reg[] =
 {
-  { NULL , NULL }
+  { "gettimeofday"	, sys_gettimeofday	} ,
+  { NULL 		, NULL 			}
 };
 
 /*************************************************************************/
@@ -74,6 +80,17 @@ int luaopen_org_conman_sys(lua_State *const L)
 #endif
   lua_pushstring(L,CPU);
   lua_setfield(L,-2,"_CPU");
+  return 1;
+}
+
+/*************************************************************************/
+
+static int sys_gettimeofday(lua_State *const L)
+{
+  struct timeval now;
+  
+  gettimeofday(&now,NULL);
+  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
   return 1;
 }
 
