@@ -61,14 +61,30 @@ static int math_randomseed(lua_State *const L)
 
 static int math_idiv(lua_State *const L)
 {
+  long   numer = luaL_checkinteger(L,1);
+  long   denom = luaL_checkinteger(L,2);
   ldiv_t result;
   
-  result = ldiv(
-  		 luaL_checkinteger(L,1),
-  		 luaL_checkinteger(L,2)
-  	       );
-  lua_pushinteger(L,result.quot);
-  lua_pushinteger(L,result.rem);
+  if (denom == 0)
+  {
+    if (numer < 0)
+    {
+      lua_pushnumber(L,-HUGE_VAL);
+      lua_pushnumber(L,-HUGE_VAL);
+    }
+    else
+    {
+      lua_pushnumber(L,HUGE_VAL);
+      lua_pushnumber(L,HUGE_VAL);
+    }
+  }
+  else
+  {
+    result = ldiv(numer,denom);
+    lua_pushinteger(L,result.quot);
+    lua_pushinteger(L,result.rem);
+  }
+  
   return 2;
 }
 
