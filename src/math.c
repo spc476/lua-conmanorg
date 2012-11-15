@@ -58,9 +58,25 @@ static int math_randomseed(lua_State *const L)
 
 /**************************************************************************/
 
+static int math_idiv(lua_State *const L)
+{
+  ldiv_t result;
+  
+  result = ldiv(
+  		 luaL_checkinteger(L,1),
+  		 luaL_checkinteger(L,2)
+  	       );
+  lua_pushinteger(L,result.quot);
+  lua_pushinteger(L,result.rem);
+  return 2;
+}
+
+/**************************************************************************/
+
 static const struct luaL_Reg reg_math[] =
 {
   { "randomseed"	, math_randomseed },
+  { "idiv"		, math_idiv	  },
   { NULL		, NULL		  }
 };
 
