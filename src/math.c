@@ -124,7 +124,7 @@ int luaopen_org_conman_math(lua_State *L)
   lua_pushliteral(L,"Some useful math routines no in stock Lua");
   lua_setfield(L,-2,"_DESCRIPTION");
   
-  lua_pushliteral(L,"0.0.1");
+  lua_pushliteral(L,"0.0.3");
   lua_setfield(L,-2,"_VERSION");
   
   return 1;
