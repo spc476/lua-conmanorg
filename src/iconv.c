@@ -188,18 +188,6 @@ int luaopen_org_conman_iconv(lua_State *L)
   
   luaL_register(L,"org.conman.iconv",reg_iconv);
   
-  lua_pushliteral(L,"Copyright 2011 by Sean Conner.  All Rights Reserved.");
-  lua_setfield(L,-2,"_COPYRIGHT");
-  
-  lua_pushliteral(L,"GNU-GPL 3");
-  lua_setfield(L,-2,"_LICENSE");
-  
-  lua_pushliteral(L,"Interface to the Iconv codeset conversion routines");
-  lua_setfield(L,-2,"_DESCRIPTION");
-  
-  lua_pushliteral(L,"0.1.1");
-  lua_setfield(L,-2,"_VERSION");
-  
   return 1;
 }
 

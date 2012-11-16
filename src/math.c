@@ -130,19 +130,6 @@ static const struct luaL_Reg reg_math[] =
 int luaopen_org_conman_math(lua_State *L)
 {
   luaL_register(L,"org.conman.math",reg_math);
-  
-  lua_pushliteral(L,"Copyright 2011 by Sean Conner.  All Rights Reserved.");
-  lua_setfield(L,-2,"_COPYRIGHT");
-
-  lua_pushliteral(L,"GNU-GPL 3");
-  lua_setfield(L,-2,"_LICENSE");
-  
-  lua_pushliteral(L,"Some useful math routines no in stock Lua");
-  lua_setfield(L,-2,"_DESCRIPTION");
-  
-  lua_pushliteral(L,"0.0.3");
-  lua_setfield(L,-2,"_VERSION");
-  
   return 1;
 }
 

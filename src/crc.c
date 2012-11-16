@@ -124,16 +124,6 @@ static const struct luaL_Reg reg_crc[] =
 int luaopen_org_conman_crc(lua_State *L)
 {
   luaL_register(L,"org.conman.crc",reg_crc);
-  
-  lua_pushliteral(L,"Copyright 2011 by Sean Conner.  All Rights Reserved");
-  lua_setfield(L,-2,"_COPYRIGHT");
-  
-  lua_pushliteral(L,"GNU-GPL 3");
-  lua_setfield(L,-2,"_LICENSE");
-  
-  lua_pushliteral(L,"0.0.1");
-  lua_setfield(L,-2,"_VERSION");
-  
   lua_pushinteger(L,0xFFFFFFFFuL);
   lua_setfield(L,-2,"INITCRC32");
   

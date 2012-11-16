@@ -265,18 +265,6 @@ int luaopen_org_conman_syslog(lua_State *L)
   }
   lua_settable(L,-3);
 
-  lua_pushliteral(L,"Copyright 2011 by Sean Conner.  All Rights Reserved.");
-  lua_setfield(L,-2,"_COPYRIGHT");
-  
-  lua_pushliteral(L,"GNU-GPL 3");
-  lua_setfield(L,-2,"_LICENSE");
-  
-  lua_pushliteral(L,"Interface to Unix syslog");
-  lua_setfield(L,-2,"_DESCRIPTION");
-  
-  lua_pushliteral(L,"1.1.0");
-  lua_setfield(L,-2,"_VERSION");
-  
   lua_newtable(L);
   lua_pushcfunction(L,syslog___call);
   lua_setfield(L,-2,"__call");

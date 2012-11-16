@@ -321,15 +321,6 @@ int luaopen_org_conman_fsys_magic(lua_State *const L)
   lua_pushvalue(L,-1);
   lua_setfield(L,-3,"__index");
   
-  lua_pushliteral(L,"Copyright 2011 by Sean Conner.  All Rights Reserved.");
-  lua_setfield(L,-2,"_COPYRIGHT");
-  lua_pushliteral(L,"GNU-GPL 3");
-  lua_setfield(L,-2,"_LICENSE");
-  lua_pushliteral(L,"Interface to the magic file");
-  lua_setfield(L,-2,"_DESCRIPTION");
-  lua_pushliteral(L,"0.0.1");
-  lua_setfield(L,-2,"_VERSION");
-  
   return 1;
 }
 

@@ -100,9 +100,6 @@ end
 
 -- ************************************************************************
 
-_DESCRIPTION = "The list of users, groups and programs on this Unix system"
-_COPYRIGHT   = "Copyright 2010 by Sean Conner.  All Rights Reserved."
-_VERSION     = "1.0"
 users        = etcpasswd()
 groups       = etcgroup()
 paths        = setmetatable({} , { __index = findexec })

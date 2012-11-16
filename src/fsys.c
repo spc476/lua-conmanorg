@@ -1194,18 +1194,6 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_pushinteger(L,STDERR_FILENO);
   lua_setfield(L,-2,"_STDERR");
   
-  lua_pushliteral(L,"Copyright 2010 by Sean Conner.  All Rights Reserved.");
-  lua_setfield(L,-2,"_COPYRIGHT");
-
-  lua_pushliteral(L,"GNU-GPL 3");
-  lua_setfield(L,-2,"_LICENSE");
-  
-  lua_pushliteral(L,"Useful file manipulation functions available under Unix.");
-  lua_setfield(L,-2,"_DESCRIPTION");
-  
-  lua_pushliteral(L,"0.7.2");
-  lua_setfield(L,-2,"_VERSION");
-
   return 1;
 }
 
