@@ -235,15 +235,6 @@ int luaopen_org_conman_hash(lua_State *const L)
   
   luaL_register(L,"org.conman.hash",hashlua);
   
-  lua_pushliteral(L,"Copyright 2011 by Sean Conner.  All Rights Reserved.");
-  lua_setfield(L,-2,"_COPYRIGHT");
-  
-  lua_pushliteral(L,"GNU-GPL 3");
-  lua_setfield(L,-2,"_LICENSE");
-  
-  lua_pushliteral(L,"0.0.1");
-  lua_setfield(L,-2,"_VERSION");
-  
   lua_createtable(L,0,7);
   lua_pushinteger(L,128);
   lua_setfield(L,-2,"md2");
