@@ -870,6 +870,52 @@ static int socklua_bind(lua_State *const L)
     lua_pushinteger(L,errno);
   else
     lua_pushinteger(L,0);
+  
+  if (addr->sa.sa_family == AF_INET)
+  {
+    if (IN_MULTICAST(ntohl(addr->sin.sin_addr.s_addr)))
+    {
+      unsigned char  on = 0;
+      struct ip_mreq mreq;
+      
+      if (setsockopt(sock->fh,IPPROTO_IP,IP_MULTICAST_LOOP,&on,1) < 0)
+      {
+        lua_pushinteger(L,errno);
+        return 1;
+      }
+      
+      mreq.imr_multiaddr        = addr->sin.sin_addr;
+      mreq.imr_interface.s_addr = INADDR_ANY;
+      if (setsockopt(sock->fh,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq)) < 0)
+      {
+        lua_pushinteger(L,errno);
+        return 1;
+      }
+    }   
+  }
+  else if (addr->sa.sa_family == AF_INET6)
+  {
+    if (IN6_IS_ADDR_MULTICAST(&addr->sin6.sin6_addr))
+    {
+      unsigned int     on = 0;
+      struct ipv6_mreq mreq6;
+      
+      if (setsockopt(sock->fh,IPPROTO_IPV6,IPV6_MULTICAST_LOOP,&on,sizeof(on)) < 0)
+      {
+        lua_pushinteger(L,errno);
+        return 1;
+      }
+      
+      mreq6.ipv6mr_multiaddr = addr->sin6.sin6_addr;
+      mreq6.ipv6mr_interface = 0;
+      if (setsockopt(sock->fh,IPPROTO_IPV6,IPV6_ADD_MEMBERSHIP,&mreq6,sizeof(mreq6)) < 0)
+      {
+        lua_pushinteger(L,errno);
+        return 1;
+      }      
+    }
+  }
+  
   return 1;
 }
 
