@@ -47,6 +47,14 @@ static int errno_strerror(lua_State *L)
 
 /***********************************************************************/
 
+static int errno___index(lua_State *L)
+{
+  lua_pushstring(L,strerror(luaL_checkint(L,2)));
+  return 1;
+}
+
+/***********************************************************************/
+
 static const struct luaL_reg m_reg_errno[] = 
 {
   { "strerror"	, errno_strerror } ,
@@ -66,6 +74,11 @@ int luaopen_org_conman_errno(lua_State *L)
     lua_pushinteger(L,m_errors[i].value);
     lua_setfield(L,-2,m_errors[i].text);
   }
+  
+  lua_createtable(L,0,1);
+  lua_pushcfunction(L,errno___index);
+  lua_setfield(L,-2,"__index");
+  lua_setmetatable(L,-2);
   
   return 1;
 }
