@@ -56,6 +56,7 @@ all : lib/env.so	\
 	lib/net.so	\
 	lib/tcc.so	\
 	lib/sys.so	\
+	lib/uuid.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
