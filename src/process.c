@@ -53,6 +53,10 @@
 #define SYS_LIMIT_HARD	"rlimit_hard"
 #define SYS_LIMIT_SOFT	"rlimit_soft"
 
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
+
 /**********************************************************************/
 
 struct strint
@@ -92,6 +96,10 @@ static int	siglua_caught		(lua_State *const);
 static int	siglua_catch		(lua_State *const);
 static int	siglua_ignore		(lua_State *const);
 static int	siglua_default		(lua_State *const);
+static int	siglua_block		(lua_State *const);
+static int	siglua_unblock		(lua_State *const);
+static int	siglua_mask		(lua_State *const);
+static int	siglua_getmask		(lua_State *const);
 static int	siglua_strsignal	(lua_State *const);
 static void	proc_pushstatus		(lua_State *const,const pid_t,int);
 static void	proc_pushrusage		(lua_State *const restrict,struct rusage *const restrict);
@@ -149,6 +157,10 @@ static const struct luaL_reg msig_reg[] =
   { "catch"	, siglua_catch		} ,
   { "ignore"	, siglua_ignore		} ,
   { "default"	, siglua_default	} ,
+  { "block"	, siglua_block		} ,
+  { "unblock"	, siglua_unblock	} ,
+  { "mask"	, siglua_mask		} ,
+  { "getmask"	, siglua_getmask	} ,
   { "strsignal"	, siglua_strsignal	} ,
   { NULL	, NULL			}
 };
@@ -1164,6 +1176,33 @@ static void sig_table(lua_State *const L,int idx,void (*handler)(int))
 
 /************************************************************************/
 
+static void sig_mask(lua_State *const L,int idx,sigset_t *set)
+{
+  size_t max;
+  size_t i;
+  
+  assert(L   != NULL);
+  assert(idx != 0);
+  assert(set != NULL);
+  
+  idx = (idx < 0)
+      ? lua_gettop(L) + idx + 1
+      : idx;
+  max = lua_objlen(L,idx);
+  for (i = 1 ; i <= max ; i++)
+  {
+    lua_pushinteger(L,i);
+    lua_gettable(L,idx);
+    if (lua_isnumber(L,-1))
+      sigaddset(set,lua_tointeger(L,-1));
+    else if (lua_istable(L,-1))
+      sig_mask(L,-1,set);
+    lua_pop(L,1);
+  }
+}
+
+/************************************************************************/
+
 static int siglua_catch(lua_State *const L)
 {
   int top = lua_gettop(L);
@@ -1223,6 +1262,99 @@ int siglua_default(lua_State *const L)
 }
 
 /**********************************************************************/
+
+int siglua_block(lua_State *const L)
+{
+  int      top = lua_gettop(L);
+  sigset_t set;
+  
+  sigemptyset(&set);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      sigaddset(&set,lua_tointeger(L,i));
+    else if (lua_istable(L,i))
+      sig_mask(L,i,&set);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  
+  sigprocmask(SIG_BLOCK,&set,NULL);
+  return 0;
+}
+
+/*********************************************************************/
+
+int siglua_unblock(lua_State *const L)
+{
+  int      top = lua_gettop(L);
+  sigset_t set;
+  
+  sigemptyset(&set);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      sigaddset(&set,lua_tointeger(L,i));
+    else if (lua_istable(L,i))
+      sig_mask(L,i,&set);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  
+  sigprocmask(SIG_UNBLOCK,&set,NULL);
+    
+  return 0;
+}
+
+/*******************************************************************/
+
+int siglua_mask(lua_State *const L)
+{
+  int      top = lua_gettop(L);
+  sigset_t set;
+  
+  sigemptyset(&set);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      sigaddset(&set,lua_tointeger(L,i));
+    else if (lua_istable(L,i))
+      sig_mask(L,i,&set);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  
+  sigprocmask(SIG_SETMASK,&set,NULL);
+  return 0;
+}
+
+/********************************************************************/
+
+int siglua_getmask(lua_State *const L)
+{
+  sigset_t set;
+  size_t   i;
+  int      idx;
+  
+  sigprocmask(0,NULL,&set);
+  lua_createtable(L,0,0);
+  for (idx = 1 , i = 0 ; m_sigs[i].text != NULL ; i++)
+  {
+    if (sigismember(&set,m_sigs[i].value))
+    {
+      lua_pushinteger(L,idx++);
+      lua_pushinteger(L,m_sigs[i].value);
+      lua_settable(L,-3);
+    }
+  }
+      
+  return 1;
+}
+
+/*********************************************************************/
 
 int siglua_strsignal(lua_State *const L)
 {
