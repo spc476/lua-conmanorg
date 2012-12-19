@@ -1268,16 +1268,21 @@ int siglua_block(lua_State *const L)
   int      top = lua_gettop(L);
   sigset_t set;
   
-  sigemptyset(&set);
-  
-  for (int i = 1 ; i <= top ; i++)
+  if (top == 0)
+    sigfillset(&set);
+  else
   {
-    if (lua_isnumber(L,i))
-      sigaddset(&set,lua_tointeger(L,i));
-    else if (lua_istable(L,i))
-      sig_mask(L,i,&set);
-    else
-      luaL_error(L,"expected number or table");
+    sigemptyset(&set);
+  
+    for (int i = 1 ; i <= top ; i++)
+    {
+      if (lua_isnumber(L,i))
+        sigaddset(&set,lua_tointeger(L,i));
+      else if (lua_istable(L,i))
+        sig_mask(L,i,&set);
+      else
+        luaL_error(L,"expected number or table");
+    }
   }
   
   sigprocmask(SIG_BLOCK,&set,NULL);
@@ -1291,16 +1296,21 @@ int siglua_unblock(lua_State *const L)
   int      top = lua_gettop(L);
   sigset_t set;
   
-  sigemptyset(&set);
-  
-  for (int i = 1 ; i <= top ; i++)
+  if (top == 0)
+    sigfillset(&set);
+  else
   {
-    if (lua_isnumber(L,i))
-      sigaddset(&set,lua_tointeger(L,i));
-    else if (lua_istable(L,i))
-      sig_mask(L,i,&set);
-    else
-      luaL_error(L,"expected number or table");
+    sigemptyset(&set);
+  
+    for (int i = 1 ; i <= top ; i++)
+    {
+      if (lua_isnumber(L,i))
+        sigaddset(&set,lua_tointeger(L,i));
+      else if (lua_istable(L,i))
+        sig_mask(L,i,&set);
+      else
+        luaL_error(L,"expected number or table");
+    }
   }
   
   sigprocmask(SIG_UNBLOCK,&set,NULL);
