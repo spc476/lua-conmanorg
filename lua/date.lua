@@ -63,4 +63,19 @@ function fromjulianday(jd)
 end
 
 -- ************************************************************************
-  
+
+function dayofweek(date)
+  local a = floor((14 - date.month) / 12)
+  local y = date.year - a
+  local m = date.month + 12 * a - 2
+
+  local d = date.day
+          + y
+          + floor(y / 4)
+          - floor(y / 100)
+          + floor(y / 400)
+          + floor(31 * m / 12)
+  return (d % 7) + 1
+end
+
+-- ************************************************************************
