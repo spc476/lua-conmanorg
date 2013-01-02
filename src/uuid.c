@@ -184,28 +184,41 @@ static int uuidlua___call(lua_State *const L)
   uuid__t     ns;
   const char *name;
   size_t      len;
+  const char *data;
+  size_t      dlen;
   int         rc;
   bool        sha1;
   
-  sha1 = lua_isnoneornil(L,4);
-  uuid = lua_newuserdata(L,sizeof(uuid__t));
-  
   if (lua_isnoneornil(L,2))
+  {
+    uuid = lua_newuserdata(L,sizeof(uuid__t));
     uuidlib_v4(uuid);
+  }
   else if (lua_isnumber(L,2))
+  {
+    uuid = lua_newuserdata(L,sizeof(uuid__t));
     uuidlib_v1(uuid);
+  }
   else if (lua_isstring(L,2))
   {
-    rc = uuidlib_parse(&ns,luaL_checkstring(L,2));
-    if (rc != 0)
+    data = luaL_checklstring(L,2,&dlen);
+    if (dlen == 16)
+      memcpy(ns.flat,data,sizeof(uuid__t));
+    else
     {
-      lua_pushnil(L);
-      lua_pushinteger(L,rc);
-      return 2;
+      rc = uuidlib_parse(&ns,data);
+      if (rc !=  0)
+      {
+        lua_pushnil(L);
+        lua_pushinteger(L,rc);
+        return 2;
+      }
     }
     
     name = luaL_checklstring(L,3,&len);
-
+    sha1 = lua_isnoneornil(L,4);
+    uuid = lua_newuserdata(L,sizeof(uuid__t));
+    
     if (sha1)
       uuidlib_v5(uuid,&ns,name,len);
     else
@@ -213,9 +226,11 @@ static int uuidlua___call(lua_State *const L)
   }
   else if (lua_isuserdata(L,2))
   {
-    pns  = luaL_checkudata(L,2,UUID_TYPE);
+    pns = luaL_checkudata(L,2,UUID_TYPE);
     name = luaL_checklstring(L,3,&len);
-      
+    sha1 = lua_isnoneornil(L,4);
+    uuid = lua_newuserdata(L,sizeof(uuid__t));
+    
     if (sha1)
       uuidlib_v5(uuid,pns,name,len);
     else
@@ -223,7 +238,7 @@ static int uuidlua___call(lua_State *const L)
   }
   else
     uuidlib_v1(uuid);
-    
+  
   luaL_getmetatable(L,UUID_TYPE);
   lua_setmetatable(L,-2);
   return 1;
@@ -240,7 +255,7 @@ static int uuidlua_parse(lua_State *const L)
   int         rc;
   
   data = luaL_checklstring(L,1,&size);
-  if (lua_toboolean(L,2))
+  if (size == 16)
     memcpy(uuid.flat,data,sizeof(struct uuid));
   else
   {
