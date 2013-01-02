@@ -46,6 +46,7 @@ static int	uuidlua___tostring	(lua_State *const);
 static int	uuidlua___eq		(lua_State *const);
 static int	uuidlua___le		(lua_State *const);
 static int	uuidlua___lt		(lua_State *const);
+static int	uuidlua___len		(lua_State *const);
 static int	uuidlua___call		(lua_State *const);
 static int	uuidlua_parse		(lua_State *const);
 static int	uuidlua_breakout	(lua_State *const);
@@ -65,6 +66,7 @@ static const struct luaL_reg muuid_meta[] =
   { "__eq"		, uuidlua___eq		} ,
   { "__lt"		, uuidlua___lt		} ,
   { "__le"		, uuidlua___le		} ,
+  { "__len"		, uuidlua___len		} ,
   { NULL		, NULL			}
 };
 
@@ -161,6 +163,15 @@ static int uuidlua___lt(lua_State *const L)
       luaL_checkudata(L,2,UUID_TYPE)
     ) < 0
   );
+  return 1;
+}
+
+/*************************************************************************/
+
+static int uuidlua___len(lua_State *const L)
+{
+  luaL_checkudata(L,1,UUID_TYPE);
+  lua_pushinteger(L,sizeof(uuid__t));
   return 1;
 }
 
