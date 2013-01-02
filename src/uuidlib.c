@@ -202,6 +202,10 @@ int uuidlib_cmp(
   assert(uuid1 != NULL);
   assert(uuid2 != NULL);
   
+  /*---------------------------------------------------------------
+  ; per RFC-4122, this is the "correct" way to compare UUIDs
+  ;---------------------------------------------------------------*/
+  
   a32 = ntohl(uuid1->uuid.time_low);
   b32 = ntohl(uuid2->uuid.time_low);
   
