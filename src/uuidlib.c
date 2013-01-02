@@ -302,7 +302,7 @@ int uuidlib_parse(uuid__t *const uuid,const char *text)
 
 /***************************************************************************/
 
-size_t uuidlib_toa(uuid__t *const uuid,char *dest,size_t size)
+size_t uuidlib_toa(const uuid__t *const uuid,char *dest,size_t size)
 {
   assert(uuid != NULL);
   assert(dest != NULL);

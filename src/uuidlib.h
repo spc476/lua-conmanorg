@@ -77,6 +77,6 @@ int	uuidlib_v5		(uuid__t *const,const uuid__t *const,const void *const,const siz
 int	uuidlib_cmp		(const uuid__t *const restrict,const uuid__t *const restrict);
 int	uuidlib_parse_seg	(uuid__t *const,size_t,const char **,const size_t);
 int	uuidlib_parse		(uuid__t *const,const char *);
-size_t	uuidlib_toa		(uuid__t *const,char *dest,size_t);
+size_t	uuidlib_toa		(const uuid__t *const,char *dest,size_t);
 
 #endif
