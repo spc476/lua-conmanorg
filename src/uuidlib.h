@@ -36,6 +36,10 @@
 
 /*******************************************************************/
 
+#ifdef __SunOS
+#pragma pack(1)
+#endif
+
 struct uuid
 {
   uint32_t time_low;
@@ -51,7 +55,11 @@ typedef union
   struct uuid uuid;
   uint8_t     flat[sizeof(struct uuid)];
   rand__t     rnd [sizeof(struct uuid) / sizeof(rand__t)];
-} uuid__t;
+} __attribute__((packed)) uuid__t;
+
+#ifdef __SunOS
+#pragma pack()
+#endif
 
 /*******************************************************************/
 
