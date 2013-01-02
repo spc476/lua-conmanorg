@@ -237,7 +237,10 @@ static int uuidlua___call(lua_State *const L)
       uuidlib_v3(uuid,pns,name,len);
   }
   else
+  {
+    uuid = lua_newuserdata(L,sizeof(uuid__t));
     uuidlib_v1(uuid);
+  }
   
   luaL_getmetatable(L,UUID_TYPE);
   lua_setmetatable(L,-2);
