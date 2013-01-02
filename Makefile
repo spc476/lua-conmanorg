@@ -111,8 +111,8 @@ lib/tcc.so : src/tcc.c
 lib/sys.so : src/sys.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
-lib/uuid.so : src/uuid.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lcrypto -lrt
+lib/uuid.so : src/uuid.c src/uuidlib.c src/uuidlib.h
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ src/uuid.c src/uuidlib.c -lcrypto -lrt
 
 lib/base64.so : src/base64.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<

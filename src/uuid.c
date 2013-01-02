@@ -31,46 +31,17 @@
 #include <assert.h>
 
 #include <arpa/inet.h>
-#include <openssl/evp.h>
 
 #include <lua.h>
 #include <lauxlib.h>
 
-#ifndef __GNUC__
-#  define __attribute__(x)
-#endif
+#include "uuidlib.h"
 
 #define UUID_TYPE	"UUID"
-#define UUID_EPOCH	0x01B21DD213814000LL
 
 /***********************************************************************/
 
-#if RAND_MAX == SHORT_MAX
-  typedef unsigned short rand__t;
-#else
-  typedef unsigned int   rand__t;
-#endif
-
-struct uuid
-{
-  uint32_t time_low;
-  uint16_t time_mid;
-  uint16_t time_hi_and_version;
-  uint8_t  clock_seq_hi_and_reserved;
-  uint8_t  clock_seq_low;
-  uint8_t  node[6];
-} __attribute__((packed));
-
-typedef union 
-{
-  struct uuid uuid;
-  uint8_t     flat[sizeof(struct uuid)];
-  rand__t     rnd [sizeof(struct uuid) / sizeof(rand__t)];
-} uuid__t;
-
-/*************************************************************************/
-
-static void	uuidluaL_pushuuid	(lua_State *const,const uint8_t *const);
+static void	uuidluaL_pushuuid	(lua_State *const,const uuid__t *const);
 static int	uuidlua___tostring	(lua_State *const);
 static int	uuidlua___eq		(lua_State *const);
 static int	uuidlua___le		(lua_State *const);
@@ -79,42 +50,7 @@ static int	uuidlua___call		(lua_State *const);
 static int	uuidlua_parse		(lua_State *const);
 static int	uuidlua_breakout	(lua_State *const);
 
-static int	uuidlib_v1		(uuid__t *const);
-static int	uuidlib_v2		(uuid__t *const) __attribute__((unused));
-static int	uuidlib_v3		(uuid__t *const,const uuid__t *const,const void *const,const size_t);
-static int	uuidlib_v4		(uuid__t *const);
-static int	uuidlib_v5		(uuid__t *const,const uuid__t *const,const void *const,const size_t);
-static int	uuidlib_cmp		(const uuid__t *const restrict,const uuid__t *const restrict);
-static int	uuidlib_parse_seg	(uuid__t *const,size_t,const char **,const size_t);
-static int	uuidlib_parse		(uuid__t *const,const char *);
-
 /************************************************************************/
-
-	/* per RFC-4122 */
-
-static const uint8_t c_namespace_dns[] =
-{
-  0x6b , 0xa7 , 0xb8 , 0x10 , 0x9d , 0xad , 0x11 , 0xd1 ,
-  0x80 , 0xb4 , 0x00 , 0xc0 , 0x4f , 0xd4 , 0x30 , 0xc8
-};
-
-static const uint8_t c_namespace_url[] =
-{
-  0x6b , 0xa7 , 0xb8 , 0x11 , 0x9d , 0xad , 0x11 , 0xd1 ,
-  0x80 , 0xb4 , 0x00 , 0xc0 , 0x4f , 0xd4 , 0x30 , 0xc8
-};
-
-static const uint8_t c_namespace_oid[] =
-{
-   0x6b , 0xa7 , 0xb8 , 0x12 , 0x9d , 0xad , 0x11 , 0xd1 ,
-   0x80 , 0xb4 , 0x00 , 0xc0 , 0x4f , 0xd4 , 0x30 , 0xc8
-};
-
-static const uint8_t c_namespace_x500[] =
-{
-   0x6b , 0xa7 , 0xb8 , 0x14 , 0x9d , 0xad , 0x11 , 0xd1 ,
-   0x80 , 0xb4 , 0x00 , 0xc0 , 0x4f , 0xd4 , 0x30 , 0xc8
-};
 
 static const struct luaL_reg muuid_reg[] =
 {
@@ -132,32 +68,24 @@ static const struct luaL_reg muuid_meta[] =
   { NULL		, NULL			}
 };
 
-static uint8_t m_mac[6] = { 0xDE , 0xCA , 0xFB , 0xAD , 0x02 , 0x01 };
-
 /*************************************************************************/
 
 int luaopen_org_conman_uuid(lua_State *const L)
 {
-  uuid__t *ns;
-  
   luaL_newmetatable(L,UUID_TYPE);
   luaL_register(L,NULL,muuid_meta);
   
   luaL_register(L,"org.conman.uuid",muuid_reg);
   
-  uuidluaL_pushuuid(L,c_namespace_dns);
+  uuidluaL_pushuuid(L,&c_uuid_namespace_dns);
   lua_setfield(L,-2,"DNS");
-  uuidluaL_pushuuid(L,c_namespace_url);
+  uuidluaL_pushuuid(L,&c_uuid_namespace_url);
   lua_setfield(L,-2,"URL");
-  uuidluaL_pushuuid(L,c_namespace_oid);
+  uuidluaL_pushuuid(L,&c_uuid_namespace_oid);
   lua_setfield(L,-2,"OID");
-  uuidluaL_pushuuid(L,c_namespace_x500);
+  uuidluaL_pushuuid(L,&c_uuid_namespace_x500);
   lua_setfield(L,-2,"X500");
-  
-  ns = lua_newuserdata(L,sizeof(uuid__t));
-  memset(ns->flat,0,sizeof(ns->flat));
-  luaL_getmetatable(L,UUID_TYPE);
-  lua_setmetatable(L,-2);
+  uuidluaL_pushuuid(L,&c_uuid_null);
   lua_setfield(L,-2,"NIL");
   
   lua_createtable(L,0,1);
@@ -170,12 +98,12 @@ int luaopen_org_conman_uuid(lua_State *const L)
 
 /*************************************************************************/
 
-static void uuidluaL_pushuuid(lua_State *const L,const uint8_t *const uuid)
+static void uuidluaL_pushuuid(lua_State *const L,const uuid__t *const uuid)
 {
   uuid__t *ns;
   
   ns = lua_newuserdata(L,sizeof(uuid__t));
-  memcpy(ns->flat,uuid,sizeof(ns->flat));
+  memcpy(ns->flat,uuid->flat,sizeof(ns->flat));
   luaL_getmetatable(L,UUID_TYPE);
   lua_setmetatable(L,-2);
 }
@@ -186,36 +114,12 @@ static int uuidlua___tostring(lua_State *const L)
 {
   uuid__t *uuid;
   char     buffer[37];
-  char    *p;
   
   uuid  = luaL_checkudata(L,1,UUID_TYPE);
-  p     = buffer;
   
-  for (size_t i = 0 ; i < 4 ; i++)
-    p += sprintf(p,"%02X",uuid->flat[i]);
-  
-  *p++ = '-';
-  
-  for (size_t i = 4 ; i < 6 ; i++)
-    p += sprintf(p,"%02X",uuid->flat[i]);
-  
-  *p++ = '-';
-  
-  for (size_t i = 6 ; i < 8 ; i++)
-    p += sprintf(p,"%02X",uuid->flat[i]);
-  
-  *p++ = '-';
-  
-  for (size_t i = 8 ; i < 10 ; i++)
-    p += sprintf(p,"%02X",uuid->flat[i]);
-  
-  *p++ = '-';
-  
-  for (size_t i = 10 ; i < 16 ; i++)
-    p += sprintf(p,"%02X",uuid->flat[i]);
-  
+  uuidlib_toa(uuid,buffer,sizeof(buffer));
   lua_pushlstring(L,buffer,36);
-  return 1;  
+  return 1;
 }
 
 /*************************************************************************/
@@ -444,202 +348,3 @@ static int uuidlua_breakout(lua_State *const L)
 }
 
 /***********************************************************************/
-
-static int uuidlib_v1(uuid__t *const uuid)
-{
-  struct timespec now;
-  int64_t         timestamp;
-  
-  clock_gettime(CLOCK_REALTIME,&now);
-  timestamp = (now.tv_sec * 10000000LL)
-            + (now.tv_nsec / 100LL)
-            + UUID_EPOCH;
-  uuid->uuid.time_hi_and_version       = htons(timestamp >> 48);
-  uuid->uuid.time_mid                  = htons((timestamp >> 32) & 0xFFFFLL);
-  uuid->uuid.time_low                  = htonl(timestamp & 0xFFFFFFFFLL);
-  uuid->uuid.clock_seq_hi_and_reserved = rand() & 0xFF;
-  uuid->uuid.clock_seq_low             = rand() & 0xFF;
-  memcpy(uuid->uuid.node,m_mac,6);
-  
-  uuid->flat[6] = (uuid->flat[6] & 0x0F) | 0x10;
-  uuid->flat[8] = (uuid->flat[8] & 0x3F) | 0x80;
-  return 0;
-}
-
-/*************************************************************************/
-
-static int uuidlib_v2(uuid__t *const uuid)
-{
-  memset(uuid,0,sizeof(uuid__t));
-  return ENOSYS;
-}
-
-/**************************************************************************/
-
-static int uuidlib_v3(
-	uuid__t       *const uuid,
-	const uuid__t *const namespace,
-	const void    *const name,
-	const size_t         len
-)
-{
-  const EVP_MD *m = EVP_md5();
-  EVP_MD_CTX    ctx;
-  unsigned char hash[EVP_MAX_MD_SIZE];
-  unsigned int  hashsize;
-  
-  EVP_DigestInit(&ctx,m);
-  EVP_DigestUpdate(&ctx,namespace->flat,sizeof(struct uuid));
-  EVP_DigestUpdate(&ctx,name,len);
-  EVP_DigestFinal(&ctx,hash,&hashsize);
-  
-  memcpy(uuid->flat,hash,sizeof(struct uuid));
-  uuid->flat[6] = (uuid->flat[6] & 0x0F) | 0x30;
-  uuid->flat[8] = (uuid->flat[8] & 0x3F) | 0x80;
-  return 0;
-}
-
-/**************************************************************************/
-
-static int uuidlib_v4(uuid__t *const uuid)
-{
-  for (size_t i = 0 ; i < (sizeof(struct uuid) / sizeof(rand__t)) ; i++)
-    uuid->rnd[i] = (unsigned)rand() + (unsigned)rand();
-  
-  uuid->flat[6] = (uuid->flat[6] & 0x0F) | 0x40;
-  uuid->flat[8] = (uuid->flat[8] & 0x3F) | 0x80;
-  return 0;
-}
-
-/*************************************************************************/
-
-static int uuidlib_v5(
-	uuid__t       *const uuid,
-	const uuid__t *const namespace,
-	const void    *const name,
-	const size_t         len
-)
-{
-  const EVP_MD *m = EVP_sha1();
-  EVP_MD_CTX    ctx;
-  unsigned char hash[EVP_MAX_MD_SIZE];
-  unsigned int  hashsize;
-  
-  EVP_DigestInit(&ctx,m);
-  EVP_DigestUpdate(&ctx,namespace->flat,sizeof(struct uuid));
-  EVP_DigestUpdate(&ctx,name,len);
-  EVP_DigestFinal(&ctx,hash,&hashsize);
-  
-  memcpy(uuid->flat,hash,sizeof(struct uuid));
-  uuid->flat[6] = (uuid->flat[6] & 0x0F) | 0x50;
-  uuid->flat[8] = (uuid->flat[8] & 0x3F) | 0x80;
-  return 0;
-}
-
-/**************************************************************************/
-
-static int uuidlib_cmp(
-	const uuid__t *const restrict uuid1,
-	const uuid__t *const restrict uuid2
-)
-{
-  uint32_t a32;
-  uint32_t b32;
-  uint16_t a16;
-  uint16_t b16;
-  
-  a32 = ntohl(uuid1->uuid.time_low);
-  b32 = ntohl(uuid2->uuid.time_low);
-  
-  if (a32 < b32)
-    return -1;
-  else if (a32 > b32)
-    return 1;
-  
-  a16 = ntohs(uuid1->uuid.time_mid);
-  b16 = ntohs(uuid2->uuid.time_mid);
-  
-  if (a16 < b16)
-    return -1;
-  else if (a16 > b16)
-    return 1;
-  
-  a16 = ntohs(uuid1->uuid.time_hi_and_version);
-  b16 = ntohs(uuid2->uuid.time_hi_and_version);
-  
-  if (a16 < b16)
-    return -1;
-  else if (a16 > b16)
-    return 1;
-      
-  if (uuid1->uuid.clock_seq_hi_and_reserved < uuid2->uuid.clock_seq_hi_and_reserved)
-    return -1;
-  else if (uuid1->uuid.clock_seq_hi_and_reserved > uuid2->uuid.clock_seq_hi_and_reserved)
-    return 1;
-  
-  if (uuid1->uuid.clock_seq_low < uuid2->uuid.clock_seq_low)
-    return -1;
-  else if (uuid1->uuid.clock_seq_low > uuid2->uuid.clock_seq_low)
-    return 1;
-  
-  return memcmp(uuid1->uuid.node,uuid2->uuid.node,6);
-}
-
-/*************************************************************************/
-
-static int uuidlib_parse_seg(
-	uuid__t     *const uuid,
-	size_t             idx,
-	const char       **ptext,
-	const size_t       bytes
-)
-{
-  char        buf[3];
-  const char *p;
-  
-  assert(uuid   != NULL);
-  assert(idx    <  sizeof(struct uuid));
-  assert(ptext  != NULL);
-  assert(*ptext != NULL);
-  assert(bytes  >  0);
-  
-  errno = 0;
-  p     = *ptext;
-  
-  for (size_t i = 0 ; i < bytes ; i++)
-  {
-    buf[0] = *p++;
-    buf[1] = *p++;
-    buf[2] = '\0';
-    
-    errno = 0;
-    uuid->flat[idx++] = strtoul(buf,NULL,16);
-    if (errno != 0) return errno;
-  }
-  
-  if ((*p != '-') && (*p != '\0')) 
-    return EINVAL;
-  
-  *ptext = p + 1;
-  return 0;
-}
-
-/************************************************************************/
-
-static int uuidlib_parse(uuid__t *const uuid,const char *text)
-{
-  int rc;
-  
-  assert(uuid != NULL);
-  assert(text != NULL);
-  
-  if ((rc = uuidlib_parse_seg(uuid, 0,&text,4)) != 0) return rc;
-  if ((rc = uuidlib_parse_seg(uuid, 4,&text,2)) != 0) return rc;
-  if ((rc = uuidlib_parse_seg(uuid, 6,&text,2)) != 0) return rc;
-  if ((rc = uuidlib_parse_seg(uuid, 8,&text,2)) != 0) return rc;
-  if ((rc = uuidlib_parse_seg(uuid,10,&text,6)) != 0) return rc;
-  
-  return 0;
-}
-
-/***************************************************************************/
