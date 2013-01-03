@@ -77,7 +77,7 @@ const uuid__t c_uuid_null =
           }
 };
 
-static uint8_t m_mac[6] = { 0xDE , 0xCA , 0xFB , 0xAD , 0x02 , 0x01 };
+static const uint8_t m_mac[6] = { 0xDE , 0xCA , 0xFB , 0xAD , 0x02 , 0x01 };
 
 /*************************************************************************/
 
