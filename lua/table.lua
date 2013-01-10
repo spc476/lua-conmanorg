@@ -167,3 +167,17 @@ end
 
 -- ***********************************************************
 
+function keepset(t,name,value)
+  if t[name] == nil then
+    t[name] = value
+  elseif type(t[name]) == 'table' then
+    t[name][#t[name] + 1] = value
+  else
+    t[name] = { t[name] , value }
+  end
+  
+  return t
+end
+
+-- ************************************************************
+
