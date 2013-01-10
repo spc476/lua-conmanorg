@@ -40,27 +40,19 @@ int luaopen_org_conman_env(lua_State *L)
   
   for (int i = 0 ; environ[i] != NULL ; i++)
   {
-    size_t  len = strlen(environ[i]);
-    char    buffer[len];
-    size_t  namelen;
-    size_t  valuelen;
-    char   *p;
+    char   *value;
+    char   *eos;
     
-    memcpy(buffer,environ[i],len);
-    buffer[len] = '\0';
+    value = memchr(environ[i],'=',(size_t)-1);
+    assert(value != NULL);
+    eos   = memchr(value + 1,'\0',(size_t)-1);
+    assert(eos   != NULL);
     
-    p = memchr(buffer,'=',len);
-    if (p == NULL) continue;
-    
-    namelen = (size_t)(p - buffer);
-    *p++ = '\0';
-    valuelen = (len - namelen) - 1;
-    
-    lua_pushlstring(L,buffer,namelen);
-    lua_pushlstring(L,p,valuelen);
+    lua_pushlstring(L,environ[i],(size_t)(value - environ[i]));
+    lua_pushlstring(L,value + 1,(size_t)(eos - (value + 1)));
     lua_settable(L,-3);
   }
-  
+    
   return 1;
 }
 
