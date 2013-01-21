@@ -33,8 +33,7 @@
 
 static bool find_break_point(
 	size_t     *const restrict pidx,
-	const char *const restrict txt,
-	const size_t               max __attribute__((unused))
+	const char *const restrict txt
 )
 {
   size_t idx;
@@ -42,8 +41,6 @@ static bool find_break_point(
   assert(pidx  != NULL);
   assert(*pidx >  0);
   assert(txt   != NULL);
-  assert(max   >  0);
-  assert(max   >  *pidx);
 
   for (idx = *pidx ; idx ; idx--)
     if (isspace(txt[idx])) break;
@@ -78,7 +75,7 @@ static int wrap(lua_State *L)
     if (ssz < breakp)
       break;
 
-    if (find_break_point(&breakp,src,ssz))
+    if (find_break_point(&breakp,src))
     {
       luaL_addlstring(&buf,src,breakp - 1);
       luaL_addchar(&buf,'\n');
