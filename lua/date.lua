@@ -19,7 +19,6 @@
 --
 -- ********************************************************************
 
-local type  = type
 local floor = math.floor
 local os    = os
 
