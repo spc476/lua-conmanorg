@@ -62,10 +62,13 @@ static int wrap(lua_State *L)
   size_t      ssz;
   size_t      margin;
   size_t      breakp;
+  const char *lead;
+  size_t      lsize;
   luaL_Buffer buf;
   
   src    = luaL_checklstring(L,1,&ssz);
   margin = luaL_optinteger(L,2,DEF_MARGIN);
+  lead   = lua_tolstring(L,3,&lsize);
   breakp = margin;
   
   luaL_buffinit(L,&buf);
@@ -77,6 +80,7 @@ static int wrap(lua_State *L)
 
     if (find_break_point(&breakp,src))
     {
+      if (lead) luaL_addlstring(&buf,lead,lsize);
       luaL_addlstring(&buf,src,breakp - 1);
       luaL_addchar(&buf,'\n');
       src    += breakp;
@@ -87,6 +91,7 @@ static int wrap(lua_State *L)
       break;
   }
   
+  if (lead) luaL_addlstring(&buf,lead,lsize);
   luaL_addlstring(&buf,src,ssz);
   luaL_addchar(&buf,'\n');
   luaL_pushresult(&buf);
