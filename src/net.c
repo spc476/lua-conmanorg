@@ -1109,15 +1109,35 @@ static int socklua_read(lua_State *const L)
 static int socklua_write(lua_State *const L)
 {
   sockaddr_all__t *remote;
+  struct sockaddr *remaddr;
+  socklen_t        remsize;
   sock__t         *sock;
   const char      *buffer;
   size_t           bufsiz;
   ssize_t          bytes;
   
   sock   = luaL_checkudata(L,1,NET_SOCK);
-  remote = luaL_checkudata(L,2,NET_ADDR);
   buffer = luaL_checklstring(L,3,&bufsiz);  
-  bytes  = sendto(sock->fh,buffer,bufsiz,0,&remote->sa,Inet_len(remote));
+  
+  /*--------------------------------------------------------------------
+  ; sometimes, a connected socket (in my experience, a UNIX domain TCP
+  ; socket) will return EISCONN if remote isn't NULL.  So, we *may* need
+  ; to, in some cases, specify a nil parameter here.  
+  ;---------------------------------------------------------------------*/
+  
+  if (lua_isnil(L,2))
+  {
+    remaddr = NULL;
+    remsize = 0;
+  }
+  else
+  {
+    remote  = luaL_checkudata(L,2,NET_ADDR);
+    remaddr = &remote->sa;
+    remsize = Inet_len(remote);
+  }
+  
+  bytes  = sendto(sock->fh,buffer,bufsiz,0,remaddr,remsize);
   if (bytes < 0)
   {
     int err = errno;
