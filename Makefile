@@ -26,6 +26,7 @@ CC     = gcc -std=c99
 CFLAGS = -g -Wall -Wextra -pedantic -fpic
 LFLAGS = -shared 
 LNET   =
+MKDIR  = /bin/mkdir
 endif
 
 ifeq ($(UNAME),SunOS)
@@ -33,6 +34,7 @@ CC     = cc -xc99
 CFLAGS =  -g -mt -m64 -xcode=pic32 -I /home/spc/work/ecid/third_party/lua-5.1.4/src -I /usr/sfw/include
 LFLAGS = -G -mt -m64 -L /usr/sfw/lib/64
 LNET   = -lsocket -lnsl
+MKDIR  = /bin/mkdir
 endif
 
 LUALUA = /usr/local/share/lua/5.1
@@ -40,7 +42,8 @@ LUALIB = /usr/local/lib/lua/5.1
 
 .PHONY:	all clean
 
-all : lib/env.so	\
+all : lib		\
+	lib/env.so	\
 	lib/errno.so	\
 	lib/fsys.so	\
 	lib/math.so	\
@@ -62,6 +65,9 @@ all : lib/env.so	\
 
 build/bin2c : build/bin2c.c
 	$(CC) $(CFLAGS) -o $@ $<
+
+lib :
+	$(MKDIR) lib
 
 lib/env.so : src/env.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
