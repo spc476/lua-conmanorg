@@ -120,7 +120,25 @@ int uuidlib_init(void)
     close(sock);
     return 0;
   }
-
+  
+  /*-----------------------------------------------------------------------
+  ; we found no Ethernet interface to use.  So let's make up a MAC address
+  ;
+  ; The size calculation of rndbuf[] is done such that it will be the 
+  ; smallest integral size of rand__t that is larger than a MAC address.
+  ;-----------------------------------------------------------------------*/
+  
+  uint8_t rndbuf[(sizeof(m_mac) / sizeof(rand__t)) + sizeof(rand__t)];
+  
+  assert(sizeof(rndbuf) >= sizeof(m_mac));
+  
+  for (size_t i = 0 ; i < (sizeof(rndbuf) / sizeof(rand__t)) ; i++)
+    rndbuf[i] = (unsigned)rand() + (unsigned)rand();
+  
+  memcpy(m_mac,rndbuf,sizeof(m_mac));
+  m_mac[0] &= 0xFE;	/* this is an individual address */
+  m_mac[0] |= 0x02;	/* this is an assigned (local) address */
+  
   errno = 0;
   
 uuidlib_init_error:
