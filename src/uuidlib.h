@@ -69,6 +69,7 @@ extern const uuid__t c_uuid_namespace_oid;
 extern const uuid__t c_uuid_namespace_x500;
 extern const uuid__t c_uuid_null;
 
+int	uuidlib_init		(void);
 int	uuidlib_v1		(uuid__t *const);
 int	uuidlib_v2		(uuid__t *const) __attribute__((unused));
 int	uuidlib_v3		(uuid__t *const,const uuid__t *const,const void *const,const size_t);

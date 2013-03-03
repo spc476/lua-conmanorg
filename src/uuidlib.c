@@ -30,6 +30,10 @@
 
 #include <arpa/inet.h>
 #include <openssl/evp.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <unistd.h>
+#include <netinet/in.h>
 
 #include "uuidlib.h"
 
@@ -77,9 +81,55 @@ const uuid__t c_uuid_null =
           }
 };
 
-static const uint8_t m_mac[6] = { 0xDE , 0xCA , 0xFB , 0xAD , 0x02 , 0x01 };
+static uint8_t m_mac[6] = { 0xDE , 0xCA , 0xFB , 0xAD , 0x02 , 0x01 };
 
 /*************************************************************************/
+
+int uuidlib_init(void)
+{
+  struct ifreq  *it;
+  struct ifreq  *end;
+  struct ifreq   ifr;
+  struct ifconf  ifc;
+  char           buffer[BUFSIZ];
+  int            err;
+  int            sock;
+  
+  sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_IP);
+  if (sock == -1) return errno;
+  
+  ifc.ifc_len = sizeof(buffer);
+  ifc.ifc_buf = buffer;
+  
+  if (ioctl(sock,SIOCGIFCONF,&ifc) < 0)
+    goto uuidlib_init_error;
+  
+  it  = ifc.ifc_req;
+  end = it + (ifc.ifc_len / sizeof(struct ifreq));
+  
+  for ( ; it != end ; it++)
+  {
+    strcpy(ifr.ifr_name,it->ifr_name);
+    if (ioctl(sock,SIOCGIFFLAGS,&ifr) < 0)
+      goto uuidlib_init_error;
+    if ((ifr.ifr_flags & IFF_LOOPBACK) == IFF_LOOPBACK)
+      continue;
+    if (ioctl(sock,SIOCGIFHWADDR,&ifr) < 0)
+      goto uuidlib_init_error;
+    memcpy(m_mac,ifr.ifr_hwaddr.sa_data,sizeof(m_mac));
+    close(sock);
+    return 0;
+  }
+
+  errno = 0;
+  
+uuidlib_init_error:
+  err = errno;
+  close(sock);
+  return err;
+}
+
+/***********************************************************************/
 
 int uuidlib_v1(uuid__t *const uuid)
 {
