@@ -19,7 +19,9 @@
 *
 *********************************************************************/
 
-#define _GNU_SOURCE
+#ifdef __GNUC__
+#  define _GNU_SOURCE
+#endif
 
 #include <time.h>
 #include <assert.h>
@@ -34,6 +36,12 @@
 #include <net/if.h>
 #include <unistd.h>
 #include <netinet/in.h>
+
+#ifdef __SunOS
+#  include <net/if_arp.h>
+#  include <sys/socket.h>
+#  include <sys/sockio.h>
+#endif
 
 #include "uuidlib.h"
 
@@ -89,7 +97,6 @@ int uuidlib_init(void)
 {
   struct ifreq  *it;
   struct ifreq  *end;
-  struct ifreq   ifr;
   struct ifconf  ifc;
   char           buffer[BUFSIZ];
   int            err;
@@ -109,14 +116,25 @@ int uuidlib_init(void)
   
   for ( ; it != end ; it++)
   {
-    strcpy(ifr.ifr_name,it->ifr_name);
-    if (ioctl(sock,SIOCGIFFLAGS,&ifr) < 0)
+    if (ioctl(sock,SIOCGIFFLAGS,it) < 0)
       goto uuidlib_init_error;
-    if ((ifr.ifr_flags & IFF_LOOPBACK) == IFF_LOOPBACK)
+      
+    if ((it->ifr_flags & IFF_LOOPBACK) == IFF_LOOPBACK)
       continue;
-    if (ioctl(sock,SIOCGIFHWADDR,&ifr) < 0)
+
+#ifdef __SunOS
+    struct arpreq arpreq;
+
+    memcpy(&arpreq.arp_pa,&it->ifr_addr,sizeof(it->ifr_addr));
+    if (ioctl(sock,SIOCGARP,&arpreq) < 0)
       goto uuidlib_init_error;
-    memcpy(m_mac,ifr.ifr_hwaddr.sa_data,sizeof(m_mac));
+    memcpy(m_mac,arpreq.arp_ha.sa_data,sizeof(m_mac));
+#else      
+    if (ioctl(sock,SIOCGIFHWADDR,it) < 0)
+      goto uuidlib_init_error;
+    memcpy(m_mac,it->ifr_hwaddr.sa_data,sizeof(m_mac));
+#endif
+
     close(sock);
     return 0;
   }
