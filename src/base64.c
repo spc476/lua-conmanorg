@@ -93,19 +93,24 @@ static int base64_decode(lua_State *const L)
   size_t      size;
   uint8_t     buf[4];
   luaL_Buffer b;
+  size_t      skip;
   
   data = luaL_checklstring(L,1,&size);
   if ((size % 4) != 0)
     return luaL_error(L,"invalid string size for Base-64");
     
   luaL_buffinit(L,&b);
-  
+  skip = 0;
+
   while(size)
   {
     for(size_t i = 0 ; i < 4 ; i++)
     {
       if (data[i] == '=')
+      {
         buf[i] = 0;
+	skip++;
+      }
       else
       {
         char *p = strchr(mtrans,data[i]);
@@ -114,10 +119,12 @@ static int base64_decode(lua_State *const L)
         assert(buf[i] < 64);
       }
     }
+    if (skip > 2)
+      return luaL_error(L,"invalid padding for Base-64");
         
     luaL_addchar(&b,(buf[0] << 2) | (buf[1] >> 4));
-    luaL_addchar(&b,(buf[1] << 4) | (buf[2] >> 2));
-    luaL_addchar(&b,(buf[2] << 6) | (buf[3]     ));
+    if (skip < 2) luaL_addchar(&b,(buf[1] << 4) | (buf[2] >> 2));
+    if( skip < 1) luaL_addchar(&b,(buf[2] << 6) | (buf[3]     ));
     
     data += 4;
     size -= 4;
