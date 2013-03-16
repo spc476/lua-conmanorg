@@ -24,14 +24,19 @@
 #endif
 
 #if defined(__sparcv9)
+#  define END "big"
 #  define CPU "sparcv9"
 #elif defined(__sparc)
+#  define END "big"
 #  define CPU "sparc"
 #elif defined(__x86)
+#  define END "little"
 #  define CPU "x86"
 #elif defined(__i386)
+#  define END "little"
 #  define CPU "x86"
 #elif defined(__x86_64)
+#  define END "little"
 #  define CPU "x86_64"
 #else
 #  error Define your CPU please
@@ -74,6 +79,8 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_setfield(L,-2,"_VERSION");
   lua_pushstring(L,buffer.machine);
   lua_setfield(L,-2,"_MACHINE");
+  lua_pushliteral(L,END);
+  lua_setfield(L,-2,"_ENDIAN");
 #ifdef _GNU_SOURCE
   lua_pushstring(L,buffer.domainname);
   lua_setfield(L,-2,"_DOMAINNAME");
