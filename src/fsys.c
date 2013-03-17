@@ -64,9 +64,8 @@ static int fsys_chroot(lua_State *L)
 {
   if (chroot(luaL_checkstring(L,1)) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -83,9 +82,8 @@ static int fsys_chdir(lua_State *L)
 {
   if (chdir(luaL_checkstring(L,1)) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -105,9 +103,8 @@ static int fsys_symlink(lua_State *L)
   
   if (symlink(old,new) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -126,9 +123,8 @@ static int fsys_link(lua_State *L)
   
   if (link(old,new) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -148,9 +144,8 @@ static int fsys_readlink(lua_State *L)
   size = readlink(luaL_checkstring(L,1),buffer,sizeof(buffer));
   if (size == -1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -184,9 +179,8 @@ static int fsys_mkdir(lua_State *L)
 {
   if (mkdir(luaL_checkstring(L,1),0777) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -209,9 +203,8 @@ static int fsys_utime(lua_State *L)
   
   if (utime(path,&when) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -227,9 +220,8 @@ static int fsys_rmdir(lua_State *L)
 {
   if (rmdir(luaL_checkstring(L,1)) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -331,9 +323,8 @@ static int fsys_stat(lua_State *L)
   {
     if (fstat(lua_tointeger(L,1),&status) < 0)
     {
-      err = errno;
       lua_pushnil(L);
-      lua_pushinteger(L,err);
+      lua_pushinteger(L,errno);
       return 2;
     }
   }
@@ -341,9 +332,8 @@ static int fsys_stat(lua_State *L)
   {
     if (stat(lua_tostring(L,1),&status) < 0)
     {
-      err = errno;
       lua_pushnil(L);
-      lua_pushinteger(L,err);
+      lua_pushinteger(L,errno);
       return 2;
     }
   }
@@ -352,9 +342,8 @@ static int fsys_stat(lua_State *L)
     FILE **pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
     if (fstat(fileno(*pfp),&status) < 0)
     {
-      err = errno;
       lua_pushnil(L);
-      lua_pushinteger(L,err);
+      lua_pushinteger(L,errno);
       return 2;
     }
   }
@@ -378,10 +367,8 @@ static int fsys_lstat(lua_State *L)
   rc    = lstat(fname,&status);
   if (rc == -1)
   {
-    int e = errno;
-    
     lua_pushnil(L);
-    lua_pushinteger(L,e);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -410,9 +397,8 @@ static int fsys_chmod(lua_State *L)
 
   if (chmod(fname,mode) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -476,9 +462,8 @@ static int fsys_access(lua_State *L)
   
   if (access(fname,mode) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -496,9 +481,8 @@ static int fsys_getcwd(lua_State *L)
   
   if (getcwd(cwd,sizeof(cwd)) == NULL)
   {
-    int e = errno;    
     lua_pushnil(L);
-    lua_pushinteger(L,e);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -521,9 +505,8 @@ static int fsys_opendir(lua_State *L)
   dir = opendir(dname);
   if (dir == NULL)
   {
-    int e = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,e);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -569,9 +552,8 @@ static int fsys_readdir(lua_State *L)
     
     if (entry == NULL)
     {
-      int e = errno;
       lua_pushnil(L);
-      if (e == 0)
+      if (errno == 0)
       {
         lua_pushboolean(L,1);
         return 2;
@@ -579,7 +561,7 @@ static int fsys_readdir(lua_State *L)
       else
       {
         lua_pushboolean(L,0);
-        lua_pushinteger(L,e);
+        lua_pushinteger(L,errno);
         return 3;
       }
     }
@@ -752,9 +734,8 @@ static int fsys_open(lua_State *L)
   fd->fh = open(fname,oflags,0666);
   if (fd->fh == -1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
     lua_pushinteger(L,0);
@@ -787,9 +768,8 @@ static int fsys_pipe(lua_State *L)
   
   if (pipe(fh) < 0)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -878,9 +858,8 @@ static int fsys_dup(lua_State *L)
   
   if (dup2(orig,copy) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -925,9 +904,8 @@ static int fsys_fdopen(lua_State *L)
   fp->fp  = fdopen(fh,luaL_checkstring(L,2));
   if (fp->fp == NULL)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -942,9 +920,8 @@ static int fsys_close(lua_State *L)
   {
     if (close(lua_tointeger(L,1)) < 0)
     {
-      int err = errno;
       lua_pushboolean(L,false);
-      lua_pushinteger(L,err);
+      lua_pushinteger(L,errno);
       return 2;
     }
     else
@@ -1009,9 +986,8 @@ static int fiolua_read(lua_State *L)
   bytes = read(fh,buffer,sizeof(buffer));
   if (bytes < 0)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -1067,9 +1043,8 @@ static int fiolua_isfile(lua_State *L)
   
   if (isatty(fh) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -1091,9 +1066,8 @@ static int fiolua_close(lua_State *L)
   {
     if (close(fd->fh) < 0)
     {
-      int err = errno;
       lua_pushboolean(L,false);
-      lua_pushinteger(L,err);
+      lua_pushinteger(L,errno);
       return 2;
     }
   }

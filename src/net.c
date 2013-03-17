@@ -324,9 +324,8 @@ static int netlua_socket(lua_State *const L)
   sock->fh = socket(family,type,proto);
   if (sock->fh == -1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -531,9 +530,8 @@ static int netlua_address(lua_State *const L)
       presult = getprotobyname_r(serv,&result,tmp,sizeof(tmp));
       if (presult == NULL)
       {
-        int err = errno;
         lua_pushnil(L);
-        lua_pushinteger(L,err);
+        lua_pushinteger(L,errno);
         return 2;
       }
 #else           
@@ -568,9 +566,8 @@ static int netlua_address(lua_State *const L)
     presult = getservbyname_r(serv,type,&result,tmp,sizeof(tmp));
     if (presult == NULL)
     {
-      int err = errno;
       lua_pushnil(L);
-      lua_pushinteger(L,err);
+      lua_pushinteger(L,errno);
       return 2;
     }
 #else    
@@ -837,9 +834,8 @@ static int socklua_peer(lua_State *const L)
   
   if (getpeername(s,&addr->sa,&len) < 0)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -995,10 +991,9 @@ static int socklua_accept(lua_State *const L)
   newsock->fh = accept(sock->fh,&remote->sa,&remsize);
   if (newsock->fh == -1)
   {
-    int err = errno;
     lua_pushnil(L);
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 3;
   }
   
@@ -1022,10 +1017,8 @@ static int socklua_reuse(lua_State *const L)
   sock = luaL_checkudata(L,1,NET_SOCK);
   if (setsockopt(sock->fh,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(int)) < 0)
   {
-    int err = errno;
-    
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -1084,10 +1077,9 @@ static int socklua_read(lua_State *const L)
   bytes = recvfrom(fdlist.fd,buffer,sizeof(buffer),0,&remaddr->sa,&remsize);
   if (bytes < 0)
   {
-    int err = errno;
     lua_pushnil(L);
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 3;
   }
   
@@ -1140,9 +1132,8 @@ static int socklua_write(lua_State *const L)
   bytes  = sendto(sock->fh,buffer,bufsiz,0,remaddr,remsize);
   if (bytes < 0)
   {
-    int err = errno;
     lua_pushinteger(L,-1);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   

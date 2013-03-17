@@ -45,10 +45,8 @@ static int luaiconv_open(lua_State *L)
   
   if (ic == (iconv_t)-1)
   {
-    int err = errno;
-    
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     lua_pushfstring(L,"%s:%s",tocode,fromcode);
     return 3;
   }
@@ -81,12 +79,10 @@ static int luametaiconv_iconv(lua_State *L)
   rc = iconv(*pic,(char **)&from,&fsize,&pto,&tsize);
   if (rc == (size_t)-1)
   {
-    int err = errno;
-    
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     
-    if (err == E2BIG)
+    if (errno == E2BIG)
     {
       lua_pushnil(L);
       lua_pushnil(L);
@@ -117,10 +113,8 @@ static int luametaiconv_close(lua_State *L)
   
   if (iconv_close(*pic) < 0)
   {
-    int err = errno;
-    
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     lua_pushliteral(L,"how did this happen?");
     return 3;
   }

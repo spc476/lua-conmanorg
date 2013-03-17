@@ -377,10 +377,8 @@ static int proclua_fork(lua_State *const L)
   }
   else
   {
-    int err = errno;
-    
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
 }
@@ -399,9 +397,8 @@ static int proclua_wait(lua_State *const L)
   rc    = waitpid(child,&status,flag);
   if (rc == -1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -431,10 +428,9 @@ static int proclua_waitusage(lua_State *const L)
   rc    = wait4(child,&status,flag,&usage);
   if (rc == -1)
   {
-    int err = errno;
     lua_pushnil(L);
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 3;
   }
   
@@ -469,9 +465,8 @@ static int proclua_waitid(lua_State *const L)
   memset(&info,0,sizeof(info));
   if (waitid(idtype,child,&info,flag) == -1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -534,9 +529,8 @@ static int proclua_getrusage(lua_State *const L)
   
   if (getrusage(who,&usage) < 0)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -589,9 +583,8 @@ static int proclua_itimer(lua_State *const L)
   
   if (setitimer(ITIMER_REAL,&set,NULL) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
   }
   else
   {
@@ -621,9 +614,8 @@ static int proclua_sleep(lua_State *const L)
   
   if (nanosleep(&interval,&left) < 0)
   {
-    int err = errno;
     lua_pushnumber(L,param);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -659,9 +651,8 @@ static int proclua_kill(lua_State *const L)
   
   if (kill(child,sig) < 0)
   {
-    int err = errno;
     lua_pushboolean(L,false);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -807,9 +798,8 @@ static int proclua_times(lua_State *const L)
   
   if (times(&tms) == (clock_t)-1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
 
@@ -985,9 +975,8 @@ static int mhlimitlua___index(lua_State *const L)
   rc = getrlimit(key,&limit);
   if (rc == -1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
@@ -1059,9 +1048,8 @@ static int mslimitlua___index(lua_State *const L)
   rc = getrlimit(key,&limit);
   if (rc == -1)
   {
-    int err = errno;
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,errno);
     return 2;
   }
   
