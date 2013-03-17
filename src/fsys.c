@@ -317,7 +317,6 @@ static void impl_dumpstat(lua_State *L,struct stat *status)
 static int fsys_stat(lua_State *L)
 {
   struct stat status;
-  int         err;
   
   if (lua_isnumber(L,1))
   {
