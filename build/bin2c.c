@@ -220,7 +220,7 @@ int main(int argc,char *argv[])
            tag = optarg;
            break;
       case 'o':
-           fpout = fopen(optarg,"w");
+           fpout = fopen(optarg,"wb");
            if (fpout == NULL)
            {
              perror(optarg);
