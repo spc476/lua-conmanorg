@@ -64,7 +64,7 @@ all : lib		\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ $< -lz
 
 lib :
 	$(MKDIR) lib
