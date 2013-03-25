@@ -26,6 +26,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#ifndef __GNUC__
+#  define __attribute__(x)
+#endif
+
 #if RAND_MAX == SHORT_MAX
   typedef unsigned short rand__t;
 #else
