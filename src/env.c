@@ -27,6 +27,13 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if defined(__GNUC__) && defined(__x86_64)
+#  include <limits.h>
+#  define SIZET_MAX INT_MAX
+#else
+#  define SIZET_MAX (size_t)-1
+#endif
+
 extern char **environ;
 
 static const struct luaL_reg env[] =
