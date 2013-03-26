@@ -50,9 +50,9 @@ int luaopen_org_conman_env(lua_State *L)
     char   *value;
     char   *eos;
     
-    value = memchr(environ[i],'=',(size_t)-1);
+    value = memchr(environ[i],'=',SIZET_MAX);
     assert(value != NULL);
-    eos   = memchr(value + 1,'\0',(size_t)-1);
+    eos   = memchr(value + 1,'\0',SIZET_MAX);
     assert(eos   != NULL);
     
     lua_pushlstring(L,environ[i],(size_t)(value - environ[i]));
