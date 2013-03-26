@@ -27,7 +27,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if defined(__GNUC__) && defined(__x86_64)
+#if defined(__GNUC__) && defined(__x86_64) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 12)
 #  include <limits.h>
 #  define SIZET_MAX INT_MAX
 #else
