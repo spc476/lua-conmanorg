@@ -882,7 +882,7 @@ static bool mlimit_trans(
     *pret = RLIMIT_NOFILE;
   else if (strcmp(tag,"stack") == 0)
     *pret = RLIMIT_STACK;
-  else if (strcmp(tag,"as") == 0)
+  else if (strcmp(tag,"vm") == 0)
     *pret = RLIMIT_AS;
   else
     return false;
