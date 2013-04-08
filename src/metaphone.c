@@ -127,7 +127,8 @@ static int metaphone_lua(lua_State *const L)
     if (KSFlag)
     {
       KSFlag = false;
-      luaL_addchar(&metaph,*n);      
+      if (*n)
+        luaL_addchar(&metaph,*n);      
     }
     else
     {
@@ -136,14 +137,20 @@ static int metaphone_lua(lua_State *const L)
         continue;
         
       if (same(*n) || ((n == n_start) && vowel(*n)))
-        luaL_addchar(&metaph,*n);
+      {
+        if (*n)
+          luaL_addchar(&metaph,*n);
+      }
       else 
       {
         switch (*n)
         {
           case 'B':
                if ((n < n_end) || (n[-1] != 'M'))
-                 luaL_addchar(&metaph,*n);
+               {
+                 if (*n)
+                   luaL_addchar(&metaph,*n);
+               }
                break;
                
           case 'C':
@@ -215,7 +222,10 @@ static int metaphone_lua(lua_State *const L)
           case 'W':
           case 'Y':
                if (vowel(n[1]))
-                 luaL_addchar(&metaph,*n);
+               {
+                 if (*n)
+                   luaL_addchar(&metaph,*n);
+               }
                break;
                
           case 'X':
