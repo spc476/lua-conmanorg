@@ -59,13 +59,13 @@ static int metaphone_lua(lua_State *const L)
   word = luaL_checklstring(L,1,&wordsize);
   luaL_buffinit(L,&metaph);
   
-  char ntrans[wordsize + 3];
+  char ntrans[wordsize + 4];
   char *n;
   char *n_start;
   char *n_end;
   
   for (
-    n = ntrans + 1 , n_end = ntrans + wordsize ; 
+    n = ntrans + 1 , n_end = ntrans + wordsize + 1; 
     (*word != '\0') && (n < n_end);
     word++
   )  
