@@ -64,6 +64,8 @@ static int metaphone_lua(lua_State *const L)
   char *n_start;
   char *n_end;
   
+  ntrans[0] = '\0';
+  
   for (
     n = ntrans + 1 , n_end = ntrans + wordsize + 1; 
     (*word != '\0') && (n < n_end);
