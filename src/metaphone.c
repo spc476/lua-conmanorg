@@ -41,12 +41,11 @@ static const char vsfn[26] =
 /* A  B C  D E F G  H I J K L M N O P Q R S T U V W X Y Z */
 };
 
-/* Testing macros */
-#define vowel(x)   (vsfn[(x) - 'A'] & 1)
-#define same(x)    (vsfn[(x) - 'A'] & 2)
-#define varson(x)  (vsfn[(x) - 'A'] & 4)
-#define frontv(x)  (vsfn[(x) - 'A'] & 8)
-#define noghf(x)   (vsfn[(x) - 'A'] & 16)
+static inline bool vowel(int x) { return isalpha(x) && (vsfn[(x) - 'A'] & 1); }
+static inline bool same(int x)  { return isalpha(x) && (vsfn[(x) - 'A'] & 2); }
+static inline bool varson(int x){ return isalpha(x) && (vsfn[(x) - 'A'] & 4); }
+static inline bool frontv(int x){ return isalpha(x) && (vsfn[(x) - 'A'] & 8); }
+static inline bool noghf(int x) { return isalpha(x) && (vsfn[(x) - 'A'] & 16);}
 
 /********************************************************************/
 
