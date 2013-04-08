@@ -62,6 +62,7 @@ all : lib		\
 	lib/uuid.so	\
 	lib/base64.so	\
 	lib/soundex.so	\
+	lib/metaphone.so \
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -126,6 +127,9 @@ lib/base64.so : src/base64.c
 
 lib/soundex.so : src/soundex.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+	
+lib/metaphone.so : src/metaphone.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
@@ -149,6 +153,7 @@ install : all
 	install lib/wrap.so    $(LUALIB)/org/conman/string
 	install lib/remchar.so $(LUALIB)/org/conman/string
 	install lib/soundex.so $(LUALIB)/org/conman/string
+	install lib/metaphone.so $(LUALIB)/org/conman/string
 	install lib/iconv.so   $(LUALIB)/org/conman
 	install lib/crc.so     $(LUALIB)/org/conman
 	install lib/hash.so    $(LUALIB)/org/conman
