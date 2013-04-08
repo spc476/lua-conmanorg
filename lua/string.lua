@@ -26,6 +26,7 @@ module("org.conman.string",package.seeall)
 trim    = require "org.conman.string.trim"
 wrap    = require "org.conman.string.wrap"
 remchar = require "org.conman.string.remchar"
+soundex = require "org.conman.string.soundex"
 
 function split(s,delim)
   local results = {}
