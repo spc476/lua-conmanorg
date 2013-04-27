@@ -103,7 +103,7 @@ static int	addrlua___len		(lua_State *const) __attribute__((nonnull));
 
 /*************************************************************************/
 
-static const luaL_reg mnet_reg[] =
+static const luaL_Reg m_net_reg[] =
 {
   { "socket"		, netlua_socket		} ,
   { "socketfd"		, netlua_socketfd	} ,
@@ -113,7 +113,7 @@ static const luaL_reg mnet_reg[] =
   { NULL		, NULL			}
 };
 
-static const luaL_reg msock_regmeta[] =
+static const luaL_Reg m_sock_meta[] =
 {
   { "__tostring"	, socklua___tostring	} ,
   { "__gc"		, socklua_close		} ,
@@ -133,7 +133,7 @@ static const luaL_reg msock_regmeta[] =
   { NULL		, NULL			}
 };
 
-static const luaL_reg maddr_regmeta[] =
+static const luaL_Reg m_addr_meta[] =
 {
   { "__index"		, addrlua___index	} ,
   { "__tostring"	, addrlua___tostring	} ,
@@ -1393,12 +1393,12 @@ static int addrlua___len(lua_State *const L)
 int luaopen_org_conman_net(lua_State *const L)
 {
   luaL_newmetatable(L,TYPE_SOCK);
-  luaL_register(L,NULL,msock_regmeta);
+  luaL_register(L,NULL,m_sock_meta);
 
   luaL_newmetatable(L,TYPE_ADDR);
-  luaL_register(L,NULL,maddr_regmeta);
+  luaL_register(L,NULL,m_addr_meta);
   
-  luaL_register(L,"org.conman.net",mnet_reg);
+  luaL_register(L,"org.conman.net",m_net_reg);
   return 1;
 }
 
