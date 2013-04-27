@@ -43,7 +43,7 @@
 #include <libgen.h>
 #include <utime.h>
 
-#define FSYS_FD		"fsys:fd"
+#define TYPE_FD		"org.conman.fsys:fd"
 
 /*************************************************************************/
 
@@ -727,7 +727,7 @@ static int fsys_open(lua_State *L)
     luaL_error(L,"illegal flag: %s",flags);
   
   fd = lua_newuserdata(L,sizeof(fd__t));
-  luaL_getmetatable(L,FSYS_FD);
+  luaL_getmetatable(L,TYPE_FD);
   lua_setmetatable(L,-2);
   
   fd->fh = open(fname,oflags,0666);
@@ -751,7 +751,7 @@ static int fsys_openfd(lua_State *L)
   
   fh = luaL_checkint(L,1);
   fd = lua_newuserdata(L,sizeof(fd__t));
-  luaL_getmetatable(L,FSYS_FD);
+  luaL_getmetatable(L,TYPE_FD);
   lua_setmetatable(L,-2);
   fd->fh = fh;
   return 1;
@@ -776,13 +776,13 @@ static int fsys_pipe(lua_State *L)
   
   read = lua_newuserdata(L,sizeof(fd__t));
   read->fh = fh[0];
-  luaL_getmetatable(L,FSYS_FD);
+  luaL_getmetatable(L,TYPE_FD);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"read");
   
   write = lua_newuserdata(L,sizeof(fd__t));
   write->fh = fh[1];
-  luaL_getmetatable(L,FSYS_FD);
+  luaL_getmetatable(L,TYPE_FD);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"write");
   
@@ -959,7 +959,7 @@ static int fiolua___tostring(lua_State *L)
 {
   fd__t *fd;
   
-  fd = luaL_checkudata(L,1,FSYS_FD);
+  fd = luaL_checkudata(L,1,TYPE_FD);
   lua_pushfstring(L,"FILE:%d",fd->fh);
   return 1;
 }
@@ -1059,7 +1059,7 @@ static int fiolua_close(lua_State *L)
 {
   fd__t *fd;
   
-  fd = luaL_checkudata(L,1,FSYS_FD);
+  fd = luaL_checkudata(L,1,TYPE_FD);
 
   if (fd->fh >= 0)
   {
@@ -1082,7 +1082,7 @@ static int fiolua_fd(lua_State *L)
 {
   fd__t *fd;
   
-  fd = luaL_checkudata(L,1,FSYS_FD);
+  fd = luaL_checkudata(L,1,TYPE_FD);
   lua_pushinteger(L,fd->fh);
   return 1;
 }
@@ -1138,7 +1138,7 @@ static const luaL_reg mfio_regmeta[] =
 
 int luaopen_org_conman_fsys(lua_State *L)
 {
-  luaL_newmetatable(L,FSYS_FD);
+  luaL_newmetatable(L,TYPE_FD);
   luaL_register(L,NULL,mfio_regmeta);
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");

@@ -28,7 +28,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#define ICONV_TYPE	"ICONV"
+#define TYPE_ICONV	"org.conman.iconv:iconv"
 
 /**************************************************************************/
 
@@ -53,7 +53,7 @@ static int luaiconv_open(lua_State *L)
   
   pic  = lua_newuserdata(L,sizeof(iconv_t));
 
-  luaL_getmetatable(L,ICONV_TYPE);
+  luaL_getmetatable(L,TYPE_ICONV);
   lua_setmetatable(L,-2);
     
   *pic = ic;
@@ -68,7 +68,7 @@ static int luametaiconv_iconv(lua_State *L)
   size_t      fsize;
   iconv_t    *pic;
   
-  pic  = luaL_checkudata(L,1,ICONV_TYPE);
+  pic  = luaL_checkudata(L,1,TYPE_ICONV);
   from = luaL_checklstring(L,2,&fsize);
   
   size_t  rc;
@@ -107,7 +107,7 @@ static int luametaiconv_close(lua_State *L)
 {
   iconv_t *pic;
   
-  pic = luaL_checkudata(L,1,ICONV_TYPE);
+  pic = luaL_checkudata(L,1,TYPE_ICONV);
   
   assert(*pic != (iconv_t)-1);
   
@@ -130,7 +130,7 @@ static int luametaiconv___tostring(lua_State *L)
 {
   iconv_t *pic;
   
-  pic = luaL_checkudata(L,1,ICONV_TYPE);
+  pic = luaL_checkudata(L,1,TYPE_ICONV);
 
   if (*pic == (iconv_t)-1)
     lua_pushfstring(L,"iconv (closed)");
@@ -146,7 +146,7 @@ static int luametaiconv___gc(lua_State *L)
 {
   iconv_t *pic;
   
-  pic = luaL_checkudata(L,1,ICONV_TYPE);
+  pic = luaL_checkudata(L,1,TYPE_ICONV);
   if (*pic != (iconv_t)-1)
   {
     iconv_close(*pic);
@@ -175,7 +175,7 @@ static const struct luaL_reg reg_iconv_meta[] =
 
 int luaopen_org_conman_iconv(lua_State *L)
 {
-  luaL_newmetatable(L,ICONV_TYPE);
+  luaL_newmetatable(L,TYPE_ICONV);
   luaL_register(L,NULL,reg_iconv_meta);
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");

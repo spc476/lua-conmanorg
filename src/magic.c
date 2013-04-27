@@ -27,7 +27,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#define MAGIC_TYPE	"It's MAGIC!"
+#define TYPE_MAGIC	"org.conman.magic:It's Magic!"
 
 /**************************************************************************/
 
@@ -79,7 +79,7 @@ static int magiclua_open(lua_State *const L)
       
   pm = lua_newuserdata(L,sizeof(magic_t));
   
-  luaL_getmetatable(L,MAGIC_TYPE);
+  luaL_getmetatable(L,TYPE_MAGIC);
   lua_setmetatable(L,-2);
   
   *pm = magic_open(flags);
@@ -96,7 +96,7 @@ static int magiclua_close(lua_State *const L)
   
   assert(L != NULL);
   
-  pm = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm = luaL_checkudata(L,1,TYPE_MAGIC);
   magic_close(*pm);
   *pm = NULL;
   return 0; 
@@ -110,7 +110,7 @@ static int magiclua_error(lua_State *const L)
   
   assert(L != NULL);
   
-  pm  = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm  = luaL_checkudata(L,1,TYPE_MAGIC);
   err = magic_error(*pm);
   lua_pushstring(L,err);
   return 1;
@@ -125,7 +125,7 @@ static int magiclua_setflags(lua_State *const L)
   int      flags;
   int      rc;
   
-  pm    = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm    = luaL_checkudata(L,1,TYPE_MAGIC);
   flags = 0;
   top   = lua_gettop(L);
   rc    = 0;
@@ -157,7 +157,7 @@ static int magiclua_load(lua_State *const L)
   
   assert(L != NULL);
   
-  pm       = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm       = luaL_checkudata(L,1,TYPE_MAGIC);
   filename = luaL_optstring(L,2,NULL);
   rc       = magic_load(*pm,filename);
   
@@ -182,7 +182,7 @@ static int magiclua_compile(lua_State *const L)
   
   assert(L != NULL);
   
-  pm       = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm       = luaL_checkudata(L,1,TYPE_MAGIC);
   filename = luaL_optstring(L,2,NULL);
   rc       = magic_compile(*pm,filename);
   
@@ -207,7 +207,7 @@ static int magiclua_check(lua_State *const L)
   
   assert(L != NULL);
   
-  pm       = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm       = luaL_checkudata(L,1,TYPE_MAGIC);
   filename = luaL_optstring(L,2,NULL);
   rc       = magic_check(*pm,filename);
   
@@ -230,7 +230,7 @@ static int magiclua_errno(lua_State *const L)
   
   assert(L != NULL);
   
-  pm = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm = luaL_checkudata(L,1,TYPE_MAGIC);
   lua_pushinteger(L,magic_errno(*pm));
   return 1;
 }
@@ -245,7 +245,7 @@ static int magiclua___call(lua_State *const L)
   
   assert(L != NULL);
   
-  pm       = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm       = luaL_checkudata(L,1,TYPE_MAGIC);
   filedata = luaL_checklstring(L,2,&size);
   
   if (lua_toboolean(L,3))
@@ -263,7 +263,7 @@ static int magiclua___tostring(lua_State *const L)
   magic_t *pm;
   
   assert(L != NULL);
-  pm = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm = luaL_checkudata(L,1,TYPE_MAGIC);
   lua_pushfstring(L,"MAGIC (%p)",(void *)pm);
   return 1;
 }
@@ -275,7 +275,7 @@ static int magiclua___gc(lua_State *const L)
   magic_t *pm;
   
   assert(L != NULL);
-  pm = luaL_checkudata(L,1,MAGIC_TYPE);
+  pm = luaL_checkudata(L,1,TYPE_MAGIC);
   if (*pm != NULL)
   {
     magic_close(*pm);
@@ -314,7 +314,7 @@ int luaopen_org_conman_fsys_magic(lua_State *const L)
 {
   assert(L != NULL);
   
-  luaL_newmetatable(L,MAGIC_TYPE);
+  luaL_newmetatable(L,TYPE_MAGIC);
   luaL_register(L,NULL,mmagic_reg_meta);
   
   luaL_register(L,"org.conman.fsys.magic",mmagic_reg);

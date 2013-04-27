@@ -50,8 +50,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define SYS_LIMIT_HARD	"rlimit_hard"
-#define SYS_LIMIT_SOFT	"rlimit_soft"
+#define TYPE_LIMIT_HARD	"org.conman.process:rlimit_hard"
+#define TYPE_LIMIT_SOFT	"org.conman.process:rlimit_soft"
 
 #ifndef __GNUC__
 #  define __attribute__(x)
@@ -966,7 +966,7 @@ static int mhlimitlua___index(lua_State *const L)
   
   assert(L != NULL);
   
-  luaL_checkudata(L,1,SYS_LIMIT_HARD);
+  luaL_checkudata(L,1,TYPE_LIMIT_HARD);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -999,7 +999,7 @@ static int mhlimitlua___newindex(lua_State *const L)
 
   assert(L != NULL);
   
-  luaL_checkudata(L,1,SYS_LIMIT_HARD);
+  luaL_checkudata(L,1,TYPE_LIMIT_HARD);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -1039,7 +1039,7 @@ static int mslimitlua___index(lua_State *const L)
   
   assert(L != NULL);
   
-  luaL_checkudata(L,1,SYS_LIMIT_SOFT);
+  luaL_checkudata(L,1,TYPE_LIMIT_SOFT);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -1074,7 +1074,7 @@ static int mslimitlua___newindex(lua_State *const L)
   
   assert(L != NULL);
   
-  luaL_checkudata(L,1,SYS_LIMIT_SOFT);
+  luaL_checkudata(L,1,TYPE_LIMIT_SOFT);
   tkey = luaL_checkstring(L,2);
   
   if (!mlimit_trans(&key,tkey))
@@ -1367,10 +1367,10 @@ int luaopen_org_conman_process(lua_State *const L)
 {
   assert(L != NULL);
   
-  luaL_newmetatable(L,SYS_LIMIT_HARD);
+  luaL_newmetatable(L,TYPE_LIMIT_HARD);
   luaL_register(L,NULL,mhlimit_reg);
   
-  luaL_newmetatable(L,SYS_LIMIT_SOFT);
+  luaL_newmetatable(L,TYPE_LIMIT_SOFT);
   luaL_register(L,NULL,mslimit_reg);
   
   luaL_register(L,"org.conman.process",mprocess_reg);
@@ -1386,12 +1386,12 @@ int luaopen_org_conman_process(lua_State *const L)
   
   lua_createtable(L,0,2);
   lua_newuserdata(L,sizeof(int));
-  luaL_getmetatable(L,SYS_LIMIT_HARD);
+  luaL_getmetatable(L,TYPE_LIMIT_HARD);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"hard");
   
   lua_newuserdata(L,sizeof(int));
-  luaL_getmetatable(L,SYS_LIMIT_SOFT);
+  luaL_getmetatable(L,TYPE_LIMIT_SOFT);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"soft");
   

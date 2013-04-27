@@ -29,7 +29,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#define HASH_TYPE	"org.conman.hash"
+#define TYPE_HASH	"org.conman.hash:hash"
 
 /************************************************************************/
 
@@ -70,7 +70,7 @@ static int hashlua_init(lua_State *const L)
   
   ctx = lua_newuserdata(L,sizeof(EVP_MD_CTX));
   EVP_DigestInit(ctx,m);
-  luaL_getmetatable(L,HASH_TYPE);
+  luaL_getmetatable(L,TYPE_HASH);
   lua_setmetatable(L,-2);
   return 1;
 }
@@ -83,7 +83,7 @@ static int hashlua_update(lua_State *const L)
   const char *data;
   size_t      size;
   
-  ctx  = luaL_checkudata(L,1,HASH_TYPE);
+  ctx  = luaL_checkudata(L,1,TYPE_HASH);
   data = luaL_checklstring(L,2,&size);
   
   if (size > INT_MAX)
@@ -106,7 +106,7 @@ static int hashlua_final(lua_State *const L)
   unsigned char  hash[EVP_MAX_MD_SIZE];
   unsigned int   hashsize;
   
-  ctx      = luaL_checkudata(L,1,HASH_TYPE);
+  ctx      = luaL_checkudata(L,1,TYPE_HASH);
   hashsize = sizeof(hash);
   
   EVP_DigestFinal(ctx,hash,&hashsize);
@@ -197,7 +197,7 @@ static int hashlua___tostring(lua_State *const L)
 {
   EVP_MD_CTX *ctx;
   
-  ctx = luaL_checkudata(L,1,HASH_TYPE);
+  ctx = luaL_checkudata(L,1,TYPE_HASH);
   lua_pushfstring(L,"HASH:%p",(void *)ctx);
   return 1;
 }
@@ -228,7 +228,7 @@ int luaopen_org_conman_hash(lua_State *const L)
 {
   OpenSSL_add_all_digests();
   
-  luaL_newmetatable(L,HASH_TYPE);
+  luaL_newmetatable(L,TYPE_HASH);
   luaL_register(L,NULL,hashlua_meta);
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");

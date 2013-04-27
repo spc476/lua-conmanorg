@@ -52,8 +52,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#define NET_SOCK	"net:sock"
-#define NET_ADDR	"net:addr"
+#define TYPE_SOCK	"org.conman.net:sock"
+#define TYPE_ADDR	"org.conman.net:addr"
 
 #ifdef __SunOS
 #  define SUN_LEN(x)	sizeof(struct sockaddr_un)
@@ -330,7 +330,7 @@ static int netlua_socket(lua_State *const L)
   }
   else
   {
-    luaL_getmetatable(L,NET_SOCK);
+    luaL_getmetatable(L,TYPE_SOCK);
     lua_setmetatable(L,-2);
     lua_pushinteger(L,0);
   }
@@ -352,7 +352,7 @@ static int netlua_socketfd(lua_State *const L)
   
   sock     = lua_newuserdata(L,sizeof(sock__t));
   sock->fh = luaL_checkinteger(L,1);
-  luaL_getmetatable(L,NET_SOCK);
+  luaL_getmetatable(L,TYPE_SOCK);
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
   return 2;
@@ -440,7 +440,7 @@ static int netlua_address2(lua_State *const L)
   {
     sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
     memcpy(&addr->sa,results->ai_addr,Inet_lensa(results->ai_addr));
-    luaL_getmetatable(L,NET_ADDR);
+    luaL_getmetatable(L,TYPE_ADDR);
     lua_setmetatable(L,-2);
     lua_pushinteger(L,0);
     return 2;
@@ -451,7 +451,7 @@ static int netlua_address2(lua_State *const L)
   {
     lua_pushinteger(L,i);
     sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-    luaL_getmetatable(L,NET_ADDR);
+    luaL_getmetatable(L,TYPE_ADDR);
     lua_setmetatable(L,-2);
     memcpy(&addr->sa,results->ai_addr,Inet_lensa(results->ai_addr));
     lua_settable(L,-3);
@@ -498,7 +498,7 @@ static int netlua_address(lua_State *const L)
     
     addr->ssun.sun_family = AF_UNIX;
     memcpy(addr->ssun.sun_path,host,hsize + 1);
-    luaL_getmetatable(L,NET_ADDR);
+    luaL_getmetatable(L,TYPE_ADDR);
     lua_setmetatable(L,-2);
     lua_pushinteger(L,0);
     return 2;
@@ -546,7 +546,7 @@ static int netlua_address(lua_State *const L)
 #endif
        
       Inet_setport(addr,result.p_proto);
-      luaL_getmetatable(L,NET_ADDR);
+      luaL_getmetatable(L,TYPE_ADDR);
       lua_setmetatable(L,-2);
       lua_pushinteger(L,0);
       return 2;
@@ -584,7 +584,7 @@ static int netlua_address(lua_State *const L)
     Inet_setportn(addr,result.s_port);
   }
   
-  luaL_getmetatable(L,NET_ADDR);
+  luaL_getmetatable(L,TYPE_ADDR);
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
   return 2;
@@ -596,7 +596,7 @@ static int socklua___tostring(lua_State *const L)
 {
   sock__t *sock;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
   lua_pushfstring(L,"SOCK:%d",sock->fh);
   return 1;
 }
@@ -678,7 +678,7 @@ static int socklua___index(lua_State *const L)
   double                    dvalue;
   socklen_t                 len;
   
-  sock  = luaL_checkudata(L,1,NET_SOCK);
+  sock  = luaL_checkudata(L,1,TYPE_SOCK);
   tkey  = luaL_checkstring(L,2);
   value = bsearch(tkey,m_sockoptions,MAX_SOPTS,sizeof(struct sockoptions),sopt_compare);
 
@@ -770,7 +770,7 @@ static int socklua___newindex(lua_State *const L)
   double                    seconds;
   double                    fract;
   
-  sock  = luaL_checkudata(L,1,NET_SOCK);
+  sock  = luaL_checkudata(L,1,TYPE_SOCK);
   tkey  = luaL_checkstring(L,2);
   value = bsearch(tkey,m_sockoptions,MAX_SOPTS,sizeof(struct sockoptions),sopt_compare);
   
@@ -848,7 +848,7 @@ static int socklua_peer(lua_State *const L)
   
   if (lua_isuserdata(L,1))
   {
-    sock__t *sock = luaL_checkudata(L,1,NET_SOCK);
+    sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
     s = sock->fh;
   }
   else
@@ -864,7 +864,7 @@ static int socklua_peer(lua_State *const L)
     return 2;
   }
   
-  luaL_getmetatable(L,NET_ADDR);
+  luaL_getmetatable(L,TYPE_ADDR);
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
   return 2;
@@ -884,8 +884,8 @@ static int socklua_bind(lua_State *const L)
   sockaddr_all__t *addr;
   sock__t         *sock;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
-  addr = luaL_checkudata(L,2,NET_ADDR);
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
+  addr = luaL_checkudata(L,2,TYPE_ADDR);
   
   if (bind(sock->fh,&addr->sa,Inet_len(addr)) < 0)
     lua_pushinteger(L,errno);
@@ -954,8 +954,8 @@ static int socklua_connect(lua_State *const L)
   sockaddr_all__t *addr;
   sock__t         *sock;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
-  addr = luaL_checkudata(L,2,NET_ADDR);
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
+  addr = luaL_checkudata(L,2,TYPE_ADDR);
   
   if (connect(sock->fh,&addr->sa,Inet_len(addr)) < 0)
     lua_pushinteger(L,errno);
@@ -977,7 +977,7 @@ static int socklua_listen(lua_State *const L)
   sock__t *sock;
   int      backlog;
   
-  sock    = luaL_checkudata(L,1,NET_SOCK);
+  sock    = luaL_checkudata(L,1,TYPE_SOCK);
   backlog = luaL_optint(L,2,5);
   
   if (listen(sock->fh,backlog) < 0)
@@ -1002,15 +1002,15 @@ static int socklua_accept(lua_State *const L)
   sock__t         *sock;
   sock__t         *newsock;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
   
   newsock = lua_newuserdata(L,sizeof(sock__t));
-  luaL_getmetatable(L,NET_SOCK);
+  luaL_getmetatable(L,TYPE_SOCK);
   lua_setmetatable(L,-2);
   
   remsize = sizeof(sockaddr_all__t);
   remote  = lua_newuserdata(L,sizeof(sockaddr_all__t));
-  luaL_getmetatable(L,NET_ADDR);
+  luaL_getmetatable(L,TYPE_ADDR);
   lua_setmetatable(L,-2);
   
   newsock->fh = accept(sock->fh,&remote->sa,&remsize);
@@ -1039,7 +1039,7 @@ static int socklua_reuse(lua_State *const L)
   sock__t *sock;
   int      reuse = 1;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
   if (setsockopt(sock->fh,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(int)) < 0)
   {
     lua_pushboolean(L,false);
@@ -1075,7 +1075,7 @@ static int socklua_read(lua_State *const L)
   int              timeout;
   int              rc;
   
-  sock          = luaL_checkudata(L,1,NET_SOCK);
+  sock          = luaL_checkudata(L,1,TYPE_SOCK);
   fdlist.events = POLLIN;
   fdlist.fd     = sock->fh;
   
@@ -1096,7 +1096,7 @@ static int socklua_read(lua_State *const L)
   
   remaddr = lua_newuserdata(L,sizeof(sockaddr_all__t));
   remsize = sizeof(sockaddr_all__t);
-  luaL_getmetatable(L,NET_ADDR);
+  luaL_getmetatable(L,TYPE_ADDR);
   lua_setmetatable(L,-2);
   
   bytes = recvfrom(fdlist.fd,buffer,sizeof(buffer),0,&remaddr->sa,&remsize);
@@ -1133,7 +1133,7 @@ static int socklua_write(lua_State *const L)
   size_t           bufsiz;
   ssize_t          bytes;
   
-  sock   = luaL_checkudata(L,1,NET_SOCK);
+  sock   = luaL_checkudata(L,1,TYPE_SOCK);
   buffer = luaL_checklstring(L,3,&bufsiz);  
   
   /*--------------------------------------------------------------------
@@ -1149,7 +1149,7 @@ static int socklua_write(lua_State *const L)
   }
   else
   {
-    remote  = luaL_checkudata(L,2,NET_ADDR);
+    remote  = luaL_checkudata(L,2,TYPE_ADDR);
     remaddr = &remote->sa;
     remsize = Inet_len(remote);
   }
@@ -1181,7 +1181,7 @@ static int socklua_shutdown(lua_State *const L)
   static const char *const opts[] = { "r" , "w" , "rw" };
   sock__t *sock;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
   if (shutdown(sock->fh,luaL_checkoption(L,2,"rw",opts)) < 0)
     lua_pushinteger(L,errno);
   else
@@ -1199,7 +1199,7 @@ static int socklua_shutdown(lua_State *const L)
 
 static int socklua_close(lua_State *const L)
 {
-  sock__t *sock = luaL_checkudata(L,1,NET_SOCK);
+  sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
 
   if (sock->fh != -1)
   {
@@ -1221,7 +1221,7 @@ static int socklua_fd(lua_State *const L)
 {
   sock__t *sock;
   
-  sock = luaL_checkudata(L,1,NET_SOCK);
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
   lua_pushinteger(L,sock->fh);
   return 1;
 }
@@ -1233,7 +1233,7 @@ static int addrlua___index(lua_State *const L)
   sockaddr_all__t *addr;
   const char      *sidx;
   
-  addr = luaL_checkudata(L,1,NET_ADDR);
+  addr = luaL_checkudata(L,1,TYPE_ADDR);
   if (!lua_isstring(L,2))
   {
     lua_pushnil(L);
@@ -1283,7 +1283,7 @@ static int addrlua___tostring(lua_State *const L)
   sockaddr_all__t *addr;
   char             taddr[INET6_ADDRSTRLEN];
   
-  addr = luaL_checkudata(L,1,NET_ADDR);
+  addr = luaL_checkudata(L,1,TYPE_ADDR);
   switch(addr->sa.sa_family)
   {
     case AF_INET:
@@ -1309,8 +1309,8 @@ static int addrlua___eq(lua_State *const L)
   sockaddr_all__t *a;
   sockaddr_all__t *b;
   
-  a = luaL_checkudata(L,1,NET_ADDR);
-  b = luaL_checkudata(L,2,NET_ADDR);
+  a = luaL_checkudata(L,1,TYPE_ADDR);
+  b = luaL_checkudata(L,2,TYPE_ADDR);
   
   if (a->sa.sa_family != b->sa.sa_family)
   {
@@ -1335,8 +1335,8 @@ static int addrlua___lt(lua_State *const L)
   sockaddr_all__t *a;
   sockaddr_all__t *b;
   
-  a = luaL_checkudata(L,1,NET_ADDR);
-  b = luaL_checkudata(L,2,NET_ADDR);
+  a = luaL_checkudata(L,1,TYPE_ADDR);
+  b = luaL_checkudata(L,2,TYPE_ADDR);
   
   if (a->sa.sa_family < b->sa.sa_family)
   {
@@ -1361,8 +1361,8 @@ static int addrlua___le(lua_State *const L)
   sockaddr_all__t *a;
   sockaddr_all__t *b;
   
-  a = luaL_checkudata(L,1,NET_ADDR);
-  b = luaL_checkudata(L,2,NET_ADDR);
+  a = luaL_checkudata(L,1,TYPE_ADDR);
+  b = luaL_checkudata(L,2,TYPE_ADDR);
   
   if (a->sa.sa_family <= b->sa.sa_family)
   {
@@ -1384,7 +1384,7 @@ static int addrlua___le(lua_State *const L)
 
 static int addrlua___len(lua_State *const L)
 {
-  lua_pushinteger(L,Inet_addrlen(luaL_checkudata(L,1,NET_ADDR)));
+  lua_pushinteger(L,Inet_addrlen(luaL_checkudata(L,1,TYPE_ADDR)));
   return 1;
 }
 
@@ -1392,10 +1392,10 @@ static int addrlua___len(lua_State *const L)
   
 int luaopen_org_conman_net(lua_State *const L)
 {
-  luaL_newmetatable(L,NET_SOCK);
+  luaL_newmetatable(L,TYPE_SOCK);
   luaL_register(L,NULL,msock_regmeta);
 
-  luaL_newmetatable(L,NET_ADDR);
+  luaL_newmetatable(L,TYPE_ADDR);
   luaL_register(L,NULL,maddr_regmeta);
   
   luaL_register(L,"org.conman.net",mnet_reg);
