@@ -47,6 +47,7 @@
 #include <sys/poll.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -607,7 +608,8 @@ typedef enum sopt
   SOPT_FLAG,
   SOPT_INT,
   SOPT_LINGER,
-  SOPT_TIMEVAL
+  SOPT_TIMEVAL,
+  SOPT_NONBLOCK,
 } sopt__t;
 
 struct sockoptions
@@ -630,6 +632,10 @@ static const struct sockoptions m_sockoptions[] =
   { "linger"		, SOL_SOCKET 	, SO_LINGER		, SOPT_LINGER	, true , true  } ,
   { "maxsegment"	, IPPROTO_TCP	, TCP_MAXSEG		, SOPT_INT	, true , true  } ,
   { "nodelay"		, IPPROTO_TCP	, TCP_NODELAY		, SOPT_FLAG	, true , true  } ,
+  { "nonblock"		, 0		, 0			, SOPT_NONBLOCK , true , true  } ,
+#ifdef SO_NOSIGPIPE
+  { "nosigpipe"		, SOL_SOCKET	, SO_NOSIGPIPE		, SOPT_FLAG	, true , true  } ,
+#endif
   { "oobinline"		, SOL_SOCKET 	, SO_OOBINLINE		, SOPT_FLAG	, true , true  } ,
   { "recvbuffer"	, SOL_SOCKET 	, SO_RCVBUF		, SOPT_INT	, true , true  } ,
   { "recvlow"		, SOL_SOCKET 	, SO_RCVLOWAT		, SOPT_INT	, true , true  } ,
@@ -735,6 +741,14 @@ static int socklua___index(lua_State *const L)
          }
          break;
 
+    case SOPT_NONBLOCK:
+         ivalue = fcntl(sock->fh,F_GETFL,0);
+         if (ivalue == -1)
+           lua_pushboolean(L,false);
+         else
+           lua_pushboolean(L,(ivalue & O_NONBLOCK) == O_NONBLOCK);
+         break;
+         
     default:
          assert(0);
          return luaL_error(L,"internal error");
@@ -799,7 +813,18 @@ static int socklua___newindex(lua_State *const L)
          if (setsockopt(sock->fh,value->level,value->option,&tvalue,sizeof(tvalue)) < 0)
            syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
          break;
-        
+    
+    case SOPT_NONBLOCK:
+         ivalue = fcntl(sock->fh,F_GETFL,0);
+         if (ivalue > 0)
+         {
+           if (fcntl(sock->fh,F_SETFL,ivalue | O_NONBLOCK) < 0)
+             syslog(LOG_ERR,"fcntl() = %s",strerror(errno));
+         }
+         else
+           syslog(LOG_ERR,"fcntl() = %s",strerror(errno));
+         break;
+         
     default:
          assert(0);
          return luaL_error(L,"internal error");
