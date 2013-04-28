@@ -39,14 +39,6 @@ extern const struct strint m_errors[];
 
 /***************************************************************************/
 
-static int errno_strerror(lua_State *L)
-{
-  lua_pushstring(L,strerror(luaL_checkint(L,1)));
-  return 1;
-}
-
-/***********************************************************************/
-
 static int errno___index(lua_State *L)
 {
   lua_pushstring(L,strerror(luaL_checkint(L,2)));
@@ -57,7 +49,6 @@ static int errno___index(lua_State *L)
 
 static const struct luaL_reg m_reg_errno[] = 
 {
-  { "strerror"	, errno_strerror } ,
   { NULL	, NULL		 }
 };
 
