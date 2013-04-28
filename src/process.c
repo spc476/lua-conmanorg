@@ -108,7 +108,7 @@ static int	set_signal_handler	(int,void (*)(int));
 
 /************************************************************************/
 
-static const struct luaL_reg mprocess_reg[] =
+static const struct luaL_Reg mprocess_reg[] =
 {
   { "getuid"		, proclua_getuid	} ,
   { "getgid"		, proclua_getgid	} ,
@@ -130,28 +130,28 @@ static const struct luaL_reg mprocess_reg[] =
   { NULL		, NULL			} 
 };
 
-static const struct luaL_reg mprocess_meta[] =
+static const struct luaL_Reg mprocess_meta[] =
 {
   { "__index"		, proclua___index	} ,
   { "__newindex"	, proclua___newindex	} ,
   { NULL		, NULL			}
 };
 
-static const struct luaL_reg mhlimit_reg[] =
+static const struct luaL_Reg mhlimit_reg[] =
 {
   { "__index" 		, mhlimitlua___index	} ,
   { "__newindex"	, mhlimitlua___newindex	} ,
   { NULL		, NULL			}
 };
 
-static const struct luaL_reg mslimit_reg[] =
+static const struct luaL_Reg mslimit_reg[] =
 {
   { "__index"		, mslimitlua___index	} ,
   { "__newindex"	, mslimitlua___newindex	} ,
   { NULL		, NULL			}
 };
 
-static const struct luaL_reg msig_reg[] =
+static const struct luaL_Reg msig_reg[] =
 {
   { "caught"	, siglua_caught		} ,
   { "catch"	, siglua_catch		} ,
