@@ -67,101 +67,107 @@ struct strint
 
 /*************************************************************************/
 
-static int	proclua_getuid		(lua_State *const);
-static int	proclua_getgid		(lua_State *const);
-static int	proclua_setuid		(lua_State *const);
-static int	proclua_setgid		(lua_State *const);
-static int	proclua_exit		(lua_State *const);
-static int	proclua_fork		(lua_State *const);
-static int	proclua_wait		(lua_State *const);
-static int	proclua_waitusage	(lua_State *const);
-static int	proclua_waitid		(lua_State *const);
-static int	proclua_sleep		(lua_State *const);
-static int	proclua_sleepres	(lua_State *const);
-static int	proclua_kill		(lua_State *const);
-static int	proclua_exec		(lua_State *const);
-static int	proclua_times		(lua_State *const);
-static int	proclua_getrusage	(lua_State *const);
-static int	proclua_pause		(lua_State *const);
-static int	proclua_itimer		(lua_State *const);
-static int	proclua___index		(lua_State *const);
-static int	proclua___newindex	(lua_State *const);
-static bool	mlimit_trans		(int *const restrict,const char *const restrict);
-static bool	mlimit_valid_suffix	(lua_Integer *const restrict,const int,const char *const restrict);
-static int	mhlimitlua___index	(lua_State *const);
-static int	mhlimitlua___newindex	(lua_State *const);
-static int	mslimitlua___index	(lua_State *const);
-static int	mslimitlua___newindex	(lua_State *const);
-static int	sig_meta___index	(lua_State *const);
-static int	siglua_caught		(lua_State *const);
-static int	siglua_catch		(lua_State *const);
-static int	siglua_ignore		(lua_State *const);
-static int	siglua_default		(lua_State *const);
-static int	siglua_block		(lua_State *const);
-static int	siglua_unblock		(lua_State *const);
-static int	siglua_mask		(lua_State *const);
-static int	siglua_getmask		(lua_State *const);
-static void	proc_pushstatus		(lua_State *const,const pid_t,int);
-static void	proc_pushrusage		(lua_State *const restrict,struct rusage *const restrict);
-static void	signal_handler		(int);
-static int	set_signal_handler	(int,void (*)(int));
+static int	proclua_getuid			(lua_State *const);
+static int	proclua_getgid			(lua_State *const);
+static int	proclua_setuid			(lua_State *const);
+static int	proclua_setgid			(lua_State *const);
+static int	proclua_exit			(lua_State *const);
+static int	proclua_fork			(lua_State *const);
+static int	proclua_wait			(lua_State *const);
+static int	proclua_waitusage		(lua_State *const);
+static int	proclua_waitid			(lua_State *const);
+static int	proclua_sleep			(lua_State *const);
+static int	proclua_sleepres		(lua_State *const);
+static int	proclua_kill			(lua_State *const);
+static int	proclua_exec			(lua_State *const);
+static int	proclua_times			(lua_State *const);
+static int	proclua_getrusage		(lua_State *const);
+static int	proclua_pause			(lua_State *const);
+static int	proclua_itimer			(lua_State *const);
+
+static int	proclua_meta___index		(lua_State *const);
+static int	proclua_meta___newindex		(lua_State *const);
+
+static bool	limit_trans			(int *const restrict,const char *const restrict);
+static bool	limit_valid_suffix		(lua_Integer *const restrict,const int,const char *const restrict);
+
+static int	hlimitlua_meta___index		(lua_State *const);
+static int	hlimitlua_meta___newindex	(lua_State *const);
+static int	slimitlua_meta___index		(lua_State *const);
+static int	slimitlua_meta___newindex	(lua_State *const);
+
+static int	sig_meta___index		(lua_State *const);
+
+static int	siglua_caught			(lua_State *const);
+static int	siglua_catch			(lua_State *const);
+static int	siglua_ignore			(lua_State *const);
+static int	siglua_default			(lua_State *const);
+static int	siglua_block			(lua_State *const);
+static int	siglua_unblock			(lua_State *const);
+static int	siglua_mask			(lua_State *const);
+static int	siglua_getmask			(lua_State *const);
+
+static void	proc_pushstatus			(lua_State *const,const pid_t,int);
+static void	proc_pushrusage			(lua_State *const restrict,struct rusage *const restrict);
+static void	signal_handler			(int);
+static int	set_signal_handler		(int,void (*)(int));
 
 /************************************************************************/
 
-static const struct luaL_Reg mprocess_reg[] =
+static const struct luaL_Reg m_process_reg[] =
 {
-  { "getuid"		, proclua_getuid	} ,
-  { "getgid"		, proclua_getgid	} ,
-  { "setuid"		, proclua_setuid	} ,
-  { "setgid"		, proclua_setgid	} ,
-  { "exit"		, proclua_exit		} ,
-  { "fork"		, proclua_fork		} ,
-  { "wait"		, proclua_wait		} ,
-  { "waitusage"		, proclua_waitusage	} ,
-  { "waitid"		, proclua_waitid	} ,
-  { "sleep"		, proclua_sleep		} ,
-  { "sleepres"		, proclua_sleepres	} ,
-  { "kill"		, proclua_kill		} ,
-  { "exec"		, proclua_exec		} ,
-  { "times"		, proclua_times		} ,
-  { "getrusage"		, proclua_getrusage	} ,
-  { "pause"		, proclua_pause		} ,
-  { "itimer"		, proclua_itimer	} ,
-  { NULL		, NULL			} 
+  { "getuid"		, proclua_getuid		} ,
+  { "getgid"		, proclua_getgid		} ,
+  { "setuid"		, proclua_setuid		} ,
+  { "setgid"		, proclua_setgid		} ,
+  { "exit"		, proclua_exit			} ,
+  { "fork"		, proclua_fork			} ,
+  { "wait"		, proclua_wait			} ,
+  { "waitusage"		, proclua_waitusage		} ,
+  { "waitid"		, proclua_waitid		} ,
+  { "sleep"		, proclua_sleep			} ,
+  { "sleepres"		, proclua_sleepres		} ,
+  { "kill"		, proclua_kill			} ,
+  { "exec"		, proclua_exec			} ,
+  { "times"		, proclua_times			} ,
+  { "getrusage"		, proclua_getrusage		} ,
+  { "pause"		, proclua_pause			} ,
+  { "itimer"		, proclua_itimer		} ,
+  { NULL		, NULL				} 
 };
 
-static const struct luaL_Reg mprocess_meta[] =
+static const struct luaL_Reg m_process_meta[] =
 {
-  { "__index"		, proclua___index	} ,
-  { "__newindex"	, proclua___newindex	} ,
-  { NULL		, NULL			}
+  { "__index"		, proclua_meta___index		} ,
+  { "__newindex"	, proclua_meta___newindex	} ,
+  { NULL		, NULL				}
 };
 
-static const struct luaL_Reg mhlimit_reg[] =
+static const struct luaL_Reg m_hlimit_meta[] =
 {
-  { "__index" 		, mhlimitlua___index	} ,
-  { "__newindex"	, mhlimitlua___newindex	} ,
-  { NULL		, NULL			}
+  { "__index" 		, hlimitlua_meta___index	} ,
+  { "__newindex"	, hlimitlua_meta___newindex	} ,
+  { NULL		, NULL				}
 };
 
-static const struct luaL_Reg mslimit_reg[] =
+static const struct luaL_Reg m_slimit_meta[] =
 {
-  { "__index"		, mslimitlua___index	} ,
-  { "__newindex"	, mslimitlua___newindex	} ,
-  { NULL		, NULL			}
+  { "__index"		, slimitlua_meta___index	} ,
+  { "__newindex"	, slimitlua_meta___newindex	} ,
+  { NULL		, NULL				}
 };
 
-static const struct luaL_Reg msig_reg[] =
+static const struct luaL_Reg m_sig_reg[] =
 {
-  { "caught"	, siglua_caught		} ,
-  { "catch"	, siglua_catch		} ,
-  { "ignore"	, siglua_ignore		} ,
-  { "default"	, siglua_default	} ,
-  { "block"	, siglua_block		} ,
-  { "unblock"	, siglua_unblock	} ,
-  { "mask"	, siglua_mask		} ,
-  { "getmask"	, siglua_getmask	} ,
-  { NULL	, NULL			}
+  { "caught"		, siglua_caught			} ,
+  { "catch"		, siglua_catch			} ,
+  { "ignore"		, siglua_ignore			} ,
+  { "default"		, siglua_default		} ,
+  { "block"		, siglua_block			} ,
+  { "unblock"		, siglua_unblock		} ,
+  { "mask"		, siglua_mask			} ,
+  { "getmask"		, siglua_getmask		} ,
+  { NULL		, NULL				}
 };
 
 static const struct strint m_sigs[] =
@@ -817,7 +823,7 @@ static int proclua_times(lua_State *const L)
 
 /*********************************************************************/
 
-static int proclua___index(lua_State *const L)
+static int proclua_meta___index(lua_State *const L)
 {
   const char *idx;
   
@@ -835,7 +841,7 @@ static int proclua___index(lua_State *const L)
 
 /*********************************************************************/
 
-static int proclua___newindex(lua_State *const L)
+static int proclua_meta___newindex(lua_State *const L)
 {
   const char *idx;
   
@@ -861,7 +867,7 @@ static int proclua___newindex(lua_State *const L)
 
 /*********************************************************************/
 
-static bool mlimit_trans(
+static bool limit_trans(
 	int        *const restrict pret,
 	const char *const restrict tag
 )
@@ -891,7 +897,7 @@ static bool mlimit_trans(
 
 /**********************************************************************/
 
-static bool mlimit_valid_suffix(
+static bool limit_valid_suffix(
 	lua_Integer *const restrict pval,
 	const int                   key,
 	const char *const restrict  unit
@@ -956,7 +962,7 @@ static bool mlimit_valid_suffix(
 
 /******************************************************************/
 
-static int mhlimitlua___index(lua_State *const L)
+static int hlimitlua_meta___index(lua_State *const L)
 {
   struct rlimit  limit;
   const char    *tkey;
@@ -968,7 +974,7 @@ static int mhlimitlua___index(lua_State *const L)
   luaL_checkudata(L,1,TYPE_LIMIT_HARD);
   tkey = luaL_checkstring(L,2);
   
-  if (!mlimit_trans(&key,tkey))
+  if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
   
   rc = getrlimit(key,&limit);
@@ -989,7 +995,7 @@ static int mhlimitlua___index(lua_State *const L)
 
 /************************************************************************/
 
-static int mhlimitlua___newindex(lua_State *const L)
+static int hlimitlua_meta___newindex(lua_State *const L)
 {
   struct rlimit  limit;
   const char    *tkey;
@@ -1001,7 +1007,7 @@ static int mhlimitlua___newindex(lua_State *const L)
   luaL_checkudata(L,1,TYPE_LIMIT_HARD);
   tkey = luaL_checkstring(L,2);
   
-  if (!mlimit_trans(&key,tkey))
+  if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
 
   if (lua_isnumber(L,3))
@@ -1014,7 +1020,7 @@ static int mhlimitlua___newindex(lua_State *const L)
     tval = lua_tostring(L,3);
     ival = strtoul(tval,(char **)&unit,10);
 
-    if (!mlimit_valid_suffix(&ival,key,unit))
+    if (!limit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
   } 
   else
@@ -1029,7 +1035,7 @@ static int mhlimitlua___newindex(lua_State *const L)
 
 /************************************************************************/
 
-static int mslimitlua___index(lua_State *const L)
+static int slimitlua_meta___index(lua_State *const L)
 {
   struct rlimit  limit;
   const char    *tkey;
@@ -1041,7 +1047,7 @@ static int mslimitlua___index(lua_State *const L)
   luaL_checkudata(L,1,TYPE_LIMIT_SOFT);
   tkey = luaL_checkstring(L,2);
   
-  if (!mlimit_trans(&key,tkey))
+  if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
   
   rc = getrlimit(key,&limit);
@@ -1062,7 +1068,7 @@ static int mslimitlua___index(lua_State *const L)
 
 /************************************************************************/
 
-static int mslimitlua___newindex(lua_State *const L)
+static int slimitlua_meta___newindex(lua_State *const L)
 {
   struct rlimit  climit;
   struct rlimit  limit;
@@ -1076,7 +1082,7 @@ static int mslimitlua___newindex(lua_State *const L)
   luaL_checkudata(L,1,TYPE_LIMIT_SOFT);
   tkey = luaL_checkstring(L,2);
   
-  if (!mlimit_trans(&key,tkey))
+  if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
 
   if (lua_isnumber(L,3))
@@ -1089,7 +1095,7 @@ static int mslimitlua___newindex(lua_State *const L)
     tval = lua_tostring(L,3);
     ival = strtoul(tval,(char **)&unit,10);
 
-    if (!mlimit_valid_suffix(&ival,key,unit))
+    if (!limit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
   } 
   else
@@ -1367,15 +1373,15 @@ int luaopen_org_conman_process(lua_State *const L)
   assert(L != NULL);
   
   luaL_newmetatable(L,TYPE_LIMIT_HARD);
-  luaL_register(L,NULL,mhlimit_reg);
+  luaL_register(L,NULL,m_hlimit_meta);
   
   luaL_newmetatable(L,TYPE_LIMIT_SOFT);
-  luaL_register(L,NULL,mslimit_reg);
+  luaL_register(L,NULL,m_slimit_meta);
   
-  luaL_register(L,"org.conman.process",mprocess_reg);
+  luaL_register(L,"org.conman.process",m_process_reg);
 
   lua_createtable(L,0,0);
-  luaL_register(L,NULL,msig_reg);
+  luaL_register(L,NULL,m_sig_reg);
   for (size_t i = 0 ; m_sigs[i].text != NULL ; i++)
   {
     lua_pushinteger(L,m_sigs[i].value);
@@ -1401,7 +1407,7 @@ int luaopen_org_conman_process(lua_State *const L)
   lua_setfield(L,-2,"limits");
   
   lua_createtable(L,0,0);
-  luaL_register(L,NULL,mprocess_meta);
+  luaL_register(L,NULL,m_process_meta);
   lua_setmetatable(L,-2);
   
   return 1;
