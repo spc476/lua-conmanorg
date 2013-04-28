@@ -42,12 +42,12 @@
 /***********************************************************************/
 
 static void	uuidluaL_pushuuid	(lua_State *const,const uuid__t *const);
-static int	uuidlua___tostring	(lua_State *const);
-static int	uuidlua___eq		(lua_State *const);
-static int	uuidlua___le		(lua_State *const);
-static int	uuidlua___lt		(lua_State *const);
-static int	uuidlua___len		(lua_State *const);
-static int	uuidlua___call		(lua_State *const);
+static int	uuidlua_meta___tostring	(lua_State *const);
+static int	uuidlua_meta___eq	(lua_State *const);
+static int	uuidlua_meta___le	(lua_State *const);
+static int	uuidlua_meta___lt	(lua_State *const);
+static int	uuidlua_meta___len	(lua_State *const);
+static int	uuidlua_meta___call	(lua_State *const);
 static int	uuidlua_parse		(lua_State *const);
 static int	uuidlua_breakout	(lua_State *const);
 
@@ -62,12 +62,12 @@ static const struct luaL_reg muuid_reg[] =
 
 static const struct luaL_reg muuid_meta[] =
 {
-  { "__tostring"	, uuidlua___tostring	} ,
-  { "__eq"		, uuidlua___eq		} ,
-  { "__lt"		, uuidlua___lt		} ,
-  { "__le"		, uuidlua___le		} ,
-  { "__len"		, uuidlua___len		} ,
-  { NULL		, NULL			}
+  { "__tostring"	, uuidlua_meta___tostring	} ,
+  { "__eq"		, uuidlua_meta___eq		} ,
+  { "__lt"		, uuidlua_meta___lt		} ,
+  { "__le"		, uuidlua_meta___le		} ,
+  { "__len"		, uuidlua_meta___len		} ,
+  { NULL		, NULL				}
 };
 
 /*************************************************************************/
@@ -94,7 +94,7 @@ int luaopen_org_conman_uuid(lua_State *const L)
   lua_setfield(L,-2,"NIL");
   
   lua_createtable(L,0,1);
-  lua_pushcfunction(L,uuidlua___call);
+  lua_pushcfunction(L,uuidlua_meta___call);
   lua_setfield(L,-2,"__call");
   lua_setmetatable(L,-2);
   
@@ -115,7 +115,7 @@ static void uuidluaL_pushuuid(lua_State *const L,const uuid__t *const uuid)
 
 /*************************************************************************/
 
-static int uuidlua___tostring(lua_State *const L)
+static int uuidlua_meta___tostring(lua_State *const L)
 {
   uuid__t *uuid;
   char     buffer[37];
@@ -129,7 +129,7 @@ static int uuidlua___tostring(lua_State *const L)
 
 /*************************************************************************/
 
-static int uuidlua___eq(lua_State *const L)
+static int uuidlua_meta___eq(lua_State *const L)
 {
   lua_pushboolean(
     L,
@@ -143,7 +143,7 @@ static int uuidlua___eq(lua_State *const L)
 
 /*************************************************************************/
 
-static int uuidlua___le(lua_State *const L)
+static int uuidlua_meta___le(lua_State *const L)
 {
   lua_pushboolean(
    L,
@@ -157,7 +157,7 @@ static int uuidlua___le(lua_State *const L)
 
 /*************************************************************************/
 
-static int uuidlua___lt(lua_State *const L)
+static int uuidlua_meta___lt(lua_State *const L)
 {
   lua_pushboolean(
     L,
@@ -171,7 +171,7 @@ static int uuidlua___lt(lua_State *const L)
 
 /*************************************************************************/
 
-static int uuidlua___len(lua_State *const L)
+static int uuidlua_meta___len(lua_State *const L)
 {
   luaL_checkudata(L,1,TYPE_UUID);
   lua_pushinteger(L,sizeof(uuid__t));
@@ -180,7 +180,7 @@ static int uuidlua___len(lua_State *const L)
 
 /*************************************************************************/
 
-static int uuidlua___call(lua_State *const L)
+static int uuidlua_meta___call(lua_State *const L)
 {
   uuid__t    *uuid;
   uuid__t    *pns;
