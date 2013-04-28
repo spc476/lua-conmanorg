@@ -92,6 +92,7 @@ static int	mhlimitlua___index	(lua_State *const);
 static int	mhlimitlua___newindex	(lua_State *const);
 static int	mslimitlua___index	(lua_State *const);
 static int	mslimitlua___newindex	(lua_State *const);
+static int	sig_meta___index	(lua_State *const);
 static int	siglua_caught		(lua_State *const);
 static int	siglua_catch		(lua_State *const);
 static int	siglua_ignore		(lua_State *const);
@@ -100,7 +101,6 @@ static int	siglua_block		(lua_State *const);
 static int	siglua_unblock		(lua_State *const);
 static int	siglua_mask		(lua_State *const);
 static int	siglua_getmask		(lua_State *const);
-static int	siglua_strsignal	(lua_State *const);
 static void	proc_pushstatus		(lua_State *const,const pid_t,int);
 static void	proc_pushrusage		(lua_State *const restrict,struct rusage *const restrict);
 static void	signal_handler		(int);
@@ -161,7 +161,6 @@ static const struct luaL_reg msig_reg[] =
   { "unblock"	, siglua_unblock	} ,
   { "mask"	, siglua_mask		} ,
   { "getmask"	, siglua_getmask	} ,
-  { "strsignal"	, siglua_strsignal	} ,
   { NULL	, NULL			}
 };
 
@@ -1354,10 +1353,10 @@ int siglua_getmask(lua_State *const L)
 
 /*********************************************************************/
 
-int siglua_strsignal(lua_State *const L)
+int sig_meta___index(lua_State *const L)
 {
   assert(L != NULL);
-  lua_pushstring(L,strsignal(luaL_checkinteger(L,1)));
+  lua_pushstring(L,strsignal(luaL_checkinteger(L,2)));
   return 1;
 }
 
@@ -1382,6 +1381,10 @@ int luaopen_org_conman_process(lua_State *const L)
     lua_pushinteger(L,m_sigs[i].value);
     lua_setfield(L,-2,m_sigs[i].text);
   }
+  lua_createtable(L,0,1);
+  lua_pushcfunction(L,sig_meta___index);
+  lua_setfield(L,-2,"__index");
+  lua_setmetatable(L,-2);
   lua_setfield(L,-2,"sig");
   
   lua_createtable(L,0,2);
