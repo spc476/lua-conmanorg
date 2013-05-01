@@ -173,7 +173,6 @@ static int syslog_close(lua_State *L __attribute__((unused)))
 
 static int syslog_log(lua_State *L)
 {
-  const char  *msg;
   int          level;
   int          top;
   
@@ -200,26 +199,19 @@ static int syslog_log(lua_State *L)
   }
   else
     return luaL_error(L,"number or string expected, got %s",luaL_typename(L,1));
+
+  /*------------------------------------------------------------------------
+  ; shove string.format() onto the stack to format the message, which
+  ; comprises the rest of the paramters.  Call it, then print the resulting
+  ; string via syslog()
+  ;--------------------------------------------------------------------------*/
   
-  if (top > 2)
-  {
-    luaL_Buffer buf;
-    
-    luaL_buffinit(L,&buf);
-    for (int i = 2 ; i <= top ; i++)
-    {
-      const char *text;
-      size_t      size;
-    
-      if (i > 2) luaL_addchar(&buf,' ');
-      text = lua_tolstring(L,i,&size);
-      luaL_addlstring(&buf,text,size);
-    }
-    luaL_pushresult(&buf);
-  }
-  
-  msg = lua_tostring(L,-1);
-  syslog(level,"%s",msg);
+  luaL_checktype(L,2,LUA_TSTRING);
+  lua_getfield(L,2,"format");
+  lua_insert(L,2);
+  lua_call(L,lua_gettop(L) - 2,1);
+  syslog(level,"%s",lua_tostring(L,-1));
+
   return 0;
 }
 
