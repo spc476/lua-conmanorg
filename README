@@ -535,6 +535,18 @@ org.conman.string	Some useful string operations
 		Break a string into an array on the character delim
 		(defaults to ':').
 
+	new = metaphone(string)
+		Run the metaphone algorithm over the string.
+
+	new = soundex(string)
+		Run the soundex algorithm over the string.
+
+	new = base64.encode(string)
+		Encode string in base64 encoding.
+
+	new = base64.decode(string)
+		Decode string in base64 encoding.
+
 -------------------------
 
 org.conman.table	Some useful table operations
