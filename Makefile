@@ -59,6 +59,7 @@ all : lib		\
 	lib/net.so	\
 	lib/tcc.so	\
 	lib/sys.so	\
+	lib/strcore.so	\
 	lib/base64.so	\
 	lib/soundex.so	\
 	lib/metaphone.so \
@@ -127,6 +128,9 @@ lib/soundex.so : src/soundex.c
 lib/metaphone.so : src/metaphone.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
+lib/strcore.so : src/strcore.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
 	/bin/rm -rf lib/*
@@ -159,6 +163,7 @@ install : all
 	install lib/tcc.so     $(LUALIB)/org/conman
 	install lib/sys.so     $(LUALIB)/org/conman
 	install lib/base64.so  $(LUALIB)/org/conman
+	install lib/strcore.so $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman

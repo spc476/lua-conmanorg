@@ -1,4 +1,4 @@
-/*********************************************************************
+/********************************************
 *
 * Copyright 2013 by Sean Conner.  All Rights Reserved.
 *
@@ -19,21 +19,225 @@
 *
 * ===================================================================
 *
-* The main algorithm was placed into the public domain by Gary A. Parker
-* and transcribed into machine readable format by Mark Grosbert from 
-* The C Gazette Jun/Jul 1991, Volume 5, No 4., Pg 55, and further modified
-* by Sean Conner for use with Lua.
+* The main algorithm for metaphone was placed into the public domain by Gary
+* A. Parker and transcribed into machine readable format by Mark Grosbert
+* from The C Gazette Jun/Jul 1991, Volume 5, No 4., Pg 55, and further
+* modified by Sean Conner for use with Lua.
 *
 *********************************************************************/
 
-#include <ctype.h>
-#include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+#include <ctype.h>
+#include <assert.h>
 
 #include <lua.h>
 #include <lauxlib.h>
 
-/********************************************************************/
+#define DEF_MARGIN	78
+
+/************************************************************************/
+
+static int	strcore_trim		(lua_State *const);
+static int	strcore_wrap		(lua_State *const);
+static int	strcore_remchar		(lua_State *const);
+static int	strcore_metaphone	(lua_State *const);
+static int	strcore_soundex		(lua_State *cosnt);
+
+/************************************************************************/
+
+static const luaL_Reg m_strcore_reg[] =
+{
+  { "trim"	, strcore_trim		} ,
+  { "wrap"	, strcore_wrap		} ,
+  { "remchar"	, strcore_remchar	} ,
+  { "metaphone"	, strcore_metaphone	} ,
+  { "soundex"	, strcore_soundex	} ,
+  { NULL	, NULL			}
+};
+
+/************************************************************************/
+
+int luaopen_org_conman_strcore(lua_State *const L)
+{
+  luaL_register(L,"org.conman.string",m_strcore_reg);
+  return 1;
+}
+
+/************************************************************************/
+
+static int strcore_trim(lua_State *const L)
+{
+  const char *front;
+  const char *end;
+  size_t      size;
+  
+  assert(L != NULL);
+  
+  front = lua_tolstring(L,1,&size);
+  end   = &front[size - 1];
+  
+  lua_pop(L,1);
+  
+  for ( ; size && isspace(*front) ; size-- , front++)
+    ;
+  
+  for ( ; size && isspace(*end) ; size-- , end--)
+    ;
+  
+  lua_pushlstring(L,front,(size_t)(end - front) + 1);
+  return 1;
+}
+
+/************************************************************************/
+
+static bool find_break_point(
+	size_t     *const restrict pidx,
+	const char *const restrict txt
+)
+{
+  size_t idx;
+  
+  assert(pidx  != NULL);
+  assert(*pidx >  0);
+  assert(txt   != NULL);
+
+  for (idx = *pidx ; idx ; idx--)
+    if (isspace(txt[idx])) break;
+  
+  if (idx)
+  {
+    *pidx = idx + 1;
+    return true;
+  }
+  
+  return false;
+}
+
+/************************************************************************/
+
+static int strcore_wrap(lua_State *const L)
+{
+  const char *src;
+  size_t      ssz;
+  size_t      margin;
+  size_t      breakp;
+  const char *lead;
+  size_t      lsize;
+  luaL_Buffer buf;
+  
+  src    = luaL_checklstring(L,1,&ssz);
+  margin = luaL_optinteger(L,2,DEF_MARGIN);
+  lead   = lua_tolstring(L,3,&lsize);
+  breakp = margin;
+  
+  luaL_buffinit(L,&buf);
+  
+  while(true)
+  {
+    if (ssz < breakp)
+      break;
+
+    if (find_break_point(&breakp,src))
+    {
+      if (lead) luaL_addlstring(&buf,lead,lsize);
+      luaL_addlstring(&buf,src,breakp - 1);
+      luaL_addchar(&buf,'\n');
+      src    += breakp;
+      ssz    -= breakp;
+      breakp  = margin;
+    }
+    else
+      break;
+  }
+  
+  if (lead) luaL_addlstring(&buf,lead,lsize);
+  luaL_addlstring(&buf,src,ssz);
+  luaL_addchar(&buf,'\n');
+  luaL_pushresult(&buf);
+  return 1;
+}
+
+/************************************************************************/
+
+static int strcore_remchar(lua_State *const L)
+{
+  const char *src;
+  size_t      size;
+  int         c;
+  
+  src = luaL_checklstring(L,1,&size);
+  if (lua_isnumber(L,2))
+    c = lua_tointeger(L,2);
+  else if (lua_isstring(L,2))
+  {
+    const char *cc;
+    cc = lua_tostring(L,2);
+    c = *cc;
+  }
+  else
+    return luaL_error(L,"you stupid, number or string!");
+
+  char   buffer[size];
+  char   *dst;
+  
+  for (dst = buffer ; size ; src++,size--)
+    if (*src != c)
+      *dst++ = *src;
+  
+  lua_pushlstring(L,buffer,(size_t)(dst - buffer));
+  return 1;
+}
+
+/************************************************************************/
+
+static int strcore_soundex(lua_State *const L)
+{
+  static const char        ignore[] = "AEIOUWYH";
+  static const char *const use[6]   =
+  {
+    "BPFV",
+    "CSKGJQXZ",
+    "DT",
+    "L",
+    "MN",
+    "R"
+  };
+  
+  char        sdx[4];
+  const char *word = luaL_checkstring(L,1);
+  char        c;
+  char        last;
+  size_t      idx;
+  
+  sdx[0] = last   = toupper(*word++);
+  sdx[1] = sdx[2] = sdx[3] = '0';
+  idx    = 1;
+  
+  while((idx < 4) && ((c = toupper(*word++)) != '\0'))
+  {
+    if (strchr(ignore,c) != NULL)
+      continue;
+    
+    for (size_t i = 0 ; i < 6 ; i++)
+    {
+      if (strchr(use[i],c) != NULL)
+      {
+        if (strchr(use[i],last) != NULL)
+          continue;
+        last = c;
+        sdx[idx++] = '1' + i;
+      }
+    }
+  }
+  
+  lua_pushlstring(L,sdx,4);
+  return 1;  
+}
+
+/************************************************************************/
 
 static const char vsfn[26] =
 {
@@ -47,9 +251,9 @@ static inline bool varson(int x){ return isalpha(x) && (vsfn[(x) - 'A'] & 4); }
 static inline bool frontv(int x){ return isalpha(x) && (vsfn[(x) - 'A'] & 8); }
 static inline bool noghf(int x) { return isalpha(x) && (vsfn[(x) - 'A'] & 16);}
 
-/********************************************************************/
+/************************************************************************/
 
-static int metaphone_lua(lua_State *const L)
+static int strcore_metaphone(lua_State *const L)
 {
   luaL_Buffer  metaph;
   const char  *word;
@@ -251,13 +455,5 @@ static int metaphone_lua(lua_State *const L)
   return 1; 
 }
 
-/********************************************************************/
-
-int luaopen_org_conman_string_metaphone(lua_State *const L)
-{
-  lua_pushcfunction(L,metaphone_lua);
-  return 1;
-}
-
-/********************************************************************/
+/************************************************************************/
 
