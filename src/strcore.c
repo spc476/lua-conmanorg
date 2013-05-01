@@ -63,6 +63,8 @@ static const luaL_Reg m_strcore_reg[] =
 int luaopen_org_conman_strcore(lua_State *const L)
 {
   luaL_register(L,"org.conman.string",m_strcore_reg);
+  lua_pushliteral(L,"0.9.0");
+  lua_setfield(L,-2,"_VERSION");
   return 1;
 }
 
