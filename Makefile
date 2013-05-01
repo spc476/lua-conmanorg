@@ -48,9 +48,6 @@ all : lib		\
 	lib/fsys.so	\
 	lib/math.so	\
 	lib/syslog.so	\
-	lib/trim.so	\
-	lib/wrap.so	\
-	lib/remchar.so	\
 	lib/iconv.so	\
 	lib/crc.so	\
 	lib/hash.so	\
@@ -61,8 +58,6 @@ all : lib		\
 	lib/sys.so	\
 	lib/strcore.so	\
 	lib/base64.so	\
-	lib/soundex.so	\
-	lib/metaphone.so \
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -84,15 +79,6 @@ lib/math.so : src/math.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 	
 lib/syslog.so : src/syslog.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
-lib/trim.so : src/trim.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
-lib/wrap.so : src/wrap.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-
-lib/remchar.so : src/remchar.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 	
 lib/iconv.so : src/iconv.c
@@ -120,12 +106,6 @@ lib/sys.so : src/sys.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
 lib/base64.so : src/base64.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-
-lib/soundex.so : src/soundex.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
-lib/metaphone.so : src/metaphone.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
 lib/strcore.so : src/strcore.c
