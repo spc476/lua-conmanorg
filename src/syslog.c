@@ -173,12 +173,7 @@ static int syslog_close(lua_State *L __attribute__((unused)))
 
 static int syslog_log(lua_State *L)
 {
-  int          level;
-  int          top;
-  
-  top = lua_gettop(L);
-  if (top < 2)
-    return luaL_error(L,"too few paramters to syslog()");
+  int level;
   
   if (lua_type(L,1) == LUA_TNUMBER)
   {
