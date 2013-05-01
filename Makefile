@@ -57,7 +57,6 @@ all : lib		\
 	lib/tcc.so	\
 	lib/sys.so	\
 	lib/strcore.so	\
-	lib/base64.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -105,9 +104,6 @@ lib/tcc.so : src/tcc.c
 lib/sys.so : src/sys.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
-lib/base64.so : src/base64.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-
 lib/strcore.so : src/strcore.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
@@ -122,18 +118,12 @@ install : all
 	install lua/*.lua $(LUALUA)/org/conman	
 	install lua/dns/*.lua $(LUALUA)/org/conman/dns
 	install -d $(LUALIB)/org/conman
-	install -d $(LUALIB)/org/conman/string
 	install -d $(LUALIB)/org/conman/fsys
 	install lib/env.so     $(LUALIB)/org/conman
 	install lib/errno.so   $(LUALIB)/org/conman
 	install lib/fsys.so    $(LUALIB)/org/conman
 	install lib/math.so    $(LUALIB)/org/conman
 	install lib/syslog.so  $(LUALIB)/org/conman
-	install lib/trim.so    $(LUALIB)/org/conman/string
-	install lib/wrap.so    $(LUALIB)/org/conman/string
-	install lib/remchar.so $(LUALIB)/org/conman/string
-	install lib/soundex.so $(LUALIB)/org/conman/string
-	install lib/metaphone.so $(LUALIB)/org/conman/string
 	install lib/iconv.so   $(LUALIB)/org/conman
 	install lib/crc.so     $(LUALIB)/org/conman
 	install lib/hash.so    $(LUALIB)/org/conman
@@ -142,7 +132,6 @@ install : all
 	install lib/net.so     $(LUALIB)/org/conman
 	install lib/tcc.so     $(LUALIB)/org/conman
 	install lib/sys.so     $(LUALIB)/org/conman
-	install lib/base64.so  $(LUALIB)/org/conman
 	install lib/strcore.so $(LUALIB)/org/conman
 
 remove:
