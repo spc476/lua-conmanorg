@@ -32,26 +32,33 @@
 
 static int math_randomseed(lua_State *const L)
 {
-  FILE         *fp;
   unsigned int  seed;
   
-  assert(L != NULL);  
+  assert(L != NULL);
   
-  if (lua_toboolean(L,1))
-  {
-    fp = fopen("/dev/random","rb");
-    if (fp == NULL)
-      return luaL_error(L,"The NSA is keeping you from seeding your RNG");
-  }
+  if (!lua_isboolean(L,1) && lua_isnumber(L,1))
+    seed = lua_tonumber(L,1);
   else
   {
-    fp = fopen("/dev/urandom","rb");
-    if (fp == NULL)
-      return luaL_error(L,"cannot seed RNG");
+    FILE *fp;
+    
+    if (lua_toboolean(L,1))
+    {
+      fp = fopen("/dev/random","rb");
+      if (fp == NULL)
+        return luaL_error(L,"The NSA is keeping you from seeding your RNG");
+    }
+    else
+    {
+      fp = fopen("/dev/urandom","rb");
+      if (fp == NULL)
+        return luaL_error(L,"cannot seed RNG");
+    }
+    
+    fread(&seed,sizeof(seed),1,fp);
+    fclose(fp);
   }
   
-  fread(&seed,sizeof(seed),1,fp);
-  fclose(fp);
   srand(seed);
   lua_pushnumber(L,seed);
   return 1;
