@@ -59,7 +59,6 @@ all : lib		\
 	lib/net.so	\
 	lib/tcc.so	\
 	lib/sys.so	\
-	lib/uuid.so	\
 	lib/base64.so	\
 	lib/soundex.so	\
 	lib/metaphone.so \
@@ -119,9 +118,6 @@ lib/tcc.so : src/tcc.c
 lib/sys.so : src/sys.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
-lib/uuid.so : src/uuid.c src/uuidlib.c src/uuidlib.h
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ src/uuid.c src/uuidlib.c -lcrypto -lrt
-
 lib/base64.so : src/base64.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
@@ -162,7 +158,6 @@ install : all
 	install lib/net.so     $(LUALIB)/org/conman
 	install lib/tcc.so     $(LUALIB)/org/conman
 	install lib/sys.so     $(LUALIB)/org/conman
-	install lib/uuid.so    $(LUALIB)/org/conman
 	install lib/base64.so  $(LUALIB)/org/conman
 
 remove:
