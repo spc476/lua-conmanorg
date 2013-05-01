@@ -23,7 +23,7 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
 CC     = gcc -std=c99
-CFLAGS = -g -Wall -Wextra -pedantic -fpic
+CFLAGS = -g -Wall -Wextra -pedantic -fPIC
 LFLAGS = -shared 
 LNET   =
 MKDIR  = /bin/mkdir
