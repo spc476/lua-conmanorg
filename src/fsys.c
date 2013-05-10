@@ -318,16 +318,7 @@ static int fsys_stat(lua_State *L)
 {
   struct stat status;
   
-  if (lua_isnumber(L,1))
-  {
-    if (fstat(lua_tointeger(L,1),&status) < 0)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,errno);
-      return 2;
-    }
-  }
-  else if (lua_isstring(L,1))
+  if (lua_isstring(L,1))
   {
     if (stat(lua_tostring(L,1),&status) < 0)
     {
