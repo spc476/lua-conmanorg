@@ -43,21 +43,6 @@
 #include <libgen.h>
 #include <utime.h>
 
-#define TYPE_FD		"org.conman.fsys:fd"
-
-/*************************************************************************/
-
-typedef struct filedescr
-{
-  int fh;
-} fd__t;
-
-typedef struct fileptr
-{
-  FILE *fp;
-  int   ref;
-} fp__t;
-
 /*************************************************************************/
 
 static int fsys_chroot(lua_State *L)
@@ -691,71 +676,64 @@ static int fsys_dirname(lua_State *L)
 
 /***********************************************************************/
 
-static int fsys_open(lua_State *L)
-{ 
-  fd__t      *fd;
-  const char *fname;
-  const char *flags;
-  int         oflags;
+static int fsys_openfd(lua_State *L)
+{
+  FILE       **pfp;
+  int          fh;
+  const char  *mode;
   
-  fname = luaL_checkstring(L,1);
-  flags = luaL_checkstring(L,2);
-  oflags = 0;
-  
-  if (flags[0] == 'r')
-    oflags = (flags[1] == '+')
-    	? O_RDWR
-    	: O_RDONLY;
-  else if (flags[0] == 'w')
-    oflags = (flags[1] == '+')
-    	? O_CREAT | O_RDWR
-    	: O_CREAT | O_WRONLY | O_TRUNC;
-  else if (flags[0] == 'a')
-    oflags = (flags[1] == '+')
-    	? O_RDWR   | O_APPEND
-    	: O_WRONLY | O_APPEND;
-  else
-    luaL_error(L,"illegal flag: %s",flags);
-  
-  fd = lua_newuserdata(L,sizeof(fd__t));
-  luaL_getmetatable(L,TYPE_FD);
-  lua_setmetatable(L,-2);
-  
-  fd->fh = open(fname,oflags,0666);
-  if (fd->fh == -1)
+  fh   = luaL_checkinteger(L,1);
+  mode = luaL_checkstring(L,2);
+  pfp  = lua_newuserdata(L,sizeof(FILE *));
+  *pfp = fdopen(fh,mode);
+  if (*pfp == NULL)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
+    return 2;
   }
-  else
-    lua_pushinteger(L,0);
   
-  return 2;
-}
-
-/***********************************************************************/
-
-static int fsys_openfd(lua_State *L)
-{
-  int    fh;
-  fd__t *fd;
-  
-  fh = luaL_checkint(L,1);
-  fd = lua_newuserdata(L,sizeof(fd__t));
-  luaL_getmetatable(L,TYPE_FD);
+  luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
-  fd->fh = fh;
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /***********************************************************************/
 
 static int fsys_pipe(lua_State *L)
 {
-  fd__t *read;
-  fd__t *write;
+  FILE **pfpread;
+  FILE **pfpwrite;
   int    fh[2];
+  char  *rm;
+  char  *wm;
   
+  lua_settop(L,1);
+  if (lua_isboolean(L,1))
+  {
+    rm = "rb";
+    wm = "wb";
+  }
+  else
+  {
+    rm = "r";
+    wm = "w";
+  }
+  
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_createtable(L,0,2);
+  
+  pfpread = lua_newuserdata(L,sizeof(FILE *));
+  lua_pushvalue(L,2);
+  lua_setmetatable(L,-2);
+  lua_setfield(L,-2,"read");
+  
+  pfpwrite = lua_newuserdata(L,sizeof(FILE *));
+  lua_pushvalue(L,2);
+  lua_setmetatable(L,-2);
+  lua_setfield(L,-2,"write");
+    
   if (pipe(fh) < 0)
   {
     lua_pushnil(L);
@@ -763,19 +741,25 @@ static int fsys_pipe(lua_State *L)
     return 2;
   }
   
-  lua_createtable(L,0,2);
+  *pfpread = fdopen(fh[0],rm);
+  if (*pfpread == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    close(fh[0]);
+    close(fh[1]);
+    return 2;
+  }
   
-  read = lua_newuserdata(L,sizeof(fd__t));
-  read->fh = fh[0];
-  luaL_getmetatable(L,TYPE_FD);
-  lua_setmetatable(L,-2);
-  lua_setfield(L,-2,"read");
-  
-  write = lua_newuserdata(L,sizeof(fd__t));
-  write->fh = fh[1];
-  luaL_getmetatable(L,TYPE_FD);
-  lua_setmetatable(L,-2);
-  lua_setfield(L,-2,"write");
+  *pfpwrite = fdopen(fh[1],wm);
+  if (*pfpwrite == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    close(fh[0]);
+    close(fh[1]);
+    return 2;
+  }
   
   lua_pushinteger(L,0);
   return 2;
@@ -783,68 +767,18 @@ static int fsys_pipe(lua_State *L)
 
 /***********************************************************************/
 
-static void *ifsys_checkudata(lua_State *L,int idx,const char *tname)
-{
-  /*------------------------------------------------------------------------
-  ; XXX---gross hack to check the userdata type without erroring out.  Uses
-  ; internals of Lua implementation.
-  ;-----------------------------------------------------------------------*/
-  
-  void *p = lua_touserdata(L,idx);
-  
-  if (p != NULL)
-  {
-    if (lua_getmetatable(L,idx))
-    {
-      lua_getfield(L,LUA_REGISTRYINDEX,tname);
-      if (lua_rawequal(L,-1,-2))
-      {
-        lua_pop(L,2);
-        return p;
-      }
-    }
-  }
-  return NULL;
-}
-
-/********************************************************************/
-
 static int fsys_dup(lua_State *L)
 {
-  int orig;
-  int copy;
+  FILE **porig;
+  FILE **pcopy;
+  int    orig;
+  int    copy;
   
-  if (lua_isnumber(L,1))
-    orig = lua_tointeger(L,1);
-  else
-  {
-    FILE **pfp = ifsys_checkudata(L,1,LUA_FILEHANDLE);
-    if (pfp)
-      orig = fileno(*pfp);
-    else
-    {
-      lua_getfield(L,1,"fd");
-      lua_pushvalue(L,1);
-      lua_call(L,1,1);
-      orig = luaL_checkint(L,-1);
-    }
-  }
+  porig = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  pcopy = luaL_checkudata(L,1,LUA_FILEHANDLE);
   
-  if (lua_isnumber(L,2))
-    copy = lua_tointeger(L,2);
-  else
-  {
-    FILE **pfp = ifsys_checkudata(L,1,LUA_FILEHANDLE);
-    if (pfp)
-      copy = fileno(*pfp);
-    else
-    {
-      lua_getfield(L,2,"fd"); 
-      lua_pushvalue(L,1);
-      lua_call(L,1,1);
-      copy = luaL_checkint(L,-1);
-    }
-  }
+  orig = fileno(*porig);
+  copy = fileno(*pcopy);
   
   if (dup2(orig,copy) < 0)
   {
@@ -862,176 +796,13 @@ static int fsys_dup(lua_State *L)
 
 /**************************************************************************/  
 
-static int fsys_fdopen(lua_State *L)
+static int fsys_isfile(lua_State *L)
 {
-  fp__t *fp;
-  int    fh;
-  int    ref;
+  FILE **pfp;
   
-  if (lua_isnumber(L,1))
-  {
-    fh = lua_tointeger(L,1);
-    ref = LUA_NOREF;
-  }
-  else
-  {
-    lua_getfield(L,1,"fd");
-    lua_pushvalue(L,1);
-    lua_call(L,1,1);
-    fh  = luaL_checkint(L,-1);
-    lua_pushvalue(L,1);
-    ref = luaL_ref(L,LUA_REGISTRYINDEX);
-  }
-  
-  fp      = lua_newuserdata(L,sizeof(fp__t));
-  fp->fp  = NULL;
-  fp->ref = LUA_NOREF;
-  
-  luaL_getmetatable(L,LUA_FILEHANDLE);
-  lua_setmetatable(L,-2);
-  
-  fp->ref = ref;
-  fp->fp  = fdopen(fh,luaL_checkstring(L,2));
-  if (fp->fp == NULL)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  return 1;
-}
+  pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
 
-/************************************************************************/  
-
-static int fsys_close(lua_State *L)
-{
-  if (lua_isnumber(L,1))
-  {
-    if (close(lua_tointeger(L,1)) < 0)
-    {
-      lua_pushboolean(L,false);
-      lua_pushinteger(L,errno);
-      return 2;
-    }
-    else
-    {
-      lua_pushboolean(L,true);
-      lua_pushinteger(L,0);
-      return 2;
-    }
-  }
-  else
-  {
-    lua_getfield(L,1,"close");
-    lua_pushvalue(L,1);
-    lua_call(L,1,1);
-    return 2;
-  }
-}
-
-/**********************************************************************/
-    
-static int fiolua___close(lua_State *L)
-{
-  fp__t *fp;
-  
-  fp = luaL_checkudata(L,1,LUA_FILEHANDLE);
-  fclose(fp->fp);
-  fp->fp = NULL;
-  luaL_unref(L,LUA_REGISTRYINDEX,fp->ref);
-  lua_pushboolean(L,true);
-  return 1;
-}
-
-/************************************************************************/
-
-static int fiolua___tostring(lua_State *L)
-{
-  fd__t *fd;
-  
-  fd = luaL_checkudata(L,1,TYPE_FD);
-  lua_pushfstring(L,"FILE:%d",fd->fh);
-  return 1;
-}
-
-/************************************************************************/
-
-static int fiolua_read(lua_State *L)
-{
-  char    buffer[LUAL_BUFFERSIZE];
-  ssize_t bytes;
-  int     fh;
-  
-  if (lua_isnumber(L,1))
-    fh = lua_tointeger(L,1);
-  else
-  {
-    lua_getfield(L,1,"fd");
-    lua_pushvalue(L,1);
-    lua_call(L,1,1);
-    fh = luaL_checkint(L,-1);
-  }
-  
-  bytes = read(fh,buffer,sizeof(buffer));
-  if (bytes < 0)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushlstring(L,buffer,bytes);
-    lua_pushinteger(L,0);
-  }
-  
-  return 2;
-}
-
-/************************************************************************/
-
-static int fiolua_write(lua_State *L)
-{
-  int         fh;
-  const char *data;
-  size_t      size;
-  ssize_t     bytes;
-  
-  if (lua_isnumber(L,1))
-    fh = lua_tonumber(L,1);
-  else
-  {
-    lua_getfield(L,1,"fd");
-    lua_pushvalue(L,1);
-    lua_call(L,1,1);
-    fh = luaL_checkint(L,1);
-  }
-  
-  data  = luaL_checklstring(L,2,&size);
-  errno = 0;
-  bytes = write(fh,data,size);
-  lua_pushinteger(L,bytes);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/************************************************************************/
-
-static int fiolua_isfile(lua_State *L)
-{
-  int fh;
-  
-  if (lua_isnumber(L,1))
-    fh = lua_tonumber(L,1);
-  else
-  {
-    lua_getfield(L,1,"fd");
-    lua_pushvalue(L,1);
-    lua_call(L,1,1);
-    fh = luaL_checkint(L,-1);
-  }
-  
-  if (isatty(fh) < 0)
+  if (isatty(fileno(*pfp)) < 0)
   {
     lua_pushboolean(L,false);
     lua_pushinteger(L,errno);
@@ -1042,40 +813,6 @@ static int fiolua_isfile(lua_State *L)
     lua_pushinteger(L,0);
   }
   return 2;
-}
-
-/************************************************************************/
-
-static int fiolua_close(lua_State *L)
-{
-  fd__t *fd;
-  
-  fd = luaL_checkudata(L,1,TYPE_FD);
-
-  if (fd->fh >= 0)
-  {
-    if (close(fd->fh) < 0)
-    {
-      lua_pushboolean(L,false);
-      lua_pushinteger(L,errno);
-      return 2;
-    }
-  }
-  
-  lua_pushboolean(L,true);
-  lua_pushinteger(L,0);
-  return 2;
-}
-
-/************************************************************************/
-
-static int fiolua_fd(lua_State *L)
-{
-  fd__t *fd;
-  
-  fd = luaL_checkudata(L,1,TYPE_FD);
-  lua_pushinteger(L,fd->fh);
-  return 1;
 }
 
 /************************************************************************/
@@ -1106,58 +843,16 @@ static const struct luaL_reg reg_fsys[] =
   { "_safename"	, fsys__safename} ,
   { "basename"	, fsys_basename	} ,
   { "dirname"	, fsys_dirname	} ,
-  { "open"	, fsys_open	} ,
-  { "close"	, fsys_close	} ,
   { "openfd"	, fsys_openfd	} ,
   { "pipe"	, fsys_pipe	} ,
   { "dup"	, fsys_dup	} ,
-  { "fdopen"	, fsys_fdopen	} ,
+  { "isfile"	, fsys_isfile	} ,
   { NULL	, NULL		}
-};
-
-static const luaL_reg mfio_regmeta[] =
-{
-  { "__tostring", fiolua___tostring	} ,
-  { "__gc"	, fiolua_close		} ,
-  { "read"	, fiolua_read		} ,
-  { "write"	, fiolua_write		} ,
-  { "isfile"	, fiolua_isfile		} ,
-  { "close"	, fiolua_close		} ,
-  { "fd"	, fiolua_fd		} ,
-  { NULL	, NULL			}
 };
 
 int luaopen_org_conman_fsys(lua_State *L)
 {
-  luaL_newmetatable(L,TYPE_FD);
-  luaL_register(L,NULL,mfio_regmeta);
-  lua_pushvalue(L,-1);
-  lua_setfield(L,-2,"__index");
-  
-  luaL_register(L,"org.conman.fsys",reg_fsys);
-  
-  /*----------------------------------------------------------------------
-  ; there's no API to manipulate LUA_FILEHANDLEs safely, so we kind of have
-  ; to hack our way in there.  We need to define a "__close()" function
-  ; associated with the function used to create the LUA_FILEHANDLE.  This is
-  ; a gross hack and deals with Lua internals that aren't really well
-  ; documented.  We may have to reinvestigate this for Lua 5.2.
-  ;------------------------------------------------------------------------*/
-  
-  lua_getfield(L,-1,"fdopen");
-  lua_createtable(L,0,1);
-  lua_pushcfunction(L,fiolua___close);
-  lua_setfield(L,-2,"__close");
-  lua_setfenv(L,-2);
-  lua_pop(L,1);
-  
-  lua_pushinteger(L,STDIN_FILENO);
-  lua_setfield(L,-2,"_STDIN");
-  lua_pushinteger(L,STDOUT_FILENO);
-  lua_setfield(L,-2,"_STDOUT");
-  lua_pushinteger(L,STDERR_FILENO);
-  lua_setfield(L,-2,"_STDERR");
-  
+  luaL_register(L,"org.conman.fsys",reg_fsys);  
   return 1;
 }
 
