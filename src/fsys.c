@@ -852,6 +852,10 @@ static const struct luaL_reg reg_fsys[] =
 
 int luaopen_org_conman_fsys(lua_State *L)
 {
+  lua_getglobal(L,"io");
+  lua_getfield(L,-1,"open");
+  lua_getfenv(L,-1);
+  lua_replace(L, LUA_ENVIRONINDEX);
   luaL_register(L,"org.conman.fsys",reg_fsys);  
   return 1;
 }
