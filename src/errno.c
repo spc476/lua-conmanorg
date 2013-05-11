@@ -35,48 +35,7 @@ struct strint
 
 /***************************************************************************/
 
-extern const struct strint m_errors[];
-
-/***************************************************************************/
-
-static int errno___index(lua_State *L)
-{
-  lua_pushstring(L,strerror(luaL_checkint(L,2)));
-  return 1;
-}
-
-/***********************************************************************/
-
-static const struct luaL_reg m_reg_errno[] = 
-{
-  { NULL	, NULL		 }
-};
-
-/***********************************************************************/
-
-int luaopen_org_conman_errno(lua_State *L)
-{
-  size_t i;
-  
-  luaL_register(L,"org.conman.errno",m_reg_errno);
-  
-  for (i = 0 ; m_errors[i].text != NULL ; i++)
-  {
-    lua_pushinteger(L,m_errors[i].value);
-    lua_setfield(L,-2,m_errors[i].text);
-  }
-  
-  lua_createtable(L,0,1);
-  lua_pushcfunction(L,errno___index);
-  lua_setfield(L,-2,"__index");
-  lua_setmetatable(L,-2);
-  
-  return 1;
-}
-
-/*************************************************************************/
-
-const struct strint m_errors[] = 
+static const struct strint m_errors[] = 
 {
   { "EDOM"   , EDOM   } ,
   { "ERANGE" , ERANGE } ,
@@ -566,4 +525,43 @@ const struct strint m_errors[] =
 #endif
     { NULL , 0 }
 };
+
+/***************************************************************************/
+
+static int errno___index(lua_State *L)
+{
+  lua_pushstring(L,strerror(luaL_checkint(L,2)));
+  return 1;
+}
+
+/***********************************************************************/
+
+static const struct luaL_reg m_reg_errno[] = 
+{
+  { NULL	, NULL		 }
+};
+
+/***********************************************************************/
+
+int luaopen_org_conman_errno(lua_State *L)
+{
+  size_t i;
+  
+  luaL_register(L,"org.conman.errno",m_reg_errno);
+  
+  for (i = 0 ; m_errors[i].text != NULL ; i++)
+  {
+    lua_pushinteger(L,m_errors[i].value);
+    lua_setfield(L,-2,m_errors[i].text);
+  }
+  
+  lua_createtable(L,0,1);
+  lua_pushcfunction(L,errno___index);
+  lua_setfield(L,-2,"__index");
+  lua_setmetatable(L,-2);
+  
+  return 1;
+}
+
+/*************************************************************************/
 
