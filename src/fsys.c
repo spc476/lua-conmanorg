@@ -818,20 +818,6 @@ static int fsys_dup(lua_State *L)
   }
   else
   {
-    /*----------------------------------------------------------------------
-    ; I can't really find anything about resetting the buffer of a FILE *.
-    ; The intent here is to reset the buffer so that any pre-existing data
-    ; doesn't affect the copy (since we're closing and opening the
-    ; underlying file).  I'm not concerned with losing any memory here since
-    ; Lua never specifies an actual buffer (it always calls setvbuf() with a
-    ; NULL buffer pointer) and I expect the underlying C library to Do The
-    ; Right Thing (TM Spike Lee).
-    ;
-    ; Under Unix, if the file descriptor refers to a TTY, the buffering is
-    ; lined based; else it's fully buffered.
-    ;-----------------------------------------------------------------------*/
-    
-    setvbuf(*pcopy,NULL,isatty(copy) ? _IOLBF : _IOFBF,BUFSIZ);
     lua_pushboolean(L,true);
     lua_pushinteger(L,0);
   }
