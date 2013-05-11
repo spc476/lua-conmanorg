@@ -800,16 +800,18 @@ static int fsys_pipe(lua_State *L)
 
 static int fsys_dup(lua_State *L)
 {
-  FILE **porig;
-  FILE **pcopy;
-  int    orig;
-  int    copy;
+  int orig;
+  int copy;
   
-  porig = luaL_checkudata(L,1,LUA_FILEHANDLE);
-  pcopy = luaL_checkudata(L,2,LUA_FILEHANDLE);
+  if (lua_isuserdata(L,1))
+    orig = fileno(*(FILE **)luaL_checkudata(L,1,LUA_FILEHANDLE));
+  else
+    orig = luaL_checkinteger(L,1);
   
-  orig = fileno(*porig);
-  copy = fileno(*pcopy);
+  if (lua_isuserdata(L,2))
+    copy = fileno(*(FILE **)luaL_checkudata(L,2,LUA_FILEHANDLE));
+  else
+    copy = luaL_checkinteger(L,2);
   
   if (dup2(orig,copy) < 0)
   {
