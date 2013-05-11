@@ -56,7 +56,7 @@ org.conman.fsys		Posix file system routines.  Error code is an
 		Update the timestamp on path to the given modification
 		time (and optional access time)
 
-	info,error = stat(fd | string | FILE)
+	info,error = stat(string | FILE)
 		Return meta information about file.  The input parameter
 		can be an open file (via io.open()), a filename, or a file
 		descriptor (via fsys.open().fd()).
@@ -71,7 +71,11 @@ org.conman.fsys		Posix file system routines.  Error code is an
 			'----r--r-'	022
 			'---rwxrwx'	077
 
-	chmod
+	bool,error = chmod(path,mode)
+		Set the mode of a file.  The mode is a string:
+			'rw-r--r--'	644
+			'rw-rw-rw-'	666
+			'rwxr-xr-x'	755
 
 	bool,error = access(filename,mode)
 		Checks the access of a filename.  Mode is a string with
@@ -104,6 +108,8 @@ org.conman.fsys		Posix file system routines.  Error code is an
 	fnc,dirobj = dir([directory])
 		Use as:  for entry in fsys.dir("/tmp") do ... end
 
+		Note, this will not return "." or ".."
+
 	newmame = _safename(name)
 		Convert "problematic" characters to "_".
 
@@ -113,53 +119,20 @@ org.conman.fsys		Posix file system routines.  Error code is an
 	name,error = dirname(filename)
 		Returns the path portion of a filename
 
-	fh,error = open(name,flags)
-		Uses open() instead of fopen() to open a file.  The returned
-		fh is a userdata object and *not* an actual Posix file
-		handle.
-
-	bool,error = close(number | fh)
-		Close a file handle or file descriptor.
-
 	fh = openfd(number)
-		Create a file handle object from a raw file descriptor.
+		Create a file object (as from io.open()) from a raw file
+		descriptor.
 	
 	p,error = pipe()
 		Return a pipe object.  This is a table with two fields:
 			.read	= read file handle
 			.write	= write file handle
 
-	bool,error = dup(fhorig | FILEorig , fhcopy | FILEcopy)
+	bool,error = dup(orig , copy)
 		Duplicates the underlying Posix file handle of the original
-		file to the copy file.  
-
-	FILE,error = fdopen(number | fh)
-		Creates a FILE object (as from io.open()) from a file
-		handle object (as from fsys.open()) or a raw file
-		descriptor.
-
-The file handle returned by fsys.open() has the following methods associated
-with it:
-
-	string = fh:__tostring()
-	fh:__gc()
-		closes the file upon garbage collection.
-	
-	data,error = fh.read(fh | number)
-		Read upto the next LUAL_BUFFERSIZE bytes from a file
-
-	bytes,error = fh.write(fh | number,data)
-		Write data
-
-	bool,error = fh.isfile(fh | number)
-		Returns true if given file handle refers to a file,
-		otherwise (like it's a socket or a device) false.
-
-	bool,error = fh.close(fh)
-		Closes the file handle
-
-	number = fh.fd(fh)
-		Returns the raw file descriptor for the given file handle
+		file to the copy file.  If successful, the copy file will
+		have full buffering (if a file) or line buffering (if a
+		tty).
 
 -------------------------
 
