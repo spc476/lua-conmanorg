@@ -678,14 +678,18 @@ static int fsys_dirname(lua_State *L)
 
 static int fsys_openfd(lua_State *L)
 {
-  FILE       **pfp;
-  int          fh;
-  const char  *mode;
+  FILE **pfp;
   
-  fh   = luaL_checkinteger(L,1);
-  mode = luaL_checkstring(L,2);
   pfp  = lua_newuserdata(L,sizeof(FILE *));
-  *pfp = fdopen(fh,mode);
+  *pfp = NULL;	/* see comments in fsys_pipe() */
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_setmetatable(L,-2);
+  
+  *pfp = fdopen(
+  		luaL_checkinteger(L,1),
+  		luaL_checkstring(L,2)
+  	);
+  
   if (*pfp == NULL)
   {
     lua_pushnil(L);
@@ -693,10 +697,8 @@ static int fsys_openfd(lua_State *L)
     return 2;
   }
   
-  luaL_getmetatable(L,LUA_FILEHANDLE);
-  lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
-  return 2;
+  return 2;  
 }
 
 /***********************************************************************/
@@ -705,11 +707,17 @@ static int fsys_pipe(lua_State *L)
 {
   FILE **pfpread;
   FILE **pfpwrite;
+  FILE  *fpr;
+  FILE  *fpw;
   int    fh[2];
   char  *rm;
   char  *wm;
+
+  /*------------------------------------------------------------------------
+  ; This is done first because there may not be a paramter, and if we create
+  ; the return data, we might get behavior we weren't expecting.
+  ;-------------------------------------------------------------------------*/
   
-  lua_settop(L,1);
   if (lua_isboolean(L,1))
   {
     rm = "rb";
@@ -721,19 +729,34 @@ static int fsys_pipe(lua_State *L)
     wm = "w";
   }
   
-  luaL_getmetatable(L,LUA_FILEHANDLE);
+  /*---------------------------------------------------------------------
+  ; Create our return table.  We initialize the FILE pointers to NULL to
+  ; signify a "closed" file.  We do this all up front first before anything
+  ; else in case things go wrong to the calls in Lua.  By the time we get
+  ; through this code, we should be okay to continue without worry of losing
+  ; an open file.
+  ;-------------------------------------------------------------------------*/
+  
   lua_createtable(L,0,2);
   
-  pfpread = lua_newuserdata(L,sizeof(FILE *));
-  lua_pushvalue(L,2);
+  pfpread  = lua_newuserdata(L,sizeof(FILE *));
+  *pfpread = NULL;
+  luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"read");
   
-  pfpwrite = lua_newuserdata(L,sizeof(FILE *));
-  lua_pushvalue(L,2);
+  pfpwrite  = lua_newuserdata(L,sizeof(FILE *));
+  *pfpwrite = NULL;
+  luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"write");
-    
+  
+  /*---------------------------------------------------------------------
+  ; now we can create our pipe and reopen them as FILE*s.  If these fail,
+  ; the table and userdata structures we created will be reclaimed properly
+  ; in time (since to Lua, they're closed files).
+  ;-----------------------------------------------------------------------*/
+  
   if (pipe(fh) < 0)
   {
     lua_pushnil(L);
@@ -741,25 +764,33 @@ static int fsys_pipe(lua_State *L)
     return 2;
   }
   
-  *pfpread = fdopen(fh[0],rm);
-  if (*pfpread == NULL)
+  fpr = fdopen(fh[0],rm);
+  if (fpr == NULL)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
-    close(fh[0]);
     close(fh[1]);
+    close(fh[0]);
     return 2;
   }
   
-  *pfpwrite = fdopen(fh[1],wm);
-  if (*pfpwrite == NULL)
+  fpw = fdopen(fh[1],wm);
+  if (fpw == NULL)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
-    close(fh[0]);
     close(fh[1]);
+    fclose(fpr);
     return 2;
   }
+  
+  /*-------------------------------------------------------------------
+  ; everything has gone as planned.  Set the open files and return it
+  ; back to our Lua script.
+  ;-------------------------------------------------------------------*/
+  
+  *pfpread  = fpr;
+  *pfpwrite = fpw;
   
   lua_pushinteger(L,0);
   return 2;
