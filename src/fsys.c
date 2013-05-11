@@ -896,7 +896,13 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_getfenv(L,-1);
   lua_replace(L, LUA_ENVIRONINDEX);
   
-  luaL_register(L,"org.conman.fsys",reg_fsys);  
+  luaL_register(L,"org.conman.fsys",reg_fsys);
+  lua_pushinteger(L,STDIN_FILENO);
+  lua_setfield(L,-2,"_STDIN");
+  lua_pushinteger(L,STDOUT_FILENO);
+  lua_setfield(L,-2,"_STDOUT");
+  lua_pushinteger(L,STDERR_FILENO);
+  lua_setfield(L,-2,"_STDERR");
   return 1;
 }
 
