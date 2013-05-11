@@ -883,10 +883,17 @@ static const struct luaL_reg reg_fsys[] =
 
 int luaopen_org_conman_fsys(lua_State *L)
 {
+  /*------------------------------------------------------------------------
+  ; the Lua io module requires a unique environment.  Let's crib it (we grab
+  ; it from io.open()) and use it for ourselves.  This way, when we attempt
+  ; to close pipes, Lua won't crash.
+  ;-------------------------------------------------------------------------*/
+  
   lua_getglobal(L,"io");
   lua_getfield(L,-1,"open");
   lua_getfenv(L,-1);
   lua_replace(L, LUA_ENVIRONINDEX);
+  
   luaL_register(L,"org.conman.fsys",reg_fsys);  
   return 1;
 }
