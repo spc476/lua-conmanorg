@@ -806,7 +806,7 @@ static int fsys_dup(lua_State *L)
   int    copy;
   
   porig = luaL_checkudata(L,1,LUA_FILEHANDLE);
-  pcopy = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  pcopy = luaL_checkudata(L,2,LUA_FILEHANDLE);
   
   orig = fileno(*porig);
   copy = fileno(*pcopy);
