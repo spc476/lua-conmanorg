@@ -52,6 +52,7 @@
 
 #include <lua.h>
 #include <lauxlib.h>
+#include <lualib.h>
 
 #define TYPE_SOCK	"org.conman.net:sock"
 #define TYPE_ADDR	"org.conman.net:addr"
@@ -85,7 +86,7 @@ typedef struct sock
 /************************************************************************/
 
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
-static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
+static int	netlua_socketfile	(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int	netlua_pollset		(lua_State *const) __attribute__((nonnull));
@@ -121,7 +122,7 @@ static int	pollset_meta_events	(lua_State *const) __attribute__((nonnull));
 static const luaL_Reg m_net_reg[] =
 {
   { "socket"		, netlua_socket		} ,
-  { "socketfd"		, netlua_socketfd	} ,
+  { "socketfile"	, netlua_socketfile	} ,
   { "address2"		, netlua_address2	} ,
   { "address"		, netlua_address	} ,
   { "peer"		, socklua_peer		} ,
@@ -367,21 +368,25 @@ static int netlua_socket(lua_State *const L)
   
 /*******************************************************************
 *
-*	sock,err = net.socketfd(fd)
+*	sock,err = net.socketfile(fp)
 *
-*	fd = integer
+*	fp = io.open(...) or io.stdin or io.stdout or io.stderr
 *
 ********************************************************************/
 
-static int netlua_socketfd(lua_State *const L)
+static int netlua_socketfile(lua_State *const L)
 {
-  sock__t *sock;
+  FILE    **pfp;
+  sock__t  *sock;
   
+  pfp      = luaL_checkudata(L,1,LUA_FILEHANDLE);
   sock     = lua_newuserdata(L,sizeof(sock__t));
-  sock->fh = luaL_checkinteger(L,1);
+  sock->fh = fileno(*pfp);
+  
   luaL_getmetatable(L,TYPE_SOCK);
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
+  
   return 2;
 }
 
