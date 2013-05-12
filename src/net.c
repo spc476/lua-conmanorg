@@ -854,7 +854,12 @@ static int socklua___newindex(lua_State *const L)
          ivalue = fcntl(sock->fh,value->level,0);
          if (ivalue > 0)
          {
-           if (fcntl(sock->fh,value->setlevel,ivalue | value->option) < 0)
+           if (lua_toboolean(L,3))
+             ivalue |= value->option;
+           else
+             ivalue &= ~value->option;
+             
+           if (fcntl(sock->fh,value->setlevel,ivalue) < 0)
              syslog(LOG_ERR,"fcntl() = %s",strerror(errno));
          }
          else
