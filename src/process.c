@@ -89,7 +89,7 @@ static int	proclua_meta___index		(lua_State *const);
 static int	proclua_meta___newindex		(lua_State *const);
 
 static bool	limit_trans			(int *const restrict,const char *const restrict);
-static bool	limit_valid_suffix		(lua_Integer *const restrict,const int,const char *const restrict);
+static bool	limit_valid_suffix		(lua_Number *const restrict,const int,const char *const restrict);
 
 static int	hlimitlua_meta___index		(lua_State *const);
 static int	hlimitlua_meta___newindex	(lua_State *const);
@@ -898,9 +898,9 @@ static bool limit_trans(
 /**********************************************************************/
 
 static bool limit_valid_suffix(
-	lua_Integer *const restrict pval,
-	const int                   key,
-	const char *const restrict  unit
+	lua_Number *const restrict pval,
+	const int                  key,
+	const char *const restrict unit
 )
 {
   assert(pval != NULL);
@@ -927,10 +927,10 @@ static bool limit_valid_suffix(
          switch(toupper(*unit))
          {
            case 'S':                     break;
-           case 'M':  *pval *=     60uL; break;
-           case 'H':  *pval *=   3600uL; break;
-           case 'D':  *pval *=  86400uL; break;
-           case 'W':  *pval *= 604800uL; break;
+           case 'M':  *pval *=     60.0; break;
+           case 'H':  *pval *=   3600.0; break;
+           case 'D':  *pval *=  86400.0; break;
+           case 'W':  *pval *= 604800.0; break;
            case '\0':                    break;
            default: return false;
          }
@@ -947,9 +947,9 @@ static bool limit_valid_suffix(
          switch(toupper(*unit))
          {
            case 'B':                                       break;
-           case 'K':  *pval *= (1024uL);                   break;
-           case 'M':  *pval *= (1024uL * 1024uL);          break;
-           case 'G':  *pval *= (1024uL * 1024uL * 1024uL); break;
+           case 'K':  *pval *= (1024.0);                   break;
+           case 'M':  *pval *= (1024.0 * 1024.0);          break;
+           case 'G':  *pval *= (1024.0 * 1024.0 * 1024.0); break;
            case '\0':                                      break;
            default: return false;
          }
@@ -1000,7 +1000,7 @@ static int hlimitlua_meta___newindex(lua_State *const L)
   struct rlimit  limit;
   const char    *tkey;
   int            key;
-  lua_Integer    ival;
+  lua_Number     ival;
 
   assert(L != NULL);
   
@@ -1018,7 +1018,7 @@ static int hlimitlua_meta___newindex(lua_State *const L)
     const char *unit;
     
     tval = lua_tostring(L,3);
-    ival = strtoul(tval,(char **)&unit,10);
+    ival = strtod(tval,(char **)&unit);
 
     if (!limit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
@@ -1074,7 +1074,7 @@ static int slimitlua_meta___newindex(lua_State *const L)
   struct rlimit  limit;
   const char    *tkey;
   int            key;
-  lua_Integer    ival;
+  lua_Number     ival;
   int            rc;
   
   assert(L != NULL);
@@ -1093,7 +1093,7 @@ static int slimitlua_meta___newindex(lua_State *const L)
     const char *unit;
     
     tval = lua_tostring(L,3);
-    ival = strtoul(tval,(char **)&unit,10);
+    ival = strtod(tval,(char **)&unit);
 
     if (!limit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
