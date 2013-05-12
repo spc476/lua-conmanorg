@@ -641,13 +641,14 @@ typedef enum sopt
   SOPT_INT,
   SOPT_LINGER,
   SOPT_TIMEVAL,
-  SOPT_NONBLOCK,
+  SOPT_FCNTL,
 } sopt__t;
 
 struct sockoptions
 {
   const char *const name;
   const int         level;
+  const int         setlevel;
   const int         option;
   const sopt__t     type;
   const bool	    get;
@@ -656,32 +657,35 @@ struct sockoptions
 
 static const struct sockoptions m_sockoptions[] = 
 {
-  { "broadcast"		, SOL_SOCKET 	, SO_BROADCAST 		, SOPT_FLAG 	, true , true  } ,
-  { "debug"		, SOL_SOCKET 	, SO_DEBUG		, SOPT_FLAG 	, true , true  } ,
-  { "dontroute"		, SOL_SOCKET 	, SO_DONTROUTE		, SOPT_FLAG 	, true , true  } ,
-  { "error"		, SOL_SOCKET 	, SO_ERROR		, SOPT_INT  	, true , false } ,
-  { "keepalive"		, SOL_SOCKET 	, SO_KEEPALIVE		, SOPT_FLAG 	, true , true  } ,
-  { "linger"		, SOL_SOCKET 	, SO_LINGER		, SOPT_LINGER	, true , true  } ,
-  { "maxsegment"	, IPPROTO_TCP	, TCP_MAXSEG		, SOPT_INT	, true , true  } ,
-  { "nodelay"		, IPPROTO_TCP	, TCP_NODELAY		, SOPT_FLAG	, true , true  } ,
-  { "nonblock"		, 0		, 0			, SOPT_NONBLOCK , true , true  } ,
+  { "broadcast"		, SOL_SOCKET 	, 0		, SO_BROADCAST 		, SOPT_FLAG 	, true , true  } ,
+#ifdef FD_CLOEXEC
+  { "closeexec"		, F_GETFD	, F_SETFD	, FD_CLOEXEC		, SOPT_FCNTL	, true , true  } ,
+#endif
+  { "debug"		, SOL_SOCKET 	, 0		, SO_DEBUG		, SOPT_FLAG 	, true , true  } ,
+  { "dontroute"		, SOL_SOCKET 	, 0		, SO_DONTROUTE		, SOPT_FLAG 	, true , true  } ,
+  { "error"		, SOL_SOCKET 	, 0		, SO_ERROR		, SOPT_INT  	, true , false } ,
+  { "keepalive"		, SOL_SOCKET 	, 0		, SO_KEEPALIVE		, SOPT_FLAG 	, true , true  } ,
+  { "linger"		, SOL_SOCKET 	, 0		, SO_LINGER		, SOPT_LINGER	, true , true  } ,
+  { "maxsegment"	, IPPROTO_TCP	, 0		, TCP_MAXSEG		, SOPT_INT	, true , true  } ,
+  { "nodelay"		, IPPROTO_TCP	, 0		, TCP_NODELAY		, SOPT_FLAG	, true , true  } ,
+  { "nonblock"		, F_GETFL	, F_SETFL	, O_NONBLOCK		, SOPT_FCNTL	, true , true  } ,
 #ifdef SO_NOSIGPIPE
-  { "nosigpipe"		, SOL_SOCKET	, SO_NOSIGPIPE		, SOPT_FLAG	, true , true  } ,
+  { "nosigpipe"		, SOL_SOCKET	, 0		, SO_NOSIGPIPE		, SOPT_FLAG	, true , true  } ,
 #endif
-  { "oobinline"		, SOL_SOCKET 	, SO_OOBINLINE		, SOPT_FLAG	, true , true  } ,
-  { "recvbuffer"	, SOL_SOCKET 	, SO_RCVBUF		, SOPT_INT	, true , true  } ,
-  { "recvlow"		, SOL_SOCKET 	, SO_RCVLOWAT		, SOPT_INT	, true , true  } ,
-  { "recvtimeout"	, SOL_SOCKET 	, SO_RCVTIMEO		, SOPT_INT	, true , true  } ,
-  { "reuseaddr"		, SOL_SOCKET 	, SO_REUSEADDR		, SOPT_FLAG	, true , true  } ,
+  { "oobinline"		, SOL_SOCKET 	, 0		, SO_OOBINLINE		, SOPT_FLAG	, true , true  } ,
+  { "recvbuffer"	, SOL_SOCKET 	, 0		, SO_RCVBUF		, SOPT_INT	, true , true  } ,
+  { "recvlow"		, SOL_SOCKET 	, 0		, SO_RCVLOWAT		, SOPT_INT	, true , true  } ,
+  { "recvtimeout"	, SOL_SOCKET 	, 0		, SO_RCVTIMEO		, SOPT_INT	, true , true  } ,
+  { "reuseaddr"		, SOL_SOCKET 	, 0		, SO_REUSEADDR		, SOPT_FLAG	, true , true  } ,
 #ifdef SO_REUSEPORT  
-  { "reuseport"		, SOL_SOCKET 	, SO_REUSEPORT		, SOPT_FLAG	, true , true  } ,
+  { "reuseport"		, SOL_SOCKET 	, 0		, SO_REUSEPORT		, SOPT_FLAG	, true , true  } ,
 #endif
-  { "sendbuffer"	, SOL_SOCKET 	, SO_SNDBUF		, SOPT_INT	, true , true  } ,
-  { "sendlow"		, SOL_SOCKET 	, SO_SNDLOWAT		, SOPT_INT	, true , true  } ,
-  { "sendtimeout"	, SOL_SOCKET 	, SO_SNDTIMEO		, SOPT_INT	, true , true  } ,
-  { "type"		, SOL_SOCKET 	, SO_TYPE		, SOPT_INT	, true , false } ,
+  { "sendbuffer"	, SOL_SOCKET 	, 0		, SO_SNDBUF		, SOPT_INT	, true , true  } ,
+  { "sendlow"		, SOL_SOCKET 	, 0		, SO_SNDLOWAT		, SOPT_INT	, true , true  } ,
+  { "sendtimeout"	, SOL_SOCKET 	, 0		, SO_SNDTIMEO		, SOPT_INT	, true , true  } ,
+  { "type"		, SOL_SOCKET 	, 0		, SO_TYPE		, SOPT_INT	, true , false } ,
 #ifdef SO_USELOOPBACK
-  { "useloopback"	, SOL_SOCKET 	, SO_USELOOPBACK	, SOPT_FLAG	, true , true  } ,
+  { "useloopback"	, SOL_SOCKET 	, 0		, SO_USELOOPBACK	, SOPT_FLAG	, true , true  } ,
 #endif
 };
 
@@ -773,12 +777,12 @@ static int socklua___index(lua_State *const L)
          }
          break;
 
-    case SOPT_NONBLOCK:
-         ivalue = fcntl(sock->fh,F_GETFL,0);
+    case SOPT_FCNTL:
+         ivalue = fcntl(sock->fh,value->level,0);
          if (ivalue == -1)
            lua_pushboolean(L,false);
          else
-           lua_pushboolean(L,(ivalue & O_NONBLOCK) == O_NONBLOCK);
+           lua_pushboolean(L,(ivalue & value->option) == value->option);
          break;
          
     default:
@@ -846,11 +850,11 @@ static int socklua___newindex(lua_State *const L)
            syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
          break;
     
-    case SOPT_NONBLOCK:
-         ivalue = fcntl(sock->fh,F_GETFL,0);
+    case SOPT_FCNTL:
+         ivalue = fcntl(sock->fh,value->level,0);
          if (ivalue > 0)
          {
-           if (fcntl(sock->fh,F_SETFL,ivalue | O_NONBLOCK) < 0)
+           if (fcntl(sock->fh,value->setlevel,ivalue | value->option) < 0)
              syslog(LOG_ERR,"fcntl() = %s",strerror(errno));
          }
          else
