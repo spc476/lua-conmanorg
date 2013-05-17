@@ -96,8 +96,6 @@ static int strcore_trim(lua_State *const L)
   front = lua_tolstring(L,1,&size);
   end   = &front[size - 1];
   
-  lua_pop(L,1);
-  
   for ( ; size && isspace(*front) ; size-- , front++)
     ;
   
