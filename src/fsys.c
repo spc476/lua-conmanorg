@@ -470,10 +470,61 @@ static int fsys_getcwd(lua_State *L)
 
 /************************************************************************/
 
+#define TYPE_DIR	"org.conman.fsys:dir"
+
+static int dir_meta___tostring(lua_State *const L)
+{
+  lua_pushfstring(L,"DIR:%p",luaL_checkudata(L,1,TYPE_DIR));
+  return 1;
+}
+
+static int dir_meta___gc(lua_State *const L)
+{
+  closedir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
+  return 0;
+}
+
+static int dir_meta_rewind(lua_State *const L)
+{
+  rewinddir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
+  return 0;
+}
+
+static int dir_meta_next(lua_State *const L)
+{
+  struct dirent  *entry;
+  DIR           **dir;
+  
+  dir = luaL_checkudata(L,1,TYPE_DIR);
+  while(true)
+  {
+    errno = 0;
+    entry = readdir(*dir);
+    
+    if (entry == NULL)
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,errno);
+      return 2;
+    }
+    
+    if (
+            (strcmp(entry->d_name,".")  != 0)
+         && (strcmp(entry->d_name,"..") != 0)
+       )
+       break;
+  }
+  
+  lua_pushstring(L,entry->d_name);
+  lua_pushinteger(L,0);
+  return 2;
+}
+
 static int fsys_opendir(lua_State *L)
 {
-  const char *dname;
-  DIR        *dir;
+  const char   *dname;
+  DIR          *dir;
+  DIR        **pdir;
   
   dname = luaL_optstring(L,1,".");
   
@@ -485,116 +536,19 @@ static int fsys_opendir(lua_State *L)
     return 2;
   }
   
-  lua_pushlightuserdata(L,dir);
-  return 1;
+  pdir = lua_newuserdata(L,sizeof(DIR *));
+  *pdir = dir;
+  luaL_getmetatable(L,TYPE_DIR);
+  lua_setmetatable(L,-2);
+  lua_pushinteger(L,0);
+  return 2;
 }
 
-static int fsys_rewinddir(lua_State *L)
-{
-  DIR *dir;
-  
-  if (!lua_islightuserdata(L,1))
-  {
-    lua_pop(L,1);
-    return luaL_error(L,"incorrect type");
-  }
-  
-  dir = lua_touserdata(L,1);
-  lua_pop(L,1);
-  
-  rewinddir(dir);
-  return 0;
-}
-
-static int fsys_readdir(lua_State *L)
-{
-  DIR           *dir;
-  struct dirent *entry;
-  
-  if (!lua_islightuserdata(L,1))
-  {
-    lua_pop(L,1);
-    return luaL_error(L,"incorrect type");
-  }
-  
-  dir = lua_touserdata(L,1);
-  lua_pop(L,1);
-  
-  while(true)
-  {
-    errno = 0;
-    entry = readdir(dir);
-    
-    if (entry == NULL)
-    {
-      lua_pushnil(L);
-      if (errno == 0)
-      {
-        lua_pushboolean(L,1);
-        return 2;
-      }
-      else
-      {
-        lua_pushboolean(L,0);
-        lua_pushinteger(L,errno);
-        return 3;
-      }
-    }
-    
-    if (
-            (strcmp(entry->d_name,".")  != 0) 
-         && (strcmp(entry->d_name,"..") != 0)
-       )
-      break;
-  }
-  
-  lua_pushstring(L,entry->d_name);
-  return 1;
-}
-
-static int fsys_closedir(lua_State *L)
-{
-  DIR *dir;
-
-  if (!lua_islightuserdata(L,1))
-  {
-    lua_pop(L,1);
-    return luaL_error(L,"incorrect type");
-  }
-  
-  dir = lua_touserdata(L,1);
-  lua_pop(L,1);
-  closedir(dir);
-  return 0;
-}
-
-static int impl_dir(lua_State *L)
-{
-  int rc;
-  
-  rc = fsys_readdir(L);
-  if (rc == 1)		/* normal return */
-    return 1;
-  else if (rc == 2)	/* no more entries, so close out dir */
-  {
-    lua_pushvalue(L,1);
-    fsys_closedir(L);
-    lua_pushnil(L);
-    return 1;
-  }
-  else			/* error */
-    return 3;
-}
-    
 static int fsys_dir(lua_State *L)
 {
-  int rc;
-  
-  rc = fsys_opendir(L);
-  if (rc == 2) return rc;
-  lua_pushcfunction(L,impl_dir);
-  lua_pushvalue(L,-2);
-  lua_pushnil(L);
+  fsys_opendir(L);
+  lua_pushcfunction(L,dir_meta_next);
+  lua_insert(L,-3);
   return 3;
 }
 
@@ -621,7 +575,7 @@ static int fsys__safename(lua_State *L)
   lua_pushlstring(L,buffer,len);
   return 1;
 }
- 
+
 /**********************************************************************/
 
 static int fsys_basename(lua_State *L)
@@ -866,9 +820,6 @@ static const struct luaL_reg reg_fsys[] =
   { "chmod"	, fsys_chmod	} ,
   { "access"	, fsys_access	} ,
   { "opendir"	, fsys_opendir	} ,
-  { "rewinddir"	, fsys_rewinddir} ,
-  { "readdir"	, fsys_readdir	} ,
-  { "closedir"	, fsys_closedir	} ,
   { "chroot"	, fsys_chroot	} ,
   { "chdir"     , fsys_chdir	} ,
   { "getcwd"	, fsys_getcwd   } ,
@@ -883,8 +834,22 @@ static const struct luaL_reg reg_fsys[] =
   { NULL	, NULL		}
 };
 
+static const luaL_Reg m_dir_meta[] =
+{
+  { "__tostring"	, dir_meta___tostring 	} ,
+  { "__gc"		, dir_meta___gc		} ,
+  { "rewind"		, dir_meta_rewind	} ,
+  { "next"		, dir_meta_next		} ,
+  { NULL		, NULL			}
+};
+
 int luaopen_org_conman_fsys(lua_State *L)
 {
+  luaL_newmetatable(L,TYPE_DIR);
+  luaL_register(L,NULL,m_dir_meta);
+  lua_pushvalue(L,-1);
+  lua_setfield(L,-2,"__index");
+  
   /*------------------------------------------------------------------------
   ; the Lua io module requires a unique environment.  Let's crib it (we grab
   ; it from io.open()) and use it for ourselves.  This way, when we attempt
