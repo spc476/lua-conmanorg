@@ -232,25 +232,21 @@ int luaopen_org_conman_syslog(lua_State *L)
 {
   luaL_register(L,"org.conman.syslog",reg_syslog);
 
-  lua_pushliteral(L,"facility");
   lua_createtable(L,0,MAX_FACILITY);
   for (size_t i = 0 ; i < MAX_FACILITY; i++)
   {
-    lua_pushstring(L,m_facilities[i].name);
     lua_pushinteger(L,m_facilities[i].value);
-    lua_settable(L,-3);
+    lua_setfield(L,-2,m_facilities[i].name);
   }
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"facility");
 
-  lua_pushliteral(L,"level");
   lua_createtable(L,0,MAX_LEVEL);
   for (size_t i = 0 ; i < MAX_LEVEL; i++)
   {
-    lua_pushstring(L,m_levels[i].name);
     lua_pushinteger(L,m_levels[i].value);
-    lua_settable(L,-3);
+    lua_setfield(L,-2,m_levels[i].name);
   }
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"level");
 
   lua_newtable(L);
   lua_pushcfunction(L,syslog___call);
