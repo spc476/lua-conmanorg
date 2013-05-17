@@ -258,7 +258,6 @@ static void impl_dumpstat(lua_State *L,struct stat *status)
   impl_setfield(L,"st_mtime"	, status->st_mtime);
   impl_setfield(L,"st_ctime"	, status->st_ctime);
   
-  lua_pushliteral(L,"type");
   if (S_ISREG(status->st_mode))
     lua_pushliteral(L,"file");
   else if (S_ISDIR(status->st_mode))
@@ -275,13 +274,12 @@ static void impl_dumpstat(lua_State *L,struct stat *status)
     lua_pushliteral(L,"socket");
   else
     lua_pushliteral(L,"?");
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"type");
   
   impl_setbool(L,"setuid",status->st_mode & S_ISUID);
   impl_setbool(L,"setgid",status->st_mode & S_ISGID);
   impl_setbool(L,"sticky",status->st_mode & S_ISVTX);
   
-  lua_pushliteral(L,"perms");
   perms[ 0] = (status->st_mode & S_ISUID) ? 'u' : '-';
   perms[ 1] = (status->st_mode & S_ISGID) ? 'g' : '-';
   perms[ 2] = (status->st_mode & S_ISVTX) ? 's' : '-';
@@ -296,7 +294,7 @@ static void impl_dumpstat(lua_State *L,struct stat *status)
   perms[11] = (status->st_mode & S_IXOTH) ? 'x' : '-';
   perms[12] = '\0';
   lua_pushstring(L,perms);
-  lua_settable(L,-3);
+  lua_setfield(L,-2,"perms");
 }
 
 /***********************************************************************/
