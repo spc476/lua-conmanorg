@@ -370,22 +370,17 @@ static int proclua_fork(lua_State *const L)
   pid_t child;
   
   child = fork();
-  if (child > 0)
-  {
-    lua_pushinteger(L,child);
-    return 1;
-  }
-  else if (child == 0)
-  {
-    lua_pushinteger(L,0);
-    return 1;
-  }
-  else
+  if (child < 0)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
-    return 2;
   }
+  else
+  {
+    lua_pushinteger(L,child);
+    lua_pushinteger(L,errno);
+  }
+  return 2;
 }
 
 /***********************************************************************/
@@ -586,17 +581,10 @@ static int proclua_itimer(lua_State *const L)
   set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
   set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
   
-  if (setitimer(ITIMER_REAL,&set,NULL) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
-  
+  errno = 0;
+  setitimer(ITIMER_REAL,&set,NULL);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -653,16 +641,12 @@ static int proclua_kill(lua_State *const L)
 
   child = luaL_checkinteger(L,1);
   sig   = luaL_optint(L,2,SIGTERM);
+  errno = 0;
   
-  if (kill(child,sig) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  lua_pushboolean(L,1);
-  return 1;
+  kill(child,sig);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
 }
 
 /*********************************************************************/
