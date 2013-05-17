@@ -67,17 +67,10 @@ static int fsys_chroot(lua_State *L)
 
 static int fsys_chdir(lua_State *L)
 {
-  if (chdir(luaL_checkstring(L,1)) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
-  
+  errno = 0;
+  chdir(luaL_checkstring(L,1));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -88,16 +81,10 @@ static int fsys_symlink(lua_State *L)
   const char *old = luaL_checkstring(L,1);
   const char *new = luaL_checkstring(L,2);
   
-  if (symlink(old,new) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+  errno = 0;
+  symlink(old,new);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -107,17 +94,11 @@ static int fsys_link(lua_State *L)
 {
   const char *old = luaL_checkstring(L,1);
   const char *new = luaL_checkstring(L,2);
-  
-  if (link(old,new) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+
+  errno = 0;
+  link(old,new);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -164,16 +145,10 @@ static int fsys_mkfifo(lua_State *L)
 
 static int fsys_mkdir(lua_State *L)
 {
-  if (mkdir(luaL_checkstring(L,1),0777) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+  errno = 0;
+  mkdir(luaL_checkstring(L,1),0777);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -187,17 +162,11 @@ static int fsys_utime(lua_State *L)
   path         = luaL_checkstring(L,1);
   when.modtime = luaL_checknumber(L,2);
   when.actime  = luaL_optnumber(L,3,when.modtime);
+  errno        = 0;
   
-  if (utime(path,&when) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+  utime(path,&when);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -205,16 +174,10 @@ static int fsys_utime(lua_State *L)
 
 static int fsys_rmdir(lua_State *L)
 {
-  if (rmdir(luaL_checkstring(L,1)) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+  errno = 0;
+  rmdir(luaL_checkstring(L,1));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -370,16 +333,10 @@ static int fsys_chmod(lua_State *L)
     if (*value != '-')
       mode |= bit;
 
-  if (chmod(fname,mode) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+  errno = 0;
+  chmod(fname,mode);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -435,16 +392,10 @@ static int fsys_access(lua_State *L)
     }
   }
   
-  if (access(fname,mode) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+  errno = 0;
+  access(fname,mode);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -516,12 +467,12 @@ static int dir_meta_next(lua_State *const L)
             (strcmp(entry->d_name,".")  != 0)
          && (strcmp(entry->d_name,"..") != 0)
        )
-       break;
-  }
-  
-  lua_pushstring(L,entry->d_name);
-  lua_pushinteger(L,0);
-  return 2;
+    {
+      lua_pushstring(L,entry->d_name);
+      lua_pushinteger(L,0);
+      return 2;
+    }
+  }  
 }
 
 /*************************************************************************/
@@ -795,21 +746,8 @@ static int fsys_dup(lua_State *L)
 
 static int fsys_isfile(lua_State *L)
 {
-  FILE **pfp;
-  
-  pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
-
-  if (isatty(fileno(*pfp)) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
-  return 2;
+  lua_pushboolean(L,!isatty(fileno(*(FILE **)luaL_checkudata(L,1,LUA_FILEHANDLE))));
+  return 1;
 }
 
 /************************************************************************/
