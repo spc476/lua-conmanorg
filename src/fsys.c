@@ -43,6 +43,8 @@
 #include <libgen.h>
 #include <utime.h>
 
+#define TYPE_DIR	"org.conman.fsys:dir"
+
 /*************************************************************************/
 
 static int fsys_chroot(lua_State *L)
@@ -470,13 +472,13 @@ static int fsys_getcwd(lua_State *L)
 
 /************************************************************************/
 
-#define TYPE_DIR	"org.conman.fsys:dir"
-
 static int dir_meta___tostring(lua_State *const L)
 {
   lua_pushfstring(L,"DIR:%p",luaL_checkudata(L,1,TYPE_DIR));
   return 1;
 }
+
+/*************************************************************************/
 
 static int dir_meta___gc(lua_State *const L)
 {
@@ -484,11 +486,15 @@ static int dir_meta___gc(lua_State *const L)
   return 0;
 }
 
+/*************************************************************************/
+
 static int dir_meta_rewind(lua_State *const L)
 {
   rewinddir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
   return 0;
 }
+
+/*************************************************************************/
 
 static int dir_meta_next(lua_State *const L)
 {
@@ -520,6 +526,8 @@ static int dir_meta_next(lua_State *const L)
   return 2;
 }
 
+/*************************************************************************/
+
 static int fsys_opendir(lua_State *L)
 {
   const char   *dname;
@@ -544,6 +552,8 @@ static int fsys_opendir(lua_State *L)
   return 2;
 }
 
+/*************************************************************************/
+
 static int fsys_dir(lua_State *L)
 {
   fsys_opendir(L);
@@ -551,6 +561,8 @@ static int fsys_dir(lua_State *L)
   lua_insert(L,-3);
   return 3;
 }
+
+/*************************************************************************/
 
 static int fsys__safename(lua_State *L)
 {
