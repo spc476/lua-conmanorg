@@ -401,93 +401,118 @@ static int netlua_address2(lua_State *const L)
   struct addrinfo  hints;
   struct addrinfo *results;
   const char      *hostname;
-  const char      *service;
+  const char      *family;
+  int              protocol;
+  const char      *port;
+  
+  lua_settop(L,4);
+  memset(&hints,0,sizeof(hints));
+  results = NULL;
   
   hostname = luaL_checkstring(L,1);
-  service  = lua_tostring(L,2);
-  results  = NULL;
-  memset(&hints,0,sizeof(hints));
   
-  if (!lua_isnoneornil(L,3))
+  /*------------------------------------------------
+  ; set the address family, this can be
+  ;
+  ;	ip
+  ;	ip6
+  ;	any
+  ;------------------------------------------------*/
+  
+  family = luaL_optstring(L,2,"any");
+
+  if (strcmp(family,"any") == 0)
+    hints.ai_family = AF_UNSPEC;
+  else if (strcmp(family,"ip") == 0)
+    hints.ai_family = AF_INET;
+  else if (strcmp(family,"ip6") == 0)
+    hints.ai_family = AF_INET6;
+  else
   {
-    const char *flags = lua_tostring(L,3);
-    if (strcmp(flags,"passive") == 0)
-      hints.ai_flags = AI_PASSIVE;
-    else if (strcmp(flags,"canonname") == 0)
-      hints.ai_flags = AI_CANONNAME;
-    else if (strcmp(flags,"numerichost") == 0)
-      hints.ai_flags = AI_NUMERICHOST;
-    else if (strcmp(flags,"v4mapped") == 0)
-      hints.ai_flags = AI_V4MAPPED;
-    else if (strcmp(flags,"all") == 0)
-      hints.ai_flags = AI_ALL;
-    else if (strcmp(flags,"addrconfig") == 0)
-      hints.ai_flags = AI_ADDRCONFIG;
-    else
-      hints.ai_flags = 0;
+    lua_pushnil(L);
+    lua_pushinteger(L,EPROTONOSUPPORT);
+    return 2;
   }
   
-  if (!lua_isnoneornil(L,4))
-    hints.ai_family = m_netfamily[luaL_checkoption(L,4,NULL,m_netfamilytext)];
+  /*--------------------------------------------
+  ; set the protocol type, samples:
+  ;
+  ;	udp
+  ;	tcp
+  ;---------------------------------------------*/
   
-  if (!lua_isnoneornil(L,5))
+  if (lua_isnumber(L,3))
+    protocol = lua_tointeger(L,3);
+  else if (lua_isstring(L,3))
   {
-    const char *type = lua_tostring(L,5);
-    if (strcmp(type,"stream") == 0)
-      hints.ai_socktype = SOCK_STREAM;
-    else if (strcmp(type,"dgram") == 0)
-      hints.ai_socktype = SOCK_DGRAM;
-    else if (strcmp(type,"raw") == 0)
-      hints.ai_socktype = SOCK_RAW;
-    else
-      hints.ai_socktype = 0;
-  }
-  
-  if (!lua_isnoneornil(L,6))
-  {
-    struct protoent *e = getprotobyname(lua_tostring(L,6));
+    struct protoent *e = getprotobyname(lua_tostring(L,3));
     if (e == NULL)
-      hints.ai_protocol = 0;
-    else
-      hints.ai_protocol = e->p_proto;
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,ENOPROTOOPT);
+      return 2;
+    }
+    protocol = e->p_proto;
   }
+  else
+    protocol = 0;
   
-  if (getaddrinfo(hostname,service,&hints,&results) < 0)
+  if (protocol == IPPROTO_TCP)
+    hints.ai_socktype = SOCK_STREAM;
+  else if (protocol == IPPROTO_UDP)
+    hints.ai_socktype = SOCK_DGRAM;
+  else if (protocol != 0)
+    hints.ai_socktype = SOCK_RAW;
+    
+  /*-------------------------------------------------
+  ; now set the port (or service), examples:
+  ;
+  ;	finger
+  ;	www
+  ;	smtp
+  ;-------------------------------------------------*/
+  
+  port = lua_tostring(L,4);
+
+  if (getaddrinfo(hostname,port,&hints,&results) < 0)
   {
-    int err = errno;
-    freeaddrinfo(results);
     lua_pushnil(L);
-    lua_pushinteger(L,err);
-    return 2;
-  }
-  
-  if (results == NULL)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,0);
-    return 2;
-  }
-  
-  if (results->ai_next == NULL)
-  {
-    sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-    memcpy(&addr->sa,results->ai_addr,Inet_lensa(results->ai_addr));
-    luaL_getmetatable(L,TYPE_ADDR);
-    lua_setmetatable(L,-2);
-    lua_pushinteger(L,0);
+    lua_pushinteger(L,errno);
     freeaddrinfo(results);
     return 2;
   }
   
   lua_createtable(L,0,0);
-  for (int i = 1 ; results != NULL ; i++)
+  
+  if (results == NULL)
   {
-    lua_pushinteger(L,i);
-    sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-    luaL_getmetatable(L,TYPE_ADDR);
-    lua_setmetatable(L,-2);
-    memcpy(&addr->sa,results->ai_addr,Inet_lensa(results->ai_addr));
-    lua_settable(L,-3);
+    lua_pushinteger(L,0);
+    return 2;
+  }
+  
+  /*-----------------------------------------------------------------
+  ; getaddrinfo() returns addresses that can use used by bind(), connect(),
+  ; etc.  If a protocol isn't specified, it will return multiple addresses
+  ; (say, one for TCP, one for UDP, one just an address) when really we only
+  ; need one.  To determine which ne need, if port is not NULL but protocol
+  ; == 0, then set protocol = IPROTO_TCP.  This will filter out the results
+  ;-----------------------------------------------------------------------*/
+  
+  if ((port != NULL) && (protocol == 0))
+    protocol = IPPROTO_TCP;
+  
+  for (int i = 1 ; results != NULL ; )
+  {
+    if (results->ai_protocol == protocol)
+    {
+      lua_pushinteger(L,i);
+      sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+      luaL_getmetatable(L,TYPE_ADDR);
+      lua_setmetatable(L,-2);
+      memcpy(&addr->sa,results->ai_addr,sizeof(struct sockaddr));
+      lua_settable(L,-3);
+      i++;
+    }
     results = results->ai_next;
   }
   
