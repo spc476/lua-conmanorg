@@ -542,7 +542,7 @@ static int netlua_address2(lua_State *const L)
   if ((port != NULL) && (protocol == 0))
     protocol = IPPROTO_TCP;
   
-  for (int i = 1 ; results != NULL ; )
+  for (int i = 1 ; results != NULL ; results = results->ai_next)
   {
     if (results->ai_protocol == protocol)
     {
@@ -554,7 +554,6 @@ static int netlua_address2(lua_State *const L)
       lua_settable(L,-3);
       i++;
     }
-    results = results->ai_next;
   }
   
   freeaddrinfo(results);
