@@ -475,6 +475,7 @@ static int netlua_address2(lua_State *const L)
     luaL_getmetatable(L,TYPE_ADDR);
     lua_setmetatable(L,-2);
     lua_pushinteger(L,0);
+    freeaddrinfo(results);
     return 2;
   }
   
@@ -490,6 +491,7 @@ static int netlua_address2(lua_State *const L)
     results = results->ai_next;
   }
   
+  freeaddrinfo(results);
   lua_pushinteger(L,0);
   return 2;
 }
