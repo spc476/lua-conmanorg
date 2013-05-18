@@ -83,8 +83,15 @@ typedef struct sock
   int fh;
 } sock__t;
 
+struct strint
+{
+  const char *const text;
+  const int         value;
+};
+
 /************************************************************************/
 
+static int	err_meta___index	(lua_State *const) __attribute__((nonnull));
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfile	(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
@@ -172,8 +179,24 @@ static const luaL_Reg m_pollset_meta[] =
   { NULL		, NULL				}
 };
 
-static const char *const m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
-static const int         m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
+static const char *const   m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
+static const int           m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
+static const struct strint m_errors[] =
+{
+  { "EAI_BADFLAGS"	, EAI_BADFLAGS		} ,
+  { "EAI_NONAME"	, EAI_NONAME		} ,
+  { "EAI_AGAIN"		, EAI_AGAIN		} ,
+  { "EAI_FAIL"		, EAI_FAIL		} ,
+  { "EAI_NODATA"	, EAI_NODATA		} ,
+  { "EAI_FAMILY"	, EAI_FAMILY		} ,
+  { "EAI_SOCKTYPE"	, EAI_SOCKTYPE		} ,
+  { "EAI_SERVICE"	, EAI_SERVICE		} ,
+  { "EAI_ADDRFAMILY"	, EAI_ADDRFAMILY	} ,
+  { "EAI_MEMORY"	, EAI_MEMORY		} ,
+  { "EAI_SYSTEM"	, EAI_SYSTEM		} ,
+  { "EAI_OVERFLOW"	, EAI_OVERFLOW		} ,
+  { NULL		, 0			}
+};
 
 /************************************************************************/
 
@@ -305,6 +328,18 @@ static inline void *Inet_address(sockaddr_all__t *const addr)
   }
 }
 
+/**********************************************************************/
+
+static int err_meta___index(lua_State *const L)
+{
+  int err = luaL_checkinteger(L,2);
+  if (err < 0)
+    lua_pushstring(L,gai_strerror(err));
+  else
+    lua_pushstring(L,strerror(err));
+  return 1;
+}
+
 /**********************************************************************
 *
 *	sock,err = net.socket(family,proto)
@@ -404,6 +439,7 @@ static int netlua_address2(lua_State *const L)
   const char      *family;
   int              protocol;
   const char      *port;
+  int              rc;
   
   lua_settop(L,4);
   memset(&hints,0,sizeof(hints));
@@ -430,8 +466,9 @@ static int netlua_address2(lua_State *const L)
   else
   {
     lua_pushnil(L);
+    lua_pushinteger(L,EAI_SYSTEM);
     lua_pushinteger(L,EPROTONOSUPPORT);
-    return 2;
+    return 3;
   }
   
   /*--------------------------------------------
@@ -449,8 +486,9 @@ static int netlua_address2(lua_State *const L)
     if (e == NULL)
     {
       lua_pushnil(L);
+      lua_pushinteger(L,EAI_SYSTEM);
       lua_pushinteger(L,ENOPROTOOPT);
-      return 2;
+      return 3;
     }
     protocol = e->p_proto;
   }
@@ -474,12 +512,14 @@ static int netlua_address2(lua_State *const L)
   
   port = lua_tostring(L,4);
 
-  if (getaddrinfo(hostname,port,&hints,&results) < 0)
+  rc = getaddrinfo(hostname,port,&hints,&results);
+  if (rc != 0)
   {
     lua_pushnil(L);
+    lua_pushinteger(L,rc);
     lua_pushinteger(L,errno);
     freeaddrinfo(results);
-    return 2;
+    return 3;
   }
   
   lua_createtable(L,0,0);
@@ -487,7 +527,8 @@ static int netlua_address2(lua_State *const L)
   if (results == NULL)
   {
     lua_pushinteger(L,0);
-    return 2;
+    lua_pushinteger(L,0);
+    return 3;
   }
   
   /*-----------------------------------------------------------------
@@ -518,7 +559,8 @@ static int netlua_address2(lua_State *const L)
   
   freeaddrinfo(results);
   lua_pushinteger(L,0);
-  return 2;
+  lua_pushinteger(L,0);
+  return 3;
 }
 
 /***********************************************************************
@@ -1485,6 +1527,18 @@ int luaopen_org_conman_net(lua_State *const L)
   luaL_register(L,"org.conman.net",m_net_reg);
   lua_pushliteral(L,IMPL_POLL);
   lua_setfield(L,-2,"_POLL");
+  
+  lua_createtable(L,0,0);
+  for (size_t i = 0 ; m_errors[i].text != NULL ; i++)
+  {
+    lua_pushinteger(L,m_errors[i].value);
+    lua_setfield(L,-2,m_errors[i].text);
+  }
+  lua_createtable(L,0,1);
+  lua_pushcfunction(L,err_meta___index);
+  lua_setfield(L,-2,"__index");
+  lua_setmetatable(L,-2);
+  lua_setfield(L,-2,"errno");
   
   return 1;
 }
