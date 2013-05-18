@@ -309,7 +309,7 @@ static inline void *Inet_address(sockaddr_all__t *const addr)
 *
 *	sock,err = net.socket(family,proto)
 *
-*	family = 'ip'  | 'ipv6' | 'unix'
+*	family = 'ip'  | 'ip6' | 'unix'
 *	proto  = string | number
 *
 **********************************************************************/
