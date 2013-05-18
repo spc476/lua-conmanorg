@@ -424,7 +424,7 @@ static int netlua_address2(lua_State *const L)
     else if (strcmp(flags,"addrconfig") == 0)
       hints.ai_flags = AI_ADDRCONFIG;
     else
-      hints.ai_flags =0;
+      hints.ai_flags = 0;
   }
   
   if (!lua_isnoneornil(L,4))
