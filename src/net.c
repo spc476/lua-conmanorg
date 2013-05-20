@@ -187,11 +187,15 @@ static const struct strint m_errors[] =
   { "EAI_NONAME"	, EAI_NONAME		} ,
   { "EAI_AGAIN"		, EAI_AGAIN		} ,
   { "EAI_FAIL"		, EAI_FAIL		} ,
+#ifdef EAI_NODATA
   { "EAI_NODATA"	, EAI_NODATA		} ,
+#endif
   { "EAI_FAMILY"	, EAI_FAMILY		} ,
   { "EAI_SOCKTYPE"	, EAI_SOCKTYPE		} ,
   { "EAI_SERVICE"	, EAI_SERVICE		} ,
+#ifdef EAI_ADDRFAMILY
   { "EAI_ADDRFAMILY"	, EAI_ADDRFAMILY	} ,
+#endif
   { "EAI_MEMORY"	, EAI_MEMORY		} ,
   { "EAI_SYSTEM"	, EAI_SYSTEM		} ,
   { "EAI_OVERFLOW"	, EAI_OVERFLOW		} ,
