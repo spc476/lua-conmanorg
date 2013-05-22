@@ -27,7 +27,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#define TYPE_MAGIC	"org.conman.magic:It's Magic!"
+#define TYPE_MAGIC	"org.conman.fsys.magic:It's Magic!"
 
 /**************************************************************************/
 
