@@ -1413,13 +1413,16 @@ static void proc_pushstatus(
   {
     lua_pushinteger(L,WEXITSTATUS(status));
     lua_setfield(L,-2,"rc");
+    lua_pushinteger(L,WEXITSTATUS(status));
+    lua_tostring(L,-1);
+    lua_setfield(L,"description");
     lua_pushliteral(L,"normal");
     lua_setfield(L,-2,"status");
   }
   else if (WIFSTOPPED(status))
   {
     lua_pushinteger(L,WSTOPSIG(status));
-    lua_setfield(L,-2,"signal");
+    lua_setfield(L,-2,"rc");
     lua_pushstring(L,strsignal(WSTOPSIG(status)));
     lua_setfield(L,-2,"description");
     lua_pushliteral(L,"stopped");
@@ -1428,7 +1431,7 @@ static void proc_pushstatus(
   else if (WIFSIGNALED(status))
   {
     lua_pushinteger(L,WTERMSIG(status));
-    lua_setfield(L,-2,"signal");
+    lua_setfield(L,-2,"rc");
     lua_pushstring(L,strsignal(WTERMSIG(status)));
     lua_setfield(L,-2,"description");
     lua_pushliteral(L,"terminated");
