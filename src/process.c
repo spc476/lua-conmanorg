@@ -1411,11 +1411,18 @@ static void proc_pushstatus(
   
   if (WIFEXITED(status))
   {
-    lua_pushinteger(L,WEXITSTATUS(status));
+    int rc = WEXITSTATUS(status);
+    lua_pushinteger(L,rc);
     lua_setfield(L,-2,"rc");
-    lua_pushinteger(L,WEXITSTATUS(status));
-    lua_tostring(L,-1);
-    lua_setfield(L,"description");
+    lua_pushfstring(
+    	L,
+    	"%s %d",
+    	(rc == EXIT_SUCCESS)
+    		? "success"
+    		: "failure",
+    	rc
+    );
+    lua_setfield(L,-2,"description");
     lua_pushliteral(L,"normal");
     lua_setfield(L,-2,"status");
   }
