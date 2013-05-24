@@ -972,7 +972,7 @@ static int hlimitlua_meta___index(lua_State *const L)
   if (limit.rlim_max == RLIM_INFINITY)
     lua_pushliteral(L,"inf");
   else
-    lua_pushinteger(L,limit.rlim_max);
+    lua_pushnumber(L,limit.rlim_max);
 
   return 1;
 }
@@ -995,7 +995,7 @@ static int hlimitlua_meta___newindex(lua_State *const L)
     return luaL_error(L,"Illegal limit resource: %s",tkey);
 
   if (lua_isnumber(L,3))
-    ival = lua_tointeger(L,3);
+    ival = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
     const char *tval;
@@ -1045,7 +1045,7 @@ static int slimitlua_meta___index(lua_State *const L)
   if (limit.rlim_cur == RLIM_INFINITY)
     lua_pushliteral(L,"inf");
   else
-    lua_pushinteger(L,limit.rlim_cur);
+    lua_pushnumber(L,limit.rlim_cur);
     
   return 1;
 }
@@ -1070,7 +1070,7 @@ static int slimitlua_meta___newindex(lua_State *const L)
     return luaL_error(L,"Illegal limit resource: %s",tkey);
 
   if (lua_isnumber(L,3))
-    ival = lua_tointeger(L,3);
+    ival = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
     const char *tval;
