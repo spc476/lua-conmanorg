@@ -46,6 +46,8 @@
 #include <netinet/tcp.h>
 #include <sys/un.h>
 #include <sys/poll.h>
+#include <net/if.h>
+#include <ifaddrs.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -92,6 +94,7 @@ struct strint
 /************************************************************************/
 
 static int	err_meta___index	(lua_State *const) __attribute__((nonnull));
+static int	netlua_interfaces	(lua_State *const) __attribute__((nonnull));
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfile	(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
@@ -128,6 +131,7 @@ static int	pollset_meta_events	(lua_State *const) __attribute__((nonnull));
 
 static const luaL_Reg m_net_reg[] =
 {
+  { "interfaces"	, netlua_interfaces	} ,
   { "socket"		, netlua_socket		} ,
   { "socketfile"	, netlua_socketfile	} ,
   { "address2"		, netlua_address2	} ,
@@ -342,6 +346,93 @@ static int err_meta___index(lua_State *const L)
   else
     lua_pushstring(L,strerror(err));
   return 1;
+}
+
+/**********************************************************************
+*
+*	list,err = net.interfaces()
+*
+**********************************************************************/
+
+static int netlua_interfaces(lua_State *const L)
+{
+  struct ifaddrs  *interfaces;
+  struct ifaddrs  *i;
+  sockaddr_all__t *addr;
+  
+  lua_settop(L,0);
+  
+  if (getifaddrs(&interfaces) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_createtable(L,0,0);
+  
+  for (i = interfaces ; i != NULL ; i = i->ifa_next)
+  {
+    if (
+            (i->ifa_addr->sa_family != AF_INET)
+         && (i->ifa_addr->sa_family != AF_INET6)
+       )
+      continue;
+    
+    lua_getfield(L,-1,i->ifa_name);
+    if (lua_isnil(L,-1))
+    {
+      lua_pop(L,1);
+      lua_createtable(L,0,0);
+      lua_pushvalue(L,-1);
+      lua_setfield(L,-3,i->ifa_name);
+    }
+    
+    lua_pushinteger(L,lua_objlen(L,-1) + 1);
+    lua_createtable(L,0,0);
+    
+    addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+    memcpy(&addr->sa,i->ifa_addr,Inet_lensa(i->ifa_addr));
+    luaL_getmetatable(L,TYPE_ADDR);
+    lua_setmetatable(L,-2);
+    lua_setfield(L,-2,"addr");
+    
+    addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+    memcpy(&addr->sa,i->ifa_netmask,Inet_lensa(i->ifa_netmask));
+    luaL_getmetatable(L,TYPE_ADDR);
+    lua_setmetatable(L,-2);
+    lua_setfield(L,-2,"mask");
+    
+    if ((i->ifa_flags & IFF_BROADCAST) == IFF_BROADCAST)
+    {
+      if (i->ifa_ifu.ifu_broadaddr != NULL)
+      {
+        addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+        memcpy(&addr->sa,i->ifa_ifu.ifu_broadaddr,Inet_lensa(i->ifa_ifu.ifu_broadaddr));
+        luaL_getmetatable(L,TYPE_ADDR);
+        lua_setmetatable(L,-2);
+        lua_setfield(L,-2,"broadcast");
+      }
+    }
+    else if ((i->ifa_flags & IFF_POINTOPOINT) == IFF_POINTOPOINT)
+    {
+      if (i->ifa_ifu.ifu_dstaddr != NULL)
+      {
+        addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+        memcpy(&addr->sa,i->ifa_ifu.ifu_dstaddr,Inet_lensa(i->ifa_ifu.ifu_dstaddr));
+        luaL_getmetatable(L,TYPE_ADDR);
+        lua_setmetatable(L,-2);
+        lua_setfield(L,-2,"destaddr");
+      }
+    }
+    
+    lua_settable(L,-3);
+    lua_pop(L,1);
+  }
+  
+  freeifaddrs(interfaces);
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /**********************************************************************
