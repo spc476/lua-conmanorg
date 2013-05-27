@@ -29,6 +29,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include <luaconf.h>
 #include <lua.h>
