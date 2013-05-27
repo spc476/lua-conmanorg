@@ -104,6 +104,7 @@ static int	socklua___tostring	(lua_State *const) __attribute__((nonnull));
 static int	socklua___index		(lua_State *const) __attribute__((nonnull));
 static int	socklua___newindex	(lua_State *const) __attribute__((nonnull));
 static int      socklua_peer		(lua_State *const) __attribute__((nonnull));
+static int	socklua_addr		(lua_State *const) __attribute__((nonnull));
 static int	socklua_bind		(lua_State *const) __attribute__((nonnull));
 static int	socklua_connect		(lua_State *const) __attribute__((nonnull));
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
@@ -148,6 +149,7 @@ static const luaL_Reg m_sock_meta[] =
   { "__index"		, socklua___index	} ,
   { "__newindex"	, socklua___newindex	} ,
   { "peer"		, socklua_peer		} ,
+  { "addr"		, socklua_addr		} ,
   { "bind"		, socklua_bind		} ,
   { "connect"		, socklua_connect	} ,
   { "listen"		, socklua_listen	} ,
@@ -1062,6 +1064,43 @@ static int socklua_peer(lua_State *const L)
   addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
   
   if (getpeername(s,&addr->sa,&len) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  luaL_getmetatable(L,TYPE_ADDR);
+  lua_setmetatable(L,-2);
+  lua_pushinteger(L,0);
+  return 2;
+}
+
+/*********************************************************************
+*
+*	addr,err = sock:addr(sock | integer)
+*
+*	sock = net.socket(...)
+********************************************************************/
+
+static int socklua_addr(lua_State *const L)
+{
+  sockaddr_all__t *addr;
+  socklen_t        len;
+  int              s;
+  
+  if (lua_isuserdata(L,1))
+  {
+    sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
+    s = sock->fh;
+  }
+  else
+    s = lua_tointeger(L,1);
+    
+  len = sizeof(sockaddr_all__t);
+  addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+  
+  if (getsockname(s,&addr->sa,&len) < 0)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
