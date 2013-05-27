@@ -1097,7 +1097,7 @@ static int socklua_addr(lua_State *const L)
   else
     s = lua_tointeger(L,1);
     
-  len = sizeof(sockaddr_all__t);
+  len  = sizeof(sockaddr_all__t);
   addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
   
   if (getsockname(s,&addr->sa,&len) < 0)
