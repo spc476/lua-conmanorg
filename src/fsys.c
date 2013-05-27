@@ -713,18 +713,55 @@ static int fsys_pipe(lua_State *L)
 
 /***********************************************************************/
 
+static void *checkutype(lua_State *const L,int idx,const char *tname)
+{
+  void *p = lua_touserdata(L,idx);
+  
+  assert(p != NULL);
+  
+  if (lua_getmetatable(L,idx))
+  {
+    lua_getfield(L,LUA_REGISTRYINDEX,tname);
+    if (lua_rawequal(L,-1,-2))
+    {
+      lua_pop(L,2);
+      return p;
+    }
+  }
+  return NULL;
+}
+  
+/***********************************************************************/
+
+static int getfh(lua_State *const L,int idx)
+{
+  void *p;
+  
+  p = checkutype(L,idx,LUA_FILEHANDLE);
+  if (p != NULL)
+    return fileno(*(FILE **)p);
+  
+  p = checkutype(L,idx,"org.conman.net:sock");
+  if (p != NULL)
+    return *(int *)p;
+  
+  return luaL_error(L,"not a file nor a socket");
+}
+
+/***********************************************************************/
+
 static int fsys_dup(lua_State *L)
 {
   int orig;
   int copy;
   
   if (lua_isuserdata(L,1))
-    orig = fileno(*(FILE **)luaL_checkudata(L,1,LUA_FILEHANDLE));
+    orig = getfh(L,1);
   else
     orig = luaL_checkinteger(L,1);
   
   if (lua_isuserdata(L,2))
-    copy = fileno(*(FILE **)luaL_checkudata(L,2,LUA_FILEHANDLE));
+    copy = getfh(L,2);
   else
     copy = luaL_checkinteger(L,2);
   
