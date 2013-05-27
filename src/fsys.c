@@ -493,7 +493,7 @@ static int fsys_opendir(lua_State *L)
     return 2;
   }
   
-  pdir = lua_newuserdata(L,sizeof(DIR *));
+  pdir  = lua_newuserdata(L,sizeof(DIR *));
   *pdir = dir;
   luaL_getmetatable(L,TYPE_DIR);
   lua_setmetatable(L,-2);
@@ -765,16 +765,10 @@ static int fsys_dup(lua_State *L)
   else
     copy = luaL_checkinteger(L,2);
   
-  if (dup2(orig,copy) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
+  errno = 0;
+  dup2(orig,copy);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   
   return 2;
 }
