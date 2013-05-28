@@ -212,7 +212,7 @@ static const struct strint m_errors[] =
 
 static inline size_t	  Inet_addrlen	(sockaddr_all__t *const)                               __attribute__((nonnull));
 static inline socklen_t   Inet_len    	(sockaddr_all__t *const)                               __attribute__((nonnull));
-static inline socklen_t   Inet_lensa	(sockaddr_all__t *const)                               __attribute__((nonnull));
+static inline socklen_t   Inet_lensa	(struct sockaddr *const)                               __attribute__((nonnull));
 static inline int         Inet_port   	(sockaddr_all__t *const)                               __attribute__((nonnull));
 static inline void        Inet_setport	(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1)));
 static inline void	  Inet_setportn	(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1)));
