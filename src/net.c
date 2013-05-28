@@ -559,9 +559,8 @@ static int netlua_address2(lua_State *const L)
   else
   {
     lua_pushnil(L);
-    lua_pushinteger(L,EAI_SYSTEM);
     lua_pushinteger(L,EPROTONOSUPPORT);
-    return 3;
+    return 2;
   }
   
   /*--------------------------------------------
@@ -579,9 +578,8 @@ static int netlua_address2(lua_State *const L)
     if (e == NULL)
     {
       lua_pushnil(L);
-      lua_pushinteger(L,EAI_SYSTEM);
       lua_pushinteger(L,ENOPROTOOPT);
-      return 3;
+      return 2;
     }
     protocol = e->p_proto;
   }
@@ -603,16 +601,16 @@ static int netlua_address2(lua_State *const L)
   ;	smtp
   ;-------------------------------------------------*/
   
-  port = lua_tostring(L,4);
-
-  rc = getaddrinfo(hostname,port,&hints,&results);
+  port  = lua_tostring(L,4);
+  errno = 0;
+  rc    = getaddrinfo(hostname,port,&hints,&results);
+  
   if (rc != 0)
   {
     lua_pushnil(L);
-    lua_pushinteger(L,rc);
-    lua_pushinteger(L,errno);
+    lua_pushinteger(L,(rc == EAI_SYSTEM) ? errno : rc);
     freeaddrinfo(results);
-    return 3;
+    return 2;
   }
   
   lua_createtable(L,0,0);
@@ -620,8 +618,7 @@ static int netlua_address2(lua_State *const L)
   if (results == NULL)
   {
     lua_pushinteger(L,0);
-    lua_pushinteger(L,0);
-    return 3;
+    return 2;
   }
   
   /*-----------------------------------------------------------------
@@ -651,8 +648,7 @@ static int netlua_address2(lua_State *const L)
   
   freeaddrinfo(results);
   lua_pushinteger(L,0);
-  lua_pushinteger(L,0);
-  return 3;
+  return 2;
 }
 
 /***********************************************************************
