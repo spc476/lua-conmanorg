@@ -509,17 +509,14 @@ static int netlua_socket(lua_State *const L)
 
 static int netlua_socketfile(lua_State *const L)
 {
-  FILE    **pfp;
-  sock__t  *sock;
+  FILE    **pfp  = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  sock__t  *sock = lua_newuserdata(L,sizeof(sock__t));
   
-  pfp      = luaL_checkudata(L,1,LUA_FILEHANDLE);
-  sock     = lua_newuserdata(L,sizeof(sock__t));
-  sock->fh = fileno(*pfp);
-  
+  sock->fh = fileno(*pfp);  
   luaL_getmetatable(L,TYPE_SOCK);
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
-  
+
   return 2;
 }
 
@@ -1195,16 +1192,12 @@ static int socklua_bind(lua_State *const L)
 
 static int socklua_connect(lua_State *const L)
 {
-  sockaddr_all__t *addr;
-  sock__t         *sock;
-  
-  sock = luaL_checkudata(L,1,TYPE_SOCK);
-  addr = luaL_checkudata(L,2,TYPE_ADDR);
-  
-  if (connect(sock->fh,&addr->sa,Inet_len(addr)) < 0)
-    lua_pushinteger(L,errno);
-  else
-    lua_pushinteger(L,0);
+  sock__t         *sock = luaL_checkudata(L,1,TYPE_ADDR);
+  sockaddr_all__t *addr = luaL_checkudata(L,2,TYPE_ADDR);  
+
+  errno = 0;
+  connect(sock->fh,&addr->sa,Inet_len(addr));
+  lua_pushinteger(L,errno);
   return 1;
 }
 
@@ -1218,16 +1211,11 @@ static int socklua_connect(lua_State *const L)
 
 static int socklua_listen(lua_State *const L)
 {
-  sock__t *sock;
-  int      backlog;
+  sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   
-  sock    = luaL_checkudata(L,1,TYPE_SOCK);
-  backlog = luaL_optint(L,2,5);
-  
-  if (listen(sock->fh,backlog) < 0)
-    lua_pushinteger(L,errno);
-  else
-    lua_pushinteger(L,0);
+  errno = 0;
+  listen(sock->fh,luaL_optint(L,2,5));
+  lua_pushinteger(L,errno);
   return 1;
 }
 
@@ -1280,21 +1268,13 @@ static int socklua_accept(lua_State *const L)
 
 static int socklua_reuse(lua_State *const L)
 {
-  sock__t *sock;
+  sock__t *sock  = luaL_checkudata(L,1,TYPE_SOCK);
   int      reuse = 1;
-  
-  sock = luaL_checkudata(L,1,TYPE_SOCK);
-  if (setsockopt(sock->fh,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(int)) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
-  }
-  
+
+  errno = 0;  
+  setsockopt(sock->fh,SOL_SOCKET,SO_REUSEADDR,&reuse,sizeof(int));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -1423,13 +1403,11 @@ static int socklua_write(lua_State *const L)
 static int socklua_shutdown(lua_State *const L)
 {
   static const char *const opts[] = { "r" , "w" , "rw" };
-  sock__t *sock;
+  sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   
-  sock = luaL_checkudata(L,1,TYPE_SOCK);
-  if (shutdown(sock->fh,luaL_checkoption(L,2,"rw",opts)) < 0)
-    lua_pushinteger(L,errno);
-  else
-    lua_pushinteger(L,0);
+  errno = 0;
+  shutdown(sock->fh,luaL_checkoption(L,2,"rw",opts));
+  lua_pushinteger(L,errno);
   return 1;
 }
 
@@ -1447,10 +1425,9 @@ static int socklua_close(lua_State *const L)
 
   if (sock->fh != -1)
   {
-    if (close(sock->fh) < 0)
-      lua_pushinteger(L,errno);
-    else
-      lua_pushinteger(L,0);
+    errno = 0;
+    close(sock->fh);
+    lua_pushinteger(L,errno);
     sock->fh = -1;
   }
   else
@@ -1463,9 +1440,7 @@ static int socklua_close(lua_State *const L)
 
 static int socklua_fd(lua_State *const L)
 {
-  sock__t *sock;
-  
-  sock = luaL_checkudata(L,1,TYPE_SOCK);
+  sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   lua_pushinteger(L,sock->fh);
   return 1;
 }
@@ -1478,12 +1453,6 @@ static int addrlua___index(lua_State *const L)
   const char      *sidx;
   
   addr = luaL_checkudata(L,1,TYPE_ADDR);
-  if (!lua_isstring(L,2))
-  {
-    lua_pushnil(L);
-    return 1;
-  }
-  
   if (!lua_isstring(L,2))
   {
     lua_pushnil(L);
