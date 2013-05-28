@@ -331,15 +331,10 @@ static int fsys_lstat(lua_State *L)
 
 static int fsys_chmod(lua_State *L)
 {
-  const char        *fname;
-  const char        *value;
-  mode_t             mode;
-  mode_t             bit;
-  
-  fname = luaL_checkstring(L,1);
-  value = luaL_checkstring(L,2);
-  bit   = 0400;
-  mode  = 0;
+  const char        *fname = luaL_checkstring(L,1);
+  const char        *value = luaL_checkstring(L,2);
+  mode_t             bit   = 0400;
+  mode_t             mode  = 0;
   
   for ( ; *value ; bit >>= 1 , value++)
     if (*value != '-')
