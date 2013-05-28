@@ -137,8 +137,19 @@ static int fsys_mknod(lua_State *L)
 
 static int fsys_mkfifo(lua_State *L)
 {
-  lua_pushboolean(L,false);
-  lua_pushinteger(L,ENOSYS);
+  const char *fname = luaL_checkstring(L,1);
+  const char *value = luaL_checkstring(L,2);
+  mode_t      bit   = 0400;
+  mode_t      mode  = 0000;
+  
+  for ( ; *value ; bit >>= 1 , value++)
+    if (*value != '-')
+      mode |= bit;
+  
+  errno = 0;
+  mkfifo(fname,mode);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
