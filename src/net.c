@@ -94,12 +94,14 @@ struct strint
 /************************************************************************/
 
 static int	err_meta___index	(lua_State *const) __attribute__((nonnull));
+
 static int	netlua_interfaces	(lua_State *const) __attribute__((nonnull));
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfile	(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int	netlua_pollset		(lua_State *const) __attribute__((nonnull));
+
 static int	socklua___tostring	(lua_State *const) __attribute__((nonnull));
 static int	socklua___index		(lua_State *const) __attribute__((nonnull));
 static int	socklua___newindex	(lua_State *const) __attribute__((nonnull));
@@ -114,18 +116,20 @@ static int	socklua_write		(lua_State *const) __attribute__((nonnull));
 static int	socklua_shutdown	(lua_State *const) __attribute__((nonnull));
 static int	socklua_close		(lua_State *const) __attribute__((nonnull));
 static int	socklua_fd		(lua_State *const) __attribute__((nonnull));
+
 static int	addrlua___index		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___tostring	(lua_State *const) __attribute__((nonnull));
 static int	addrlua___eq		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___lt		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___le		(lua_State *const) __attribute__((nonnull));
 static int	addrlua___len		(lua_State *const) __attribute__((nonnull));
-static int	pollset_meta___tostring	(lua_State *const) __attribute__((nonnull));
-static int	pollset_meta___gc	(lua_State *const) __attribute__((nonnull));
-static int	pollset_meta_insert	(lua_State *const) __attribute__((nonnull));
-static int	pollset_meta_update	(lua_State *const) __attribute__((nonnull));
-static int	pollset_meta_remove	(lua_State *const) __attribute__((nonnull));
-static int	pollset_meta_events	(lua_State *const) __attribute__((nonnull));
+
+static int	polllua___tostring	(lua_State *const) __attribute__((nonnull));
+static int	polllua___gc		(lua_State *const) __attribute__((nonnull));
+static int	polllua_insert		(lua_State *const) __attribute__((nonnull));
+static int	polllua_update		(lua_State *const) __attribute__((nonnull));
+static int	polllua_remove		(lua_State *const) __attribute__((nonnull));
+static int	polllua_events		(lua_State *const) __attribute__((nonnull));
 
 /*************************************************************************/
 
@@ -172,15 +176,15 @@ static const luaL_Reg m_addr_meta[] =
   { NULL		, NULL			}
 };
 
-static const luaL_Reg m_pollset_meta[] =
+static const luaL_Reg m_polllua[] =
 {
-  { "__tostring"	, pollset_meta___tostring	} ,
-  { "__gc"		, pollset_meta___gc		} ,
-  { "insert"		, pollset_meta_insert		} ,
-  { "update"		, pollset_meta_update		} ,
-  { "remove"		, pollset_meta_remove		} ,
-  { "events"		, pollset_meta_events		} ,
-  { NULL		, NULL				}
+  { "__tostring"	, polllua___tostring	} ,
+  { "__gc"		, polllua___gc		} ,
+  { "insert"		, polllua_insert	} ,
+  { "update"		, polllua_update	} ,
+  { "remove"		, polllua_remove	} ,
+  { "events"		, polllua_events	} ,
+  { NULL		, NULL			}
 };
 
 static const char *const   m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
@@ -1597,7 +1601,7 @@ int luaopen_org_conman_net(lua_State *const L)
   luaL_register(L,NULL,m_addr_meta);
   
   luaL_newmetatable(L,TYPE_POLL);
-  luaL_register(L,NULL,m_pollset_meta);
+  luaL_register(L,NULL,m_polllua);
   lua_pushvalue(L,-1);
   lua_setfield(L,-1,"__index");
   
@@ -1749,7 +1753,7 @@ static int netlua_pollset(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta___tostring(lua_State *const L)
+static int polllua___tostring(lua_State *const L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   lua_pushfstring(L,"SET:%d:%p",set->idx,(void *)set);
@@ -1758,7 +1762,7 @@ static int pollset_meta___tostring(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta___gc(lua_State *const L)
+static int polllua___gc(lua_State *const L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
@@ -1768,7 +1772,7 @@ static int pollset_meta___gc(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_insert(lua_State *const L)
+static int polllua_insert(lua_State *const L)
 {
   pollset__t         *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t            *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -1803,7 +1807,7 @@ static int pollset_meta_insert(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_update(lua_State *const L)
+static int polllua_update(lua_State *const L)
 {
   pollset__t         *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t            *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -1826,7 +1830,7 @@ static int pollset_meta_update(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_remove(lua_State *const L)
+static int polllua_remove(lua_State *const L)
 {
   pollset__t         *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t            *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -1851,7 +1855,7 @@ static int pollset_meta_remove(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_events(lua_State *const L)
+static int polllua_events(lua_State *const L)
 {
   pollset__t *set     = luaL_checkudata(L,1,TYPE_POLL);
   int         timeout = luaL_optinteger(L,2,-1);
@@ -1994,7 +1998,7 @@ static int netlua_pollset(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta___tostring(lua_State *const L)
+static int polllua___tostring(lua_State *const L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   lua_pushfstring(L,"SET:%d:%p",set->idx,(void *)set);
@@ -2003,7 +2007,7 @@ static int pollset_meta___tostring(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta___gc(lua_State *const L)
+static int polllua___gc(lua_State *const L)
 {
   lua_Alloc  allocf;
   void      *ud;
@@ -2017,7 +2021,7 @@ static int pollset_meta___gc(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_insert(lua_State *const L)
+static int polllua_insert(lua_State *const L)
 {
   pollset__t *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t    *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -2071,7 +2075,7 @@ static int pollset_meta_insert(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_update(lua_State *const L)
+static int polllua_update(lua_State *const L)
 {
   pollset__t *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t    *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -2094,7 +2098,7 @@ static int pollset_meta_update(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_remove(lua_State *const L)
+static int polllua_remove(lua_State *const L)
 {
   pollset__t *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t    *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -2127,7 +2131,7 @@ static int pollset_meta_remove(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_events(lua_State *const L)
+static int polllua_events(lua_State *const L)
 {
   pollset__t *set     = luaL_checkudata(L,1,TYPE_POLL);
   int         timeout = luaL_optinteger(L,2,-1);
@@ -2259,7 +2263,7 @@ static int netlua_pollset(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta___tostring(lua_State *const L)
+static int polllua___tostring(lua_State *const L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   lua_pushfstring(L,"SET:%d:%p",set->idx,(void *)set);
@@ -2268,7 +2272,7 @@ static int pollset_meta___tostring(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta___gc(lua_State *const L)
+static int polllua___gc(lua_State *const L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
@@ -2277,7 +2281,7 @@ static int pollset_meta___gc(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_insert(lua_State *const L)
+static int polllua_insert(lua_State *const L)
 {
   pollset__t *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t    *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -2313,7 +2317,7 @@ static int pollset_meta_insert(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_update(lua_State *const L)
+static int polllua_update(lua_State *const L)
 {
   pollset__t *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t    *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -2329,7 +2333,7 @@ static int pollset_meta_update(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_remove(lua_State *const L)
+static int polllua_remove(lua_State *const L)
 {
   pollset__t *set  = luaL_checkudata(L,1,TYPE_POLL);
   sock__t    *sock = luaL_checkudata(L,2,TYPE_SOCK);
@@ -2351,7 +2355,7 @@ static int pollset_meta_remove(lua_State *const L)
 
 /**********************************************************************/
 
-static int pollset_meta_events(lua_State *const L)
+static int polllua_events(lua_State *const L)
 {
   pollset__t     *set     = luaL_checkudata(L,1,TYPE_POLL);
   double          timeout = luaL_optnumber(L,2,-1.0);
