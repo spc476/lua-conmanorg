@@ -143,7 +143,6 @@ static const luaL_Reg m_net_reg[] =
   { "socketfile"	, netlua_socketfile	} ,
   { "address2"		, netlua_address2	} ,
   { "address"		, netlua_address	} ,
-  { "peer"		, socklua_peer		} ,
   { "pollset"		, netlua_pollset	} ,
   { NULL		, NULL			}
 };
