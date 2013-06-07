@@ -561,21 +561,7 @@ static int netlua_address2(lua_State *const L)
   ;	tcp
   ;---------------------------------------------*/
   
-  if (lua_isnumber(L,3))
-    protocol = lua_tointeger(L,3);
-  else if (lua_isstring(L,3))
-  {
-    struct protoent *e = getprotobyname(lua_tostring(L,3));
-    if (e == NULL)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,ENOPROTOOPT);
-      return 2;
-    }
-    protocol = e->p_proto;
-  }
-  else
-    protocol = 0;
+  protocol = net_toproto(L,3);
   
   if (protocol == IPPROTO_TCP)
     hints.ai_socktype = SOCK_STREAM;
@@ -1517,7 +1503,7 @@ static int net_toproto(lua_State *const L,const int idx)
     return result.p_proto;
   }
   else
-    return luaL_error(L,"invalid protocol");
+    return 0;
 }
 
 /*********************************************************************/
@@ -1544,7 +1530,7 @@ static int net_toport(lua_State *const L,int idx,const int proto)
     return result.s_port;
   }
   else
-    return luaL_error(L,"invalid service");
+    return 0;
 }
 
 /*********************************************************************/
