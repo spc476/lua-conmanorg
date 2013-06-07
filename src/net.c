@@ -131,6 +131,9 @@ static int	polllua_update		(lua_State *const) __attribute__((nonnull));
 static int	polllua_remove		(lua_State *const) __attribute__((nonnull));
 static int	polllua_events		(lua_State *const) __attribute__((nonnull));
 
+static int	net_toproto		(lua_State *const,const int)           __attribute__((nonnull));
+static int	net_toport		(lua_State *const,const int,const int) __attribute__((nonnull));
+
 /*************************************************************************/
 
 static const luaL_Reg m_net_reg[] =
@@ -456,23 +459,8 @@ static int netlua_socket(lua_State *const L)
   int      type;
   sock__t *sock;
 
-  family = m_netfamily[luaL_checkoption(L,1,NULL,m_netfamilytext)];
-  
-  if (lua_isnumber(L,2))
-    proto = lua_tointeger(L,2);
-  else if (lua_isstring(L,2))
-  {
-    struct protoent *e = getprotobyname(lua_tostring(L,2));
-    if (e == NULL)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,ENOPROTOOPT);
-      return 2;
-    }
-    proto = e->p_proto;
-  }
-  else
-    return luaL_error(L,"invalid protocol");
+  family = m_netfamily[luaL_checkoption(L,1,NULL,m_netfamilytext)];  
+  proto  = net_toproto(L,2);
   
   if (proto == IPPROTO_TCP)
     type = SOCK_STREAM;
@@ -657,11 +645,11 @@ static int netlua_address2(lua_State *const L)
 
 /***********************************************************************
 *
-*	addr,err = net.address(address,port[,type = 'tcp'])
-*
-*	address = ip (192.168.1.1) | ip6 (fc00::1) | unix (/dev/log)
-*	port    = number | string (not used for unix addresses)
-*	type    = 'tcp'  | 'udp' | 'raw'
+*       addr,err = net.address(address,proto[,port])
+*  
+*       address = ip (192.168.1.1) | ip6 (fc00::1) | unix (/dev/log)
+*	proto   = 'tcp','udp', ... 
+*	port	= string | number
 *
 ***********************************************************************/
 
@@ -670,9 +658,9 @@ static int netlua_address(lua_State *const L)
   sockaddr_all__t *addr;
   const char      *host;
   size_t           hsize;
-  int              top;
+  int              proto;
   
-  top  = lua_gettop(L);
+  lua_settop(L,3);
   addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
   host = luaL_checklstring(L,1,&hsize);
   
@@ -697,85 +685,12 @@ static int netlua_address(lua_State *const L)
     return 2;
   }
   
-  if (lua_isnumber(L,2))
-  {
-    int port;
-    
-    port = lua_tointeger(L,2);
-    if ((port < 0) || (port > 65535))
-      return luaL_error(L,"invalid port number");
-    Inet_setport(addr,port);
-  }
-  else if (lua_isstring(L,2))
-  {
-    const char *serv;
-    const char *type;
-    
-    serv = lua_tostring(L,2);
-    type = (top == 3) ? lua_tostring(L,3) : "tcp";
-    
-    if (strcmp(type,"raw") == 0)
-    {
-      struct protoent  result;
-      struct protoent *presult;
-      char             tmp[BUFSIZ];
-
-#ifdef __SunOS
-      presult = getprotobyname_r(serv,&result,tmp,sizeof(tmp));
-      if (presult == NULL)
-      {
-        lua_pushnil(L);
-        lua_pushinteger(L,errno);
-        return 2;
-      }
-#else           
-      int rc = getprotobyname_r(serv,&result,tmp,sizeof(tmp),&presult);
-      if (rc != 0)
-      {
-        lua_pushnil(L);
-        lua_pushinteger(L,rc);
-        return 2;
-      }
-#endif
-       
-      Inet_setport(addr,result.p_proto);
-      luaL_getmetatable(L,TYPE_ADDR);
-      lua_setmetatable(L,-2);
-      lua_pushinteger(L,0);
-      return 2;
-    }
-    
-    if ((strcmp(type,"tcp") != 0) && (strcmp(type,"udp") != 0))
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,EPROTOTYPE);
-      return 2;
-    }
-    
-    struct servent  result;
-    struct servent *presult;
-    char            tmp[BUFSIZ];
-
-#ifdef __SunOS
-    presult = getservbyname_r(serv,type,&result,tmp,sizeof(tmp));
-    if (presult == NULL)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,errno);
-      return 2;
-    }
-#else    
-    int rc = getservbyname_r(serv,type,&result,tmp,sizeof(tmp),&presult);
-    if (rc != 0)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,rc);
-      return 2;
-    }
-#endif
-
-    Inet_setportn(addr,result.s_port);
-  }
+  proto = net_toproto(L,2);
+  
+  if ((proto == IPPROTO_TCP) || (proto == IPPROTO_UDP))
+    Inet_setport(addr,net_toport(L,3,proto));
+  else
+    Inet_setport(addr,proto);
   
   luaL_getmetatable(L,TYPE_ADDR);
   lua_setmetatable(L,-2);
@@ -1577,6 +1492,60 @@ static int addrlua___len(lua_State *const L)
 {
   lua_pushinteger(L,Inet_addrlen(luaL_checkudata(L,1,TYPE_ADDR)));
   return 1;
+}
+
+/*********************************************************************/
+
+static int net_toproto(lua_State *const L,const int idx)
+{
+  if (lua_isnumber(L,idx))
+    return lua_tointeger(L,idx);
+  else if (lua_isstring(L,idx))
+  {
+    const char      *proto = lua_tostring(L,idx);
+    struct protoent *presult;
+    struct protoent  result;
+    char             tmp[BUFSIZ];
+    
+#ifdef __SunOS
+    presult = getprotobyname_r(proto,&result,tmp,sizeof(tmp));
+    if (presult == NULL)
+      return luaL_error(L,"invalid protocol");
+#else
+    if (getprotobyname_r(proto,&result,tmp,sizeof(tmp),&presult) != 0)
+      return luaL_error(L,"invalid protocol");
+#endif
+    return result.p_proto;
+  }
+  else
+    return luaL_error(L,"invalid protocol");
+}
+
+/*********************************************************************/
+
+static int net_toport(lua_State *const L,int idx,const int proto)
+{
+  if (lua_isnumber(L,idx))
+    return lua_tointeger(L,idx);
+  else if (lua_isstring(L,idx))
+  {
+    const char     *serv = lua_tostring(L,idx);
+    struct servent *presult;
+    struct servent  result;
+    char            tmp[BUFSIZ];
+    
+#ifdef __SunOS
+    presult = getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp));
+    if (presult == NULL)
+      return luaL_error(L,"invalid service");
+#else
+    if (getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp),&presult) != 0)
+      return luaL_error(L,"invalid service");
+#endif
+    return result.s_port;
+  }
+  else
+    return luaL_error(L,"invalid service");
 }
 
 /*********************************************************************/
