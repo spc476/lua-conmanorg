@@ -1090,7 +1090,7 @@ static int socklua_bind(lua_State *const L)
 
 static int socklua_connect(lua_State *const L)
 {
-  sock__t         *sock = luaL_checkudata(L,1,TYPE_ADDR);
+  sock__t         *sock = luaL_checkudata(L,1,TYPE_SOCK);
   sockaddr_all__t *addr = luaL_checkudata(L,2,TYPE_ADDR);  
 
   errno = 0;
