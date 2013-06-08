@@ -1527,7 +1527,7 @@ static int net_toport(lua_State *const L,int idx,const int proto)
     if (getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp),&presult) != 0)
       return luaL_error(L,"invalid service");
 #endif
-    return result.s_port;
+    return ntohs((short)result.s_port);
   }
   else
     return 0;
