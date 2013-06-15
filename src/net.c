@@ -826,6 +826,9 @@ static const struct sockoptions m_sockoptions[] =
   { "dontroute"		, SOL_SOCKET 	, 0		, SO_DONTROUTE		, SOPT_FLAG 	, true , true  } ,
   { "error"		, SOL_SOCKET 	, 0		, SO_ERROR		, SOPT_INT  	, true , false } ,
 #ifdef TCP_FASTOPEN
+  /*---------------------------------------------------
+  ; read http://lwn.net/Articles/508865/ for more info
+  ;----------------------------------------------------*/
   { "fastopen"		, SOL_TCP	, 0		, TCP_FASTOPEN		, SOPT_INT	, true , true  } ,
 #endif
   { "keepalive"		, SOL_SOCKET 	, 0		, SO_KEEPALIVE		, SOPT_FLAG 	, true , true  } ,
