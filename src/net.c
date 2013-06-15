@@ -825,6 +825,9 @@ static const struct sockoptions m_sockoptions[] =
   { "debug"		, SOL_SOCKET 	, 0		, SO_DEBUG		, SOPT_FLAG 	, true , true  } ,
   { "dontroute"		, SOL_SOCKET 	, 0		, SO_DONTROUTE		, SOPT_FLAG 	, true , true  } ,
   { "error"		, SOL_SOCKET 	, 0		, SO_ERROR		, SOPT_INT  	, true , false } ,
+#ifdef TCP_FASTOPEN
+  { "fastopen"		, SOL_TCP	, 0		, TCP_FASTOPEN		, SOPT_INT	, true , true  } ,
+#endif
   { "keepalive"		, SOL_SOCKET 	, 0		, SO_KEEPALIVE		, SOPT_FLAG 	, true , true  } ,
   { "linger"		, SOL_SOCKET 	, 0		, SO_LINGER		, SOPT_LINGER	, true , true  } ,
   { "maxsegment"	, IPPROTO_TCP	, 0		, TCP_MAXSEG		, SOPT_INT	, true , true  } ,
