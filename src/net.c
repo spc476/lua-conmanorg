@@ -98,6 +98,7 @@ static int	err_meta___index	(lua_State *const) __attribute__((nonnull));
 static int	netlua_interfaces	(lua_State *const) __attribute__((nonnull));
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfile	(lua_State *const) __attribute__((nonnull));
+static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int	netlua_pollset		(lua_State *const) __attribute__((nonnull));
@@ -141,6 +142,7 @@ static const luaL_Reg m_net_reg[] =
   { "interfaces"	, netlua_interfaces	} ,
   { "socket"		, netlua_socket		} ,
   { "socketfile"	, netlua_socketfile	} ,
+  { "socketfd"		, netlua_socketfd	} ,
   { "address2"		, netlua_address2	} ,
   { "address"		, netlua_address	} ,
   { "pollset"		, netlua_pollset	} ,
@@ -502,6 +504,27 @@ static int netlua_socketfile(lua_State *const L)
   sock__t  *sock = lua_newuserdata(L,sizeof(sock__t));
   
   sock->fh = fileno(*pfp);  
+  luaL_getmetatable(L,TYPE_SOCK);
+  lua_setmetatable(L,-2);
+  lua_pushinteger(L,0);
+
+  return 2;
+}
+
+/*******************************************************************
+*
+*	sock,err = net.socketfd(fh)
+*
+*	fh = <integer>
+*
+********************************************************************/
+
+static int netlua_socketfd(lua_State *const L)
+{
+  int      fh   = luaL_checkinteger(L,1);
+  sock__t *sock = lua_newuserdata(L,sizeof(sock__t));
+  
+  sock->fh = fh;
   luaL_getmetatable(L,TYPE_SOCK);
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
