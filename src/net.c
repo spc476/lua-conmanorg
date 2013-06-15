@@ -109,6 +109,7 @@ static int      socklua_peer		(lua_State *const) __attribute__((nonnull));
 static int	socklua_addr		(lua_State *const) __attribute__((nonnull));
 static int	socklua_bind		(lua_State *const) __attribute__((nonnull));
 static int	socklua_connect		(lua_State *const) __attribute__((nonnull));
+static int	socklua_fastconnect	(lua_State *const) __attribute__((nonnull));
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
 static int	socklua_accept		(lua_State *const) __attribute__((nonnull));
 static int	socklua_read		(lua_State *const) __attribute__((nonnull));
@@ -155,6 +156,7 @@ static const luaL_Reg m_sock_meta[] =
   { "addr"		, socklua_addr		} ,
   { "bind"		, socklua_bind		} ,
   { "connect"		, socklua_connect	} ,
+  { "fastconnect"	, socklua_fastconnect	} ,
   { "listen"		, socklua_listen	} ,
   { "accept"		, socklua_accept	} ,
   { "read"		, socklua_read		} ,
@@ -1204,6 +1206,45 @@ static int socklua_connect(lua_State *const L)
   lua_pushinteger(L,errno);
   return 1;
 }
+
+
+/**********************************************************************
+*
+*	bytes,err = sock:fastconnect(addr,data)
+*
+*	sock = net.socket(...)
+*	addr = net.address(...)
+*
+**********************************************************************/
+
+#ifndef TCP_FASTOPEN
+  static int socklua_fastconnect(lua_State *const L)
+  {
+    lua_pushinteger(L,-1);
+    lua_pushinteger(L,ENOSYS);
+    return 2;
+  }
+#else
+  static int socklua_fastconnect(lua_State *const L)
+  {
+    sock__t         *sock   = luaL_checkudata(L,1,TYPE_SOCK);
+    sockaddr_all__t *remote = luaL_checkudata(L,2,TYPE_ADDR);
+    size_t           bufsiz;
+    const char      *buffer = luaL_checklstring(L,3,&bufsiz);
+    struct sockaddr *remaddr;
+    socklen_t        remsize;
+    ssize_t          bytes;
+    
+    remaddr = &remote->sa;
+    remsize = Inet_len(remote);
+    errno   = 0;
+    bytes   = sendto(sock->fh,buffer,bufsiz,MSG_FASTOPEN,remaddr,remsize);
+    
+    lua_pushinteger(L,bytes);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+#endif
 
 /**********************************************************************
 *
