@@ -109,7 +109,9 @@ static int      socklua_peer		(lua_State *const) __attribute__((nonnull));
 static int	socklua_addr		(lua_State *const) __attribute__((nonnull));
 static int	socklua_bind		(lua_State *const) __attribute__((nonnull));
 static int	socklua_connect		(lua_State *const) __attribute__((nonnull));
+#ifdef TCP_FASTOPEN
 static int	socklua_fastconnect	(lua_State *const) __attribute__((nonnull));
+#endif
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
 static int	socklua_accept		(lua_State *const) __attribute__((nonnull));
 static int	socklua_read		(lua_State *const) __attribute__((nonnull));
@@ -156,7 +158,9 @@ static const luaL_Reg m_sock_meta[] =
   { "addr"		, socklua_addr		} ,
   { "bind"		, socklua_bind		} ,
   { "connect"		, socklua_connect	} ,
+#ifdef TCP_FASTOPEN
   { "fastconnect"	, socklua_fastconnect	} ,
+#endif
   { "listen"		, socklua_listen	} ,
   { "accept"		, socklua_accept	} ,
   { "read"		, socklua_read		} ,
@@ -1217,14 +1221,7 @@ static int socklua_connect(lua_State *const L)
 *
 **********************************************************************/
 
-#ifndef TCP_FASTOPEN
-  static int socklua_fastconnect(lua_State *const L)
-  {
-    lua_pushinteger(L,-1);
-    lua_pushinteger(L,ENOSYS);
-    return 2;
-  }
-#else
+#ifdef TCP_FASTOPEN
   static int socklua_fastconnect(lua_State *const L)
   {
     sock__t         *sock   = luaL_checkudata(L,1,TYPE_SOCK);
