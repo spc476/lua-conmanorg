@@ -54,6 +54,7 @@ all : lib		\
 	lib/magic.so	\
 	lib/process.so	\
 	lib/net.so	\
+	lib/pollset.so	\
 	lib/tcc.so	\
 	lib/sys.so	\
 	lib/strcore.so	\
@@ -98,6 +99,9 @@ lib/process.so : src/process.c
 lib/net.so : src/net.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
 
+lib/pollset.so : src/pollset.c
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+
 lib/tcc.so : src/tcc.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -ltcc
 
@@ -130,6 +134,7 @@ install : all
 	install lib/magic.so   $(LUALIB)/org/conman/fsys
 	install lib/process.so $(LUALIB)/org/conman
 	install lib/net.so     $(LUALIB)/org/conman
+	install lib/pollset.so $(LUALIB)/org/conman
 	install lib/tcc.so     $(LUALIB)/org/conman
 	install lib/sys.so     $(LUALIB)/org/conman
 	install lib/strcore.so $(LUALIB)/org/conman
