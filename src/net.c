@@ -1594,6 +1594,7 @@ int luaopen_org_conman_net(lua_State *const L)
   luaL_newmetatable(L,TYPE_ADDR);
   luaL_register(L,NULL,m_addr_meta);
   
+  luaL_register(L,"org.conman.net",m_net_reg);
   lua_createtable(L,0,0);
   for (size_t i = 0 ; m_errors[i].text != NULL ; i++)
   {
