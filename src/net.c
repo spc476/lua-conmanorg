@@ -107,8 +107,8 @@ static int	socklua_fastconnect	(lua_State *const) __attribute__((nonnull));
 #endif
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
 static int	socklua_accept		(lua_State *const) __attribute__((nonnull));
-static int	socklua_read		(lua_State *const) __attribute__((nonnull));
-static int	socklua_write		(lua_State *const) __attribute__((nonnull));
+static int	socklua_recv		(lua_State *const) __attribute__((nonnull));
+static int	socklua_send		(lua_State *const) __attribute__((nonnull));
 static int	socklua_shutdown	(lua_State *const) __attribute__((nonnull));
 static int	socklua_close		(lua_State *const) __attribute__((nonnull));
 static int	socklua_fd		(lua_State *const) __attribute__((nonnull));
@@ -151,8 +151,8 @@ static const luaL_Reg m_sock_meta[] =
 #endif
   { "listen"		, socklua_listen	} ,
   { "accept"		, socklua_accept	} ,
-  { "read"		, socklua_read		} ,
-  { "write"		, socklua_write		} ,
+  { "recv"		, socklua_recv		} ,
+  { "send"		, socklua_send		} ,
   { "shutdown"		, socklua_shutdown	} ,
   { "close"		, socklua_close		} ,
   { "fd"		, socklua_fd		} ,
@@ -1198,7 +1198,7 @@ static int socklua_accept(lua_State *const L)
 
 /***********************************************************************
 *
-*	remaddr,data,err = sock:read([timeout = inf])
+*	remaddr,data,err = sock:recv([timeout = inf])
 *
 *	sock    = net.socket(...)
 *	timeout = number (in seconds, -1 = inf)
@@ -1206,7 +1206,7 @@ static int socklua_accept(lua_State *const L)
 *
 **********************************************************************/
 
-static int socklua_read(lua_State *const L)
+static int socklua_recv(lua_State *const L)
 {
   sockaddr_all__t *remaddr;
   socklen_t        remsize;
@@ -1257,7 +1257,7 @@ static int socklua_read(lua_State *const L)
 
 /*************************************************************************
 *
-*	numbytes,err = sock:write(addr,data)
+*	numbytes,err = sock:send(addr,data)
 *
 *	sock = net.socket(...)
 *	addr = net.address(...)
@@ -1265,7 +1265,7 @@ static int socklua_read(lua_State *const L)
 *
 ***********************************************************************/
 
-static int socklua_write(lua_State *const L)
+static int socklua_send(lua_State *const L)
 {
   sockaddr_all__t *remote;
   struct sockaddr *remaddr;
