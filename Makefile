@@ -31,7 +31,7 @@ endif
 
 ifeq ($(UNAME),SunOS)
 CC     = cc -xc99
-CFLAGS =  -g -mt -m64 -xcode=pic32 -I $(HOME)/work/ecid/third_party/lua-5.1.4/src -I /usr/sfw/include
+CFLAGS = -g -mt -m64 -xcode=pic32 -I /usr/sfw/include
 LFLAGS = -G -mt -m64 -L /usr/sfw/lib/64
 LNET   = -lsocket -lnsl
 MKDIR  = /bin/mkdir
