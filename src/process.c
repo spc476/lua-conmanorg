@@ -378,7 +378,7 @@ static int proclua_fork(lua_State *const L)
   else
   {
     lua_pushinteger(L,child);
-    lua_pushinteger(L,errno);
+    lua_pushinteger(L,0);
   }
   return 2;
 }
