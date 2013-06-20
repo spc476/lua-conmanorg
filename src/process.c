@@ -478,25 +478,25 @@ static int proclua_waitid(lua_State *const L)
   
   if (info.si_code == CLD_EXITED)
   {
-    lua_pushliteral(L,"exit");
-    lua_setfield(L,-2,"state");
-    lua_pushinteger(L,info.si_status);
+    lua_pushliteral(L,"normal");
     lua_setfield(L,-2,"status");
+    lua_pushinteger(L,info.si_status);
+    lua_setfield(L,-2,"rc");
   }
   else
   {
     switch(info.si_code)
     {
-      case CLD_KILLED:    lua_pushliteral(L,"killed");    break;
-      case CLD_DUMPED:    lua_pushliteral(L,"core");      break;
-      case CLD_STOPPED:   lua_pushliteral(L,"stopped");   break;
-      case CLD_TRAPPED:   lua_pushliteral(L,"trapped");   break;
-      case CLD_CONTINUED: lua_pushliteral(L,"continued"); break;
+      case CLD_KILLED:    lua_pushliteral(L,"terminated");        break;
+      case CLD_DUMPED:    lua_pushliteral(L,"terminated");        break;
+      case CLD_STOPPED:   lua_pushliteral(L,"stopped");           break;
+      case CLD_TRAPPED:   lua_pushliteral(L,"trapped");           break;
+      case CLD_CONTINUED: lua_pushliteral(L,"continued");         break;
       default:            lua_pushfstring(L,"(%d)",info.si_code); break;
     }
-    lua_setfield(L,-2,"state");
+    lua_setfield(L,-2,"status");
     lua_pushinteger(L,info.si_status);
-    lua_setfield(L,-2,"signal");
+    lua_setfield(L,-2,"rc");
     lua_pushstring(L,strsignal(info.si_status));
     lua_setfield(L,-2,"description");
     lua_pushboolean(L,info.si_code == CLD_DUMPED);
