@@ -393,7 +393,9 @@ static int proclua_wait(lua_State *const L)
   int   rc;
   
   child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2) ? WNOHANG : 0;
+  flag  = lua_toboolean(L,2) 
+  		? WUNTRACED | WCONTINUED | WNOHANG 
+  		: WUNTRACED | WCONTINUED;
   rc    = waitpid(child,&status,flag);
   if (rc == -1)
   {
