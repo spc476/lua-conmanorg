@@ -505,7 +505,8 @@ static int proclua_waitid(lua_State *const L)
     lua_setfield(L,-2,"core");
   }
   
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /*********************************************************************/
