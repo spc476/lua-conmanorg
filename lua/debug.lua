@@ -129,14 +129,15 @@ end
 
 -- ********************************************************************
 
-function hexdump(t,f)
-  local offset=1
-  local out = f or io.stdout
+function hexdump(t,f,bias)
+  local bias   = bias or 0
+  local offset = 1
+  local out    = f or io.stdout
   
   while true do
     if offset > string.len(t) then return end
     local s = string.sub(t,offset,offset + 15)
-    out:write(string.format("%08X: ",offset - 1))
+    out:write(string.format("%08X: ",(offset - 1) + bias))
     string.gsub(s,"(.)",
             function (c) out:write(string.format("%02X ",string.byte(c))) end)
     out:write(string.rep(" ",3*(16-string.len(s))))
