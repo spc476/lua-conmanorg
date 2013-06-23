@@ -42,6 +42,7 @@
 #  error Define your CPU please
 #endif
 
+#include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/time.h>
 
@@ -87,6 +88,12 @@ int luaopen_org_conman_sys(lua_State *const L)
 #endif
   lua_pushstring(L,CPU);
   lua_setfield(L,-2,"_CPU");
+  
+#ifdef _SC_NPROCESSORS_ONLN
+  lua_pushinteger(L,sysconf(_SC_NPROCESSORS_ONLN));
+  lua_setfield(L,-2,"_CORES");
+#endif
+  
   return 1;
 }
 
