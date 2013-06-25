@@ -66,6 +66,7 @@ static const struct luaL_Reg msys_reg[] =
 int luaopen_org_conman_sys(lua_State *const L)
 {
   struct utsname buffer;
+  
   if (uname(&buffer) < 0)
     return 0;
   
@@ -82,17 +83,22 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_setfield(L,-2,"_MACHINE");
   lua_pushliteral(L,END);
   lua_setfield(L,-2,"_ENDIAN");
-#ifdef _GNU_SOURCE
-  lua_pushstring(L,buffer.domainname);
-  lua_setfield(L,-2,"_DOMAINNAME");
-#endif
   lua_pushstring(L,CPU);
   lua_setfield(L,-2,"_CPU");
+
+#ifdef _GNU_SOURCE
+  lua_pushstring(L,buffer.domainname);
+#else
+  lua_pushliteral(L,"");
+#endif
+  lua_setfield(L,-2,"_DOMAINNAME");
   
 #ifdef _SC_NPROCESSORS_ONLN
   lua_pushinteger(L,sysconf(_SC_NPROCESSORS_ONLN));
-  lua_setfield(L,-2,"_CORES");
+#else
+  lua_pushinteger(L,1);
 #endif
+  lua_setfield(L,-2,"_CORES");
   
   return 1;
 }
