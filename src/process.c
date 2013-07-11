@@ -49,6 +49,9 @@
 #include <sys/times.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#ifdef __linux
+#  include <sched.h>
+#endif
 
 #define TYPE_LIMIT_HARD	"org.conman.process:rlimit_hard"
 #define TYPE_LIMIT_SOFT	"org.conman.process:rlimit_soft"
@@ -84,6 +87,8 @@ static int	proclua_times			(lua_State *const);
 static int	proclua_getrusage		(lua_State *const);
 static int	proclua_pause			(lua_State *const);
 static int	proclua_itimer			(lua_State *const);
+static int	proclua_getaffinity		(lua_State *const);
+static int	proclua_setaffinity		(lua_State *const);
 
 static int	proclua_meta___index		(lua_State *const);
 static int	proclua_meta___newindex		(lua_State *const);
@@ -133,6 +138,8 @@ static const struct luaL_Reg m_process_reg[] =
   { "getrusage"		, proclua_getrusage		} ,
   { "pause"		, proclua_pause			} ,
   { "itimer"		, proclua_itimer		} ,
+  { "getaffinity"	, proclua_getaffinity		} ,
+  { "setaffinity"	, proclua_setaffinity		} ,
   { NULL		, NULL				} 
 };
 
@@ -511,88 +518,6 @@ static int proclua_waitid(lua_State *const L)
 
 /*********************************************************************/
 
-static int proclua_getrusage(lua_State *const L)
-{
-  struct rusage  usage;
-  const char    *twho;
-  int            who;
-  
-  twho = luaL_optstring(L,1,"self");
-  
-  if (strcmp(twho,"self") == 0)
-    who = RUSAGE_SELF;
-  else if ((strcmp(twho,"children") == 0) || (strcmp(twho,"child") == 0))
-    who = RUSAGE_CHILDREN;
-  else
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,EINVAL);
-    return 2;
-  }
-  
-  if (getrusage(who,&usage) < 0)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  proc_pushrusage(L,&usage);
-  return 1;
-}
-
-/**********************************************************************/
-
-static int proclua_pause(lua_State *const L)
-{
-  pause();
-  lua_pushinteger(L,errno);
-  return 1;
-}
-
-/**********************************************************************/
-
-static int proclua_itimer(lua_State *const L)
-{
-  struct itimerval set;
-  double           interval;
-  double           seconds;
-  double           fract;
-  
-  if (lua_isnumber(L,1))
-    interval = lua_tonumber(L,1);
-  else if (lua_isstring(L,1))
-  {
-    const char *v = lua_tostring(L,1);
-    char       *p;
-    
-    interval = strtod(v,&p);
-    switch(*p)
-    {
-      case 's': break;
-      case 'm': interval *=    60.0; break;
-      case 'h': interval *=  3600.0; break;
-      case 'd': interval *= 86400.0; break;
-      default:  break;
-    }
-  }
-  else
-    interval = 0.0;
-  
-  fract = modf(interval,&seconds);
-  
-  set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
-  set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
-  
-  errno = 0;
-  setitimer(ITIMER_REAL,&set,NULL);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/**********************************************************************/
-
 static int proclua_sleep(lua_State *const L)
 {
   struct timespec interval;
@@ -809,6 +734,173 @@ static int proclua_times(lua_State *const L)
 }
 
 /*********************************************************************/
+
+static int proclua_getrusage(lua_State *const L)
+{
+  struct rusage  usage;
+  const char    *twho;
+  int            who;
+  
+  twho = luaL_optstring(L,1,"self");
+  
+  if (strcmp(twho,"self") == 0)
+    who = RUSAGE_SELF;
+  else if ((strcmp(twho,"children") == 0) || (strcmp(twho,"child") == 0))
+    who = RUSAGE_CHILDREN;
+  else
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,EINVAL);
+    return 2;
+  }
+  
+  if (getrusage(who,&usage) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  proc_pushrusage(L,&usage);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int proclua_pause(lua_State *const L)
+{
+  pause();
+  lua_pushinteger(L,errno);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int proclua_itimer(lua_State *const L)
+{
+  struct itimerval set;
+  double           interval;
+  double           seconds;
+  double           fract;
+  
+  if (lua_isnumber(L,1))
+    interval = lua_tonumber(L,1);
+  else if (lua_isstring(L,1))
+  {
+    const char *v = lua_tostring(L,1);
+    char       *p;
+    
+    interval = strtod(v,&p);
+    switch(*p)
+    {
+      case 's': break;
+      case 'm': interval *=    60.0; break;
+      case 'h': interval *=  3600.0; break;
+      case 'd': interval *= 86400.0; break;
+      default:  break;
+    }
+  }
+  else
+    interval = 0.0;
+  
+  fract = modf(interval,&seconds);
+  
+  set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
+  set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
+  
+  errno = 0;
+  setitimer(ITIMER_REAL,&set,NULL);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/**********************************************************************/
+
+static int proclua_getaffinity(lua_State *const L)
+{
+#if defined(__linux)
+
+  cpu_set_t set;
+  long      cpus;
+  
+  if (sched_getaffinity(luaL_optinteger(L,1,0),sizeof(set),&set) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  cpus = sysconf(_SC_NPROCESSORS_ONLN);
+  
+  lua_createtable(L,sizeof(set),0);
+  for (long i = 0 ; i < cpus ; i++)
+  {
+    lua_pushinteger(L,i+1);
+    lua_pushboolean(L,CPU_ISSET(i,&set));
+    lua_settable(L,-3);
+  }
+  lua_pushinteger(L,0);
+  return 2;
+
+#else
+
+  lua_pushnil(L);
+  lua_pushinteger(L,ENOSYS);
+  return 2;
+
+#endif
+}
+
+/************************************************************************/
+
+static int proclua_setaffinity(lua_State *const L)
+{
+#if defined(__linux)
+
+  cpu_set_t set;
+  pid_t     pid;
+  long      max;
+  long      i;
+  
+  CPU_ZERO(&set);
+  pid = luaL_optinteger(L,1,0);
+  max = sysconf(_SC_NPROCESSORS_ONLN);
+  
+  if (lua_istable(L,2))
+  {
+    for (i = 1 ; max > 0 ; i++ , max--)
+    {
+      lua_pushinteger(L,i);
+      lua_gettable(L,2);
+      if (lua_toboolean(L,-1))
+        CPU_SET(i - 1,&set);
+      lua_pop(L,1);
+    }
+  }
+  else
+  {
+    for (i = 2 ; max > 0 ; i++ , max--)
+      if (lua_isnumber(L,i))
+        CPU_SET(lua_tointeger(L,i) - 1,&set);
+  } 
+  
+  errno = 0;
+  sched_setaffinity(pid,sizeof(set),&set);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+
+#else
+
+  lua_pushnil(L);
+  lua_pushinteger(L,ENOSYS);
+  return 2;
+  
+#endif
+}
+
+/************************************************************************/
 
 static int proclua_meta___index(lua_State *const L)
 {
@@ -1537,3 +1629,4 @@ static int set_signal_handler(int sig,void (*handler)(int))
 }
 
 /************************************************************************/
+
