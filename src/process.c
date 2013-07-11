@@ -49,8 +49,12 @@
 #include <sys/times.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#ifdef __linux
+
+#if defined(__linux)
 #  include <sched.h>
+#elif defined(__SunOS)
+#  include <sys/processor.h>
+#  include <sys/procset.h>
 #endif
 
 #define TYPE_LIMIT_HARD	"org.conman.process:rlimit_hard"
@@ -843,6 +847,22 @@ static int proclua_getaffinity(lua_State *const L)
   lua_pushinteger(L,0);
   return 2;
 
+#elif defined(__SunOS)
+
+  processorid_t id;
+  
+  if (processor_bind(P_PID,luaL_optinteger(L,1,P_MYID),PBIND_QUERY,&id) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushnumber(L,id);
+    lua_pushinteger(L,0);
+  }
+  return 2;
+  
 #else
 
   lua_pushnil(L);
@@ -891,6 +911,20 @@ static int proclua_setaffinity(lua_State *const L)
   lua_pushinteger(L,errno);
   return 2;
 
+#elif defined(__SunOS)
+
+  errno = 0;
+  processor_bind(
+  	P_PID,
+  	luaL_optinteger(L,1,P_MYID),
+  	luaL_checkinteger(L,2),
+  	NULL
+  );
+  
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+  
 #else
 
   lua_pushnil(L);
