@@ -437,7 +437,9 @@ static int proclua_waitusage(lua_State *const L)
   int           rc;
 
   child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2) ? WNOHANG : 0;
+  flag  = lua_toboolean(L,2) 
+  		? WUNTRACED | WCONTINUED | WNOHANG 
+  		: WUNTRACED | WCONTINUED ;
   rc    = wait4(child,&status,flag,&usage);
   if (rc == -1)
   {
