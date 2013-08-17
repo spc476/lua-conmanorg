@@ -27,6 +27,8 @@
 #  define _BSD_SOURCE
 #  define _POSIX_SOURCE
 #  define _FORTIFY_SOURCE 0
+#  include <sys/ioctl.h>
+#  include <linux/sockios.h>
 #endif
 
 #include <signal.h>
@@ -714,6 +716,7 @@ typedef enum sopt
   SOPT_LINGER,
   SOPT_TIMEVAL,
   SOPT_FCNTL,
+  SOPT_IOCTL,
 } sopt__t;
 
 struct sockoptions
@@ -753,6 +756,9 @@ static const struct sockoptions m_sockoptions[] =
   { "oobinline"		, SOL_SOCKET 	, 0		, SO_OOBINLINE		, SOPT_FLAG	, true , true  } ,
   { "recvbuffer"	, SOL_SOCKET 	, 0		, SO_RCVBUF		, SOPT_INT	, true , true  } ,
   { "recvlow"		, SOL_SOCKET 	, 0		, SO_RCVLOWAT		, SOPT_INT	, true , true  } ,
+#ifdef __linux
+  { "recvqueue"		, SIOCINQ	, 0		, 0			, SOPT_IOCTL	, true , false } ,
+#endif
   { "recvtimeout"	, SOL_SOCKET 	, 0		, SO_RCVTIMEO		, SOPT_INT	, true , true  } ,
   { "reuseaddr"		, SOL_SOCKET 	, 0		, SO_REUSEADDR		, SOPT_FLAG	, true , true  } ,
 #ifdef SO_REUSEPORT  
@@ -760,6 +766,9 @@ static const struct sockoptions m_sockoptions[] =
 #endif
   { "sendbuffer"	, SOL_SOCKET 	, 0		, SO_SNDBUF		, SOPT_INT	, true , true  } ,
   { "sendlow"		, SOL_SOCKET 	, 0		, SO_SNDLOWAT		, SOPT_INT	, true , true  } ,
+#ifdef __linux
+  { "sendqueue"		, SIOCOUTQ	, 0		, 0			, SOPT_IOCTL	, true , false } ,
+#endif
   { "sendtimeout"	, SOL_SOCKET 	, 0		, SO_SNDTIMEO		, SOPT_INT	, true , true  } ,
   { "type"		, SOL_SOCKET 	, 0		, SO_TYPE		, SOPT_INT	, true , false } ,
 #ifdef SO_USELOOPBACK
@@ -861,6 +870,13 @@ static int socklua___index(lua_State *const L)
            lua_pushboolean(L,false);
          else
            lua_pushboolean(L,(ivalue & value->option) == value->option);
+         break;
+     
+    case SOPT_IOCTL:
+         if (ioctl(sock->fh,value->level,&ivalue) < 0)
+           lua_pushnil(L);
+         else
+           lua_pushinteger(L,ivalue);
          break;
          
     default:
