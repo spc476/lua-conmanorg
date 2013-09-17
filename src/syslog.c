@@ -81,9 +81,12 @@ const struct strintmap m_levels[] =
 {
   { "alert"	, LOG_ALERT	} ,
   { "crit"	, LOG_CRIT	} ,
+  { "critical"	, LOG_CRIT	} ,
   { "debug"	, LOG_DEBUG	} ,
   { "emerg"	, LOG_EMERG	} ,
+  { "emergency"	, LOG_EMERG	} ,
   { "err"	, LOG_ERR	} ,
+  { "error"	, LOG_ERR	} ,
   { "info"	, LOG_INFO	} ,
   { "notice"	, LOG_NOTICE	} ,
   { "warn"	, LOG_WARNING	} ,
