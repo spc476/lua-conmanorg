@@ -39,6 +39,14 @@ static const struct strint m_errors[] =
 {
   { "EDOM"   , EDOM   } ,
   { "ERANGE" , ERANGE } ,
+
+#ifdef __STDC_VERSION__
+#  if __STDC_VERSION__ >= 199901L
+  { "EILSEQ" , EILSEQ } ,
+#  endif
+#elif defined(EILSEQ)
+  { "EILSEQ" , EILSEQ },
+#endif
   
 #ifdef EACCES
     { "EACCES" , EACCES } ,
@@ -174,10 +182,6 @@ static const struct strint m_errors[] =
 
 #ifdef EIDRM
     { "EIDRM" , EIDRM } ,
-#endif
-
-#ifdef EILSEQ
-    { "EILSEQ" , EILSEQ } ,
 #endif
 
 #ifdef EINPROGRESS
