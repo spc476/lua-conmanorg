@@ -54,3 +54,9 @@ function template(temp,callbacks,data)
   return s
 end
 
+function filetemplate(temp,callbacks,data)
+  local f = io.open(temp,"r")
+  local d = f:read("*a")
+  f:close()
+  return template(d,callbacks,data)
+end
