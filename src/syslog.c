@@ -95,6 +95,8 @@ const struct strintmap m_levels[] =
 
 #define MAX_LEVEL	(sizeof(m_levels) / sizeof(struct strintmap))
 
+char m_ident[1024];
+
 /************************************************************************/
 
 static int sim_cmp(const void *needle,const void *haystack)
@@ -125,10 +127,11 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
 static int syslog_open(lua_State *L)
 {
   const char *ident;
+  size_t      sident;
   int         options;
   int         facility;
   
-  ident = luaL_checkstring(L,1);
+  ident = luaL_checklstring(L,1,&sident);
   if (lua_type(L,2) == LUA_TNUMBER)
   {
     facility = lua_tointeger(L,2);
@@ -160,7 +163,13 @@ static int syslog_open(lua_State *L)
     options |= check_boolean(L , 3 , "nowait" , LOG_NOWAIT);
   }
   
-  openlog(ident,options,facility);
+  if (sident > sizeof(m_ident) - 1)
+    sident = sizeof(m_ident) - 1;
+  
+  memcpy(m_ident,ident,sident);
+  m_ident[sident] = '\0';
+  
+  openlog(m_ident,options,facility);
   return 0;
 }
 
