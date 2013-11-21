@@ -101,6 +101,7 @@ static int	netlua_socketfile	(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
+static int      netlua_addressraw	(lua_State *const) __attribute__((nonnull));
 
 static int	socklua___tostring	(lua_State *const) __attribute__((nonnull));
 static int	socklua___index		(lua_State *const) __attribute__((nonnull));
@@ -142,6 +143,7 @@ static const luaL_Reg m_net_reg[] =
   { "socketfd"		, netlua_socketfd	} ,
   { "address2"		, netlua_address2	} ,
   { "address"		, netlua_address	} ,
+  { "addressraw"	, netlua_addressraw	} ,
   { NULL		, NULL			}
 };
 
@@ -680,6 +682,57 @@ static int netlua_address(lua_State *const L)
     luaL_getmetatable(L,TYPE_ADDR);
     lua_setmetatable(L,-2);
     lua_pushinteger(L,0);
+    return 2;
+  }
+  
+  proto = net_toproto(L,2);
+  
+  if ((proto == IPPROTO_TCP) || (proto == IPPROTO_UDP))
+    Inet_setport(addr,net_toport(L,3,proto));
+  else
+    Inet_setport(addr,proto);
+  
+  luaL_getmetatable(L,TYPE_ADDR);
+  lua_setmetatable(L,-2);
+  lua_pushinteger(L,0);
+  return 2;
+}
+
+/***********************************************************************
+*
+*	addr,err = net.addressraw(binary,proto[,port])
+*
+*	binary = 4 bytes or 16 bytes of raw IP address
+*	proto  = 'tcp', 'udp', ...
+*	port   = string | number
+*
+************************************************************************/
+
+static int netlua_addressraw(lua_State *const L)
+{
+  sockaddr_all__t *addr;
+  const char      *bin;
+  size_t           blen;
+  int              proto;
+  
+  lua_settop(L,3);
+  addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+  bin  = luaL_checklstring(L,1,&blen);
+  
+  if (blen == 4)
+  {
+    addr->sin.sin_family = AF_INET;
+    memcpy(&addr->sin.sin_addr.s_addr,bin,blen);
+  }
+  else if (blen == 16)
+  {
+    addr->sin6.sin6_family = AF_INET6;
+    memcpy(&addr->sin6.sin6_addr.s6_addr,bin,blen);
+  }
+  else
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,EINVAL);
     return 2;
   }
   
