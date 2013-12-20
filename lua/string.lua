@@ -19,9 +19,14 @@
 --
 -- ********************************************************************
 
-local string = require "string"
+local require = require
+local type    = type
 
-module("org.conman.string",package.seeall)
+local string = require "string"
+local table  = require "table"
+local io     = require "io"
+
+module("org.conman.string")
 
 require "org.conman.strcore"
 
