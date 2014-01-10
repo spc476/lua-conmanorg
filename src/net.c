@@ -632,7 +632,7 @@ static int netlua_address2(lua_State *const L)
       sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
       luaL_getmetatable(L,TYPE_ADDR);
       lua_setmetatable(L,-2);
-      memcpy(&addr->sa,results->ai_addr,sizeof(struct sockaddr));
+      memcpy(&addr->sa,results->ai_addr,results->ai_addrlen);
       lua_settable(L,-3);
       i++;
     }
