@@ -218,7 +218,11 @@ int main(int argc,char *argv[])
            return EXIT_FAILURE;
       case 't':
            tag = optarg;
+           for ( ; *optarg ; optarg++)
+             if (*optarg == '-') 
+               *optarg = '_';
            break;
+           
       case 'o':
            fpout = fopen(optarg,"wb");
            if (fpout == NULL)
