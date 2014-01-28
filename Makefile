@@ -40,7 +40,7 @@ endif
 LUALUA = /usr/local/share/lua/5.1
 LUALIB = /usr/local/lib/lua/5.1
 
-.PHONY:	all clean
+.PHONY:	all clean install remove
 
 all : lib		\
 	lib/env.so	\
@@ -66,27 +66,21 @@ build/bin2c : build/bin2c.c
 lib :
 	$(MKDIR) lib
 
-lib/env.so : src/env.c
+lib/%.so : src/%.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
-lib/errno.so : src/errno.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
-lib/fsys.so : src/fsys.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
-lib/math.so : src/math.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
-lib/syslog.so : src/syslog.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
-lib/iconv.so : src/iconv.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+lib/env.so     : src/env.c
+lib/errno.so   : src/errno.c
+lib/fsys.so    : src/fsys.c
+lib/math.so    : src/math.c
+lib/syslog.so  : src/syslog.c
+lib/iconv.so   : src/iconv.c
+lib/crc.so     : src/crc.c
+lib/net.so     : src/net.c
+lib/pollset.so : src/pollset.c
+lib/sys.so     : src/sys.c
+lib/strcore.so : src/strcore.c
 
-lib/crc.so : src/crc.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-	
 lib/hash.so : src/hash.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lcrypto
 
@@ -96,20 +90,8 @@ lib/magic.so : src/magic.c
 lib/process.so : src/process.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lrt
 
-lib/net.so : src/net.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< 
-
-lib/pollset.so : src/pollset.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-
 lib/tcc.so : src/tcc.c
 	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -ltcc
-
-lib/sys.so : src/sys.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
-
-lib/strcore.so : src/strcore.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
 
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
