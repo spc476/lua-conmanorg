@@ -22,19 +22,17 @@
 UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
-CC     = gcc -std=c99
-CFLAGS = -g -Wall -Wextra -pedantic -fPIC
-LFLAGS = -shared 
-LNET   =
-MKDIR  = /bin/mkdir
+  CC     = gcc -std=c99
+  CFLAGS = -g -Wall -Wextra -pedantic
+  LFLAGS = 
+  SHARED = -shared -fPIC
 endif
 
 ifeq ($(UNAME),SunOS)
-CC     = cc -xc99
-CFLAGS = -g -mt -m64 -xcode=pic32 -I /usr/sfw/include
-LFLAGS = -G -mt -m64 -L /usr/sfw/lib/64
-LNET   = -lsocket -lnsl
-MKDIR  = /bin/mkdir
+  CC     = cc -xc99
+  CFLAGS = -g -mt -m64 -I /usr/sfw/include
+  LFLAGS =
+  SHARED = -G -xcode=pic32
 endif
 
 LUALUA = /usr/local/share/lua/5.1
@@ -64,10 +62,10 @@ build/bin2c : build/bin2c.c
 	$(CC) $(CFLAGS) -o $@ $< -lz
 
 lib :
-	$(MKDIR) lib
+	mkdir lib
 
 lib/%.so : src/%.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $<
 
 lib/env.so     : src/env.c
 lib/errno.so   : src/errno.c
@@ -82,16 +80,16 @@ lib/sys.so     : src/sys.c
 lib/strcore.so : src/strcore.c
 
 lib/hash.so : src/hash.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lcrypto
+	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lcrypto
 
 lib/magic.so : src/magic.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lmagic
+	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lmagic
 
 lib/process.so : src/process.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -lrt
+	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lrt
 
 lib/tcc.so : src/tcc.c
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $< -ltcc
+	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -ltcc
 
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
