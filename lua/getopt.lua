@@ -104,7 +104,7 @@ function getopt(arg,options,err)
     local al
     local as
     
-    al = arg[i]:match("^%-%-([^%-]+)")
+    al = arg[i]:match("^%-%-([^%=]+)")
     as = arg[i]:match("^%-([^%-])")
     
     if al ~= nil then
