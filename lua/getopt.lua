@@ -64,11 +64,15 @@ local function short_match(shopt,arg,i,err)
     elseif not shopt[opt][ARGUMENT] then
       shopt[opt][CALLBACK]()
     else
-      if arg[i]:sub(n+1,n+1) == '=' then
-        value = arg[i]:sub(n+2)
-      else
+      if n == #arg[i] then
         i = i + 1
         value = arg[i]
+      else
+        if arg[i]:sub(n+1,n+1) == '=' then
+          value = arg[i]:sub(n+2)
+        else
+          value = arg[i]:sub(n+1)
+        end
       end
       
       shopt[opt][CALLBACK](value)
