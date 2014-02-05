@@ -39,13 +39,15 @@ local function long_match(lnopt,arg,i,err)
     return i + 1
   end
 
-  if lnopt[ARGUMENT] and value == "" then
-    i = i + 1
-    value = arg[i]
+  if lnopt[ARGUMENT] then
+    if value == "" then
+      i = i + 1
+      value = arg[i]
+    end
   else
     value = nil
   end
-  
+
   lnopt[CALLBACK](value)
 
   return i + 1
