@@ -423,7 +423,8 @@ static int proclua_wait(lua_State *const L)
   }
 
   proc_pushstatus(L,rc,status);
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /*********************************************************************/
