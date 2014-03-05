@@ -1031,12 +1031,6 @@ static bool limit_valid_suffix(
           || (key == RLIMIT_AS)
         );
   
-  if ((strcmp(unit,"inf") == 0) || (strcmp(unit,"infinity") == 0))
-  {
-    *pval = RLIM_INFINITY;
-    return true;
-  }
-  
   switch(key)
   {
     case RLIMIT_CPU:
@@ -1132,7 +1126,7 @@ static int hlimitlua_meta___newindex(lua_State *const L)
   {
     const char *tval;
     const char *unit;
-    
+
     tval = lua_tostring(L,3);
     ival = strtod(tval,(char **)&unit);
 
@@ -1141,7 +1135,10 @@ static int hlimitlua_meta___newindex(lua_State *const L)
   } 
   else
     return luaL_error(L,"Non-supported type");
-
+  
+  if (ival >= RLIM_INFINITY)
+    ival = RLIM_INFINITY;
+  
   limit.rlim_cur = ival;
   limit.rlim_max = ival;
   
@@ -1200,7 +1197,7 @@ static int slimitlua_meta___newindex(lua_State *const L)
   
   if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
-
+  
   if (lua_isnumber(L,3))
     ival = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
@@ -1210,13 +1207,15 @@ static int slimitlua_meta___newindex(lua_State *const L)
     
     tval = lua_tostring(L,3);
     ival = strtod(tval,(char **)&unit);
-
     if (!limit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
   } 
   else
     return luaL_error(L,"Non-supported type");
 
+  if (ival >= RLIM_INFINITY)
+    ival = RLIM_INFINITY;
+  
   limit.rlim_cur = ival;
   
   rc = getrlimit(key,&climit);
