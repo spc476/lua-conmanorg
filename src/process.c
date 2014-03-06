@@ -35,6 +35,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <signal.h>
+#include <limits.h>
 #include <assert.h>
 
 #include <lua.h>
@@ -62,6 +63,16 @@
 
 #ifndef __GNUC__
 #  define __attribute__(x)
+#endif
+
+#if ULONG_MAX > 4294967295uL
+#  if ULONG_MAX > 9007199254740992uL
+#    define MAX_RESOURCE_LIMIT	9007199254740992uL
+#  else
+#    define MAX_RESOURCE_LIMIT	RLIM_INFINITY
+#  endif
+#else
+#  define MAX_RESOURCE_LIMIT	RLIM_INFINITY
 #endif
 
 /**********************************************************************/
@@ -1096,7 +1107,7 @@ static int hlimitlua_meta___index(lua_State *const L)
   }
   
   if (limit.rlim_max == RLIM_INFINITY)
-    lua_pushliteral(L,"inf");
+    lua_pushnumber(L,HUGE_VAL);
   else
     lua_pushnumber(L,limit.rlim_max);
 
@@ -1136,11 +1147,16 @@ static int hlimitlua_meta___newindex(lua_State *const L)
   else
     return luaL_error(L,"Non-supported type");
   
-  if (ival >= RLIM_INFINITY)
-    ival = RLIM_INFINITY;
-  
-  limit.rlim_cur = ival;
-  limit.rlim_max = ival;
+  if (ival >= MAX_RESOURCE_LIMIT)
+  {
+    limit.rlim_cur = RLIM_INFINITY;
+    limit.rlim_max = RLIM_INFINITY;
+  }
+  else
+  {
+    limit.rlim_cur = ival;
+    limit.rlim_max = ival;
+  }
   
   setrlimit(key,&limit);
   return 0;
@@ -1172,7 +1188,7 @@ static int slimitlua_meta___index(lua_State *const L)
   }
   
   if (limit.rlim_cur == RLIM_INFINITY)
-    lua_pushliteral(L,"inf");
+    lua_pushnumber(L,HUGE_VAL);
   else
     lua_pushnumber(L,limit.rlim_cur);
     
@@ -1213,10 +1229,10 @@ static int slimitlua_meta___newindex(lua_State *const L)
   else
     return luaL_error(L,"Non-supported type");
 
-  if (ival >= RLIM_INFINITY)
-    ival = RLIM_INFINITY;
-  
-  limit.rlim_cur = ival;
+  if (ival >= MAX_RESOURCE_LIMIT)
+    limit.rlim_cur = RLIM_INFINITY;
+  else
+    limit.rlim_cur = ival;
   
   rc = getrlimit(key,&climit);
   if (rc == -1)
