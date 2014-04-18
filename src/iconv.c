@@ -17,6 +17,26 @@
 *
 * Comments, questions and criticisms can be sent to: sean@conman.org
 *
+* -------------------------------------------------------------------
+*
+* Use of this module is straightforward.  There is only one call exposed
+* in the module:
+*
+*	open(source_charset,target_charset)
+*		-- type(source_charset) == 'string'
+*		-- type(target_charset) == 'string'
+*
+* This returns a userdata can can be used to transform a string from
+* one character set to another.  An example follows.
+*
+
+	iconv = require "org.conman.iconv"
+	trans = iconv.open("iso-8859-1","utf-8") -- convert from ISO-8859-1
+	x     = "This is \225 test"	-- string in ISO-8859-1
+	y     = trans(x)		-- string now in UTF-8
+	print(y)
+
+*
 *********************************************************************/
 
 #include <stdbool.h>
