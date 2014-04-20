@@ -27,7 +27,17 @@
 *		-- type(target_charset) == 'string'
 *
 * This returns a userdata can can be used to transform a string from
-* one character set to another.  An example follows.
+* one character set to another.  
+*
+*	trans = iconv.open(...)
+*	newstr,err,idx = trans("this is a test")
+*
+*	newstr = translated string, or nil if error
+*	err    = 0 if okay, otherwise, the error (integer)
+*	idx    = nil if okay, otherwise the index in the input where
+*		 the error happened.
+*
+* An example follows.
 *
 
 	iconv = require "org.conman.iconv"
@@ -85,42 +95,49 @@ static int luaiconv_open(lua_State *L)
 static int luametaiconv_iconv(lua_State *L)
 {
   const char *from;
+  const char *ofrom;
   size_t      fsize;
   iconv_t    *pic;
+  char        to[LUAL_BUFFERSIZE];
+  size_t      tsize;
+  char       *pto;
+  luaL_Buffer buf;
   
-  pic  = luaL_checkudata(L,1,TYPE_ICONV);
-  from = luaL_checklstring(L,2,&fsize);
+  pic   = luaL_checkudata(L,1,TYPE_ICONV);
+  from  = luaL_checklstring(L,2,&fsize);
+  tsize = sizeof(to);
+  pto   = to;
+  ofrom = from;
   
-  size_t  rc;
-  size_t  tsize    = fsize * 8;	/* a reasonable guess here */
-  char    to[tsize];
-  char   *pto = to;
+  luaL_buffinit(L,&buf);
   
-  rc = iconv(*pic,(char **)&from,&fsize,&pto,&tsize);
-  if (rc == (size_t)-1)
+  while(fsize > 0)
   {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    
-    if (errno == E2BIG)
+    if (iconv(*pic,(char **)&from,&fsize,&pto,&tsize) == (size_t)-1)
     {
-      lua_pushnil(L);
-      lua_pushnil(L);
+      if (errno == E2BIG)
+      {
+        luaL_addlstring(&buf,to,sizeof(to) - tsize);
+        pto   = to;
+        tsize = sizeof(to);
+      }
+      else
+      {
+        iconv(*pic,NULL,NULL,NULL,NULL); /* reset state */
+        lua_pushnil(L);
+        lua_pushinteger(L,errno);
+        lua_pushinteger(L,(int)(from - ofrom));
+        return 3;
+      }
     }
-    else
-    {
-      lua_pushlstring(L,from,fsize);
-      lua_pushlstring(L,to,sizeof(to) - tsize);
-    }
-    
-    iconv(*pic,NULL,NULL,NULL,NULL);	/* reset conversion state */  
-    return 4;
   }
   
-  lua_pushlstring(L,to,sizeof(to) - tsize);
-  return 1;
-}
-
+  luaL_addlstring(&buf,to,sizeof(to) - tsize);
+  luaL_pushresult(&buf);
+  lua_pushinteger(L,0);
+  return 2;
+}  
+      
 /*************************************************************************/
 
 static int luametaiconv_close(lua_State *L)
