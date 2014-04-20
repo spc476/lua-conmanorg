@@ -126,7 +126,7 @@ static int luametaiconv_iconv(lua_State *L)
         iconv(*pic,NULL,NULL,NULL,NULL); /* reset state */
         lua_pushnil(L);
         lua_pushinteger(L,errno);
-        lua_pushinteger(L,(int)(from - ofrom));
+        lua_pushinteger(L,(int)(from - ofrom) + 1);
         return 3;
       }
     }
