@@ -17,6 +17,18 @@
 *
 * Comments, questions and criticisms can be sent to: sean@conman.org
 *
+* ---------------------------------------------------------------------
+*
+* This module is nothing more than an array of error values (as found in
+* errno.h).
+*
+	-- get the numeric value of EDOM
+	err = org.conman.errno.EDOM
+	
+	-- print the human readable explaination for err
+	print(org.conman.errno[err])
+
+*
 *********************************************************************/
 
 #include <string.h>
