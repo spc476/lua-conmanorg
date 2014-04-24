@@ -19,29 +19,28 @@
 *
 * -------------------------------------------------------------------
 *
-* Use of this module is straightforward.  There is only one call exposed
-* in the module:
+* Use of this module is straightforward.  It returns a single function:
 *
-*	open(source_charset,target_charset)
-*		-- type(source_charset) == 'string'
-*		-- type(target_charset) == 'string'
+*       iconv(target_charset,source_charset)
+*               -- type(target_charset) == 'string'
+*               -- type(source_charset) == 'string'
 *
 * This returns a userdata can can be used to transform a string from
-* one character set to another.  
+* one character set to another.
 *
-*	trans = iconv.open(...)
-*	newstr,err,idx = trans("this is a test")
+*       trans = iconv(...)
+*       newstr,err,idx = trans("this is a test")
 *
-*	newstr = translated string, or nil if error
-*	err    = 0 if okay, otherwise, the error (integer)
-*	idx    = nil if okay, otherwise the index in the input where
-*		 the error happened.
+*       newstr = translated string, or nil if error
+*       err    = 0 if okay, otherwise, the error (integer)
+*       idx    = nil if okay, otherwise the index in the input where
+*                the error happened.
 *
 * An example follows.
 *
 
 	iconv = require "org.conman.iconv"
-	trans = iconv.open("iso-8859-1","utf-8") -- convert from ISO-8859-1
+	trans = iconv("utf-8","iso-8859-1") -- convert from ISO-8859-1
 	x     = "This is \225 test"	-- string in ISO-8859-1
 	y     = trans(x)		-- string now in UTF-8
 	print(y)
@@ -69,8 +68,8 @@ static int luaiconv_open(lua_State *L)
   iconv_t    *pic;
   iconv_t     ic;
   
-  fromcode = luaL_checkstring(L,1);
-  tocode   = luaL_checkstring(L,2);
+  tocode   = luaL_checkstring(L,1);
+  fromcode = luaL_checkstring(L,2);
   ic       = iconv_open(tocode,fromcode);
   
   if (ic == (iconv_t)-1)
@@ -82,17 +81,17 @@ static int luaiconv_open(lua_State *L)
   }
   
   pic  = lua_newuserdata(L,sizeof(iconv_t));
-
+  *pic = ic;
+  
   luaL_getmetatable(L,TYPE_ICONV);
   lua_setmetatable(L,-2);
-    
-  *pic = ic;
-  return 1;  
+  lua_pushinteger(L,0);  
+  return 2;
 }
 
 /*************************************************************************/
 
-static int luametaiconv_iconv(lua_State *L)
+static int luametaiconv___call(lua_State *L)
 {
   const char *from;
   const char *ofrom;
@@ -140,40 +139,9 @@ static int luametaiconv_iconv(lua_State *L)
       
 /*************************************************************************/
 
-static int luametaiconv_close(lua_State *L)
-{
-  iconv_t *pic;
-  
-  pic = luaL_checkudata(L,1,TYPE_ICONV);
-  
-  assert(*pic != (iconv_t)-1);
-  
-  if (iconv_close(*pic) < 0)
-  {
-    lua_pushboolean(L,false);
-    lua_pushinteger(L,errno);
-    lua_pushliteral(L,"how did this happen?");
-    return 3;
-  }
-  
-  *pic = (iconv_t)-1;
-  lua_pushboolean(L,true);
-  return 1;   
-}
-
-/*************************************************************************/
-
 static int luametaiconv___tostring(lua_State *L)
 {
-  iconv_t *pic;
-  
-  pic = luaL_checkudata(L,1,TYPE_ICONV);
-
-  if (*pic == (iconv_t)-1)
-    lua_pushfstring(L,"iconv (closed)");
-  else
-    lua_pushfstring(L,"iconv (%p)",pic);
-
+  lua_pushfstring(L,"iconv (%p)",luaL_checkudata(L,1,TYPE_ICONV));
   return 1;
 }
 
@@ -181,30 +149,15 @@ static int luametaiconv___tostring(lua_State *L)
 
 static int luametaiconv___gc(lua_State *L)
 {
-  iconv_t *pic;
-  
-  pic = luaL_checkudata(L,1,TYPE_ICONV);
-  if (*pic != (iconv_t)-1)
-  {
-    iconv_close(*pic);
-    *pic = (iconv_t)-1;
-  }
+  iconv_close(*(iconv_t *)luaL_checkudata(L,1,TYPE_ICONV));
   return 0;
 }
 
 /*************************************************************************/
 
-static const struct luaL_reg reg_iconv[] = 
+static const struct luaL_Reg reg_iconv_meta[] =
 {
-  { "open"	, luaiconv_open		} ,
-  { NULL	, NULL			} 
-};
-
-static const struct luaL_reg reg_iconv_meta[] =
-{
-  { "iconv"		, luametaiconv_iconv		} ,
-  { "close"		, luametaiconv_close		} ,
-  { "__call"		, luametaiconv_iconv		} ,
+  { "__call"		, luametaiconv___call		} ,
   { "__tostring"	, luametaiconv___tostring	} ,
   { "__gc"		, luametaiconv___gc		} ,
   { NULL		, NULL				}
@@ -213,12 +166,8 @@ static const struct luaL_reg reg_iconv_meta[] =
 int luaopen_org_conman_iconv(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_ICONV);
-  luaL_register(L,NULL,reg_iconv_meta);
-  lua_pushvalue(L,-1);
-  lua_setfield(L,-2,"__index");
-  
-  luaL_register(L,"org.conman.iconv",reg_iconv);
-  
+  luaL_register(L,NULL,reg_iconv_meta);  
+  lua_pushcfunction(L,luaiconv_open);  
   return 1;
 }
 
