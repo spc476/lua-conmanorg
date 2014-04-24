@@ -17,6 +17,16 @@
 *
 * Comments, questions and criticisms can be sent to: sean@conman.org
 *
+* ---------------------------------------------------------------------
+*
+* This module is nothing more than an array of the environmental variables
+* of the current process.  There's not much more to day about this than
+*
+	env = require "org.conman.env"
+	print(env.LUA_PATH)
+	print(env['LUA_CPATH'])
+
+*
 *********************************************/
 
 #include <stddef.h>
