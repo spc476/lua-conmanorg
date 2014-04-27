@@ -102,8 +102,8 @@ static int b64meta_encode(lua_State *L)
            luaL_addchar(&b,b64->transtable[B]);
            if (b64->pad)
            {
-             luaL_addchar(&b,'=');
-             luaL_addchar(&b,'=');
+             luaL_addchar(&b,b64->pad);
+             luaL_addchar(&b,b64->pad);
            }
            luaL_pushresult(&b);
            return 1;
@@ -121,7 +121,7 @@ static int b64meta_encode(lua_State *L)
            luaL_addchar(&b,b64->transtable[B]);
            luaL_addchar(&b,b64->transtable[C]);
            if (b64->pad)
-             luaL_addchar(&b,'=');       
+             luaL_addchar(&b,b64->pad);       
            luaL_pushresult(&b);
            return 1;
       
