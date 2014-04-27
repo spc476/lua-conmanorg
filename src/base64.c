@@ -19,15 +19,27 @@
 *
 * ==================================================================
 *
-*	conv = base64 { 
-*			last = "+/",
-*			pad  = "=",
-*			len  = 64,
+*	base64 = require "org.conman.base64" {
+*			last   = "+/",
+*			pad    = "=",
+*			len    = 76,
 *			ignore = true
 *		      }
 *
-*	x = conv:encode("blahblahblah")
-*	y = conv:decode("blahblahblah")
+*	x = base64:encode("blahblahblah")
+*	y = base64:decode("blahblahblah")
+*
+* The default encoder/decoder (if base64() is called with no parameters) is
+* what people normally expect of base64.  The parameters are there to handle
+* the other dozen variants of base64 that are defined.  The parameters given
+* above are the current default values.
+
+	base64 = require "org.conman.base64"()
+	msg = "This is a test"
+	enc = base64:encode(msg)
+	dec = base64:decode(enc)
+	print(msg == dec)
+
 *
 *********************************************************************/
 
