@@ -60,12 +60,12 @@ static const char *const mbase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static int b64meta_encode(lua_State *L)
 {
-  base64__s   *b64;
-  uint8_t     *data;
-  size_t       size;
-  size_t       len;
-  luaL_Buffer  b;
-  uint8_t      A,B,C,D;
+  const base64__s *b64;
+  uint8_t         *data;
+  size_t           size;
+  size_t           len;
+  luaL_Buffer      b;
+  uint8_t          A,B,C,D;
   
   b64  = luaL_checkudata(L,1,TYPE_BASE64);
   data = (uint8_t *)luaL_checklstring(L,2,&size);
@@ -203,11 +203,11 @@ static bool Ib64_readout4(
 
 static int b64meta_decode(lua_State *L)
 {
-  base64__s  *b64;
-  const char *data;
-  uint8_t     buf[4];
-  luaL_Buffer b;
-  size_t      skip;
+  const base64__s *b64;
+  const char       *data;
+  uint8_t           buf[4];
+  luaL_Buffer       b;
+  size_t            skip;
   
   b64  = luaL_checkudata(L,1,TYPE_BASE64);
   data = luaL_checkstring(L,2);
