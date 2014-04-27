@@ -205,7 +205,9 @@ static bool Ib64_readout4(
 	const char      **pdata
 )
 {
-  for (size_t i = 0 ; i < 4 ; i++)
+  size_t i;
+  
+  for (i = 0 ; i < 4 ; i++)
     if (!Ib64_readout(b64,&pr[i],skip,pdata))
       return false;
   return true;
