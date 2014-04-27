@@ -56,6 +56,7 @@ all : lib		\
 	lib/tcc.so	\
 	lib/sys.so	\
 	lib/strcore.so	\
+	lib/base64.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -78,6 +79,7 @@ lib/net.so     : src/net.c
 lib/pollset.so : src/pollset.c
 lib/sys.so     : src/sys.c
 lib/strcore.so : src/strcore.c
+lib/base64.so  : src/base64.c
 
 lib/hash.so : src/hash.c
 	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lcrypto
@@ -118,6 +120,7 @@ install : all
 	install lib/tcc.so     $(LUALIB)/org/conman
 	install lib/sys.so     $(LUALIB)/org/conman
 	install lib/strcore.so $(LUALIB)/org/conman
+	install lib/base64.so  $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
