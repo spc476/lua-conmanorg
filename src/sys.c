@@ -46,6 +46,11 @@
 #include <sys/utsname.h>
 #include <sys/time.h>
 
+#if defined(__linux__)
+#  define SPC_USEPATH
+#  include <paths.h>
+#endif
+
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -60,6 +65,49 @@ static const struct luaL_Reg msys_reg[] =
   { "gettimeofday"	, sys_gettimeofday	} ,
   { NULL 		, NULL 			}
 };
+
+#ifdef SPC_USEPATH
+static const struct paths 
+{
+  const char *const name;
+  const char *const value;
+} mpaths[] =
+{
+  { "DEFPATH"	, _PATH_DEFPATH		} ,
+  { "STDPATH"	, _PATH_STDPATH		} ,
+  { "bshell"	, _PATH_BSHELL		} ,
+  { "console"	, _PATH_CONSOLE		} ,
+  { "cshell"	, _PATH_CSHELL		} ,
+  { "devdb"	, _PATH_DEVDB		} ,
+  { "devnull"	, _PATH_DEVNULL		} ,
+  { "drum"	, _PATH_DRUM		} ,
+  { "klog"	, _PATH_KLOG		} ,
+  { "kmem"	, _PATH_KMEM		} ,
+  { "lastlog"	, _PATH_LASTLOG		} ,
+  { "maildir"	, _PATH_MAILDIR		} ,
+  { "man"	, _PATH_MAN		} ,
+  { "mnttab"	, _PATH_MNTTAB		} ,
+  { "mounted"	, _PATH_MOUNTED		} ,
+  { "nologin"	, _PATH_NOLOGIN		} ,
+  { "preserve"	, _PATH_PRESERVE	} ,
+  { "rwhodir"	, _PATH_RWHODIR		} ,
+  { "sendmail"	, _PATH_SENDMAIL	} ,
+  { "shadow"	, _PATH_SHADOW		} ,
+  { "shells"	, _PATH_SHELLS		} ,
+  { "tty"	, _PATH_TTY		} ,
+  { "unix"	, _PATH_UNIX		} ,
+  { "utmp"	, _PATH_UTMP		} ,
+  { "vi"	, _PATH_VI		} ,
+  { "wtmp"	, _PATH_WTMP		} ,
+  { "dev"	, _PATH_DEV		} ,
+  { "tmp"	, _PATH_TMP		} ,
+  { "vardb"	, _PATH_VARDB		} ,
+  { "varrun"	, _PATH_VARRUN		} ,
+  { "vartmp"	, _PATH_VARTMP		} ,
+};
+
+#define MAXPATH	( sizeof(mpaths) / sizeof(struct paths))
+#endif
 
 /*************************************************************************/
 
@@ -99,6 +147,16 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_pushinteger(L,1);
 #endif
   lua_setfield(L,-2,"_CORES");
+
+#ifdef SPC_USEPATH  
+  lua_createtable(L,0,MAXPATH);
+  for (size_t i = 0 ; i < MAXPATH ; i++)
+  {
+    lua_pushstring(L,mpaths[i].value);
+    lua_setfield(L,-2,mpaths[i].name);
+  }
+  lua_setfield(L,-2,"_PATHS");
+#endif
   
   return 1;
 }
