@@ -19,35 +19,31 @@
 --
 -- ********************************************************************
 
-local str  = require "org.conman.string"
-local fsys = require "org.conman.fsys"
-local env  = require "org.conman.env"
+local setmetatable = setmetatable
+local tonumber     = tonumber
 
-module("org.conman.unix",package.seeall)
+local fsys = require "org.conman.fsys"
+local io   = require "io"
+local os   = require "os"
+
+module("org.conman.unix")
 
 -- ************************************************************************
 
 local function etcpasswd()
-  local USERID = 1
-  local PASS   = 2
-  local UID    = 3
-  local GID    = 4
-  local NAME   = 5
-  local HOME   = 6
-  local SHELL  = 7
-  
   local users = {}
 
   for line in io.lines('/etc/passwd') do
-    local fields = str.split(line)
-    local user   = {}
-
-    user.userid = fields[USERID]
-    user.uid    = tonumber(fields[UID])
-    user.gid    = tonumber(fields[GID])
-    user.name   = fields[NAME]
-    user.home   = fields[HOME]
-    user.shell  = fields[SHELL]
+    local next = line:gmatch "([^:]+):?" 
+    local user = {}
+    
+    user.userid = next()
+    user.passwd = next()
+    user.uid    = tonumber(next())
+    user.gid    = tonumber(next())
+    user.name   = next()
+    user.home   = next()
+    user.shell  = next()
     
     users[user.userid] = user
     users[user.uid]    = user
@@ -59,43 +55,41 @@ end
 -- *************************************************************************
 
 local function etcgroup()
-  local NAME = 1
-  local PASS = 2
-  local GID  = 3
-  local USERS = 4
-  
   local groups = {}
 
   for line in io.lines('/etc/group') do
-    local fields = str.split(line)
-    local group  = {}
+    local next  = line:gmatch "([^:]+):?"
+    local group = {}
     
-    group.name = fields[NAME]
-    group.gid  = tonumber(fields[GID])
+    group.name   = next()
+    group.passwd = next()
+    group.gid    = tonumber(next())
+    group.users  = {}
     
-    if fields[USERS] then
-      group.users = str.split(fields[USERS],"%,")
-    else
-      group.users = {}
+    local list = next()
+    if list then
+      for user in list:gmatch("([^,]+),?") do
+        group.users[#group.users + 1] = user
+      end
     end
-   
+    
     groups[group.name] = group
     groups[group.gid]  = group
   end
-  
+    
   return groups
 end
 
 -- *************************************************************************
 
 local function findexec(t,k)
-  for _,path in ipairs(str.split(env.PATH)) do
+  local paths = os.getenv "PATH"
+  for path in paths:gmatch("([^:]+):?") do
     if fsys.access(path .. "/" .. k,"X") then
       t[k] = path .. "/" .. k
       return t[k]
     end
   end
-  return nil
 end
 
 -- ************************************************************************
