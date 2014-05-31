@@ -73,13 +73,9 @@ static const luaL_Reg m_base64_reg[] =
 int luaopen_org_conman_strcore(lua_State *const L)
 {
   luaL_register(L,"org.conman.string",m_strcore_reg);
-  lua_pushliteral(L,"0.9.0");
-  lua_setfield(L,-2,"_VERSION");
-  
   lua_createtable(L,0,2);
   luaL_register(L,NULL,m_base64_reg);
   lua_setfield(L,-2,"base64");
-  
   return 1;
 }
 
