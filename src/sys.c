@@ -39,7 +39,8 @@
 #  define END "little"
 #  define CPU "x86_64"
 #else
-#  error Define your CPU please
+#  define END "(undefined)"
+#  define CPU "(undefined)"
 #endif
 
 #include <unistd.h>
