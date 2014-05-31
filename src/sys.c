@@ -122,33 +122,33 @@ int luaopen_org_conman_sys(lua_State *const L)
 #endif
 
   lua_pushstring(L,buffer.sysname);
-  lua_setfield(L,-2,"_SYSNAME");
+  lua_setfield(L,-2,"SYSNAME");
   lua_pushstring(L,buffer.nodename);
-  lua_setfield(L,-2,"_NODENAME");
+  lua_setfield(L,-2,"NODENAME");
   lua_pushstring(L,buffer.release);
-  lua_setfield(L,-2,"_RELEASE");
+  lua_setfield(L,-2,"RELEASE");
   lua_pushstring(L,buffer.version);
-  lua_setfield(L,-2,"_VERSION");
+  lua_setfield(L,-2,"VERSION");
   lua_pushstring(L,buffer.machine);
-  lua_setfield(L,-2,"_MACHINE");
+  lua_setfield(L,-2,"MACHINE");
   lua_pushliteral(L,END);
-  lua_setfield(L,-2,"_ENDIAN");
+  lua_setfield(L,-2,"ENDIAN");
   lua_pushstring(L,CPU);
-  lua_setfield(L,-2,"_CPU");
+  lua_setfield(L,-2,"CPU");
 
 #ifdef _GNU_SOURCE
   lua_pushstring(L,buffer.domainname);
 #else
   lua_pushliteral(L,"");
 #endif
-  lua_setfield(L,-2,"_DOMAINNAME");
+  lua_setfield(L,-2,"DOMAINNAME");
   
 #ifdef _SC_NPROCESSORS_ONLN
   lua_pushinteger(L,sysconf(_SC_NPROCESSORS_ONLN));
 #else
   lua_pushinteger(L,1);
 #endif
-  lua_setfield(L,-2,"_CORES");
+  lua_setfield(L,-2,"CORES");
 
   lua_createtable(L,0,MAXPATH);
   for (i = 0 ; i < MAXPATH ; i++)
@@ -156,7 +156,7 @@ int luaopen_org_conman_sys(lua_State *const L)
     lua_pushstring(L,mpaths[i].value);
     lua_setfield(L,-2,mpaths[i].name);
   }
-  lua_setfield(L,-2,"_PATHS");
+  lua_setfield(L,-2,"PATHS");
   
   return 1;
 }
