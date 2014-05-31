@@ -110,6 +110,7 @@ static const struct paths
 int luaopen_org_conman_sys(lua_State *const L)
 {
   struct utsname buffer;
+  size_t         i;
   
   if (uname(&buffer) < 0)
     return 0;
@@ -150,7 +151,7 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_setfield(L,-2,"_CORES");
 
   lua_createtable(L,0,MAXPATH);
-  for (size_t i = 0 ; i < MAXPATH ; i++)
+  for (i = 0 ; i < MAXPATH ; i++)
   {
     lua_pushstring(L,mpaths[i].value);
     lua_setfield(L,-2,mpaths[i].name);
