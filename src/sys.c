@@ -56,14 +56,9 @@
 
 /*************************************************************************/
 
-static int	sys_gettimeofday	(lua_State *const);
-
-/*************************************************************************/
-
 static const struct luaL_Reg msys_reg[] =
 {
-  { "gettimeofday"	, sys_gettimeofday	} ,
-  { NULL 		, NULL 			}
+  { NULL , NULL }
 };
 
 #ifdef SPC_USEPATH
@@ -158,17 +153,6 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_setfield(L,-2,"_PATHS");
 #endif
   
-  return 1;
-}
-
-/*************************************************************************/
-
-static int sys_gettimeofday(lua_State *const L)
-{
-  struct timeval now;
-  
-  gettimeofday(&now,NULL);
-  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
   return 1;
 }
 

@@ -94,6 +94,7 @@ static int	proclua_fork			(lua_State *const);
 static int	proclua_wait			(lua_State *const);
 static int	proclua_waitusage		(lua_State *const);
 static int	proclua_waitid			(lua_State *const);
+static int	proclua_gettimeofday		(lua_State *const);
 static int	proclua_sleep			(lua_State *const);
 static int	proclua_sleepres		(lua_State *const);
 static int	proclua_kill			(lua_State *const);
@@ -145,6 +146,7 @@ static const struct luaL_Reg m_process_reg[] =
   { "wait"		, proclua_wait			} ,
   { "waitusage"		, proclua_waitusage		} ,
   { "waitid"		, proclua_waitid		} ,
+  { "gettimeofday"	, proclua_gettimeofday		} ,
   { "sleep"		, proclua_sleep			} ,
   { "sleepres"		, proclua_sleepres		} ,
   { "kill"		, proclua_kill			} ,
@@ -532,6 +534,17 @@ static int proclua_waitid(lua_State *const L)
   
   lua_pushinteger(L,0);
   return 2;
+}
+
+/*********************************************************************/
+
+static int proclua_gettimeofday(lua_State *const L)
+{
+  struct timeval now;
+  
+  gettimeofday(&now,NULL);
+  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
+  return 1;
 }
 
 /*********************************************************************/
