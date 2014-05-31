@@ -46,11 +46,7 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/time.h>
-
-#if defined(__linux__)
-#  define SPC_USEPATH
-#  include <paths.h>
-#endif
+#include <paths.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -68,7 +64,6 @@
   };
 #endif
 
-#ifdef SPC_USEPATH
 static const struct paths 
 {
   const char *const name;
@@ -109,7 +104,6 @@ static const struct paths
 };
 
 #define MAXPATH	( sizeof(mpaths) / sizeof(struct paths))
-#endif
 
 /*************************************************************************/
 
@@ -155,7 +149,6 @@ int luaopen_org_conman_sys(lua_State *const L)
 #endif
   lua_setfield(L,-2,"_CORES");
 
-#ifdef SPC_USEPATH  
   lua_createtable(L,0,MAXPATH);
   for (size_t i = 0 ; i < MAXPATH ; i++)
   {
@@ -163,7 +156,6 @@ int luaopen_org_conman_sys(lua_State *const L)
     lua_setfield(L,-2,mpaths[i].name);
   }
   lua_setfield(L,-2,"_PATHS");
-#endif
   
   return 1;
 }
