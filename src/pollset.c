@@ -51,7 +51,7 @@ static const luaL_Reg m_polllua[] =
   { "update"		, polllua_update	} ,
   { "remove"		, polllua_remove	} ,
   { "events"		, polllua_events	} ,
-  { "_POLL"		, polllua__POLL		} ,
+  { "POLL"		, polllua__POLL		} ,
   { NULL		, NULL			}
 };
 
