@@ -54,12 +54,18 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
+#endif
+
 /*************************************************************************/
 
-static const struct luaL_Reg msys_reg[] =
-{
-  { NULL , NULL }
-};
+#if LUA_VERSION_NUM == 501
+  static const struct luaL_Reg msys_reg[] =
+  {
+    { NULL , NULL }
+  };
+#endif
 
 #ifdef SPC_USEPATH
 static const struct paths 
@@ -112,8 +118,13 @@ int luaopen_org_conman_sys(lua_State *const L)
   
   if (uname(&buffer) < 0)
     return 0;
-  
+
+#if LUA_VERSION_NUM == 501  
   luaL_register(L,"org.conman.sys",msys_reg);
+#elif LUA_VERSION_NUM >= 502
+  lua_createtable(L,0,10);
+#endif
+
   lua_pushstring(L,buffer.sysname);
   lua_setfield(L,-2,"_SYSNAME");
   lua_pushstring(L,buffer.nodename);
