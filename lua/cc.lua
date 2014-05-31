@@ -193,7 +193,7 @@ end
 
 -- **********************************************************************
 
-_CACHE = setmetatable( {} , { __mode = "k" })
+CACHE = setmetatable( {} , { __mode = "k" })
 
 function compile(fname,code,isfile,defines)
   local defines = defines or {}
@@ -212,7 +212,7 @@ function compile(fname,code,isfile,defines)
   local f    = x:get_symbol(fname)
   
   if f then
-    _CACHE[f] = encap(blob)
+    CACHE[f] = encap(blob)
     return f,blob
   end
   
