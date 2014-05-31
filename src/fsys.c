@@ -849,11 +849,11 @@ int luaopen_org_conman_fsys(lua_State *L)
   
   luaL_register(L,"org.conman.fsys",reg_fsys);
   lua_pushinteger(L,STDIN_FILENO);
-  lua_setfield(L,-2,"_STDIN");
+  lua_setfield(L,-2,"STDIN");
   lua_pushinteger(L,STDOUT_FILENO);
-  lua_setfield(L,-2,"_STDOUT");
+  lua_setfield(L,-2,"STDOUT");
   lua_pushinteger(L,STDERR_FILENO);
-  lua_setfield(L,-2,"_STDERR");
+  lua_setfield(L,-2,"STDERR");
   return 1;
 }
 
