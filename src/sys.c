@@ -46,7 +46,43 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/time.h>
-#include <paths.h>
+
+#if defined(__linux)
+#  include <paths.h>
+#elif defined(__SunOS)
+#  define _PATH_DEFPATH		"/usr/bin:/bin"
+#  define _PATH_STDPATH		"/usr/bin:/bin:/usr/sbin:/sbin"
+#  define _PATH_BSHELL		"/bin/sh"
+#  define _PATH_CONSOLE		"/dev/console"
+#  define _PATH_CSHELL		"/bin/csh"
+#  define _PATH_DEVDB		NULL
+#  define _PATH_DEVNULL		"/dev/null"
+#  define _PATH_DRUM		NULL
+#  define _PATH_KLOG		"/system/object/sysmsg"
+#  define _PATH_KMEM		NULL
+#  define _PATH_LASTLOG		"/var/adm/lastlog"
+#  define _PATH_MAILDIR		"/var/mail"
+#  define _PATH_MAN		"/usr/share/man"
+#  define _PATH_MEM		"/dev/mem"
+#  define _PATH_MNTTAB		"/etc/fstab"
+#  define _PATH_MOUNTED		"/etc/mnttab"
+#  define _PATH_NOLOGIN		NULL
+#  define _PATH_PRESERVE	"/var/lib"
+#  define _PATH_RWHODIR		NULL
+#  define _PATH_SENDMAIL	"/usr/sbin/sendmail"
+#  define _PATH_SHADOW		"/etc/shadow"
+#  define _PATH_SHELLS		NULL
+#  define _PATH_TTY		"/dev/tty"
+#  define _PATH_UNIX		NULL
+#  define _PATH_UTMP		"/var/adm/utmpx"
+#  define _PATH_VI		"/usr/bin/vi"
+#  define _PATH_WTMP		"/var/adm/wtmpx"
+#  define _PATH_DEV		"/dev/"
+#  define _PATH_TMP		"/tmp/"
+#  define _PATH_VARDB		NULL
+#  define _PATH_VARRUN		"/var/run/"
+#  define _PATH_VARTMP		"/var/tmp/"
+#endif
 
 #include <lua.h>
 #include <lauxlib.h>
