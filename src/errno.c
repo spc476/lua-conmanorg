@@ -37,6 +37,10 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+# error You need to comple against Lua 5.1 or higher
+#endif
+
 /***************************************************************************/
 
 struct strint
@@ -552,19 +556,25 @@ static int errno___index(lua_State *L)
 
 /***********************************************************************/
 
-static const struct luaL_reg m_reg_errno[] = 
-{
-  { NULL	, NULL		 }
-};
+#if LUA_VERSION_NUM == 501
+  static const struct luaL_reg m_reg_errno[] = 
+  {
+    { NULL	, NULL		 }
+  };
+#endif
 
 /***********************************************************************/
 
 int luaopen_org_conman_errno(lua_State *L)
 {
   size_t i;
-  
+
+#if LUA_VERSION_NUM == 501  
   luaL_register(L,"org.conman.errno",m_reg_errno);
-  
+#else
+  lua_createtable(L,0,0);
+#endif
+
   for (i = 0 ; m_errors[i].text != NULL ; i++)
   {
     lua_pushinteger(L,m_errors[i].value);
