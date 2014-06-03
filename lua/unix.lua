@@ -34,7 +34,7 @@ local function etcpasswd()
   local users = {}
 
   for line in io.lines('/etc/passwd') do
-    local next = line:gmatch "([^:]+):?" 
+    local next = line:gmatch "([^:]*):?" 
     local user = {}
     
     user.userid = next()
@@ -58,7 +58,7 @@ local function etcgroup()
   local groups = {}
 
   for line in io.lines('/etc/group') do
-    local next  = line:gmatch "([^:]+):?"
+    local next  = line:gmatch "([^:]*):?"
     local group = {}
     
     group.name   = next()
@@ -68,7 +68,7 @@ local function etcgroup()
     
     local list = next()
     if list then
-      for user in list:gmatch("([^,]+),?") do
+      for user in list:gmatch("([^,]*),?") do
         group.users[#group.users + 1] = user
       end
     end
@@ -84,7 +84,7 @@ end
 
 local function findexec(t,k)
   local paths = os.getenv "PATH"
-  for path in paths:gmatch("([^:]+):?") do
+  for path in paths:gmatch("([^:]*):?") do
     if fsys.access(path .. "/" .. k,"X") then
       t[k] = path .. "/" .. k
       return t[k]
