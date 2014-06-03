@@ -37,6 +37,10 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
+#endif
+
 #if defined(__GNUC__) && defined(__x86_64) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 12)
 #  include <limits.h>
 #  define SIZET_MAX INT_MAX
@@ -46,16 +50,24 @@
 
 extern char **environ;
 
-static const struct luaL_reg env[] =
-{
-  { NULL , NULL }
-};
+#if LUA_VERSION_NUM == 501
+  static const struct luaL_reg env[] =
+  {
+    { NULL , NULL }
+  };
+#endif
 
 int luaopen_org_conman_env(lua_State *L)
 {
-  luaL_register(L,"org.conman.env",env);
+  int i;
   
-  for (int i = 0 ; environ[i] != NULL ; i++)
+#if LUA_VERSION_NUM == 501
+  luaL_register(L,"org.conman.env",env);
+#elif LUA_VERSION_NUM >= 502
+  lua_createtable(L,0,0);
+#endif
+
+  for (i = 0 ; environ[i] != NULL ; i++)
   {
     char   *value;
     char   *eos;
