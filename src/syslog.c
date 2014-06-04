@@ -27,6 +27,10 @@
 
 #include <syslog.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
+#  error This module is for Lua 5.1
+#endif
+
 #ifndef __GNUC__
 #  define __attribute__(x)
 #endif

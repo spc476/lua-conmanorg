@@ -61,6 +61,10 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
+#  error This module is for Lua 5.1
+#endif
+
 #define TYPE_SOCK	"org.conman.net:sock"
 #define TYPE_ADDR	"org.conman.net:addr"
 

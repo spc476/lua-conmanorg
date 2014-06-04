@@ -27,6 +27,10 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
+#  error This module is for Lua 5.1
+#endif
+
 #define TYPE_MAGIC	"org.conman.fsys.magic:It's Magic!"
 
 /**************************************************************************/

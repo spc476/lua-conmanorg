@@ -44,6 +44,10 @@
 #include <libgen.h>
 #include <utime.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
+#  error This module is for Lua 5.1
+#endif
+
 #define TYPE_DIR	"org.conman.fsys:dir"
 
 /*************************************************************************/

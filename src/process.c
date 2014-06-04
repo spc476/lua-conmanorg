@@ -58,6 +58,10 @@
 #  include <sys/procset.h>
 #endif
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
+#  error This module is for Lua 5.1
+#endif
+
 #define TYPE_LIMIT_HARD	"org.conman.process:rlimit_hard"
 #define TYPE_LIMIT_SOFT	"org.conman.process:rlimit_soft"
 
