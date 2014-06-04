@@ -37,8 +37,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #if defined(__GNUC__) && defined(__x86_64) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 12)
@@ -50,16 +50,22 @@
 
 extern char **environ;
 
-static const struct luaL_Reg env[] =
-{
-  { NULL , NULL }
-};
+#if LUA_VERSION_NUM == 501
+  static const struct luaL_Reg env[] =
+  {
+    { NULL , NULL }
+  };
+#endif
 
 int luaopen_org_conman_env(lua_State *L)
 {
   int i;
-  
+
+#if LUA_VERSION_NUM == 501 
   luaL_register(L,"org.conman.env",env);
+#else
+  lua_createtable(L,0,0);
+#endif
 
   for (i = 0 ; environ[i] != NULL ; i++)
   {

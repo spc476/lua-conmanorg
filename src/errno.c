@@ -37,8 +37,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-# error This module for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 /***************************************************************************/
@@ -556,10 +556,12 @@ static int errno___index(lua_State *L)
 
 /***********************************************************************/
 
-static const struct luaL_Reg m_reg_errno[] = 
-{
-  { NULL	, NULL		 }
-};
+#if LUA_VERSION_NUM == 501
+  static const struct luaL_Reg m_reg_errno[] = 
+  {
+    { NULL	, NULL		 }
+  };
+#endif
 
 /***********************************************************************/
 
@@ -567,7 +569,11 @@ int luaopen_org_conman_errno(lua_State *L)
 {
   size_t i;
 
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.errno",m_reg_errno);
+#else
+  lua_createtable(L,0,(sizeof(m_errors) / sizeof(struct strint)) - 1);
+#endif
 
   for (i = 0 ; m_errors[i].text != NULL ; i++)
   {
