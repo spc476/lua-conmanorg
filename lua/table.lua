@@ -19,6 +19,7 @@
 --
 -- ********************************************************************
 
+local _VERSION     = _VERSION
 local pairs        = pairs
 local math         = math
 local tostring     = tostring
@@ -31,7 +32,11 @@ local type         = type
 local pcall        = pcall
 local getmetatable = getmetatable
 
-module("org.conman.table")
+if _VERSION == "Lua 5.1" then
+  module("org.conman.table")
+else
+  _ENV = {}
+end
 
 -- *******************************************************************
 
@@ -180,4 +185,8 @@ function keepset(t,name,value)
 end
 
 -- ************************************************************
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV
+end
 

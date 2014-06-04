@@ -19,10 +19,15 @@
 --
 -- ********************************************************************
 
-local floor = math.floor
-local os    = os
+local _VERSION = _VERSION
+local floor    = math.floor
+local os       = os
 
-module("org.conman.date")
+if _VERSION == "Lua 5.1" then
+  module("org.conman.date")
+else
+  _ENV = {}
+end
 
 -- *********************************************************************
 
@@ -78,3 +83,8 @@ function dayofweek(date)
 end
 
 -- ************************************************************************
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV
+end
+
