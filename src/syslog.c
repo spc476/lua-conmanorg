@@ -236,7 +236,7 @@ static int syslog___call(lua_State *L)
 
 /**********************************************************************/
 
-static const struct luaL_reg reg_syslog[] =
+static const struct luaL_Reg reg_syslog[] =
 {
   { "open"	, syslog_open   } ,
   { "close"	, syslog_close	} ,

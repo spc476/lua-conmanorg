@@ -291,7 +291,7 @@ static int magiclua___gc(lua_State *const L)
 
 /**************************************************************************/
 
-static const struct luaL_reg mmagic_reg[] =
+static const struct luaL_Reg mmagic_reg[] =
 {
   { "open"	, magiclua_open		} ,
   { "close"	, magiclua_close	} ,
@@ -304,7 +304,7 @@ static const struct luaL_reg mmagic_reg[] =
   { NULL	, NULL			}
 };
 
-static const struct luaL_reg mmagic_reg_meta[] =
+static const struct luaL_Reg mmagic_reg_meta[] =
 {
   { "__call"		, magiclua___call	} ,
   { "__tostring"	, magiclua___tostring	} ,

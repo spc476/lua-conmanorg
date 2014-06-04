@@ -50,7 +50,7 @@
 
 extern char **environ;
 
-static const struct luaL_reg env[] =
+static const struct luaL_Reg env[] =
 {
   { NULL , NULL }
 };

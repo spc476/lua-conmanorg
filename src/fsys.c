@@ -794,7 +794,7 @@ static int fsys_isfile(lua_State *L)
 
 /************************************************************************/
 
-static const struct luaL_reg reg_fsys[] = 
+static const struct luaL_Reg reg_fsys[] = 
 {
   { "symlink"	, fsys_symlink 	} ,
   { "link"	, fsys_link	} ,

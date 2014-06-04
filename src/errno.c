@@ -556,7 +556,7 @@ static int errno___index(lua_State *L)
 
 /***********************************************************************/
 
-static const struct luaL_reg m_reg_errno[] = 
+static const struct luaL_Reg m_reg_errno[] = 
 {
   { NULL	, NULL		 }
 };
