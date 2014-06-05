@@ -53,7 +53,7 @@ magic =
 
 local function reverse_index(tab)
   local keys = {}
-  for name in pairs(tab)
+  for name in pairs(tab) do
     table.insert(keys,name)
   end
   
