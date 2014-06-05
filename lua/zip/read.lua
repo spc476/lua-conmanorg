@@ -32,6 +32,7 @@ local setmetatable = setmetatable
 
 local string = require "string"
 local os     = require "os"
+local table  = require "table"
 local zip    = require "org.conman.zip"
 local idiv   = zip.idiv
 
@@ -43,25 +44,25 @@ end
 
 -- ************************************************************************
 
-local function r16(zip)
-  return zip:read(1):byte() 
-       + zip:read(1):byte() * 2^8
+local function r16(zf)
+  return zf:read(1):byte() 
+       + zf:read(1):byte() * 2^8
 end
 
 -- ************************************************************************
 
-local function r32(zip)
-  return zip:read(1):byte()
-       + zip:read(1):byte() * 2^8
-       + zip:read(1):byte() * 2^16
-       + zip:read(1):byte() * 2^24
+local function r32(zf)
+  return zf:read(1):byte()
+       + zf:read(1):byte() * 2^8
+       + zf:read(1):byte() * 2^16
+       + zf:read(1):byte() * 2^24
 end
 
 -- ************************************************************************
 
-local function mstounix(zip)
-  local modtime      = r16(zip)
-  local moddate      = r16(zip)
+local function mstounix(zf)
+  local modtime      = r16(zf)
+  local moddate      = r16(zf)
   
   local hour,modtime = idiv(modtime,2^11)
   local min,sec      = idiv(modtime,2^5)
@@ -80,10 +81,10 @@ end
 
 -- ************************************************************************
 
-local function version(zip)
-  local level = zip:read(1):byte()
-  local os    = zip:read(1):byte()
-  
+local function version(zf)
+  local level = zf:read(1):byte()
+  local os    = zf:read(1):byte()
+
   return {
     os    = zip.os[os],
     level = level / 10
@@ -92,10 +93,10 @@ end
 
 -- ************************************************************************
 
-local function flags(zip)
+local function flags(zf)
   local function bool(n)
     local q,r = idiv(n,2)
-    return q,r ~= 0
+    return r ~= 0,q
   end
   
   local function bits(x,n)
@@ -104,7 +105,7 @@ local function flags(zip)
   end
   
   local flags = {}
-  local f     = r16(zip)
+  local f     = r16(zf)
   
   flags.encrypted,f        = bool(f)
   flags.compress,f         = bits(f,2)
@@ -113,20 +114,41 @@ local function flags(zip)
   flags.patched,f          = bool(f)
   flags.strong_encrypt,f   = bool(f)
   f                        = idiv(f,2^4) -- skip 4 bits
-  flags.utf8               = bool(f)
-  flags.pkware_compress    = bool(f)
-  flags.hidden             = bool(f)
-  flags.pkware             = bits(f,2)
+  flags.utf8,f             = bool(f)
+  flags.pkware_compress,f  = bool(f)
+  flags.hidden,f           = bool(f)
+  flags.pkware,f           = bits(f,2)
   
   return flags
 end
 
 -- ************************************************************************
 
-function eocd(zip)
-  local function locate(pos)
-    local pos = pos or zip:seek('end',-22)
-    local magic = zip:read(4)
+local function iattribute(zf)
+  local function bool(n)
+    local q,r = idiv(n,2)
+    return r ~= 0,q
+  end
+  
+  local iattr = {}
+  local f        = r16(zf)
+  iattr.text,f   = bool(f)
+  iattr.record,f = bool(f)
+  
+  return iattr
+end
+
+-- ************************************************************************
+
+function eocd(zf)
+  local function locate(pos,eof)
+    local eof   = eof or zf:seek('end',0)
+    local pos   = pos or zf:seek('end',-22)
+    local magic = zf:read(4)
+    
+    if eof - pos > 22 + 65535 then
+      return false
+    end
     
     if magic == zip.magic.EOCD then
       -- possible false positive
@@ -137,23 +159,23 @@ function eocd(zip)
       return false
     end
     
-    return locate(zip:seek('cur',-5))
+    return locate(zf:seek('cur',-5),eof)
   end
   
   if locate() then
     local eocd = {}
 
-    eocd.disknum      = r16(zip)
-    eocd.diskstart    = r16(zip)
-    eocd.entries      = r16(zip)
-    eocd.totalentries = r16(zip)
-    eocd.size         = r32(zip)
-    eocd.offset       = r32(zip)
+    eocd.disknum      = r16(zf)
+    eocd.diskstart    = r16(zf)
+    eocd.entries      = r16(zf)
+    eocd.totalentries = r16(zf)
+    eocd.size         = r32(zf)
+    eocd.offset       = r32(zf)
     
-    local commentlen  = r16(zip)
+    local commentlen  = r16(zf)
     -- check for consistency here
     
-    eocd.comment      = zip:read(commentlen)
+    eocd.comment      = zf:read(commentlen)
     
     return eocd
   end
@@ -252,50 +274,50 @@ local extra = setmetatable(
 
 -- ************************************************************************
 
-function dir(zip,entries)
+function dir(zf,entries)
   local list = {}
   
   for i = 1 , entries do
-    local magic = zip:read(4)
+    local magic = zf:read(4)
     local dir   = {}
     
     if magic == zip.magic.DIR then
-      dir.byversion    = version(zip)
-      dir.forversio    = version(zip)
-      dir.flags        = flags(zip)
-      dir.compression  = r16(zip)
-      dir.modtime      = mstounix(zip)
-      dir.crc          = r32(zip)
-      dir.csize        = r32(zip)
-      dir.usize        = r32(zip)
+      dir.byversion    = version(zf)
+      dir.forversio    = version(zf)
+      dir.flags        = flags(zf)
+      dir.compression  = r16(zf)
+      dir.modtime      = mstounix(zf)
+      dir.crc          = r32(zf)
+      dir.csize        = r32(zf)
+      dir.usize        = r32(zf)
       
-      local namelen    = r16(zip)
-      local extralen   = r16(zip)
-      local commentlen = r16(zip)
+      local namelen    = r16(zf)
+      local extralen   = r16(zf)
+      local commentlen = r16(zf)
       
-      dir.diskstart    = r16(zip)
-      dir.iattr        = r16(zip)
-      dir.eattr        = r32(zip)
-      dir.offset       = r32(zip)
+      dir.diskstart    = r16(zf)
+      dir.iattr        = iattribute(zf)
+      dir.eattr        = r32(zf)
+      dir.offset       = r32(zf)
       
-      dir.name         = zip:read(namelen)
+      dir.name         = zf:read(namelen)
       dir.extra        = { LEN = extralen }
       
       while extralen > 0 do
-        local id    = r16(zip)
-        local len   = r16(zip)
+        local id    = r16(zf)
+        local len   = r16(zf)
         local trans = extra[id]
         
         if type(trans) == 'function' then
-          dir.extra[id] = trans(zip,len)
+          dir.extra[id] = trans(zf,len)
         else
-          dir.extra[id] = zip:read(len)
+          dir.extra[id] = zf:read(len)
         end
                 
         extralen = extralen - (len + 4)
       end
       
-      dir.comment = zip:read(commentlen)      
+      dir.comment = zf:read(commentlen)      
       table.insert(list,dir)
     end
   end
@@ -304,34 +326,34 @@ end
 
 -- **********************************************************************
 
-function file(zip)
-  local magic = zip:read(4)
+function file(zf)
+  local magic = zf:read(4)
   local file  = {}
-  
+
   if magic == zip.magic.FILE then
-    file.byversion   = version(zip)
-    file.flags       = flags(zip)
-    file.compression = r16(zip)
-    file.modtime     = mstounix(zip)
-    file.crc         = r32(zip)
-    file.csize       = r32(zip)
-    file.usize       = r32(zip)
+    file.byversion   = version(zf)
+    file.flags       = flags(zf)
+    file.compression = r16(zf)
+    file.modtime     = mstounix(zf)
+    file.crc         = r32(zf)
+    file.csize       = r32(zf)
+    file.usize       = r32(zf)
     
-    local namelen    = r16(zip)
-    local extralen   = r16(zip)
+    local namelen    = r16(zf)
+    local extralen   = r16(zf)
     
-    file.name        = zip:read(namelen)
+    file.name        = zf:read(namelen)
     file.extra       = {}
     
     while extralen > 0 do
-      local id    = r16(zip)
-      local len   = r16(zip)
+      local id    = r16(zf)
+      local len   = r16(zf)
       local trans = extra[id]
       
       if type(trans) == 'function' then
-        dir.extra[id] = trans(zip,len)
+        dir.extra[id] = trans(zf,len)
       else
-        dir.extra[id] = zip:read(len)
+        dir.extra[id] = zf:read(len)
       end
       
       extralen = extralen - (len + 4)
@@ -343,22 +365,22 @@ end
 
 -- ************************************************************************
 
-function data(zip)
-  local magic = zip:read(4)
+function data(zf)
+  local magic = zf:read(4)
   local data  = {}
   
   if magic == zip.magic.DATA then
-    data.crc   = r32(zip)
-    data.csize = r32(zip)
-    data.usize = r32(zip)
+    data.crc   = r32(zf)
+    data.csize = r32(zf)
+    data.usize = r32(zf)
     return data
   end
 end
 
 -- ************************************************************************
 
-function archive(zip)
-  local magic = zip:read(4)
+function archive(zf)
+  local magic = zf:read(4)
 end
 
 -- ************************************************************************
