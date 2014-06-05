@@ -26,8 +26,9 @@
 --
 -- ********************************************************************
 
-local _VERSION = _VERSION
-local type     = type
+local _VERSION     = _VERSION
+local type         = type
+local setmetatable = setmetatable
 
 local string = require "string"
 local os     = require "os"
