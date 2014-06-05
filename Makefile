@@ -101,8 +101,10 @@ clean:
 install : all
 	install -d $(LUALUA)/org/conman	
 	install -d $(LUALUA)/org/conman/dns
+	install -d $(LUALUA)/org/conman/zip
 	install lua/*.lua $(LUALUA)/org/conman	
 	install lua/dns/*.lua $(LUALUA)/org/conman/dns
+	install lua/zip/*.lua $(LUALUA)/org/conman/zip
 	install -d $(LUALIB)/org/conman
 	install -d $(LUALIB)/org/conman/fsys
 	install lib/env.so     $(LUALIB)/org/conman
