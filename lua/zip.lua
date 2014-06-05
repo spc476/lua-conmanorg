@@ -26,9 +26,12 @@
 --
 -- ********************************************************************
 
-local _VERSION = _VERSION
+local _VERSION     = _VERSION
+local pairs        = pairs
+local setmetatable = setmetatable
 
-local math = require "math"
+local table = require "table"
+local math  = require "math"
 
 if _VERSION == "Lua 5.1" then
   module("org.conman.zip")
