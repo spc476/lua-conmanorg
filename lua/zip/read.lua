@@ -311,7 +311,7 @@ function dir(zf,entries)
         if type(trans) == 'function' then
           dir.extra[id] = trans(zf,len)
         else
-          dir.extra[id] = zf:read(len)
+          dir.extra[id] = string.format("%s:%d",trans,#zf:read(len))
         end
                 
         extralen = extralen - (len + 4)
