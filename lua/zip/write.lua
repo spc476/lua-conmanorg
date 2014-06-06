@@ -249,6 +249,15 @@ end
 
 -- ************************************************************************
 
+function data(zf,data)
+  zf:write(zip.magic.DATA)
+  w32(zf,data.crc)
+  w32(zf,data.csize)
+  w32(zf,data.usize)
+end
+
+-- ************************************************************************
+
 if _VERSION >= "Lua 5.2" then
   return _ENV
 end
