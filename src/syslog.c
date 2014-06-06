@@ -27,8 +27,8 @@
 
 #include <syslog.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #ifndef __GNUC__
@@ -246,7 +246,12 @@ static const struct luaL_Reg reg_syslog[] =
 
 int luaopen_org_conman_syslog(lua_State *L)
 {
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.syslog",reg_syslog);
+#else
+  lua_createtable(L,0,0);
+  luaL_setfuncs(L,reg_syslog,0);
+#endif
 
   lua_createtable(L,0,MAX_FACILITY);
   for (size_t i = 0 ; i < MAX_FACILITY; i++)
