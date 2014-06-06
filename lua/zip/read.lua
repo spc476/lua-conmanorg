@@ -176,7 +176,7 @@ function eocd(zf)
     -- check for consistency here
     
     eocd.comment      = zf:read(commentlen)
-    
+    zf:seek('set',eocd.offset)
     return eocd
   end
 end
