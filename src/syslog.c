@@ -249,8 +249,7 @@ int luaopen_org_conman_syslog(lua_State *L)
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.syslog",reg_syslog);
 #else
-  lua_createtable(L,0,0);
-  luaL_setfuncs(L,reg_syslog,0);
+  luaL_newlib(L,reg_syslog);
 #endif
 
   lua_createtable(L,0,MAX_FACILITY);
