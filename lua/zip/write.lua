@@ -65,7 +65,7 @@ local function unixtoms(zf,mtime)
                 + math.floor(mtime.sec / 2)
   
   local moddate = (mtime.year  - 1980) * 2^9
-                + (mtime.month -    1) * 2^5
+                + (mtime.month       ) * 2^5
                 +  mtime.day
   
   w16(zf,modtime)
