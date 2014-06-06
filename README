@@ -456,7 +456,7 @@ org.conman.syslog	Interface to syslog
 	close()
 		Close the link to syslog
 
-	log(level,message)
+	log(level,message[,...])
 		Log the message at the given level.  The level can be
 			'debug'
 			'info'
