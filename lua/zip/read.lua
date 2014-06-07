@@ -242,7 +242,7 @@ local extra = setmetatable(
         "osver"
       }
       
-      local ext  = { LEN = len }
+      local ext  = { }
       
       while len >= 2 do
         local field = zip:read(1):byte()
@@ -301,7 +301,7 @@ function dir(zf,entries)
       dir.offset       = r32(zf)
       
       dir.name         = zf:read(namelen)
-      dir.extra        = { LEN = extralen }
+      dir.extra        = { }
       
       while extralen > 0 do
         local id    = r16(zf)
