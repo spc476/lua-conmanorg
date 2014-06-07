@@ -19,8 +19,8 @@
 --
 -- ********************************************************************
 
-local _VERSION = _VERSION
-local pairs    = pairs
+local _VERSION     = _VERSION
+local pairs        = pairs
 local setmetatable = setmetatable
 local type         = type
 
@@ -155,7 +155,7 @@ function new(what)
     	csize       = 0,
     	usize       = 0,
     	name        = "",
-    	extra       = { },
+    	extra       = {},
     	comment     = "",
     	diskstart   = 0,
     	eattr       = 0,
@@ -191,7 +191,7 @@ function new(what)
     	csize       = 0,
     	usize       = 0,
     	name        = "",
-    	extra       = { },
+    	extra       = {},
     	flags = 
     	{
     	  encrypted        = false,

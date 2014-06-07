@@ -130,7 +130,7 @@ local function iattribute(zf)
     return r ~= 0,q
   end
   
-  local iattr = {}
+  local iattr    = {}
   local f        = r16(zf)
   iattr.text,f   = bool(f)
   iattr.record,f = bool(f)
@@ -299,7 +299,6 @@ function dir(zf,entries)
       dir.iattr        = iattribute(zf)
       dir.eattr        = r32(zf)
       dir.offset       = r32(zf)
-      
       dir.name         = zf:read(namelen)
       dir.extra        = { }
       
