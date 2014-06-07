@@ -20,10 +20,14 @@
 -- ********************************************************************
 
 local _VERSION = _VERSION
+local pairs    = pairs
+local setmetatable = setmetatable
+local type         = type
 
 local math   = require "math"
 local string = require "string"
 local os     = require "os"
+local table  = require "table"
 local zip    = require "org.conman.zip"
 local idiv   = zip.idiv
 
@@ -53,6 +57,26 @@ local function w32(zf,data)
   	string.char(b2),
   	string.char(b3)
   )
+end
+
+-- ************************************************************************
+
+local function s16(data)
+  local hi,lo = idiv(data,256)
+  return string.char(lo) .. string.char(hi)
+end
+
+-- ************************************************************************
+
+local function s32(data)
+  local b3,data = idiv(data,2^24)
+  local b2,data = idiv(data,2^16)
+  local b1,b0   = idiv(data,2^8)
+  
+  return string.char(b0)
+      .. string.char(b1)
+      .. string.char(b2)
+      .. string.char(b3)
 end
 
 -- ************************************************************************
@@ -131,7 +155,7 @@ function new(what)
     	csize       = 0,
     	usize       = 0,
     	name        = "",
-    	extra       = { LEN = 0 },
+    	extra       = { },
     	comment     = "",
     	diskstart   = 0,
     	eattr       = 0,
@@ -167,7 +191,7 @@ function new(what)
     	csize       = 0,
     	usize       = 0,
     	name        = "",
-    	extra       = { LEN = 0 },
+    	extra       = { },
     	flags = 
     	{
     	  encrypted        = false,
@@ -201,10 +225,107 @@ end
 
 -- ************************************************************************
 
+local extra = setmetatable(
+  {
+    [0x0001] = "Zip64 extended information extra field",
+    [0x0007] = "AV Info",
+    [0x0008] = "Reserved for extended language encoding data (PFS) (see APPENDIX D)",
+    [0x0009] = "OS/2",
+    [0x000a] = "NTFS",
+    [0x000c] = "OpenVMS",
+    [0x000d] = "UNIX",
+    [0x000e] = "Reserved for file stream and fork descriptors",
+    [0x000f] = "Patch Descriptor",
+    [0x0014] = "PKCS#7 Store for X.509 Certificates",
+    [0x0015] = "X.509 Certificate ID and Signature for individual file",
+    [0x0016] = "X.509 Certificate ID for Central Directory",
+    [0x0017] = "Strong Encryption Header",
+    [0x0018] = "Record Management Controls",
+    [0x0019] = "PKCS#7 Encryption Recipient Certificate List",
+    [0x0065] = "IBM S/390 (Z390), AS/400 (I400) attributes - uncompressed",
+    [0x0066] = "Reserved for IBM S/390 (Z390), AS/400 (I400) attributes - compressed",
+    [0x4690] = "POSZIP 4690 (reserved)",
+
+    [0x07c8] = "Macintosh",
+    [0x2605] = "ZipIt Macintosh",
+    [0x2705] = "ZipIt Macintosh 1.3.5+",
+    [0x2805] = "ZipIt Macintosh 1.3.5+",
+    [0x334d] = "Info-ZIP Macintosh",
+    [0x4341] = "Acorn/SparkFS",
+    [0x4453] = "Windows NT security descriptor (binary ACL)",
+    [0x4704] = "VM/CMS",
+    [0x470f] = "MVS",
+    [0x4b46] = "FWKCS MD5 (see below)",
+    [0x4c41] = "OS/2 access control list (text ACL)",
+    [0x4d49] = "Info-ZIP OpenVMS",
+    [0x4f4c] = "Xceed original location extra field",
+    [0x5356] = "AOS/VS (ACL)",
+    [0x5455] = "extended timestamp",
+    [0x554e] = "Xceed unicode extra field",
+    [0x5855] = "Info-ZIP UNIX (original, also OS/2, NT, etc)",
+    [0x6375] = "Info-ZIP Unicode Comment Extra Field",
+    [0x6542] = "BeOS/BeBox",
+    [0x7075] = "Info-ZIP Unicode Path Extra Field",
+    [0x756e] = "ASi UNIX",
+    [0x7855] = "Info-ZIP UNIX (new)",
+    [0xa220] = "Microsoft Open Packaging Growth Hint",
+    [0xfd4a] = "SMS/QDOS",
+
+    [0x454C] = function(extra) -- Language extension
+      local fields =
+      {
+        version  = "\001",
+        license  = "\002", 
+        language = "\003", 
+        lvmin    = "\004", 
+        lvmax    = "\005", 
+        cpu      = "\006", 
+        os       = "\007", 
+        osver    = "\008",
+      }
+      
+      data = {}
+      for name,tag in pairs(fields) do
+        if extra[name] then
+          if #extra[name] > 255 then
+            return
+          end
+          
+          table.insert(data,tag)
+          table.insert(data,string.char(#extra[name]))
+          table.insert(data,extra[name])
+        end
+      end
+      
+      return table.concat(data)
+    end,
+  },
+  {
+    __index = function(tab,key)
+      return nil
+    end
+  }
+)
+
+-- ************************************************************************
+
 function dir(zf,list)
   local pos = zf:seek()
   
   for i = 1 , #list do
+    local extradata = {}
+    
+    for id,data in pairs(list[i].extra) do
+      if type(extra[id]) == 'function' then
+        local data = extra[id](data)
+        if data then
+          table.insert(extradata,s16(id) .. s16(#data) .. data)
+        end
+      end
+    end
+    
+    extradata = table.concat(extradata)
+    
     zf:write(zip.magic.DIR)
     version(zf,list[i].byversion)
     version(zf,list[i].forversion)
@@ -215,13 +336,14 @@ function dir(zf,list)
     w32(zf,list[i].csize)
     w32(zf,list[i].usize)
     w16(zf,#list[i].name)
-    w16(zf,list[i].extra.LEN)
+    w16(zf,#extradata)
     w16(zf,#list[i].comment)
     w16(zf,list[i].diskstart)
     iattribute(zf,list[i].iattr)
     w32(zf,list[i].eattr)
     w32(zf,list[i].offset)
     zf:write(list[i].name)
+    zf:write(extradata)
     zf:write(list[i].comment)
   end
   
@@ -232,7 +354,20 @@ end
 -- ************************************************************************
 
 function file(zf,file)
-  local pos = zf:seek()
+  local pos       = zf:seek()
+  local extradata = {}
+  
+  for id,data in pairs(file.extra) do
+    if type(extra[id]) == 'function' then
+      local data = extra[id](data)
+      if data then
+        table.insert(extradata,s16(id) .. s16(#data) .. data)
+      end
+    end
+  end
+  
+  extradata = table.concat(extradata)
+  
   zf:write(zip.magic.FILE)
   version(zf,file.byversion)
   flags(zf,file.flags)
@@ -242,8 +377,9 @@ function file(zf,file)
   w32(zf,file.csize)
   w32(zf,file.usize)
   w16(zf,#file.name)
-  w16(zf,file.extra.LEN)
+  w16(zf,#extradata)
   zf:write(file.name)
+  zf:write(extradata)
   return pos
 end
 
