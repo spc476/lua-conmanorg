@@ -133,7 +133,7 @@ end
 
 -- ************************************************************************
 
-function new(what)
+function new(what,base)
   if what == 'eocd' then
     return {
   	disknum      = 0,
@@ -146,16 +146,30 @@ function new(what)
     }
     
   elseif what == 'dir' then
+    local base = base or {}
     return {
-	byversion   = { os = zip.os[0] , level = 2.0 },
-	forversion  = { os = zip.os[0] , level = 2.0 },
-	compression = 8,
-	modtime     = os.time(),
-    	crc         = 0,
-    	csize       = 0,
-    	usize       = 0,
-    	name        = "",
-    	extra       = {},
+	byversion   = base.byversion   or { os = zip.os[0] , level = 2.0 },
+	compression = base.compression or 8,
+	modtime     = base.modtime     or os.time(),
+    	crc         = base.crc         or 0,
+    	csize       = base.csize       or 0,
+    	usize       = base.usize       or 0,
+    	name        = base.name        or "",
+    	extra       = base.extra       or {},
+        flags       = base.flags       or {
+    					    encrypted        = false,
+    					    compress         = 0,
+    					    data             = false,
+    					    enhanced_deflate = false,
+    					    patch            = false,
+    					    strong_encrypt   = false,
+    					    utf8             = false,
+    					    pkware_compress  = false,
+    					    hidden           = false,
+    					    pkware           = 0,
+    					  },
+
+	forversion  = { os = zip.os[0] , level = 2.0 },        	
     	comment     = "",
     	diskstart   = 0,
     	eattr       = 0,
@@ -165,20 +179,6 @@ function new(what)
     	{
     	  text   = false,
     	  record = false,
-    	},
-    	
-    	flags = 
-    	{
-    	  encrypted        = false,
-    	  compress         = 0,
-    	  data             = false,
-    	  enhanced_deflate = false,
-    	  patch            = false,
-    	  strong_encrypt   = false,
-    	  utf8             = false,
-    	  pkware_compress  = false,
-    	  hidden           = false,
-    	  pkware           = 0,
     	},    	
     }
     
