@@ -297,7 +297,10 @@ local extra = setmetatable(
         end
       end
       
-      return table.concat(data)
+      data = table.concat(data)
+      if #data > 0 then
+        return data
+      end
     end,
   },
   {
