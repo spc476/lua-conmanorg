@@ -350,9 +350,9 @@ function file(zf)
       local trans = extra[id]
       
       if type(trans) == 'function' then
-        dir.extra[id] = trans(zf,len)
+        file.extra[id] = trans(zf,len)
       else
-        dir.extra[id] = zf:read(len)
+        file.extra[id] = zf:read(len)
       end
       
       extralen = extralen - (len + 4)
