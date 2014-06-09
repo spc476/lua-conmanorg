@@ -164,7 +164,8 @@ function eocd(zf)
   
   if locate() then
     local eocd = {}
-
+    local here = zf:seek('cur',0) - 4 -- adjust for Magic bytes
+    
     eocd.disknum      = r16(zf)
     eocd.diskstart    = r16(zf)
     eocd.entries      = r16(zf)
@@ -173,9 +174,33 @@ function eocd(zf)
     eocd.offset       = r32(zf)
     
     local commentlen  = r16(zf)
-    -- check for consistency here
+    local eof         = zf:seek('end',0)
     
-    eocd.comment      = zf:read(commentlen)
+    -- ---------------------------------------------------------------------
+    -- if the length of the EOCD + the comment doesn't match the end of the
+    -- the file, then this might not be an actual ZIP file.  It is best to
+    -- exit at this point.
+    -- 
+    -- The 22 is the size of the EOCD minus the comment.
+    -- ---------------------------------------------------------------------
+    
+    if here + 22 + commentlen ~= eof then
+      return nil,"bad comment len"
+    end
+    
+    zf:seek('set',here + 22)
+    eocd.comment = zf:read(commentlen)
+    
+    -- --------------------------------------------------------------------
+    -- some further checking, here making sure our CDH (Current Directory
+    -- Header) doesn't overlap the EOCD.
+    -- --------------------------------------------------------------------
+    
+    if eocd.offset > here
+    or eocd.offset + eocd.size > here then
+      return nil,"bad offset"
+    end
+    
     zf:seek('set',eocd.offset)
     return eocd
   end
