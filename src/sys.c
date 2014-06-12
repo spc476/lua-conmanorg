@@ -154,7 +154,7 @@ int luaopen_org_conman_sys(lua_State *const L)
 #if LUA_VERSION_NUM == 501  
   luaL_register(L,"org.conman.sys",msys_reg);
 #elif LUA_VERSION_NUM >= 502
-  lua_createtable(L,0,10);
+  lua_createtable(L,0,11);
 #endif
 
   lua_pushstring(L,buffer.sysname);
@@ -185,6 +185,9 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_pushinteger(L,1);
 #endif
   lua_setfield(L,-2,"CORES");
+
+  lua_pushinteger(L,sysconf(_SC_PAGESIZE));
+  lua_setfield(L,-2,"PAGESIZE");
 
   lua_createtable(L,0,MAXPATH);
   for (i = 0 ; i < MAXPATH ; i++)
