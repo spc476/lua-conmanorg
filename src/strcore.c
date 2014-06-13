@@ -45,7 +45,6 @@
 /************************************************************************/
 
 static int	strcore_wrap		(lua_State *const);
-static int	strcore_remchar		(lua_State *const);
 static int	strcore_wrapt		(lua_State *const);
 static int	strcore_metaphone	(lua_State *const);
 static int	strcore_soundex		(lua_State *cosnt);
@@ -55,7 +54,6 @@ static int	strcore_soundex		(lua_State *cosnt);
 static const luaL_Reg m_strcore_reg[] =
 {
   { "wrap"	, strcore_wrap		} ,
-  { "remchar"	, strcore_remchar	} ,
   { "wrapt"	, strcore_wrapt		} ,
   { "metaphone"	, strcore_metaphone	} ,
   { "soundex"	, strcore_soundex	} ,
@@ -179,37 +177,6 @@ static int strcore_wrapt(lua_State *const L)
 }
 
 /************************************************************************/  
-
-static int strcore_remchar(lua_State *const L)
-{
-  const char *src;
-  size_t      size;
-  int         c;
-  
-  src = luaL_checklstring(L,1,&size);
-  if (lua_isnumber(L,2))
-    c = lua_tointeger(L,2);
-  else if (lua_isstring(L,2))
-  {
-    const char *cc;
-    cc = lua_tostring(L,2);
-    c = *cc;
-  }
-  else
-    return luaL_error(L,"you stupid, number or string!");
-
-  char   buffer[size];
-  char   *dst;
-  
-  for (dst = buffer ; size ; src++,size--)
-    if (*src != c)
-      *dst++ = *src;
-  
-  lua_pushlstring(L,buffer,(size_t)(dst - buffer));
-  return 1;
-}
-
-/************************************************************************/
 
 static int strcore_soundex(lua_State *const L)
 {
