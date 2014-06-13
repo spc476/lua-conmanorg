@@ -47,6 +47,7 @@
 static int	strcore_trim		(lua_State *const);
 static int	strcore_wrap		(lua_State *const);
 static int	strcore_remchar		(lua_State *const);
+static int	strcore_wrapt		(lua_State *const);
 static int	strcore_metaphone	(lua_State *const);
 static int	strcore_soundex		(lua_State *cosnt);
 
@@ -60,6 +61,7 @@ static const luaL_Reg m_strcore_reg[] =
   { "trim"	, strcore_trim		} ,
   { "wrap"	, strcore_wrap		} ,
   { "remchar"	, strcore_remchar	} ,
+  { "wrapt"	, strcore_wrapt		} ,
   { "metaphone"	, strcore_metaphone	} ,
   { "soundex"	, strcore_soundex	} ,
   { NULL	, NULL			}
@@ -176,6 +178,45 @@ static int strcore_wrap(lua_State *const L)
 }
 
 /************************************************************************/
+
+static int strcore_wrapt(lua_State *const L)
+{
+  const char *src;
+  size_t      ssz;
+  size_t      margin;
+  size_t      breakp;
+  int         i;
+  
+  src    = luaL_checklstring(L,1,&ssz);
+  margin = luaL_optinteger(L,2,DEF_MARGIN);
+  breakp = margin;
+  
+  lua_createtable(L,0,0);
+  
+  for (i = 1 ; ssz > breakp ; i++)
+  {
+    if (find_break_point(&breakp,src))
+    {
+      lua_pushinteger(L,i);
+      lua_pushlstring(L,src,breakp - 1);
+      lua_settable(L,-3);
+      
+      src    += breakp;
+      ssz    -= breakp;
+      breakp  = margin;
+    }
+    else
+      break;
+  }
+  
+  lua_pushinteger(L,i);
+  lua_pushlstring(L,src,ssz);
+  lua_settable(L,-3);
+  
+  return 1;
+}
+
+/************************************************************************/  
 
 static int strcore_remchar(lua_State *const L)
 {
