@@ -44,7 +44,6 @@
 
 /************************************************************************/
 
-static int	strcore_trim		(lua_State *const);
 static int	strcore_wrap		(lua_State *const);
 static int	strcore_remchar		(lua_State *const);
 static int	strcore_wrapt		(lua_State *const);
@@ -55,7 +54,6 @@ static int	strcore_soundex		(lua_State *cosnt);
 
 static const luaL_Reg m_strcore_reg[] =
 {
-  { "trim"	, strcore_trim		} ,
   { "wrap"	, strcore_wrap		} ,
   { "remchar"	, strcore_remchar	} ,
   { "wrapt"	, strcore_wrapt		} ,
@@ -69,29 +67,6 @@ static const luaL_Reg m_strcore_reg[] =
 int luaopen_org_conman_strcore(lua_State *const L)
 {
   luaL_register(L,"org.conman.string",m_strcore_reg);
-  return 1;
-}
-
-/************************************************************************/
-
-static int strcore_trim(lua_State *const L)
-{
-  const char *front;
-  const char *end;
-  size_t      size;
-  
-  assert(L != NULL);
-  
-  front = lua_tolstring(L,1,&size);
-  end   = &front[size - 1];
-  
-  for ( ; size && isspace(*front) ; size-- , front++)
-    ;
-  
-  for ( ; size && isspace(*end) ; size-- , end--)
-    ;
-  
-  lua_pushlstring(L,front,(size_t)(end - front) + 1);
   return 1;
 }
 
