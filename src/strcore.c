@@ -44,7 +44,6 @@
 
 /************************************************************************/
 
-static int	strcore_wrap		(lua_State *const);
 static int	strcore_wrapt		(lua_State *const);
 static int	strcore_metaphone	(lua_State *const);
 static int	strcore_soundex		(lua_State *cosnt);
@@ -53,7 +52,6 @@ static int	strcore_soundex		(lua_State *cosnt);
 
 static const luaL_Reg m_strcore_reg[] =
 {
-  { "wrap"	, strcore_wrap		} ,
   { "wrapt"	, strcore_wrapt		} ,
   { "metaphone"	, strcore_metaphone	} ,
   { "soundex"	, strcore_soundex	} ,
@@ -91,50 +89,6 @@ static bool find_break_point(
   }
   
   return false;
-}
-
-/************************************************************************/
-
-static int strcore_wrap(lua_State *const L)
-{
-  const char *src;
-  size_t      ssz;
-  size_t      margin;
-  size_t      breakp;
-  const char *lead;
-  size_t      lsize;
-  luaL_Buffer buf;
-  
-  src    = luaL_checklstring(L,1,&ssz);
-  margin = luaL_optinteger(L,2,DEF_MARGIN);
-  lead   = lua_tolstring(L,3,&lsize);
-  breakp = margin;
-  
-  luaL_buffinit(L,&buf);
-  
-  while(true)
-  {
-    if (ssz < breakp)
-      break;
-
-    if (find_break_point(&breakp,src))
-    {
-      if (lead) luaL_addlstring(&buf,lead,lsize);
-      luaL_addlstring(&buf,src,breakp - 1);
-      luaL_addchar(&buf,'\n');
-      src    += breakp;
-      ssz    -= breakp;
-      breakp  = margin;
-    }
-    else
-      break;
-  }
-  
-  if (lead) luaL_addlstring(&buf,lead,lsize);
-  luaL_addlstring(&buf,src,ssz);
-  luaL_addchar(&buf,'\n');
-  luaL_pushresult(&buf);
-  return 1;
 }
 
 /************************************************************************/

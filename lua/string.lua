@@ -65,3 +65,17 @@ function filetemplate(temp,callbacks,data)
   f:close()
   return template(d,callbacks,data)
 end
+
+function wrap(s,margin,lead)
+  local lead = lead or ""
+  local res  = wrapt(s,margin)
+  
+  -- -----------------------------------------------------------------------
+  -- insert lead into the first position.  We then convert the table into a
+  -- string, separated by a newline and the lead.  This conforms to the
+  -- behavior of the C based version of this function.
+  -- -----------------------------------------------------------------------
+  
+  table.insert(res,1,lead)
+  return table.concat(res,"\n" .. lead)
+end
