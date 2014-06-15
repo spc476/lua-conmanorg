@@ -20,7 +20,7 @@
 * ===================================================================
 *
 * The main algorithm for metaphone was placed into the public domain by Gary
-* A. Parker and transcribed into machine readable format by Mark Grosbert
+* A. Parker and transcribed into machine readable format by Mark Grosberg
 * from The C Gazette Jun/Jul 1991, Volume 5, No 4., Pg 55, and further
 * modified by Sean Conner for use with Lua.
 *
