@@ -34,8 +34,8 @@ local function etcpasswd()
   local users = {}
 
   for line in io.lines('/etc/passwd') do
-    local next = line:gmatch "([^:]*):?" 
-    local user = {}
+    local next  = line:gmatch "([^:]*):?" 
+    local user  = {}
     
     user.userid = next()
     user.passwd = next()
@@ -58,8 +58,8 @@ local function etcgroup()
   local groups = {}
 
   for line in io.lines('/etc/group') do
-    local next  = line:gmatch "([^:]*):?"
-    local group = {}
+    local next   = line:gmatch "([^:]*):?"
+    local group  = {}
     
     group.name   = next()
     group.passwd = next()
@@ -94,6 +94,6 @@ end
 
 -- ************************************************************************
 
-users        = etcpasswd()
-groups       = etcgroup()
-paths        = setmetatable({} , { __index = findexec })
+users  = etcpasswd()
+groups = etcgroup()
+paths  = setmetatable({} , { __index = findexec })
