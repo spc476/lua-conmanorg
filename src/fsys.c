@@ -416,17 +416,9 @@ static int fsys_getcwd(lua_State *L)
 {
   char cwd[FILENAME_MAX];
   
-  if (getcwd(cwd,sizeof(cwd)) == NULL)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushstring(L,cwd);
-    lua_pushinteger(L,0);
-  }
-  
+  errno = 0;
+  lua_pushstring(L,getcwd(cwd,sizeof(cwd)));
+  lua_pushinteger(L,errno);
   return 2;
 }
 
