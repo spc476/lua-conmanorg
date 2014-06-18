@@ -58,7 +58,7 @@
 #endif
 
 #ifdef __APPLE__
-#  include <sys/iotcl.h>
+#  include <sys/ioctl.h>
 #endif
 
 #include <lua.h>
