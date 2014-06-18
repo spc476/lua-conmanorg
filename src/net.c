@@ -101,7 +101,7 @@ struct strint
 
 static int	err_meta___index	(lua_State *const) __attribute__((nonnull));
 
-#ifndef __SunOS
+#ifdef __linux__
 static int	netlua_interfaces	(lua_State *const) __attribute__((nonnull));
 #endif
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
@@ -143,7 +143,7 @@ static int	net_toport		(lua_State *const,const int,const int) __attribute__((non
 
 static const luaL_Reg m_net_reg[] =
 {
-#ifndef __SunOS
+#ifdef __linux__
   { "interfaces"	, netlua_interfaces	} ,
 #endif
   { "socket"		, netlua_socket		} ,
