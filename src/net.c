@@ -1635,6 +1635,7 @@ static int net_toproto(lua_State *const L,const int idx)
     presult = getprotobyname(proto);
     if (presult == NULL)
       return luaL_error(L,"invalid protocol");
+    result = *presult;
 #endif
     return result.p_proto;
   }
@@ -1666,6 +1667,7 @@ static int net_toport(lua_State *const L,int idx,const int proto)
     presult = getservbyname(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp");
     if (presult == NULL)
       return luaL_error(L,"invalid service");
+    result = *presult;
 #endif
     return ntohs((short)result.s_port);
   }
