@@ -215,35 +215,114 @@ static const struct strint m_sigs[] =
   ; other possible signals
   ;------------------------------*/
 
+#ifdef SIGALRM
   { "ALRM"	, SIGALRM	} ,
+#endif
+
+#ifdef SIGBUG
   { "BUS"	, SIGBUS	} ,
+#endif
+
+#ifdef SIGCHLD
   { "CHLD"	, SIGCHLD	} ,
+#endif
+
+#ifdef SIGCONT
   { "CONT"	, SIGCONT	} ,
+#endif
+
+#ifdef SIGHUP
   { "HUP"	, SIGHUP	} ,
+#endif
+
+#ifdef SIGIO
   { "IO"	, SIGIO		} ,
+#endif
+
+#ifdef SIGIOT
   { "IOT"	, SIGIOT	} ,
+#endif
+
+#ifdef SIGKILL
   { "KILL"	, SIGKILL	} ,
+#endif
+
+#ifdef SIGPIPE
   { "PIPE"	, SIGPIPE	} ,
+#endif
+
+#ifdef SIGPOLL
   { "POLL"	, SIGPOLL	} ,
+#endif
+
+#ifdef SIGPROF
   { "PROF"	, SIGPROF	} ,
+#endif
+
+#ifdef SIGPWR
   { "PWR"	, SIGPWR	} ,
+#endif
+
+#ifdef SIGQUIT
   { "QUIT"	, SIGQUIT	} ,
+#endif
+
+#ifdef SIGURG
   { "SIGURG"	, SIGURG	} ,
+#endif
+
 #ifdef SIGSTKFLT
   { "STKFLT"	, SIGSTKFLT	} ,
 #endif
+
+#ifdef SIGSTOP
   { "STOP"	, SIGSTOP	} ,
+#endif
+
+#ifdef SIGSYS
   { "SYS"	, SIGSYS	} ,
+#endif
+
+#ifdef SIGTRAP
   { "TRAP"	, SIGTRAP	} ,
+#endif
+
+#ifdef SIGTSTP
   { "TSTP"	, SIGTSTP	} ,
+#endif
+
+#ifdef SIGTTIN
   { "TTIN"	, SIGTTIN	} ,
+#endif
+
+#ifdef SIGTTOU
   { "TTOU"	, SIGTTOU	} ,
+#endif
+
+#ifdef SIGUSR1
   { "USR1"	, SIGUSR1	} ,
+#endif
+
+#ifdef SIGUSR2
   { "USR2"	, SIGUSR2	} ,
+#endif
+
+#ifdef SIGVTALRM
   { "VTALRM"	, SIGVTALRM	} ,
+#endif
+
+#ifdef SIGWINCH
   { "WINCH"	, SIGWINCH	} ,
+#endif
+
+#ifdef SIGXCPU
   { "XCPU"	, SIGXCPU	} ,
+#endif
+
+#ifdef SIGXFSZ
   { "XFSZ"	, SIGXFSZ	} ,
+#endif
+
   { NULL	, 0		}
 };
 
