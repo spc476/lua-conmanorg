@@ -1659,11 +1659,11 @@ static int net_toport(lua_State *const L,int idx,const int proto)
     presult = getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp));
     if (presult == NULL)
       return luaL_error(L,"invalid service");
-#elif define(__linux__)
+#elif defined(__linux__)
     if (getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp),&presult) != 0)
       return luaL_error(L,"invalid service");
 #else
-    presult = getservbyname(serv,(proto == IPROTO_TCP) ? "tcp" : "udp");
+    presult = getservbyname(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp");
     if (presult == NULL)
       return luaL_error(L,"invalid service");
 #endif
