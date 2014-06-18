@@ -35,6 +35,13 @@ ifeq ($(UNAME),SunOS)
   SHARED = -G -xcode=pic32
 endif
 
+ifeq ($(UNAME),Darwin)
+  CC     = gcc -std=c99
+  CFLAGS = -g -Wall -Wextra -pedantic
+  LFLAGS =
+  SHARED = -shared -fPIC -undefined dynamic_lookup -all_load
+endif
+
 LUALUA = /usr/local/share/lua/5.1
 LUALIB = /usr/local/lib/lua/5.1
 

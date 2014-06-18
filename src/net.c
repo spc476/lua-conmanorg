@@ -53,8 +53,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#ifndef __SunOS
+#ifdef __linux__
 #  include <ifaddrs.h>
+#endif
+
+#ifdef __APPLE__
+#  include <sys/iotcl.h>
 #endif
 
 #include <lua.h>
@@ -357,7 +361,7 @@ static int err_meta___index(lua_State *const L)
 *
 **********************************************************************/
 
-#ifndef __SunOS
+#ifdef __linux__
   static int netlua_interfaces(lua_State *const L)
   {
     struct ifaddrs  *interfaces;
@@ -1155,6 +1159,11 @@ static int socklua_bind(lua_State *const L)
         lua_pushinteger(L,errno);
         return 1;
       }
+
+#ifndef __APPLE__
+      /*-------------------------------------------------------------
+      ; I wonder if I should use IP_ADD_MEMBERSHIP for Darwin builds?
+      ;-------------------------------------------------------------*/
       
       mreq6.ipv6mr_multiaddr = addr->sin6.sin6_addr;
       mreq6.ipv6mr_interface = 0;
@@ -1163,6 +1172,7 @@ static int socklua_bind(lua_State *const L)
         lua_pushinteger(L,errno);
         return 1;
       }      
+#endif
     }
   }
   
@@ -1614,12 +1624,16 @@ static int net_toproto(lua_State *const L,const int idx)
     struct protoent  result;
     char             tmp[BUFSIZ];
     
-#ifdef __SunOS
+#if defined(__SunOS)
     presult = getprotobyname_r(proto,&result,tmp,sizeof(tmp));
     if (presult == NULL)
       return luaL_error(L,"invalid protocol");
-#else
+#elif defined(__linux__)
     if (getprotobyname_r(proto,&result,tmp,sizeof(tmp),&presult) != 0)
+      return luaL_error(L,"invalid protocol");
+#else
+    presult = getprotobyname(proto);
+    if (presult == NULL)
       return luaL_error(L,"invalid protocol");
 #endif
     return result.p_proto;
@@ -1641,12 +1655,16 @@ static int net_toport(lua_State *const L,int idx,const int proto)
     struct servent  result;
     char            tmp[BUFSIZ];
     
-#ifdef __SunOS
+#if defined(__SunOS)
     presult = getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp));
     if (presult == NULL)
       return luaL_error(L,"invalid service");
-#else
+#elif define(__linux__)
     if (getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp),&presult) != 0)
+      return luaL_error(L,"invalid service");
+#else
+    presult = getservbyname(serv,(proto == IPROTO_TCP) ? "tcp" : "udp");
+    if (presult == NULL)
       return luaL_error(L,"invalid service");
 #endif
     return ntohs((short)result.s_port);

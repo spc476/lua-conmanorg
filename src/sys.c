@@ -49,6 +49,17 @@
 
 #if defined(__linux)
 #  include <paths.h>
+#elif defined(__APPLE__)
+#  include <paths.h>
+#  define _PATH_KLOG            NULL
+#  define _PATH_LASTLOG         NULL
+#  define _PATH_MNTTAB          NULL
+#  define _PATH_MOUNTED         NULL
+#  define _PATH_PRESERVE        NULL
+#  define _PATH_RWHODIR         NULL
+#  define _PATH_SHADOW          NULL
+#  define _PATH_UTMP            NULL
+#  define _PATH_WTMP            NULL
 #elif defined(__SunOS)
 #  define _PATH_DEFPATH		"/usr/bin:/bin"
 #  define _PATH_STDPATH		"/usr/bin:/bin:/usr/sbin:/sbin"

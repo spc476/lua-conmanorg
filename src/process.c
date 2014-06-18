@@ -584,12 +584,16 @@ static int proclua_sleep(lua_State *const L)
 
 static int proclua_sleepres(lua_State *const L)
 {
+#ifdef __APPLE__
+  lua_pushnumber(L,0.01);
+#else
   struct timespec res;
 
   assert(L != NULL);
   
   clock_getres(CLOCK_REALTIME,&res);
   lua_pushnumber(L,(double)res.tv_sec + (((double)res.tv_nsec) / 1000000000.0));
+#endif
   return 1;  
 }
 
