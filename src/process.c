@@ -41,6 +41,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#include <sysexits.h>
 #include <syslog.h>
 #include <libgen.h>
 
@@ -324,6 +325,84 @@ static const struct strint m_sigs[] =
 #endif
 
   { NULL	, 0		}
+};
+
+static const struct strint m_sysexits[] =
+{
+  { "SUCCESS"	, EXIT_SUCCESS	} ,
+  { "FAILURE"	, EXIT_FAILURE	} ,
+
+#ifdef EX_OK
+  { "OK" , EX_OK } ,
+#else
+  { "OK" , EXIT_SUCCESS } ,
+#endif
+
+#ifdef EX_USAGE
+  { "USAGE" , EX_USAGE } ,
+#endif
+
+#ifdef EX_DATAERR
+  { "DATAERR" , EX_DATAERR } ,
+#endif
+
+#ifdef EX_NOINPUT
+  { "NOINPUT" , EX_NOINPUT } ,
+#endif
+
+#ifdef EX_NOUSER
+  { "NOUSER" , EX_NOUSER } ,
+#endif
+
+#ifdef EX_NOHOST
+  { "NOHOST" , EX_NOHOST } ,
+#endif
+
+#ifdef EX_UNAVAILABLE
+  { "UNAVAILABLE" , EX_UNAVAILABLE } ,
+#endif
+
+#ifdef EX_SOFTWARE
+  { "SOFTWARE" , EX_SOFTWARE } ,
+#endif
+
+#ifdef EX_OSERR
+  { "OSERR" , EX_OSERR } ,
+#endif
+
+#ifdef EX_OSFILE
+  { "OSFILE" , EX_OSFILE } ,
+#endif
+
+#ifdef EX_CANTCREAT
+  { "CANTCREATE" , EX_CANTCREAT } ,
+#endif
+
+#ifdef EX_IOERR
+  { "IOERR" , EX_IOERR } ,
+#endif
+
+#ifdef EX_TEMPFAIL
+  { "TEMPFAIL" , EX_TEMPFAIL } ,
+#endif
+
+#ifdef EX_PROTOCOL
+  { "PROTOCOL" , EX_PROTOCOL } ,
+#endif
+
+#ifdef EX_NOPERM
+  { "NOPERM" , EX_NOPERM } ,
+#endif
+
+#ifdef EX_CONFIG
+  { "CONFIG" , EX_CONFIG } ,
+#endif
+
+#ifdef EX_NOTFOUND
+  { "NOTFOUND" , EX_NOTFOUND } ,
+#endif
+
+  { NULL , 0 }
 };
 
 static volatile sig_atomic_t m_caught;
@@ -1612,6 +1691,14 @@ int luaopen_org_conman_process(lua_State *const L)
   luaL_register(L,"org.conman.process",m_process_reg);
 
   lua_createtable(L,0,0);
+  for (size_t i = 0 ; m_sysexits[i].text != NULL ; i++)
+  {
+    lua_pushinteger(L,m_sysexits[i].value);
+    lua_setfield(L,-2,m_sysexits[i].text);
+  }
+  lua_setfield(L,-2,"EXIT");
+
+  lua_createtable(L,0,0);
   luaL_register(L,NULL,m_sig_reg);
   for (size_t i = 0 ; m_sigs[i].text != NULL ; i++)
   {
@@ -1640,7 +1727,7 @@ int luaopen_org_conman_process(lua_State *const L)
   lua_createtable(L,0,0);
   luaL_register(L,NULL,m_process_meta);
   lua_setmetatable(L,-2);
-  
+    
   return 1;
 }
 
