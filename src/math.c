@@ -28,8 +28,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 /************************************************************************/
@@ -140,7 +140,11 @@ static const struct luaL_Reg reg_math[] =
 
 int luaopen_org_conman_math(lua_State *L)
 {
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.math",reg_math);
+#else
+  luaL_newlib(L,reg_math);
+#endif
   return 1;
 }
 
