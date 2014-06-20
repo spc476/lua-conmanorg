@@ -546,7 +546,7 @@ static int proclua_exit(lua_State *const L)
 {
   assert(L != NULL);
   
-  _exit(luaL_optint(L,1,0));
+  _exit(luaL_optint(L,1,EXIT_SUCCESS));
 }
 
 /***********************************************************************/
