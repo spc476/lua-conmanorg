@@ -20,7 +20,7 @@
 * ---------------------------------------------------------------------
 *
 * This module is nothing more than an array of the environmental variables
-* of the current process.  There's not much more to day about this than
+* of the current process.  There's not much more to say about this than
 *
 	env = require "org.conman.env"
 	print(env.LUA_PATH)
