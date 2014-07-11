@@ -41,13 +41,6 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#if defined(__GNUC__) && defined(__x86_64) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 12)
-#  include <limits.h>
-#  define SIZET_MAX INT_MAX
-#else
-#  define SIZET_MAX (size_t)-1
-#endif
-
 extern char **environ;
 
 #if LUA_VERSION_NUM == 501
@@ -69,19 +62,15 @@ int luaopen_org_conman_env(lua_State *L)
 
   for (i = 0 ; environ[i] != NULL ; i++)
   {
-    char   *value;
-    char   *eos;
-    
-    value = memchr(environ[i],'=',SIZET_MAX);
+    char *value = strchr(environ[i],'=');
+
     assert(value != NULL);
-    eos   = memchr(value + 1,'\0',SIZET_MAX);
-    assert(eos   != NULL);
-    
+
     lua_pushlstring(L,environ[i],(size_t)(value - environ[i]));
-    lua_pushlstring(L,value + 1,(size_t)(eos - (value + 1)));
+    lua_pushstring(L,value + 1);
     lua_settable(L,-3);
   }
-    
+  
   return 1;
 }
 
