@@ -43,6 +43,7 @@
 #include <dirent.h>
 #include <libgen.h>
 #include <utime.h>
+#include <fnmatch.h>
 
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
 #  error This module is for Lua 5.1
@@ -786,6 +787,29 @@ static int fsys_isfile(lua_State *L)
 
 /************************************************************************/
 
+static int fsys_fnmatch(lua_State *L)
+{
+  const char *pattern  = luaL_checkstring(L,1);
+  const char *filename = luaL_checkstring(L,2);
+  const char *tflags   = luaL_optstring(L,3,"");
+  int         flags    = 0;
+  
+  for ( ; *tflags ; tflags++)
+  {
+    switch(*tflags)
+    {
+      case '\\': flags |= FNM_NOESCAPE; break;
+      case '/' : flags |= FNM_PATHNAME; break;
+      case '.' : flags |= FNM_PERIOD;   break;
+    }
+  }
+  
+  lua_pushboolean(L,fnmatch(pattern,filename,flags) == 0);
+  return 1;
+}
+
+/************************************************************************/
+
 static const struct luaL_Reg reg_fsys[] = 
 {
   { "symlink"	, fsys_symlink 	} ,
@@ -813,6 +837,7 @@ static const struct luaL_Reg reg_fsys[] =
   { "pipe"	, fsys_pipe	} ,
   { "dup"	, fsys_dup	} ,
   { "isfile"	, fsys_isfile	} ,
+  { "fnmatch"	, fsys_fnmatch	} ,
   { NULL	, NULL		}
 };
 
