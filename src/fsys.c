@@ -44,6 +44,7 @@
 #include <libgen.h>
 #include <utime.h>
 #include <fnmatch.h>
+#include <wordexp.h>
 
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
 #  error This module is for Lua 5.1
@@ -810,6 +811,43 @@ static int fsys_fnmatch(lua_State *L)
 
 /************************************************************************/
 
+int fsys_expand(lua_State *L)
+{
+  const char *pattern = luaL_checkstring(L,1);
+  int         undef   = lua_toboolean(L,2) ? WRDE_UNDEF : 0;
+  wordexp_t   exp;
+  int         rc;
+  
+  rc = wordexp(pattern,&exp,undef);
+  if (rc != 0)
+  {
+    lua_pushnil(L);
+    switch(rc)
+    {
+      case WRDE_BADCHAR: lua_pushinteger(L,EILSEQ); break;
+      case WRDE_BADVAL:  lua_pushinteger(L,ENOENT); break;
+      case WRDE_NOSPACE: lua_pushinteger(L,ENOMEM); break;
+      case WRDE_SYNTAX:  lua_pushinteger(L,EINVAL); break;
+      default: lua_pushinteger(L,EDOM); break;
+    }
+    return 2;
+  }
+  
+  lua_createtable(L,exp.we_wordc,0);
+  for (size_t i = 0 ; i < exp.we_wordc ; i++)
+  {
+    lua_pushinteger(L,i+1);
+    lua_pushstring(L,exp.we_wordv[i]);
+    lua_settable(L,-3);
+  }
+  
+  wordfree(&exp);
+  lua_pushinteger(L,0);
+  return 2;
+}
+
+/************************************************************************/
+
 static const struct luaL_Reg reg_fsys[] = 
 {
   { "symlink"	, fsys_symlink 	} ,
@@ -838,6 +876,7 @@ static const struct luaL_Reg reg_fsys[] =
   { "dup"	, fsys_dup	} ,
   { "isfile"	, fsys_isfile	} ,
   { "fnmatch"	, fsys_fnmatch	} ,
+  { "expand"	, fsys_expand	} ,
   { NULL	, NULL		}
 };
 
