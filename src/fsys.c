@@ -814,9 +814,12 @@ static int fsys_fnmatch(lua_State *L)
 int fsys_expand(lua_State *L)
 {
   const char *pattern = luaL_checkstring(L,1);
-  int         undef   = lua_toboolean(L,2) ? WRDE_UNDEF : 0;
-  wordexp_t   exp;
-  int         rc;
+  int         undef   = lua_toboolean(L,2) 
+                      ? WRDE_NOCMD | WRDE_UNDEF 
+                      : WRDE_NOCMD
+                      ;
+  wordexp_t exp;
+  int       rc;
   
   rc = wordexp(pattern,&exp,undef);
   if (rc != 0)
