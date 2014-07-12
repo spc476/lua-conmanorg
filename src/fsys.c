@@ -51,6 +51,7 @@
 #endif
 
 #define TYPE_DIR	"org.conman.fsys:dir"
+#define TYPE_EXPAND	"org.conman.fsys:expand"
 
 /*************************************************************************/
 
@@ -851,6 +852,67 @@ int fsys_expand(lua_State *L)
 
 /************************************************************************/
 
+struct myexpand
+{
+  wordexp_t exp;
+  size_t    idx;
+};
+
+static int expand_meta___gc(lua_State *L)
+{
+  struct myexpand *data = lua_touserdata(L,1);
+  wordfree(&data->exp);
+  return 0;
+}
+
+/************************************************************************/
+
+static int expand_meta_next(lua_State *L)
+{
+  struct myexpand *data = lua_touserdata(L,1);
+  
+  if (data->idx < data->exp.we_wordc)
+    lua_pushstring(L,data->exp.we_wordv[data->idx++]);
+  else
+    lua_pushnil(L);
+
+  return 1;
+}
+
+/************************************************************************/
+
+static int fsys_gexpand(lua_State *L)
+{
+  const char *pattern = luaL_checkstring(L,1);
+  int         undef   = lua_toboolean(L,2)
+                      ? WRDE_NOCMD | WRDE_UNDEF
+                      : WRDE_NOCMD
+                      ;
+  struct myexpand *data;
+  
+  lua_pushcfunction(L,expand_meta_next);
+  
+  data = lua_newuserdata(L,sizeof(struct myexpand));  
+  luaL_getmetatable(L,TYPE_EXPAND);
+  lua_setmetatable(L,-2);
+  
+  if (wordexp(pattern,&data->exp,undef) < 0)
+  {
+    /*-------------------------------------------------------------
+    ; we can do this since data has a __gc method attached to it.  
+    ;-------------------------------------------------------------*/
+    
+    lua_pop(L,1);
+    lua_pushnil(L);
+  }
+  else
+    data->idx = 0;
+
+  return 2;
+}
+
+/************************************************************************/
+
 static const struct luaL_Reg reg_fsys[] = 
 {
   { "symlink"	, fsys_symlink 	} ,
@@ -880,6 +942,7 @@ static const struct luaL_Reg reg_fsys[] =
   { "isfile"	, fsys_isfile	} ,
   { "fnmatch"	, fsys_fnmatch	} ,
   { "expand"	, fsys_expand	} ,
+  { "gexpand"	, fsys_gexpand	} ,
   { NULL	, NULL		}
 };
 
@@ -892,12 +955,21 @@ static const luaL_Reg m_dir_meta[] =
   { NULL		, NULL			}
 };
 
+static const luaL_Reg m_expand_meta[] =
+{
+  { "__gc"		, expand_meta___gc	} ,
+  { NULL		, NULL			}
+};
+
 int luaopen_org_conman_fsys(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_DIR);
   luaL_register(L,NULL,m_dir_meta);
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
+  
+  luaL_newmetatable(L,TYPE_EXPAND);
+  luaL_register(L,NULL,m_expand_meta);
   
   /*------------------------------------------------------------------------
   ; the Lua io module requires a unique environment.  Let's crib it (we grab
