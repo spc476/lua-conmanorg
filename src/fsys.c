@@ -456,27 +456,31 @@ static int dir_meta_next(lua_State *const L)
   struct dirent  *entry;
   DIR           **dir;
   
+  if (lua_isnil(L,1))
+  {
+    lua_pushnil(L);
+    return 1;
+  }
+  
   dir = luaL_checkudata(L,1,TYPE_DIR);
   while(true)
   {
-    errno = 0;
     entry = readdir(*dir);
-    
     if (entry == NULL)
     {
       lua_pushnil(L);
-      lua_pushinteger(L,errno);
-      return 2;
+      return 1;
     }
-    
-    if (
-            (strcmp(entry->d_name,".")  != 0)
-         && (strcmp(entry->d_name,"..") != 0)
-       )
+    else
     {
-      lua_pushstring(L,entry->d_name);
-      lua_pushinteger(L,0);
-      return 2;
+      if (
+              (strcmp(entry->d_name,".")  != 0)
+           && (strcmp(entry->d_name,"..") != 0)
+         )
+      {
+        lua_pushstring(L,entry->d_name);
+        return 1;
+      }
     }
   }  
 }
