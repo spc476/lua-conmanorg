@@ -827,17 +827,20 @@ int fsys_expand(lua_State *L)
   int       rc;
   
   rc = wordexp(pattern,&exp,undef);
+  
   if (rc != 0)
   {
     lua_pushnil(L);
     switch(rc)
     {
-      case WRDE_BADCHAR: lua_pushinteger(L,EILSEQ); break;
-      case WRDE_BADVAL:  lua_pushinteger(L,ENOENT); break;
-      case WRDE_NOSPACE: lua_pushinteger(L,ENOMEM); break;
-      case WRDE_SYNTAX:  lua_pushinteger(L,EINVAL); break;
-      default: lua_pushinteger(L,EDOM); break;
+      case WRDE_BADCHAR: rc = EILSEQ; break;
+      case WRDE_BADVAL:  rc = ENOENT; break;
+      case WRDE_NOSPACE: rc = ENOMEM; break;
+      case WRDE_SYNTAX:  rc = EINVAL; break;
+      default:           rc = EDOM;   break;
     }
+    
+    lua_pushinteger(L,rc);
     return 2;
   }
   
