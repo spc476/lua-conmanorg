@@ -41,10 +41,13 @@ end
 -- *******************************************************************
 
 function show(l,fout)
-  local l    = l or _G
   local fout = fout or io.stdout
   local maxkeylen = 0
   local maxvallen = 0
+  
+  if type(l) ~= 'table' then
+    return
+  end
   
   local function conv_cntl(s)
     if s == "\n" then
