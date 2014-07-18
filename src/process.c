@@ -88,116 +88,20 @@ struct strint
   const int         value;
 };
 
-/*************************************************************************/
-
-static int	proclua_getuid			(lua_State *const);
-static int	proclua_getgid			(lua_State *const);
-static int	proclua_setuid			(lua_State *const);
-static int	proclua_setgid			(lua_State *const);
-static int	proclua_exit			(lua_State *const);
-static int	proclua_fork			(lua_State *const);
-static int	proclua_wait			(lua_State *const);
-static int	proclua_waitusage		(lua_State *const);
-static int	proclua_waitid			(lua_State *const);
-static int	proclua_gettimeofday		(lua_State *const);
-static int	proclua_sleep			(lua_State *const);
-static int	proclua_sleepres		(lua_State *const);
-static int	proclua_kill			(lua_State *const);
-static int	proclua_exec			(lua_State *const);
-static int	proclua_times			(lua_State *const);
-static int	proclua_getrusage		(lua_State *const);
-static int	proclua_pause			(lua_State *const);
-static int	proclua_itimer			(lua_State *const);
-static int	proclua_getaffinity		(lua_State *const);
-static int	proclua_setaffinity		(lua_State *const);
-
-static int	proclua_meta___index		(lua_State *const);
-static int	proclua_meta___newindex		(lua_State *const);
-
-static bool	limit_trans			(int *const restrict,const char *const restrict);
-static bool	limit_valid_suffix		(lua_Number *const restrict,const int,const char *const restrict);
-
-static int	hlimitlua_meta___index		(lua_State *const);
-static int	hlimitlua_meta___newindex	(lua_State *const);
-static int	slimitlua_meta___index		(lua_State *const);
-static int	slimitlua_meta___newindex	(lua_State *const);
-
-static int	sig_meta___index		(lua_State *const);
-
-static int	siglua_caught			(lua_State *const);
-static int	siglua_catch			(lua_State *const);
-static int	siglua_ignore			(lua_State *const);
-static int	siglua_default			(lua_State *const);
-static int	siglua_block			(lua_State *const);
-static int	siglua_unblock			(lua_State *const);
-static int	siglua_mask			(lua_State *const);
-static int	siglua_getmask			(lua_State *const);
-
-static void	proc_pushstatus			(lua_State *const,const pid_t,int);
-static void	proc_pushrusage			(lua_State *const restrict,struct rusage *const restrict);
-static void	signal_handler			(int);
-static int	set_signal_handler		(int,void (*)(int));
-
-/************************************************************************/
-
-static const struct luaL_Reg m_process_reg[] =
-{
-  { "getuid"		, proclua_getuid		} ,
-  { "getgid"		, proclua_getgid		} ,
-  { "setuid"		, proclua_setuid		} ,
-  { "setgid"		, proclua_setgid		} ,
-  { "exit"		, proclua_exit			} ,
-  { "fork"		, proclua_fork			} ,
-  { "wait"		, proclua_wait			} ,
-  { "waitusage"		, proclua_waitusage		} ,
-  { "waitid"		, proclua_waitid		} ,
-  { "gettimeofday"	, proclua_gettimeofday		} ,
-  { "sleep"		, proclua_sleep			} ,
-  { "sleepres"		, proclua_sleepres		} ,
-  { "kill"		, proclua_kill			} ,
-  { "exec"		, proclua_exec			} ,
-  { "times"		, proclua_times			} ,
-  { "getrusage"		, proclua_getrusage		} ,
-  { "pause"		, proclua_pause			} ,
-  { "itimer"		, proclua_itimer		} ,
-  { "getaffinity"	, proclua_getaffinity		} ,
-  { "setaffinity"	, proclua_setaffinity		} ,
-  { NULL		, NULL				} 
-};
-
-static const struct luaL_Reg m_process_meta[] =
-{
-  { "__index"		, proclua_meta___index		} ,
-  { "__newindex"	, proclua_meta___newindex	} ,
-  { NULL		, NULL				}
-};
-
-static const struct luaL_Reg m_hlimit_meta[] =
-{
-  { "__index" 		, hlimitlua_meta___index	} ,
-  { "__newindex"	, hlimitlua_meta___newindex	} ,
-  { NULL		, NULL				}
-};
-
-static const struct luaL_Reg m_slimit_meta[] =
-{
-  { "__index"		, slimitlua_meta___index	} ,
-  { "__newindex"	, slimitlua_meta___newindex	} ,
-  { NULL		, NULL				}
-};
-
-static const struct luaL_Reg m_sig_reg[] =
-{
-  { "caught"		, siglua_caught			} ,
-  { "catch"		, siglua_catch			} ,
-  { "ignore"		, siglua_ignore			} ,
-  { "default"		, siglua_default		} ,
-  { "block"		, siglua_block			} ,
-  { "unblock"		, siglua_unblock		} ,
-  { "mask"		, siglua_mask			} ,
-  { "getmask"		, siglua_getmask		} ,
-  { NULL		, NULL				}
-};
+/*************************************************************************
+* 
+* PROCESS SIGNAL HANDLING CODE
+* 
+* Catch and process signals.  The signals include, but are not limited to:
+*
+*	sig.ABRT	C function abort() or assert() called
+*	sig.FPE		Floating point exception
+*	sig.ILL		Illegal instruction
+*	sig.INT		Software interrupt
+*	sig.SEGV	Memory access exception
+*	sig.TERM	Program termination requested
+*
+*************************************************************************/
 
 static const struct strint m_sigs[] =
 {
@@ -219,190 +123,85 @@ static const struct strint m_sigs[] =
 #ifdef SIGALRM
   { "ALRM"	, SIGALRM	} ,
 #endif
-
 #ifdef SIGBUG
   { "BUS"	, SIGBUS	} ,
 #endif
-
 #ifdef SIGCHLD
   { "CHLD"	, SIGCHLD	} ,
 #endif
-
 #ifdef SIGCONT
   { "CONT"	, SIGCONT	} ,
 #endif
-
 #ifdef SIGHUP
   { "HUP"	, SIGHUP	} ,
 #endif
-
 #ifdef SIGIO
   { "IO"	, SIGIO		} ,
 #endif
-
 #ifdef SIGIOT
   { "IOT"	, SIGIOT	} ,
 #endif
-
 #ifdef SIGKILL
   { "KILL"	, SIGKILL	} ,
 #endif
-
 #ifdef SIGPIPE
   { "PIPE"	, SIGPIPE	} ,
 #endif
-
 #ifdef SIGPOLL
   { "POLL"	, SIGPOLL	} ,
 #endif
-
 #ifdef SIGPROF
   { "PROF"	, SIGPROF	} ,
 #endif
-
 #ifdef SIGPWR
   { "PWR"	, SIGPWR	} ,
 #endif
-
 #ifdef SIGQUIT
   { "QUIT"	, SIGQUIT	} ,
 #endif
-
 #ifdef SIGURG
   { "SIGURG"	, SIGURG	} ,
 #endif
-
 #ifdef SIGSTKFLT
   { "STKFLT"	, SIGSTKFLT	} ,
 #endif
-
 #ifdef SIGSTOP
   { "STOP"	, SIGSTOP	} ,
 #endif
-
 #ifdef SIGSYS
   { "SYS"	, SIGSYS	} ,
 #endif
-
 #ifdef SIGTRAP
   { "TRAP"	, SIGTRAP	} ,
 #endif
-
 #ifdef SIGTSTP
   { "TSTP"	, SIGTSTP	} ,
 #endif
-
 #ifdef SIGTTIN
   { "TTIN"	, SIGTTIN	} ,
 #endif
-
 #ifdef SIGTTOU
   { "TTOU"	, SIGTTOU	} ,
 #endif
-
 #ifdef SIGUSR1
   { "USR1"	, SIGUSR1	} ,
 #endif
-
 #ifdef SIGUSR2
   { "USR2"	, SIGUSR2	} ,
 #endif
-
 #ifdef SIGVTALRM
   { "VTALRM"	, SIGVTALRM	} ,
 #endif
-
 #ifdef SIGWINCH
   { "WINCH"	, SIGWINCH	} ,
 #endif
-
 #ifdef SIGXCPU
   { "XCPU"	, SIGXCPU	} ,
 #endif
-
 #ifdef SIGXFSZ
   { "XFSZ"	, SIGXFSZ	} ,
 #endif
-
   { NULL	, 0		}
-};
-
-static const struct strint m_sysexits[] =
-{
-  { "SUCCESS"	, EXIT_SUCCESS	} ,
-  { "FAILURE"	, EXIT_FAILURE	} ,
-
-#ifdef EX_OK
-  { "OK" , EX_OK } ,
-#else
-  { "OK" , EXIT_SUCCESS } ,
-#endif
-
-#ifdef EX_USAGE
-  { "USAGE" , EX_USAGE } ,
-#endif
-
-#ifdef EX_DATAERR
-  { "DATAERR" , EX_DATAERR } ,
-#endif
-
-#ifdef EX_NOINPUT
-  { "NOINPUT" , EX_NOINPUT } ,
-#endif
-
-#ifdef EX_NOUSER
-  { "NOUSER" , EX_NOUSER } ,
-#endif
-
-#ifdef EX_NOHOST
-  { "NOHOST" , EX_NOHOST } ,
-#endif
-
-#ifdef EX_UNAVAILABLE
-  { "UNAVAILABLE" , EX_UNAVAILABLE } ,
-#endif
-
-#ifdef EX_SOFTWARE
-  { "SOFTWARE" , EX_SOFTWARE } ,
-#endif
-
-#ifdef EX_OSERR
-  { "OSERR" , EX_OSERR } ,
-#endif
-
-#ifdef EX_OSFILE
-  { "OSFILE" , EX_OSFILE } ,
-#endif
-
-#ifdef EX_CANTCREAT
-  { "CANTCREATE" , EX_CANTCREAT } ,
-#endif
-
-#ifdef EX_IOERR
-  { "IOERR" , EX_IOERR } ,
-#endif
-
-#ifdef EX_TEMPFAIL
-  { "TEMPFAIL" , EX_TEMPFAIL } ,
-#endif
-
-#ifdef EX_PROTOCOL
-  { "PROTOCOL" , EX_PROTOCOL } ,
-#endif
-
-#ifdef EX_NOPERM
-  { "NOPERM" , EX_NOPERM } ,
-#endif
-
-#ifdef EX_CONFIG
-  { "CONFIG" , EX_CONFIG } ,
-#endif
-
-#ifdef EX_NOTFOUND
-  { "NOTFOUND" , EX_NOTFOUND } ,
-#endif
-
-  { NULL , 0 }
 };
 
 static volatile sig_atomic_t m_caught;
@@ -410,146 +209,371 @@ static volatile sig_atomic_t m_signal[32];
 
 /*************************************************************************/
 
-static int proclua_getuid(lua_State *const L)
+static void signal_handler(int sig)
 {
-#if defined(__linux)
-  uid_t uid;
-  uid_t euid;
-  uid_t suid;
-
-  getresuid(&uid,&euid,&suid);
-  lua_pushinteger(L,uid);
-  lua_pushinteger(L,euid);
-  lua_pushinteger(L,suid);
-
-#else
-
-  lua_pushinteger(L,getuid());
-  lua_pushinteger(L,geteuid());
-  lua_pushinteger(L,-1);
-
-#endif
-  return 3;
+  m_caught = 1;
+  if (sig < 32)
+    m_signal[sig] = 1;
 }
 
 /************************************************************************/
 
-static int proclua_getgid(lua_State *const L)
+static int set_signal_handler(int sig,void (*handler)(int))
 {
-#if defined(__linux)
-  gid_t gid;
-  gid_t egid;
-  gid_t sgid;
+  struct sigaction act;
+  struct sigaction oact;
   
-  getresgid(&gid,&egid,&sgid);  
-  lua_pushinteger(L,gid);
-  lua_pushinteger(L,egid);
-  lua_pushinteger(L,sgid);
+  sigemptyset(&act.sa_mask);
+  act.sa_handler = handler;
+  act.sa_flags   = 0;
 
-#else
+  if (sigaction(sig,&act,&oact) == -1)
+    return errno;
+  return 0;
+}
 
-  lua_pushinteger(L,getgid());
-  lua_pushinteger(L,getegid());
-  lua_pushinteger(L,-1);
+/************************************************************************
+*
+*	triggered = org.conman.process.sig.caught([signal])
+*
+*	Tests to see if the given signal has been trigger.  If no signal is
+*	given, tests to see if any signal has been trigger.  Only signals
+*	that are caught with org.conman.process.sig.catch() can be tested.
+*
+* 		signal 		= integer, one from list above
+*		triggered 	= false if no signal 
+*			  	= true  if specified signal has been caught
+*				  	or if any signal has been caught
+*				  	(if no signal provided)
+*
+***********************************************************************/
 
-#endif
-  return 3;
+static int siglua_caught(lua_State *const L)
+{
+  int sig;
+  
+  assert(L != NULL);
+  
+  if (lua_isnoneornil(L,1))
+  {
+    lua_pushboolean(L,m_caught);
+    m_caught = 0;
+    return 1;
+  }
+  
+  sig = luaL_checkint(L,1);
+  if (sig < 32)
+  {
+    lua_pushboolean(L,m_signal[sig]);
+    m_signal[sig] = 0;
+  }
+  else
+    lua_pushboolean(L,false);
+  m_caught = 0;
+  return 1;
+}
+
+/**********************************************************************/
+
+static void sig_table(lua_State *const L,int idx,void (*handler)(int))
+{
+  size_t max;
+  size_t i;
+  
+  assert(L   != NULL);
+  assert(idx != 0);
+  assert(handler);
+  
+  idx = (idx < 0) 
+  	? lua_gettop(L) + idx + 1
+  	: idx;
+	
+  max = lua_objlen(L,idx);
+  for (i = 1 ; i <= max ; i++)
+  {
+    lua_pushinteger(L,i);
+    lua_gettable(L,idx);
+    if (lua_isnumber(L,-1))
+      set_signal_handler(lua_tointeger(L,-1),handler);
+    else if (lua_istable(L,-1))
+      sig_table(L,-1,handler);
+    lua_pop(L,1);
+  }
+}
+
+/************************************************************************/
+
+static void sig_mask(lua_State *const L,int idx,sigset_t *set)
+{
+  size_t max;
+  size_t i;
+  
+  assert(L   != NULL);
+  assert(idx != 0);
+  assert(set != NULL);
+  
+  idx = (idx < 0)
+      ? lua_gettop(L) + idx + 1
+      : idx;
+  max = lua_objlen(L,idx);
+  for (i = 1 ; i <= max ; i++)
+  {
+    lua_pushinteger(L,i);
+    lua_gettable(L,idx);
+    if (lua_isnumber(L,-1))
+      sigaddset(set,lua_tointeger(L,-1));
+    else if (lua_istable(L,-1))
+      sig_mask(L,-1,set);
+    lua_pop(L,1);
+  }
+}
+
+/************************************************************************
+*
+*	org.conman.process.sig.catch(signal[,...])
+*
+*	Catches one or more signals.  See org.conman.process.sig.caught()
+*	for checking a signal.
+*
+*	signal	= integer, from list of signals
+*		= table, array of signals to catch
+*
+*	Examples:
+*
+*		catch(ABRT)
+*		catch(ABRT,SEGV,INT)
+*		catch{ ABRT , SEGV , INT }
+*
+************************************************************************/
+
+static int siglua_catch(lua_State *const L)
+{
+  int top = lua_gettop(L);
+  
+  assert(L != NULL);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      set_signal_handler(lua_tointeger(L,i),signal_handler);
+    else if (lua_istable(L,i))
+      sig_table(L,i,signal_handler);
+    else
+      luaL_error(L,"expected number or table");
+  }  
+  return 0;
+}
+
+/**********************************************************************
+*
+*	org.conman.process.sig.ignore(signal[,...])
+*
+*	Ignore one or more signals.  When ignored, signals can not be
+*	tested.
+*	
+*	signal	= integer, from list of signals.
+*		= table, an array of signals to ignore.
+*
+*	Examples:
+*
+*		ignore(ABRT)
+*		ignore(ABRT,SEGV,INT)
+*		ignore { ABRT , SEGV , INT }
+*
+**********************************************************************/
+
+int siglua_ignore(lua_State *const L)
+{
+  int top = lua_gettop(L);
+  
+  assert(L != NULL);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      set_signal_handler(lua_tointeger(L,i),SIG_IGN);
+    else if (lua_istable(L,i))
+      sig_table(L,i,SIG_IGN);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  return 0;
+}
+
+/**********************************************************************
+*
+*	org.conman.process.sig.default(signal)
+*
+*	Set the default action for a signal.  Default actions can not be
+*	tested.  When a program starts, all signals start with default
+*	actions. [1]
+*
+*	signal	= integer, from list of signals.
+*		= table, an array of signals to set the default action
+*
+*	Examples:
+*
+*		default(ABRT)
+*		default(ABRT,SEGV,INT)
+*		default { ABRT , SEGV , INT }
+*
+* [1] POSIX:	A process created via org.conman.process.fork() will 
+*		inherit the signals caught or ignored by the parent
+*		process.
+*
+***********************************************************************/
+
+int siglua_default(lua_State *const L)
+{
+  int top = lua_gettop(L);
+  
+  assert(L != NULL);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      set_signal_handler(lua_tointeger(L,i),SIG_DFL);
+    else if (lua_istable(L,i))
+      sig_table(L,i,SIG_DFL);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  return 0;
+}
+
+/**********************************************************************
+*
+*	org.conman.process.sig.block(signal[,...])
+*
+*	Block the delivery of the given signals.  Such signals can't be
+*	tested, even if explicitely caught.
+*
+*	signal	= integer, from list of signals.
+*		= table, an array of signals to block
+*
+*	Examples:
+*
+*		block(ABRT)
+*		block(ABRT,SEGV,INT)
+*		block { ABRT , SEGV , INT }
+*
+*	NOTE:	POSIX only
+*
+**********************************************************************/
+
+int siglua_block(lua_State *const L)
+{
+  int      top = lua_gettop(L);
+  sigset_t set;
+  
+  if (top == 0)
+    sigfillset(&set);
+  else
+  {
+    sigemptyset(&set);
+  
+    for (int i = 1 ; i <= top ; i++)
+    {
+      if (lua_isnumber(L,i))
+        sigaddset(&set,lua_tointeger(L,i));
+      else if (lua_istable(L,i))
+        sig_mask(L,i,&set);
+      else
+        luaL_error(L,"expected number or table");
+    }
+  }
+  
+  sigprocmask(SIG_BLOCK,&set,NULL);
+  return 0;
+}
+
+/*********************************************************************/
+
+int siglua_unblock(lua_State *const L)
+{
+  int      top = lua_gettop(L);
+  sigset_t set;
+  
+  if (top == 0)
+    sigfillset(&set);
+  else
+  {
+    sigemptyset(&set);
+  
+    for (int i = 1 ; i <= top ; i++)
+    {
+      if (lua_isnumber(L,i))
+        sigaddset(&set,lua_tointeger(L,i));
+      else if (lua_istable(L,i))
+        sig_mask(L,i,&set);
+      else
+        luaL_error(L,"expected number or table");
+    }
+  }
+  
+  sigprocmask(SIG_UNBLOCK,&set,NULL);
+    
+  return 0;
+}
+
+/*******************************************************************/
+
+int siglua_mask(lua_State *const L)
+{
+  int      top = lua_gettop(L);
+  sigset_t set;
+  
+  sigemptyset(&set);
+  
+  for (int i = 1 ; i <= top ; i++)
+  {
+    if (lua_isnumber(L,i))
+      sigaddset(&set,lua_tointeger(L,i));
+    else if (lua_istable(L,i))
+      sig_mask(L,i,&set);
+    else
+      luaL_error(L,"expected number or table");
+  }
+  
+  sigprocmask(SIG_SETMASK,&set,NULL);
+  return 0;
 }
 
 /********************************************************************/
 
-static int proclua_setuid(lua_State *const L)
+int siglua_getmask(lua_State *const L)
 {
-#if defined(__linux)
-  uid_t uid;
-  uid_t euid;
-  uid_t suid;
+  sigset_t set;
+  size_t   i;
+  int      idx;
   
-  uid  = luaL_checkinteger(L,1);
-  euid = luaL_optinteger(L,2,-1);
-  suid = luaL_optinteger(L,3,-1);
-  
-  if (setresuid(uid,euid,suid) < 0)
-    lua_pushinteger(L,errno);
-  else
-    lua_pushinteger(L,0);
-  return 1;
-#else
-  uid_t uid;
-  uid_t euid;
-
-  uid  = luaL_checkinteger(L,1);
-  euid = luaL_optinteger(L,2,-1);
-
-  if (setuid(uid) < 0)
+  sigprocmask(0,NULL,&set);
+  lua_createtable(L,0,0);
+  for (idx = 1 , i = 0 ; m_sigs[i].text != NULL ; i++)
   {
-    lua_pushinteger(L,errno);
-    return 1;
+    if (sigismember(&set,m_sigs[i].value))
+    {
+      lua_pushinteger(L,idx++);
+      lua_pushinteger(L,m_sigs[i].value);
+      lua_settable(L,-3);
+    }
   }
-
-  if (seteuid(uid) < 0)
-  {
-    lua_pushinteger(L,errno);
-    return 1;
-  }
-
-  lua_pushinteger(L,0);
+      
   return 1;
-#endif
 }
 
-/*************************************************************************/
+/*********************************************************************/
 
-static int proclua_setgid(lua_State *const L)
-{
-#if defined(__linux)
-  gid_t gid;
-  gid_t egid;
-  gid_t sgid;
-  
-  gid  = luaL_checkinteger(L,1);
-  egid = luaL_optinteger(L,2,-1);
-  sgid = luaL_optinteger(L,3,-1);
-  
-  if (setresgid(gid,egid,sgid) < 0)
-    lua_pushinteger(L,errno);
-  else
-    lua_pushinteger(L,0);
-  return 1;
-#else
-  gid_t gid;
-  gid_t egid;
-
-  gid  = luaL_checkinteger(L,1);
-  egid = luaL_optinteger(L,2,-1);
-
-  if (setgid(gid) < 0)
-  {
-    lua_pushinteger(L,errno);
-    return 1;
-  }
-
-  if (setegid(egid) < 0)
-  {
-    lua_pushinteger(L,errno);
-    return 1;
-  }
-
-  lua_pushinteger(L,0);
-  return 1;
-#endif
-}
-
-/************************************************************************/
-
-static int proclua_exit(lua_State *const L)
+int sig_meta___index(lua_State *const L)
 {
   assert(L != NULL);
-  
-  _exit(luaL_optint(L,1,EXIT_SUCCESS));
+  lua_pushstring(L,strsignal(luaL_checkinteger(L,2)));
+  return 1;
 }
 
-/***********************************************************************/
+/**********************************************************************
+* PROCESS CREATION AND DESTRUCTION
+**********************************************************************/
 
 static int proclua_fork(lua_State *const L)
 {
@@ -569,212 +593,7 @@ static int proclua_fork(lua_State *const L)
   return 2;
 }
 
-/***********************************************************************/
-
-static int proclua_wait(lua_State *const L)
-{
-  pid_t child;
-  int   status;
-  int   flag;
-  int   rc;
-  
-  child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2) 
-  		? WUNTRACED | WCONTINUED | WNOHANG 
-  		: WUNTRACED | WCONTINUED;
-  rc    = waitpid(child,&status,flag);
-  if (rc == -1)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  if (rc == 0)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,0);
-    return 2;
-  }
-
-  proc_pushstatus(L,rc,status);
-  lua_pushinteger(L,0);
-  return 2;
-}
-
-/*********************************************************************/
-
-static int proclua_waitusage(lua_State *const L)
-{
-  struct rusage usage;
-  pid_t         child;
-  int           status;
-  int           flag;
-  int           rc;
-
-  child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2) 
-  		? WUNTRACED | WCONTINUED | WNOHANG 
-  		: WUNTRACED | WCONTINUED ;
-  rc    = wait4(child,&status,flag,&usage);
-  if (rc == -1)
-  {
-    lua_pushnil(L);
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 3;
-  }
-  
-  if (rc == 0)
-  {
-    lua_pushnil(L);
-    lua_pushnil(L);
-    lua_pushinteger(L,0);
-    return 3;
-  }
-  
-  proc_pushstatus(L,rc,status);
-  proc_pushrusage(L,&usage);  
-  return 2;
-}
-
-/**********************************************************************/
-
-static int proclua_waitid(lua_State *const L)
-{
-  siginfo_t info;
-  pid_t     child;
-  idtype_t  idtype;
-  int       flag;
-  
-  child = luaL_checkinteger(L,1);
-  flag  = lua_toboolean(L,2) 
-  	? WEXITED | WSTOPPED | WCONTINUED | WNOHANG
-  	: WEXITED | WSTOPPED | WCONTINUED;
-  idtype = (child == 0) ? P_ALL : P_PID;
-  
-  memset(&info,0,sizeof(info));
-  if (waitid(idtype,child,&info,flag) == -1)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  lua_createtable(L,0,6);
-  lua_pushinteger(L,info.si_pid);
-  lua_setfield(L,-2,"pid");
-  lua_pushinteger(L,info.si_uid);
-  lua_setfield(L,-2,"uid");
-  
-  if (info.si_code == CLD_EXITED)
-  {
-    lua_pushliteral(L,"normal");
-    lua_setfield(L,-2,"status");
-    lua_pushinteger(L,info.si_status);
-    lua_setfield(L,-2,"rc");
-  }
-  else
-  {
-    switch(info.si_code)
-    {
-      case CLD_KILLED:    lua_pushliteral(L,"terminated");        break;
-      case CLD_DUMPED:    lua_pushliteral(L,"terminated");        break;
-      case CLD_STOPPED:   lua_pushliteral(L,"stopped");           break;
-      case CLD_TRAPPED:   lua_pushliteral(L,"trapped");           break;
-      case CLD_CONTINUED: lua_pushliteral(L,"continued");         break;
-      default:            lua_pushfstring(L,"(%d)",info.si_code); break;
-    }
-    lua_setfield(L,-2,"status");
-    lua_pushinteger(L,info.si_status);
-    lua_setfield(L,-2,"rc");
-    lua_pushstring(L,strsignal(info.si_status));
-    lua_setfield(L,-2,"description");
-    lua_pushboolean(L,info.si_code == CLD_DUMPED);
-    lua_setfield(L,-2,"core");
-  }
-  
-  lua_pushinteger(L,0);
-  return 2;
-}
-
-/*********************************************************************/
-
-static int proclua_gettimeofday(lua_State *const L)
-{
-  struct timeval now;
-  
-  gettimeofday(&now,NULL);
-  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
-  return 1;
-}
-
-/*********************************************************************/
-
-static int proclua_sleep(lua_State *const L)
-{
-  struct timespec interval;
-  struct timespec left;
-  double          param;
-  double          seconds;
-  double          fract;
-  
-  assert(L != NULL);
-  
-  param            = luaL_checknumber(L,1);
-  fract            = modf(param,&seconds);
-  interval.tv_sec  = (time_t)seconds;
-  interval.tv_nsec = (long)(fract * 1000000000.0);
-  
-  if (nanosleep(&interval,&left) < 0)
-  {
-    lua_pushnumber(L,param);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  lua_pushnumber(L,(double)left.tv_sec + (((double)left.tv_nsec) / 1000000000.0));
-  lua_pushinteger(L,0);
-  return 2;    
-}
-
-/***********************************************************************/
-
-static int proclua_sleepres(lua_State *const L)
-{
-#ifdef __APPLE__
-  lua_pushnumber(L,0.01);
-#else
-  struct timespec res;
-
-  assert(L != NULL);
-  
-  clock_getres(CLOCK_REALTIME,&res);
-  lua_pushnumber(L,(double)res.tv_sec + (((double)res.tv_nsec) / 1000000000.0));
-#endif
-  return 1;  
-}
-
-/**********************************************************************/
-
-static int proclua_kill(lua_State *const L)
-{
-  pid_t child;
-  int   sig;
-  
-  assert(L != NULL);
-
-  child = luaL_checkinteger(L,1);
-  sig   = luaL_optint(L,2,SIGTERM);
-  errno = 0;
-  
-  kill(child,sig);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/*********************************************************************/
+/********************************************************************/
 
 static int proc_execfree(char **argv,char **envp,size_t envc)
 {
@@ -902,7 +721,277 @@ static int proclua_exec(lua_State *const L)
   return 1;
 }
 
+/******************************************************************/
+
+static void proc_pushstatus(
+	lua_State *const L,
+	const pid_t      pid,
+	int              status
+)
+{
+  lua_createtable(L,0,0);
+  lua_pushinteger(L,pid);
+  lua_setfield(L,-2,"pid");
+  
+  if (WIFEXITED(status))
+  {
+    int rc = WEXITSTATUS(status);
+    lua_pushinteger(L,rc);
+    lua_setfield(L,-2,"rc");
+    lua_pushfstring(
+    	L,
+    	"%s %d",
+    	(rc == EXIT_SUCCESS)
+    		? "success"
+    		: "failure",
+    	rc
+    );
+    lua_setfield(L,-2,"description");
+    lua_pushliteral(L,"normal");
+    lua_setfield(L,-2,"status");
+  }
+  else if (WIFSTOPPED(status))
+  {
+    lua_pushinteger(L,WSTOPSIG(status));
+    lua_setfield(L,-2,"rc");
+    lua_pushstring(L,strsignal(WSTOPSIG(status)));
+    lua_setfield(L,-2,"description");
+    lua_pushliteral(L,"stopped");
+    lua_setfield(L,-2,"status");
+  }
+  else if (WIFSIGNALED(status))
+  {
+    lua_pushinteger(L,WTERMSIG(status));
+    lua_setfield(L,-2,"rc");
+    lua_pushstring(L,strsignal(WTERMSIG(status)));
+    lua_setfield(L,-2,"description");
+    lua_pushliteral(L,"terminated");
+    lua_setfield(L,-2,"status");
+#ifdef WCOREDUMP
+    lua_pushboolean(L,WCOREDUMP(status));
+    lua_setfield(L,-2,"core");
+#endif
+  }
+}
+
+/***********************************************************************/
+
+static int proclua_exit(lua_State *const L)
+{
+  assert(L != NULL);
+  
+  _exit(luaL_optint(L,1,EXIT_SUCCESS));
+}
+
+/***********************************************************************/
+
+static int proclua_kill(lua_State *const L)
+{
+  pid_t child;
+  int   sig;
+  
+  assert(L != NULL);
+
+  child = luaL_checkinteger(L,1);
+  sig   = luaL_optint(L,2,SIGTERM);
+  errno = 0;
+  
+  kill(child,sig);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/******************************************************************/
+
+static int proclua_wait(lua_State *const L)
+{
+  pid_t child;
+  int   status;
+  int   flag;
+  int   rc;
+  
+  child = luaL_optinteger(L,1,-1);
+  flag  = lua_toboolean(L,2) 
+  		? WUNTRACED | WCONTINUED | WNOHANG 
+  		: WUNTRACED | WCONTINUED;
+  rc    = waitpid(child,&status,flag);
+  if (rc == -1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  if (rc == 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,0);
+    return 2;
+  }
+
+  proc_pushstatus(L,rc,status);
+  lua_pushinteger(L,0);
+  return 2;
+}
+
 /*********************************************************************/
+
+static void proc_pushrusage(
+	lua_State     *const restrict L,
+	struct rusage *const restrict usage
+)
+{
+  lua_createtable(L,0,0);
+  
+  lua_pushnumber(L,usage->ru_utime.tv_sec + ((double)usage->ru_utime.tv_usec / 1000000.0));
+  lua_setfield(L,-2,"utime");
+  
+  lua_pushnumber(L,usage->ru_stime.tv_sec + ((double)usage->ru_stime.tv_usec / 1000000.0));
+  lua_setfield(L,-2,"stime");
+  
+  lua_pushnumber(L,usage->ru_maxrss);
+  lua_setfield(L,-2,"maxrss");
+  
+  lua_pushnumber(L,usage->ru_ixrss);
+  lua_setfield(L,-2,"text");
+  
+  lua_pushnumber(L,usage->ru_idrss);
+  lua_setfield(L,-2,"data");
+  
+  lua_pushnumber(L,usage->ru_isrss);
+  lua_setfield(L,-2,"stack");
+  
+  lua_pushnumber(L,usage->ru_minflt);
+  lua_setfield(L,-2,"softfaults");
+  
+  lua_pushnumber(L,usage->ru_majflt);
+  lua_setfield(L,-2,"hardfaults");
+
+  lua_pushnumber(L,usage->ru_nswap);
+  lua_setfield(L,-2,"swapped");
+  
+  lua_pushnumber(L,usage->ru_inblock);
+  lua_setfield(L,-2,"inblock");
+  
+  lua_pushnumber(L,usage->ru_oublock);
+  lua_setfield(L,-2,"outblock");
+  
+  lua_pushnumber(L,usage->ru_msgsnd);
+  lua_setfield(L,-2,"ipcsend");
+  
+  lua_pushnumber(L,usage->ru_msgrcv);
+  lua_setfield(L,-2,"ipcreceive");
+  
+  lua_pushnumber(L,usage->ru_nsignals);
+  lua_setfield(L,-2,"signals");
+  
+  lua_pushnumber(L,usage->ru_nvcsw);
+  lua_setfield(L,-2,"coopcs");
+  
+  lua_pushnumber(L,usage->ru_nivcsw);
+  lua_setfield(L,-2,"preemptcs");
+}
+
+/******************************************************************/
+
+static int proclua_waitusage(lua_State *const L)
+{
+  struct rusage usage;
+  pid_t         child;
+  int           status;
+  int           flag;
+  int           rc;
+
+  child = luaL_optinteger(L,1,-1);
+  flag  = lua_toboolean(L,2) 
+  		? WUNTRACED | WCONTINUED | WNOHANG 
+  		: WUNTRACED | WCONTINUED ;
+  rc    = wait4(child,&status,flag,&usage);
+  if (rc == -1)
+  {
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 3;
+  }
+  
+  if (rc == 0)
+  {
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushinteger(L,0);
+    return 3;
+  }
+  
+  proc_pushstatus(L,rc,status);
+  proc_pushrusage(L,&usage);  
+  return 2;
+}
+
+/**********************************************************************/
+
+static int proclua_waitid(lua_State *const L)
+{
+  siginfo_t info;
+  pid_t     child;
+  idtype_t  idtype;
+  int       flag;
+  
+  child = luaL_checkinteger(L,1);
+  flag  = lua_toboolean(L,2) 
+  	? WEXITED | WSTOPPED | WCONTINUED | WNOHANG
+  	: WEXITED | WSTOPPED | WCONTINUED;
+  idtype = (child == 0) ? P_ALL : P_PID;
+  
+  memset(&info,0,sizeof(info));
+  if (waitid(idtype,child,&info,flag) == -1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_createtable(L,0,6);
+  lua_pushinteger(L,info.si_pid);
+  lua_setfield(L,-2,"pid");
+  lua_pushinteger(L,info.si_uid);
+  lua_setfield(L,-2,"uid");
+  
+  if (info.si_code == CLD_EXITED)
+  {
+    lua_pushliteral(L,"normal");
+    lua_setfield(L,-2,"status");
+    lua_pushinteger(L,info.si_status);
+    lua_setfield(L,-2,"rc");
+  }
+  else
+  {
+    switch(info.si_code)
+    {
+      case CLD_KILLED:    lua_pushliteral(L,"terminated");        break;
+      case CLD_DUMPED:    lua_pushliteral(L,"terminated");        break;
+      case CLD_STOPPED:   lua_pushliteral(L,"stopped");           break;
+      case CLD_TRAPPED:   lua_pushliteral(L,"trapped");           break;
+      case CLD_CONTINUED: lua_pushliteral(L,"continued");         break;
+      default:            lua_pushfstring(L,"(%d)",info.si_code); break;
+    }
+    lua_setfield(L,-2,"status");
+    lua_pushinteger(L,info.si_status);
+    lua_setfield(L,-2,"rc");
+    lua_pushstring(L,strsignal(info.si_status));
+    lua_setfield(L,-2,"description");
+    lua_pushboolean(L,info.si_code == CLD_DUMPED);
+    lua_setfield(L,-2,"core");
+  }
+  
+  lua_pushinteger(L,0);
+  return 2;
+}
+
+/**********************************************************************
+* RESOURCE UTILITZATION
+**********************************************************************/
 
 static int proclua_times(lua_State *const L)
 {
@@ -962,172 +1051,7 @@ static int proclua_getrusage(lua_State *const L)
   return 1;
 }
 
-/**********************************************************************/
-
-static int proclua_pause(lua_State *const L)
-{
-  pause();
-  lua_pushinteger(L,errno);
-  return 1;
-}
-
-/**********************************************************************/
-
-static int proclua_itimer(lua_State *const L)
-{
-  struct itimerval set;
-  double           interval;
-  double           seconds;
-  double           fract;
-  
-  if (lua_isnumber(L,1))
-    interval = lua_tonumber(L,1);
-  else if (lua_isstring(L,1))
-  {
-    const char *v = lua_tostring(L,1);
-    char       *p;
-    
-    interval = strtod(v,&p);
-    switch(*p)
-    {
-      case 's': break;
-      case 'm': interval *=    60.0; break;
-      case 'h': interval *=  3600.0; break;
-      case 'd': interval *= 86400.0; break;
-      default:  break;
-    }
-  }
-  else
-    interval = 0.0;
-  
-  fract = modf(interval,&seconds);
-  
-  set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
-  set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
-  
-  errno = 0;
-  setitimer(ITIMER_REAL,&set,NULL);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/**********************************************************************/
-
-static int proclua_getaffinity(lua_State *const L)
-{
-#if defined(__linux)
-
-  cpu_set_t set;
-  long      cpus;
-  
-  if (sched_getaffinity(luaL_optinteger(L,1,0),sizeof(set),&set) < 0)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  cpus = sysconf(_SC_NPROCESSORS_ONLN);
-  
-  lua_createtable(L,sizeof(set),0);
-  for (long i = 0 ; i < cpus ; i++)
-  {
-    lua_pushinteger(L,i+1);
-    lua_pushboolean(L,CPU_ISSET(i,&set));
-    lua_settable(L,-3);
-  }
-  lua_pushinteger(L,0);
-  return 2;
-
-#elif defined(__SunOS)
-
-  processorid_t id;
-  
-  if (processor_bind(P_PID,luaL_optinteger(L,1,P_MYID),PBIND_QUERY,&id) < 0)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushnumber(L,id);
-    lua_pushinteger(L,0);
-  }
-  return 2;
-  
-#else
-
-  lua_pushnil(L);
-  lua_pushinteger(L,ENOSYS);
-  return 2;
-
-#endif
-}
-
-/************************************************************************/
-
-static int proclua_setaffinity(lua_State *const L)
-{
-#if defined(__linux)
-
-  cpu_set_t set;
-  pid_t     pid;
-  long      max;
-  long      i;
-  
-  CPU_ZERO(&set);
-  pid = luaL_optinteger(L,1,0);
-  max = sysconf(_SC_NPROCESSORS_ONLN);
-  
-  if (lua_istable(L,2))
-  {
-    for (i = 1 ; max > 0 ; i++ , max--)
-    {
-      lua_pushinteger(L,i);
-      lua_gettable(L,2);
-      if (lua_toboolean(L,-1))
-        CPU_SET(i - 1,&set);
-      lua_pop(L,1);
-    }
-  }
-  else
-  {
-    for (i = 2 ; max > 0 ; i++ , max--)
-      if (lua_isnumber(L,i))
-        CPU_SET(lua_tointeger(L,i) - 1,&set);
-  } 
-  
-  errno = 0;
-  sched_setaffinity(pid,sizeof(set),&set);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-
-#elif defined(__SunOS)
-
-  errno = 0;
-  processor_bind(
-  	P_PID,
-  	luaL_optinteger(L,1,P_MYID),
-  	luaL_checkinteger(L,2),
-  	NULL
-  );
-  
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-  
-#else
-
-  lua_pushnil(L);
-  lua_pushinteger(L,ENOSYS);
-  return 2;
-  
-#endif
-}
-
-/************************************************************************/
+/*********************************************************************/
 
 static int proclua_meta___index(lua_State *const L)
 {
@@ -1422,261 +1346,488 @@ static int slimitlua_meta___newindex(lua_State *const L)
   return 0;
 }
 
-/***********************************************************************/
+/************************************************************************
+* PROCESS USER AND GROUP INFORMATION
+************************************************************************/
 
-static int siglua_caught(lua_State *const L)
+static int proclua_getuid(lua_State *const L)
 {
-  int sig;
-  
-  assert(L != NULL);
-  
-  if (lua_isnoneornil(L,1))
-  {
-    lua_pushboolean(L,m_caught);
-    m_caught = 0;
-    return 1;
-  }
-  
-  sig = luaL_checkint(L,1);
-  if (sig < 32)
-  {
-    lua_pushboolean(L,m_signal[sig]);
-    m_signal[sig] = 0;
-  }
-  else
-    lua_pushboolean(L,false);
-  m_caught = 0;
-  return 1;
-}
+#if defined(__linux)
+  uid_t uid;
+  uid_t euid;
+  uid_t suid;
 
-/**********************************************************************/
+  getresuid(&uid,&euid,&suid);
+  lua_pushinteger(L,uid);
+  lua_pushinteger(L,euid);
+  lua_pushinteger(L,suid);
 
-static void sig_table(lua_State *const L,int idx,void (*handler)(int))
-{
-  size_t max;
-  size_t i;
-  
-  assert(L   != NULL);
-  assert(idx != 0);
-  assert(handler);
-  
-  idx = (idx < 0) 
-  	? lua_gettop(L) + idx + 1
-  	: idx;
-	
-  max = lua_objlen(L,idx);
-  for (i = 1 ; i <= max ; i++)
-  {
-    lua_pushinteger(L,i);
-    lua_gettable(L,idx);
-    if (lua_isnumber(L,-1))
-      set_signal_handler(lua_tointeger(L,-1),handler);
-    else if (lua_istable(L,-1))
-      sig_table(L,-1,handler);
-    lua_pop(L,1);
-  }
+#else
+
+  lua_pushinteger(L,getuid());
+  lua_pushinteger(L,geteuid());
+  lua_pushinteger(L,-1);
+
+#endif
+  return 3;
 }
 
 /************************************************************************/
 
-static void sig_mask(lua_State *const L,int idx,sigset_t *set)
+static int proclua_getgid(lua_State *const L)
 {
-  size_t max;
-  size_t i;
+#if defined(__linux)
+  gid_t gid;
+  gid_t egid;
+  gid_t sgid;
   
-  assert(L   != NULL);
-  assert(idx != 0);
-  assert(set != NULL);
-  
-  idx = (idx < 0)
-      ? lua_gettop(L) + idx + 1
-      : idx;
-  max = lua_objlen(L,idx);
-  for (i = 1 ; i <= max ; i++)
-  {
-    lua_pushinteger(L,i);
-    lua_gettable(L,idx);
-    if (lua_isnumber(L,-1))
-      sigaddset(set,lua_tointeger(L,-1));
-    else if (lua_istable(L,-1))
-      sig_mask(L,-1,set);
-    lua_pop(L,1);
-  }
-}
+  getresgid(&gid,&egid,&sgid);  
+  lua_pushinteger(L,gid);
+  lua_pushinteger(L,egid);
+  lua_pushinteger(L,sgid);
 
-/************************************************************************/
+#else
 
-static int siglua_catch(lua_State *const L)
-{
-  int top = lua_gettop(L);
-  
-  assert(L != NULL);
-  
-  for (int i = 1 ; i <= top ; i++)
-  {
-    if (lua_isnumber(L,i))
-      set_signal_handler(lua_tointeger(L,i),signal_handler);
-    else if (lua_istable(L,i))
-      sig_table(L,i,signal_handler);
-    else
-      luaL_error(L,"expected number or table");
-  }  
-  return 0;
-}
+  lua_pushinteger(L,getgid());
+  lua_pushinteger(L,getegid());
+  lua_pushinteger(L,-1);
 
-/**********************************************************************/
-
-int siglua_ignore(lua_State *const L)
-{
-  int top = lua_gettop(L);
-  
-  assert(L != NULL);
-  
-  for (int i = 1 ; i <= top ; i++)
-  {
-    if (lua_isnumber(L,i))
-      set_signal_handler(lua_tointeger(L,i),SIG_IGN);
-    else if (lua_istable(L,i))
-      sig_table(L,i,SIG_IGN);
-    else
-      luaL_error(L,"expected number or table");
-  }
-  return 0;
-}
-
-/**********************************************************************/
-
-int siglua_default(lua_State *const L)
-{
-  int top = lua_gettop(L);
-  
-  assert(L != NULL);
-  
-  for (int i = 1 ; i <= top ; i++)
-  {
-    if (lua_isnumber(L,i))
-      set_signal_handler(lua_tointeger(L,i),SIG_DFL);
-    else if (lua_istable(L,i))
-      sig_table(L,i,SIG_DFL);
-    else
-      luaL_error(L,"expected number or table");
-  }
-  return 0;
-}
-
-/**********************************************************************/
-
-int siglua_block(lua_State *const L)
-{
-  int      top = lua_gettop(L);
-  sigset_t set;
-  
-  if (top == 0)
-    sigfillset(&set);
-  else
-  {
-    sigemptyset(&set);
-  
-    for (int i = 1 ; i <= top ; i++)
-    {
-      if (lua_isnumber(L,i))
-        sigaddset(&set,lua_tointeger(L,i));
-      else if (lua_istable(L,i))
-        sig_mask(L,i,&set);
-      else
-        luaL_error(L,"expected number or table");
-    }
-  }
-  
-  sigprocmask(SIG_BLOCK,&set,NULL);
-  return 0;
-}
-
-/*********************************************************************/
-
-int siglua_unblock(lua_State *const L)
-{
-  int      top = lua_gettop(L);
-  sigset_t set;
-  
-  if (top == 0)
-    sigfillset(&set);
-  else
-  {
-    sigemptyset(&set);
-  
-    for (int i = 1 ; i <= top ; i++)
-    {
-      if (lua_isnumber(L,i))
-        sigaddset(&set,lua_tointeger(L,i));
-      else if (lua_istable(L,i))
-        sig_mask(L,i,&set);
-      else
-        luaL_error(L,"expected number or table");
-    }
-  }
-  
-  sigprocmask(SIG_UNBLOCK,&set,NULL);
-    
-  return 0;
-}
-
-/*******************************************************************/
-
-int siglua_mask(lua_State *const L)
-{
-  int      top = lua_gettop(L);
-  sigset_t set;
-  
-  sigemptyset(&set);
-  
-  for (int i = 1 ; i <= top ; i++)
-  {
-    if (lua_isnumber(L,i))
-      sigaddset(&set,lua_tointeger(L,i));
-    else if (lua_istable(L,i))
-      sig_mask(L,i,&set);
-    else
-      luaL_error(L,"expected number or table");
-  }
-  
-  sigprocmask(SIG_SETMASK,&set,NULL);
-  return 0;
+#endif
+  return 3;
 }
 
 /********************************************************************/
 
-int siglua_getmask(lua_State *const L)
+static int proclua_setuid(lua_State *const L)
 {
-  sigset_t set;
-  size_t   i;
-  int      idx;
+#if defined(__linux)
+  uid_t uid;
+  uid_t euid;
+  uid_t suid;
   
-  sigprocmask(0,NULL,&set);
-  lua_createtable(L,0,0);
-  for (idx = 1 , i = 0 ; m_sigs[i].text != NULL ; i++)
+  uid  = luaL_checkinteger(L,1);
+  euid = luaL_optinteger(L,2,-1);
+  suid = luaL_optinteger(L,3,-1);
+  
+  if (setresuid(uid,euid,suid) < 0)
+    lua_pushinteger(L,errno);
+  else
+    lua_pushinteger(L,0);
+  return 1;
+#else
+  uid_t uid;
+  uid_t euid;
+
+  uid  = luaL_checkinteger(L,1);
+  euid = luaL_optinteger(L,2,-1);
+
+  if (setuid(uid) < 0)
   {
-    if (sigismember(&set,m_sigs[i].value))
-    {
-      lua_pushinteger(L,idx++);
-      lua_pushinteger(L,m_sigs[i].value);
-      lua_settable(L,-3);
-    }
+    lua_pushinteger(L,errno);
+    return 1;
   }
-      
+
+  if (seteuid(uid) < 0)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+
+  lua_pushinteger(L,0);
+  return 1;
+#endif
+}
+
+/*************************************************************************/
+
+static int proclua_setgid(lua_State *const L)
+{
+#if defined(__linux)
+  gid_t gid;
+  gid_t egid;
+  gid_t sgid;
+  
+  gid  = luaL_checkinteger(L,1);
+  egid = luaL_optinteger(L,2,-1);
+  sgid = luaL_optinteger(L,3,-1);
+  
+  if (setresgid(gid,egid,sgid) < 0)
+    lua_pushinteger(L,errno);
+  else
+    lua_pushinteger(L,0);
+  return 1;
+#else
+  gid_t gid;
+  gid_t egid;
+
+  gid  = luaL_checkinteger(L,1);
+  egid = luaL_optinteger(L,2,-1);
+
+  if (setgid(gid) < 0)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+
+  if (setegid(egid) < 0)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+
+  lua_pushinteger(L,0);
+  return 1;
+#endif
+}
+
+/************************************************************************
+* PROCESS TIME RELATED ROUTINES
+*************************************************************************/
+
+static int proclua_gettimeofday(lua_State *const L)
+{
+  struct timeval now;
+  
+  gettimeofday(&now,NULL);
+  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
   return 1;
 }
 
 /*********************************************************************/
 
-int sig_meta___index(lua_State *const L)
+static int proclua_sleep(lua_State *const L)
 {
+  struct timespec interval;
+  struct timespec left;
+  double          param;
+  double          seconds;
+  double          fract;
+  
   assert(L != NULL);
-  lua_pushstring(L,strsignal(luaL_checkinteger(L,2)));
+  
+  param            = luaL_checknumber(L,1);
+  fract            = modf(param,&seconds);
+  interval.tv_sec  = (time_t)seconds;
+  interval.tv_nsec = (long)(fract * 1000000000.0);
+  
+  if (nanosleep(&interval,&left) < 0)
+  {
+    lua_pushnumber(L,param);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_pushnumber(L,(double)left.tv_sec + (((double)left.tv_nsec) / 1000000000.0));
+  lua_pushinteger(L,0);
+  return 2;    
+}
+
+/***********************************************************************/
+
+static int proclua_sleepres(lua_State *const L)
+{
+#ifdef __APPLE__
+  lua_pushnumber(L,0.01);
+#else
+  struct timespec res;
+
+  assert(L != NULL);
+  
+  clock_getres(CLOCK_REALTIME,&res);
+  lua_pushnumber(L,(double)res.tv_sec + (((double)res.tv_nsec) / 1000000000.0));
+#endif
+  return 1;  
+}
+
+
+/**********************************************************************/
+
+static int proclua_pause(lua_State *const L)
+{
+  pause();
+  lua_pushinteger(L,errno);
   return 1;
 }
 
 /**********************************************************************/
+
+static int proclua_itimer(lua_State *const L)
+{
+  struct itimerval set;
+  double           interval;
+  double           seconds;
+  double           fract;
+  
+  if (lua_isnumber(L,1))
+    interval = lua_tonumber(L,1);
+  else if (lua_isstring(L,1))
+  {
+    const char *v = lua_tostring(L,1);
+    char       *p;
+    
+    interval = strtod(v,&p);
+    switch(*p)
+    {
+      case 's': break;
+      case 'm': interval *=    60.0; break;
+      case 'h': interval *=  3600.0; break;
+      case 'd': interval *= 86400.0; break;
+      default:  break;
+    }
+  }
+  else
+    interval = 0.0;
+  
+  fract = modf(interval,&seconds);
+  
+  set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
+  set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
+  
+  errno = 0;
+  setitimer(ITIMER_REAL,&set,NULL);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/*********************************************************************
+* CPU AFINITY ROUTINES
+*********************************************************************/
+
+static int proclua_getaffinity(lua_State *const L)
+{
+#if defined(__linux)
+
+  cpu_set_t set;
+  long      cpus;
+  
+  if (sched_getaffinity(luaL_optinteger(L,1,0),sizeof(set),&set) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  cpus = sysconf(_SC_NPROCESSORS_ONLN);
+  
+  lua_createtable(L,sizeof(set),0);
+  for (long i = 0 ; i < cpus ; i++)
+  {
+    lua_pushinteger(L,i+1);
+    lua_pushboolean(L,CPU_ISSET(i,&set));
+    lua_settable(L,-3);
+  }
+  lua_pushinteger(L,0);
+  return 2;
+
+#elif defined(__SunOS)
+
+  processorid_t id;
+  
+  if (processor_bind(P_PID,luaL_optinteger(L,1,P_MYID),PBIND_QUERY,&id) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushnumber(L,id);
+    lua_pushinteger(L,0);
+  }
+  return 2;
+  
+#else
+
+  lua_pushnil(L);
+  lua_pushinteger(L,ENOSYS);
+  return 2;
+
+#endif
+}
+
+/************************************************************************/
+
+static int proclua_setaffinity(lua_State *const L)
+{
+#if defined(__linux)
+
+  cpu_set_t set;
+  pid_t     pid;
+  long      max;
+  long      i;
+  
+  CPU_ZERO(&set);
+  pid = luaL_optinteger(L,1,0);
+  max = sysconf(_SC_NPROCESSORS_ONLN);
+  
+  if (lua_istable(L,2))
+  {
+    for (i = 1 ; max > 0 ; i++ , max--)
+    {
+      lua_pushinteger(L,i);
+      lua_gettable(L,2);
+      if (lua_toboolean(L,-1))
+        CPU_SET(i - 1,&set);
+      lua_pop(L,1);
+    }
+  }
+  else
+  {
+    for (i = 2 ; max > 0 ; i++ , max--)
+      if (lua_isnumber(L,i))
+        CPU_SET(lua_tointeger(L,i) - 1,&set);
+  } 
+  
+  errno = 0;
+  sched_setaffinity(pid,sizeof(set),&set);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+
+#elif defined(__SunOS)
+
+  errno = 0;
+  processor_bind(
+  	P_PID,
+  	luaL_optinteger(L,1,P_MYID),
+  	luaL_checkinteger(L,2),
+  	NULL
+  );
+  
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+  
+#else
+
+  lua_pushnil(L);
+  lua_pushinteger(L,ENOSYS);
+  return 2;
+  
+#endif
+}
+
+/***********************************************************************/
+
+static const struct strint m_sysexits[] =
+{
+  { "SUCCESS"	, EXIT_SUCCESS	} ,
+  { "FAILURE"	, EXIT_FAILURE	} ,
+
+#ifdef EX_OK
+  { "OK" , EX_OK } ,
+#else
+  { "OK" , EXIT_SUCCESS } ,
+#endif
+#ifdef EX_USAGE
+  { "USAGE" , EX_USAGE } ,
+#endif
+#ifdef EX_DATAERR
+  { "DATAERR" , EX_DATAERR } ,
+#endif
+#ifdef EX_NOINPUT
+  { "NOINPUT" , EX_NOINPUT } ,
+#endif
+#ifdef EX_NOUSER
+  { "NOUSER" , EX_NOUSER } ,
+#endif
+#ifdef EX_NOHOST
+  { "NOHOST" , EX_NOHOST } ,
+#endif
+#ifdef EX_UNAVAILABLE
+  { "UNAVAILABLE" , EX_UNAVAILABLE } ,
+#endif
+#ifdef EX_SOFTWARE
+  { "SOFTWARE" , EX_SOFTWARE } ,
+#endif
+#ifdef EX_OSERR
+  { "OSERR" , EX_OSERR } ,
+#endif
+#ifdef EX_OSFILE
+  { "OSFILE" , EX_OSFILE } ,
+#endif
+#ifdef EX_CANTCREAT
+  { "CANTCREATE" , EX_CANTCREAT } ,
+#endif
+#ifdef EX_IOERR
+  { "IOERR" , EX_IOERR } ,
+#endif
+#ifdef EX_TEMPFAIL
+  { "TEMPFAIL" , EX_TEMPFAIL } ,
+#endif
+#ifdef EX_PROTOCOL
+  { "PROTOCOL" , EX_PROTOCOL } ,
+#endif
+#ifdef EX_NOPERM
+  { "NOPERM" , EX_NOPERM } ,
+#endif
+#ifdef EX_CONFIG
+  { "CONFIG" , EX_CONFIG } ,
+#endif
+#ifdef EX_NOTFOUND
+  { "NOTFOUND" , EX_NOTFOUND } ,
+#endif
+  { NULL , 0 }
+};
+
+static const struct luaL_Reg m_process_reg[] =
+{
+  { "getuid"		, proclua_getuid		} ,
+  { "getgid"		, proclua_getgid		} ,
+  { "setuid"		, proclua_setuid		} ,
+  { "setgid"		, proclua_setgid		} ,
+  { "exit"		, proclua_exit			} ,
+  { "fork"		, proclua_fork			} ,
+  { "wait"		, proclua_wait			} ,
+  { "waitusage"		, proclua_waitusage		} ,
+  { "waitid"		, proclua_waitid		} ,
+  { "gettimeofday"	, proclua_gettimeofday		} ,
+  { "sleep"		, proclua_sleep			} ,
+  { "sleepres"		, proclua_sleepres		} ,
+  { "kill"		, proclua_kill			} ,
+  { "exec"		, proclua_exec			} ,
+  { "times"		, proclua_times			} ,
+  { "getrusage"		, proclua_getrusage		} ,
+  { "pause"		, proclua_pause			} ,
+  { "itimer"		, proclua_itimer		} ,
+  { "getaffinity"	, proclua_getaffinity		} ,
+  { "setaffinity"	, proclua_setaffinity		} ,
+  { NULL		, NULL				} 
+};
+
+static const struct luaL_Reg m_process_meta[] =
+{
+  { "__index"		, proclua_meta___index		} ,
+  { "__newindex"	, proclua_meta___newindex	} ,
+  { NULL		, NULL				}
+};
+
+static const struct luaL_Reg m_hlimit_meta[] =
+{
+  { "__index" 		, hlimitlua_meta___index	} ,
+  { "__newindex"	, hlimitlua_meta___newindex	} ,
+  { NULL		, NULL				}
+};
+
+static const struct luaL_Reg m_slimit_meta[] =
+{
+  { "__index"		, slimitlua_meta___index	} ,
+  { "__newindex"	, slimitlua_meta___newindex	} ,
+  { NULL		, NULL				}
+};
+
+static const struct luaL_Reg m_sig_reg[] =
+{
+  { "caught"		, siglua_caught			} ,
+  { "catch"		, siglua_catch			} ,
+  { "ignore"		, siglua_ignore			} ,
+  { "default"		, siglua_default		} ,
+  { "block"		, siglua_block			} ,
+  { "unblock"		, siglua_unblock		} ,
+  { "mask"		, siglua_mask			} ,
+  { "getmask"		, siglua_getmask		} ,
+  { NULL		, NULL				}
+};
 
 int luaopen_org_conman_process(lua_State *const L)
 {
@@ -1732,140 +1883,3 @@ int luaopen_org_conman_process(lua_State *const L)
 }
 
 /************************************************************************/
-
-static void proc_pushstatus(
-	lua_State *const L,
-	const pid_t      pid,
-	int              status
-)
-{
-  lua_createtable(L,0,0);
-  lua_pushinteger(L,pid);
-  lua_setfield(L,-2,"pid");
-  
-  if (WIFEXITED(status))
-  {
-    int rc = WEXITSTATUS(status);
-    lua_pushinteger(L,rc);
-    lua_setfield(L,-2,"rc");
-    lua_pushfstring(
-    	L,
-    	"%s %d",
-    	(rc == EXIT_SUCCESS)
-    		? "success"
-    		: "failure",
-    	rc
-    );
-    lua_setfield(L,-2,"description");
-    lua_pushliteral(L,"normal");
-    lua_setfield(L,-2,"status");
-  }
-  else if (WIFSTOPPED(status))
-  {
-    lua_pushinteger(L,WSTOPSIG(status));
-    lua_setfield(L,-2,"rc");
-    lua_pushstring(L,strsignal(WSTOPSIG(status)));
-    lua_setfield(L,-2,"description");
-    lua_pushliteral(L,"stopped");
-    lua_setfield(L,-2,"status");
-  }
-  else if (WIFSIGNALED(status))
-  {
-    lua_pushinteger(L,WTERMSIG(status));
-    lua_setfield(L,-2,"rc");
-    lua_pushstring(L,strsignal(WTERMSIG(status)));
-    lua_setfield(L,-2,"description");
-    lua_pushliteral(L,"terminated");
-    lua_setfield(L,-2,"status");
-#ifdef WCOREDUMP
-    lua_pushboolean(L,WCOREDUMP(status));
-    lua_setfield(L,-2,"core");
-#endif
-  }
-}
-
-/************************************************************************/
-
-static void proc_pushrusage(
-	lua_State     *const restrict L,
-	struct rusage *const restrict usage
-)
-{
-  lua_createtable(L,0,0);
-  
-  lua_pushnumber(L,usage->ru_utime.tv_sec + ((double)usage->ru_utime.tv_usec / 1000000.0));
-  lua_setfield(L,-2,"utime");
-  
-  lua_pushnumber(L,usage->ru_stime.tv_sec + ((double)usage->ru_stime.tv_usec / 1000000.0));
-  lua_setfield(L,-2,"stime");
-  
-  lua_pushnumber(L,usage->ru_maxrss);
-  lua_setfield(L,-2,"maxrss");
-  
-  lua_pushnumber(L,usage->ru_ixrss);
-  lua_setfield(L,-2,"text");
-  
-  lua_pushnumber(L,usage->ru_idrss);
-  lua_setfield(L,-2,"data");
-  
-  lua_pushnumber(L,usage->ru_isrss);
-  lua_setfield(L,-2,"stack");
-  
-  lua_pushnumber(L,usage->ru_minflt);
-  lua_setfield(L,-2,"softfaults");
-  
-  lua_pushnumber(L,usage->ru_majflt);
-  lua_setfield(L,-2,"hardfaults");
-
-  lua_pushnumber(L,usage->ru_nswap);
-  lua_setfield(L,-2,"swapped");
-  
-  lua_pushnumber(L,usage->ru_inblock);
-  lua_setfield(L,-2,"inblock");
-  
-  lua_pushnumber(L,usage->ru_oublock);
-  lua_setfield(L,-2,"outblock");
-  
-  lua_pushnumber(L,usage->ru_msgsnd);
-  lua_setfield(L,-2,"ipcsend");
-  
-  lua_pushnumber(L,usage->ru_msgrcv);
-  lua_setfield(L,-2,"ipcreceive");
-  
-  lua_pushnumber(L,usage->ru_nsignals);
-  lua_setfield(L,-2,"signals");
-  
-  lua_pushnumber(L,usage->ru_nvcsw);
-  lua_setfield(L,-2,"coopcs");
-  
-  lua_pushnumber(L,usage->ru_nivcsw);
-  lua_setfield(L,-2,"preemptcs");
-}
-
-/************************************************************************/
-
-static void signal_handler(int sig)
-{
-  m_caught = 1;
-  if (sig < 32)
-    m_signal[sig] = 1;
-}
-
-/************************************************************************/
-
-static int set_signal_handler(int sig,void (*handler)(int))
-{
-  struct sigaction act;
-  struct sigaction oact;
-  
-  sigemptyset(&act.sa_mask);
-  act.sa_handler = handler;
-  act.sa_flags   = 0;
-
-  if (sigaction(sig,&act,&oact) == -1)
-    return errno;
-  return 0;
-}
-
-/************************************************************************/
-
