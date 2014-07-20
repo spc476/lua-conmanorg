@@ -518,7 +518,7 @@ static int siglua_set(lua_State *const L)
 *			'info'		receive additonal information
 *		blocked (userdata(set)) signals to block during handler
 *
-* Return:	okay (boolean) true of successful, false if error
+* Return:	okay (boolean) true if successful, false if error
 *		err (integer) system error, 0 if successful
 *
 *********************************************************************/
