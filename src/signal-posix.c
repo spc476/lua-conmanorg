@@ -42,7 +42,6 @@
 *
 *********************************************************************/
 
-
 /* http://pubs.opengroup.org/onlinepubs/7908799/xsh/signal.h.html */
 
 #ifdef __linux
@@ -78,6 +77,7 @@ struct datasig
 
 /**********************************************************************/
 
+static volatile sig_atomic_t  m_caught;
 static volatile sig_atomic_t  m_signal;
 static volatile sig_atomic_t  m_bam;
 static volatile int           m_hookcount;
@@ -86,11 +86,14 @@ static volatile lua_Hook      m_hook;
 static lua_State             *m_L;
 static struct datasig         m_handlers[NSIG];
 
-/**********************************************************************
+/***************************************************************************
 *
-* SIGNAL HANDLER CODE
-* 
-**********************************************************************/
+* The signal handler backend. We remove any Lua debug hooks (how we got here
+* in the first place) then figure out which signal was triggered.  If
+* there's a function reference, call the function.  After all signals have 
+* been processed, restore any Lua debug hooks and continue.
+*
+****************************************************************************/
 
 static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
 {
@@ -99,17 +102,21 @@ static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
   while(m_signal)
   {
     m_signal = 0;
+    
     for (size_t i = 0 ; i < NSIG ; i++)
     {
       if (m_handlers[i].triggered)
       {
-        m_handlers[i].triggered = 0;
-        lua_pushinteger(L,m_handlers[i].coderef);
-        lua_gettable(L,LUA_REGISTRYINDEX);      
-        lua_pushinteger(L,i);
-        if (lua_pcall(L,1,0,0) != 0)
-          lua_error(L);
-        sigprocmask(SIG_UNBLOCK,&m_handlers[i].blocked,NULL);
+        if (m_handlers[i].coderef != LUA_NOREF)
+        {
+          m_handlers[i].triggered = 0;
+          lua_pushinteger(L,m_handlers[i].coderef);
+          lua_gettable(L,LUA_REGISTRYINDEX);      
+          lua_pushinteger(L,i);
+          if (lua_pcall(L,1,0,0) != 0)
+            lua_error(L);
+          sigprocmask(SIG_UNBLOCK,&m_handlers[i].blocked,NULL);
+        }
       }
     }
   }
@@ -118,7 +125,12 @@ static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
   m_bam = 0;
 }
 
-/**********************************************************************/
+/***************************************************************************
+*
+* If not already handling signals, save any Lua debug hooks, then set one so
+* that anything that happens will trap to the signal backend.
+*
+****************************************************************************/
 
 static void signal_handler(int sig)
 {
@@ -129,19 +141,18 @@ static void signal_handler(int sig)
     m_hookmask  = lua_gethookmask (m_L);
     m_hook      = lua_gethook     (m_L);
     
-    lua_sethook(
-            m_L,
-            luasigstop,
-            LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,
-            1
-    );
+    lua_sethook(m_L,luasigstop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
   }
   
   sigprocmask(SIG_BLOCK,&m_handlers[sig].blocked,NULL);
-  m_signal = m_handlers[sig].triggered = 1;
+  m_caught = m_signal = m_handlers[sig].triggered = 1;
 }
 
-/**********************************************************************/
+/**********************************************************************
+*
+* Function to map a string to a signal value.
+*
+***********************************************************************/
 
 struct mapstrint
 {
@@ -165,8 +176,8 @@ static int slua_tosignal(lua_State *const L,int idx)
 {
   static const struct mapstrint sigs[] =
   {
-    { "abort"		, SIGABRT	} ,	/* */
-    { "abrt"		, SIGABRT	} ,	/* */
+    { "abort"		, SIGABRT	} ,	/* ANSI */
+    { "abrt"		, SIGABRT	} ,	/* ANSI */
 #ifdef SIGALRM
     { "alarm"		, SIGALRM	} ,
     { "alrm"		, SIGALRM	} ,
@@ -203,19 +214,19 @@ static int slua_tosignal(lua_State *const L,int idx)
 #ifdef SIGXFSZ
     { "filesize"	, SIGXFSZ	} ,
 #endif
-    { "fpe"		, SIGFPE	} ,	/* */
+    { "fpe"		, SIGFPE	} ,	/* ANSI */
 #ifdef SIGHUP
     { "hangup"		, SIGHUP	} ,
     { "hup"		, SIGHUP	} ,
 #endif
-    { "ill"		, SIGILL	} ,	/* */
-    { "illegal"		, SIGILL	} ,	/* */
+    { "ill"		, SIGILL	} ,	/* ANSI */
+    { "illegal"		, SIGILL	} ,	/* ANSI */
 #ifdef SIGINFO
     { "info"		, SIGINFO	} ,
     { "information"	, SIGINFO	} ,
 #endif
-    { "int"		, SIGINT	} ,	/* */
-    { "interrupt"	, SIGINT	} ,	/* */
+    { "int"		, SIGINT	} ,	/* ANSI */
+    { "interrupt"	, SIGINT	} ,	/* ANSI */
 #ifdef SIGIO
     { "io"		, SIGIO		} ,
 #endif
@@ -247,7 +258,7 @@ static int slua_tosignal(lua_State *const L,int idx)
 #ifdef SIGQUIT
     { "quit"		, SIGQUIT	} ,
 #endif
-    { "segv"		, SIGSEGV	} ,	/* */
+    { "segv"		, SIGSEGV	} ,	/* ANSI */
 #ifdef SIGSTKFLT
     { "stkflt"		, SIGSTKFLT	} ,
 #endif
@@ -257,8 +268,8 @@ static int slua_tosignal(lua_State *const L,int idx)
 #ifdef SIGSYS
     { "sys"		, SIGSYS	} ,
 #endif
-    { "term"		, SIGTERM	} ,	/* */
-    { "terminate"	, SIGTERM	} ,	/* */
+    { "term"		, SIGTERM	} ,	/* ANSI */
+    { "terminate"	, SIGTERM	} ,	/* ANSI */
 #ifdef SIGTRAP
     { "trap"		, SIGTRAP	} ,
 #endif
@@ -328,6 +339,371 @@ static int slua_tosignal(lua_State *const L,int idx)
     return luaL_error(L,"signal '%s' not supported",lua_tostring(L,idx));
   else
     return entry->value;
+}
+
+/**********************************************************************
+*
+* Usage:	status = signal.caught([signal])
+*
+* Desc:         Tests to see if the given signal has been triggered.  If no
+*               signal is given, tests to see if any signal has been
+*               triggered.  Only signals that are caught with
+*               org.conman.signal.catch() can be tested.
+*
+* Input:	signal  (string/optional) name of signal
+*
+* Return:	status (boolean) true if signal has been caught.
+*
+***********************************************************************/
+
+static int siglua_caught(lua_State *const L)
+{
+  if (lua_isnoneornil(L,1))
+  {
+    lua_pushboolean(L,m_caught != 0);
+    m_caught = 0;
+    return 1;
+  }
+  
+  int sig = slua_tosignal(L,1);  
+  lua_pushboolean(L,m_handlers[sig].triggered != 0);
+  m_handlers[sig].triggered = 0;
+  m_caught                  = 0;
+  return 1;  
+}
+
+/**********************************************************************
+*
+* Usage:	okay,err = signal.catch(signal[,handler[,flags][,blocked]])
+*
+* Desc:		Install a handler for a signal, and optionally block
+*		other signals while handling the signal.
+*
+* Input:	signal (string) signal name
+*		handler (function(sig)/optional) handler for signal
+*		flags (table/optional) various flags:
+*			* 'nochildstop'	if signal is 'child', do not
+*			|		receive notification when child
+*			|		prcess stops
+*			* 'oneshot'	restore default action after handler
+*			* 'resethandler'		"
+*			* 'onstack'	use alternative stack
+*			* 'restart'	restart system calls
+*			* 'nomask'	do not mask this signal
+*			* 'nodefer'		"
+*			* 'info'	receive additonal information
+*		blocked (userdata(set)/optional) signals to block during
+*			| handler
+*
+* Return:	okay (boolean) true if successful, false if error
+*		err (integer) system error, 0 if successful
+*
+*********************************************************************/
+
+static int siglua_catch(lua_State *const L)
+{
+  struct sigaction act;
+  int              sig;
+  
+  memset(&act,0,sizeof(act));
+  sig = slua_tosignal(L,1);
+  
+  luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
+
+  if (lua_isfunction(L,2))
+  {
+    lua_pushvalue(L,2);
+    m_handlers[sig].coderef = luaL_ref(L,LUA_REGISTRYINDEX);
+  }
+  
+  if (lua_isuserdata(L,3))
+  {
+    sigset_t *set           = luaL_checkudata(L,3,TYPE_SIGSET);
+    act.sa_mask             = *set;
+    m_handlers[sig].blocked = *set;
+  }
+  
+  act.sa_handler = signal_handler;  
+  errno = 0;
+  sigaction(sig,&act,NULL);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/**********************************************************************
+*
+* Usage:	signal.ignore(signal[,signal...])
+*
+* Desc:		Causes system to ignore one or more signals
+*
+* Input:	signal (string) name of signal
+*
+**********************************************************************/
+
+static int siglua_ignore(lua_State *const L)
+{
+  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
+  {
+    int sig = slua_tosignal(L,i);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
+    sigignore(sig);
+  }
+  
+  return 0;
+}
+
+/**********************************************************************
+*
+* Usage:        signal.default(signal[,signal...])
+*
+* Desc:         Set the default action for the given signals
+*
+* Input:        signal (string) name of signal
+*
+**********************************************************************/
+
+static int siglua_default(lua_State *const L)
+{
+  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
+  {
+    int sig = slua_tosignal(L,i);    
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
+    sigset(sig,SIG_DFL);
+  }
+  
+  return 0;
+}
+
+/**********************************************************************
+*
+* Usage:        okay,err = signal.raise(signal)
+*
+* Desc:         Triggers the given signal.
+*
+* Input:        signal (string) name of signal
+*
+* Return:       okay (boolean)  true of okay, false otherwise
+*               err (integer)   error value
+*
+* See:          org.conman.errno
+*
+**********************************************************************/
+
+static int siglua_raise(lua_State *const L)
+{
+  errno = 0;
+  raise(slua_tosignal(L,1));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/**********************************************************************
+*
+* Usage:        implementation = signal.SIGNAL()
+*
+* Desc:         Return the implementation of this module.
+*
+* Return:       implementation (string) "POSIX"
+*
+**********************************************************************/
+
+static int siglua_SIGNAL(lua_State *const L)
+{
+  lua_pushliteral(L,"POSIX");
+  return 1;
+}
+
+/**********************************************************************
+*
+* Usage:        signal.allow(signal[,signal...])
+*
+* Desc:         Allow the given signals to be sent
+*
+* Input:        signal (string) name of signal
+*
+**********************************************************************/
+
+static int siglua_allow(lua_State *const L)
+{
+  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
+    sigrelse(slua_tosignal(L,i));
+  return 0;
+}    
+
+/**********************************************************************
+*
+* Usage:	signal.block(signal[,signal...])
+*
+* Desc:		Block the signal from being sent
+*
+* Input:	signal (string) name of signal
+*
+***********************************************************************/
+
+static int siglua_block(lua_State *const L)
+{
+  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
+    sighold(slua_tosignal(L,i));
+  return 0;
+}
+
+/**********************************************************************
+*
+* Usage:	oldset,err = signal.mask([how,]newset)
+*
+* Desc:		Change the set of signals being blocked.
+*
+* Input:	how (enum/optional)
+*			'block'		- add sigals to block 
+*			'unblock'	- remove signals from being blocked
+*			'set'		* set the blocked signals
+*		newset (userdata(set))	signals to use
+*
+* Return:	oldset (userdata(set)) previous set of signals, nil on errors
+*		err (integer) system error, 0 on success
+*
+**********************************************************************/
+
+static int siglua_mask(lua_State *const L)
+{
+  sigset_t *new;
+  sigset_t *old;
+  int       how = SIG_SETMASK;
+  
+  if (lua_isstring(L,1))
+  {
+    const char *thow = lua_tostring(L,1);
+    if (strcmp(thow,"block") == 0)
+      how = SIG_BLOCK;
+    else if (strcmp(thow,"unblock") == 0)
+      how = SIG_UNBLOCK;
+    else if (strcmp(thow,"set") == 0)
+      how = SIG_SETMASK;
+    else
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,EINVAL);
+      return 2;
+    }
+    lua_remove(L,1);
+  }
+  
+  new = luaL_checkudata(L,1,TYPE_SIGSET);
+  old = lua_newuserdata(L,sizeof(sigset_t));
+  luaL_getmetatable(L,TYPE_SIGSET);
+  lua_setmetatable(L,-2);
+  
+  errno = 0;
+  sigprocmask(how,new,old);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/**********************************************************************
+*
+* Usage:	set,err = signal.pending()
+*
+* Desc:		Return a set of pending signals that are blocked
+*
+* Return:	set (userdata(set)) set of signals, nil on error
+*		err (integer) system error, 0 on success
+*
+*********************************************************************/
+
+static int siglua_pending(lua_State *const L)
+{
+  sigset_t *set = lua_newuserdata(L,sizeof(sigset_t));
+  luaL_getmetatable(L,TYPE_SIGSET);
+  lua_setmetatable(L,-2);
+  
+  errno = 0;
+  sigpending(set);
+  if (errno != 0)
+    lua_pushnil(L);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/**********************************************************************
+*
+* Usage:	err = signal.suspend(set)
+*
+* Desc:		Temporarily replace signal mask with set, then wait for
+*		a signal.  Upon signal, restore the original signal mask
+*
+* Input:	set (userdata(set)) set of signals
+*
+* Return:	err (integer) system error, never 0.
+*
+**********************************************************************/
+
+static int siglua_suspend(lua_State *const L)
+{
+  sigset_t *set = luaL_checkudata(L,1,TYPE_SIGSET);
+  sigsuspend(set);
+  lua_pushinteger(L,errno);
+  return 1;
+}
+
+/**********************************************************************
+* 
+* Usage:	set = signal.set([fill,][signal...])
+*
+* Desc:		Create a set of signals.  If no parameters are given,
+*		return an empty set.
+*
+* Input:	fill (boolean/optional)
+*			* true - fill the set, remove following
+*			|	signals if any
+*			* false (default) - empty the set, add
+*			|	following signals if any
+*		signal (string) name of signal
+*
+* Return:	set (userdata(set)) a set of signals
+*
+**********************************************************************/
+
+static int siglua_set(lua_State *const L)
+{
+  int        top = lua_gettop(L);
+  sigset_t  *set = lua_newuserdata(L,sizeof(sigset_t));
+  int      (*setsig)(sigset_t *,int);
+  int        start;
+  
+  luaL_getmetatable(L,TYPE_SIGSET);
+  lua_setmetatable(L,-2);
+  
+  if (top == 0)
+    return 1;
+  
+  if (lua_isboolean(L,1))
+  {
+    start = 2;
+    
+    if (lua_toboolean(L,1))
+    {
+      sigfillset(set);
+      setsig = (sigdelset);
+    }
+    else
+    {
+      sigemptyset(set);
+      setsig = (sigaddset);
+    }
+  }
+  else
+  {
+    start = 1;
+    sigemptyset(set);
+    setsig = (sigaddset);
+  }
+  
+  for (int i = start ; i <= top ; i++)
+    (*setsig)(set,slua_tosignal(L,i));
+  
+  return 1;
 }
 
 /**********************************************************************
@@ -433,373 +809,40 @@ static int sigsetmeta___unm(lua_State *const L)
   return 1;
 }
 
-/**********************************************************************
-* 
-* Usage:	set = signal.set([fill,][signal...])
-*
-* Desc:		Create a set of signals.  If no parameters are given,
-*		return an empty set.
-*
-* Input:	fill (boolean/optional) 			\
-*			true - fill the set, remove following 	\
-*				signals if any			\
-*			false (default) - empty the set, add 	\
-*				following signals if any
-*		signal (string) name of signal
-*
-* Return:	set (userdata(set)) a set of signals
-*
-**********************************************************************/
-
-static int siglua_set(lua_State *const L)
-{
-  int        top = lua_gettop(L);
-  sigset_t  *set = lua_newuserdata(L,sizeof(sigset_t));
-  int      (*setsig)(sigset_t *,int);
-  int        start;
-  
-  luaL_getmetatable(L,TYPE_SIGSET);
-  lua_setmetatable(L,-2);
-  
-  if (top == 0)
-    return 1;
-  
-  if (lua_isboolean(L,1))
-  {
-    start = 2;
-    
-    if (lua_toboolean(L,1))
-    {
-      sigfillset(set);
-      setsig = (sigdelset);
-    }
-    else
-    {
-      sigemptyset(set);
-      setsig = (sigaddset);
-    }
-  }
-  else
-  {
-    start = 1;
-    sigemptyset(set);
-    setsig = (sigaddset);
-  }
-  
-  for (int i = start ; i <= top ; i++)
-    (*setsig)(set,slua_tosignal(L,i));
-  
-  return 1;
-}
-
-/**********************************************************************
-*
-* Usage:	okay,err = signal.catch(signal,handler[,flags][,blocked])
-*
-* Desc:		Install a handler for a signal, and optionally block
-*		other signals while handling the signal.
-*
-* Input:	signal (string) signal name
-*		handler (function(sig) boolean) if handler is a 	\
-*				function, then install as the signal	\
-*				handler.  If ti's a boolean, then if	\
-*				true, install the default handler, 	\
-*				otherwise, ignore the signal.
-*		flags (table/optional) various flags:			\
-*			'nochildstop'	if signal is 'child', do not	\
-*					receive notification when child \
-*					prcess stops			\
-*			'oneshot'	restore default action after handler \
-*			'resethandler'		"			\
-*			'onstack'	use alternative stack		\
-*			'restart'	restart system calls		\
-*			'nomask'	do not mask this signal		\
-*			'nodefer'		"			\
-*			'info'		receive additonal information
-*		blocked (userdata(set)) signals to block during handler
-*
-* Return:	okay (boolean) true if successful, false if error
-*		err (integer) system error, 0 if successful
-*
-*********************************************************************/
-
-static int siglua_catch(lua_State *const L)
-{
-  struct sigaction act;
-  int              sig;
-  
-  memset(&act,0,sizeof(act));
-  sig = slua_tosignal(L,1);
-  
-  luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
-  
-  if (lua_isboolean(L,2))
-  {
-    if (lua_toboolean(L,2))
-      act.sa_handler = SIG_DFL;
-    else
-      act.sa_handler = SIG_IGN;
-    
-    errno = 0;
-    sigaction(sig,&act,NULL);
-    lua_pushboolean(L,errno == 0);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  luaL_checktype(L,2,LUA_TFUNCTION);
-  
-  if (lua_isuserdata(L,3))
-  {
-    sigset_t *set           = luaL_checkudata(L,3,TYPE_SIGSET);
-    act.sa_mask             = *set;
-    m_handlers[sig].blocked = *set;
-  }
-  
-  lua_pushvalue(L,2);
-  m_handlers[sig].coderef = luaL_ref(L,LUA_REGISTRYINDEX);
-  act.sa_handler  = signal_handler;
-  
-  errno = 0;
-  sigaction(sig,&act,NULL);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/**********************************************************************
-*
-* Usage:	signal.ignore(signal[,signal...])
-*
-* Desc:		Causes system to ignore one or more signals
-*
-* Input:	signal (string) name of signal
-*
-**********************************************************************/
-
-static int siglua_ignore(lua_State *const L)
-{
-  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-  {
-    int sig = slua_tosignal(L,i);
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
-    sigignore(sig);
-  }
-  
-  return 0;
-}
-
-/**********************************************************************
-*
-* Usage:        signal.default(signal[,signal...])
-*
-* Desc:         Set the default action for the given signals
-*
-* Input:        signal (string) name of signal
-*
-**********************************************************************/
-
-static int siglua_default(lua_State *const L)
-{
-  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-  {
-    int sig = slua_tosignal(L,i);    
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
-    sigset(sig,SIG_DFL);
-  }
-  
-  return 0;
-}
-
-/**********************************************************************
-*
-* Usage:        signal.allow(signal[,signal...])
-*
-* Desc:         Allow the given signals to be sent
-*
-* Input:        signal (string) name of signal
-*
-**********************************************************************/
-
-static int siglua_allow(lua_State *const L)
-{
-  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-    sighold(slua_tosignal(L,i));
-  return 0;
-}    
-
-/**********************************************************************
-*
-* Usage:	signal.block(signal[,signal...])
-*
-* Desc:		Block the signal from being sent
-*
-* Input:	signal (string) name of signal
-*
-***********************************************************************/
-
-static int siglua_block(lua_State *const L)
-{
-  for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-    sigrelse(slua_tosignal(L,i));
-  return 0;
-}
-
-/**********************************************************************
-*
-* Usage:	oldset,err = signal.mask([how,]newset)
-*
-* Desc:		Change the set of signals being blocked.
-*
-* Input:	how (enum/optional)
-*			'block'		- add sigals to block 
-*			'unblock'	- remove signals from being blocked
-*			'set'		* set the blocked signals
-*		newset (userdata(set))	signals to use
-*
-* Return:	oldset (userdata(set)) previous set of signals, nil on errors
-*		err (integer) system error, 0 on success
-*
-**********************************************************************/
-
-static int siglua_mask(lua_State *const L)
-{
-  sigset_t *new;
-  sigset_t *old;
-  int       how = SIG_SETMASK;
-  
-  if (lua_isstring(L,1))
-  {
-    const char *thow = lua_tostring(L,1);
-    if (strcmp(thow,"block") == 0)
-      how = SIG_BLOCK;
-    else if (strcmp(thow,"unblock") == 0)
-      how = SIG_UNBLOCK;
-    else if (strcmp(thow,"set") == 0)
-      how = SIG_SETMASK;
-    else
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,EINVAL);
-      return 2;
-    }
-    lua_remove(L,1);
-  }
-  
-  new = luaL_checkudata(L,1,TYPE_SIGSET);
-  old = lua_newuserdata(L,sizeof(sigset_t));
-  luaL_getmetatable(L,TYPE_SIGSET);
-  lua_setmetatable(L,-2);
-  
-  errno = 0;
-  sigprocmask(how,new,old);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/**********************************************************************
-*
-* Usage:	set,err = signal.pending()
-*
-* Desc:		Return a set of pending signals that are blocked
-*
-* Return:	set (userdata(set)) set of signals, nil on error
-*		err (integer) system error, 0 on success
-*
-*********************************************************************/
-
-static int siglua_pending(lua_State *const L)
-{
-  sigset_t *set = lua_newuserdata(L,sizeof(sigset_t));
-  luaL_getmetatable(L,TYPE_SIGSET);
-  lua_setmetatable(L,-2);
-  
-  errno = 0;
-  sigpending(set);
-  if (errno != 0)
-    lua_pushnil(L);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/**********************************************************************
-*
-* Usage:	err = signal.suspend(set)
-*
-* Desc:		Temporarily replace signal mask with set, then wait for
-*		a signal.  Upon signal, restore the original signal mask
-*
-* Input:	set (userdata(set)) set of signals
-*
-* Return:	err (integer) system error, never 0.
-*
-**********************************************************************/
-
-static int siglua_suspend(lua_State *const L)
-{
-  sigset_t *set = luaL_checkudata(L,1,TYPE_SIGSET);
-  sigsuspend(set);
-  lua_pushinteger(L,errno);
-  return 1;
-}
-
-/**********************************************************************
-*
-* Usage:        okay,err = signal.raise(signal)
-*
-* Desc:         Triggers the given signal.
-*
-* Input:        signal (string) name of signal
-*
-* Return:       okay (boolean)  true of okay, false otherwise
-*               err (integer)   error value
-*
-* See:          org.conman.errno
-*
-**********************************************************************/
-
-static int siglua_raise(lua_State *const L)
-{
-  errno = 0;
-  raise(slua_tosignal(L,1));
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-          
 /**********************************************************************/
 
 static const struct luaL_Reg m_sig_reg[] =
 {
-  { "set"		, siglua_set		} ,
-  { "catch"		, siglua_catch		} ,
-  { "ignore"		, siglua_ignore		} ,
-  { "default"		, siglua_default	} ,
-  { "allow"		, siglua_allow		} ,
-  { "block"		, siglua_block		} ,
-  { "mask"		, siglua_mask		} ,
-  { "pending"		, siglua_pending	} ,
-  { "suspend"		, siglua_suspend	} ,
-  { "raise"		, siglua_raise		} ,
-  { NULL		, NULL			}
+  { "caught"	, siglua_caught		} ,
+  { "catch"	, siglua_catch		} ,
+  { "ignore"	, siglua_ignore		} ,
+  { "default"	, siglua_default	} ,
+  { "raise"	, siglua_raise		} ,
+  { "SIGNAL"	, siglua_SIGNAL		} ,  
+  { "allow"	, siglua_allow		} ,
+  { "block"	, siglua_block		} ,
+  { "mask"	, siglua_mask		} ,
+  { "pending"	, siglua_pending	} ,
+  { "suspend"	, siglua_suspend	} ,
+  { "set"	, siglua_set		} ,
+  { NULL	, NULL			}
 };
 
 static const struct luaL_Reg m_sigset_meta[] =
 {
-  { "__index"		, sigsetmeta___index	} ,
-  { "__newindex"	, sigsetmeta___newindex	} ,
-  { "__add"		, sigsetmeta___add	} ,
-  { "__sub"		, sigsetmeta___sub	} ,
-  { "__unm"		, sigsetmeta___unm	} ,
-  { NULL		, NULL			}
+  { "__index"	, sigsetmeta___index	} ,
+  { "__newindex", sigsetmeta___newindex	} ,
+  { "__add"	, sigsetmeta___add	} ,
+  { "__sub"	, sigsetmeta___sub	} ,
+  { "__unm"	, sigsetmeta___unm	} ,
+  { NULL	, NULL			}
 };
  
 int luaopen_signal(lua_State *const L)
 {
   for (int i = 0 ; i < NSIG ; i++)
     m_handlers[i].coderef = LUA_NOREF;
-  m_L = L;
-  
+  m_L = L; 
   luaL_newmetatable(L,TYPE_SIGSET);
   luaL_register(L,NULL,m_sigset_meta); 
   luaL_register(L,"signal",m_sig_reg);
