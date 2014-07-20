@@ -443,6 +443,29 @@ int siglua_default(lua_State *const L)
 
 /**********************************************************************
 *
+*	success,err = org.conman.sig.raise(signal)
+*
+*	Raise (or send) the given signal to the current process.
+*
+*	signal	= integer, from list of signals
+*	success = true if sent
+*		= false if error
+*	err     = 0 if no error
+*		> 0 error code
+*
+**********************************************************************/
+
+int siglua_raise(lua_State *const L)
+{
+  errno = 0;
+  raise(luaL_checkinteger(L,1));
+  lua_pushbooleal(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/**********************************************************************
+*
 *	org.conman.process.sig.block(signal[,...])
 *
 *	Block the delivery of the given signals.  Such signals can't be

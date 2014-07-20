@@ -357,7 +357,48 @@ static int err_meta___index(lua_State *const L)
 
 /**********************************************************************
 *
-*	list,err = net.interfaces()
+* Usage:	list,err = net.interfaces()
+*
+* Desc:		Return a list of network interfaces
+*
+* Return:	list (table) A list of interfaces (see Note), nil on error
+*		err (integer) system error, 0 on success
+*
+* Note:		This is a Linux-only routine.
+*
+*		The list is a table, where the keys are the names of the
+*		interfaces, and the values are an array of address/mask/-
+*		broadcast values:
+*
+*			{
+*			  addr      = <addr userdata>,
+*			  mask      = <addr userdata>,
+*			  broadcast = <addr usedata> -- only for IPv4
+*			}
+*
+*		An example;
+*
+*			{ 
+*			  lo = 
+*			  {
+*			    {
+*			      addr = <ip:127.0.0.1:0>,
+*			      mask = <ip:255.0.0.0:0>
+*			    },
+*			    {
+*			      addr = <ip6:[::1]:0>,
+*			      mask = <ip6:[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:0>
+*			    }
+*			  },
+*			  eth0 = 
+*			  { 
+*			    {
+*			      addr      = <ip:192.168.1.10:0>,
+*			      mask      = <ip:255.255.255.0:0>,
+*			      broadcast = <192.168.1.255:0>
+*			    }
+*			  }
+*			}
 *
 **********************************************************************/
 
@@ -446,10 +487,15 @@ static int err_meta___index(lua_State *const L)
 
 /**********************************************************************
 *
-*	sock,err = net.socket(family,proto)
+* Usage:	sock,err = net.socket(family,proto)
 *
-*	family = 'ip'  | 'ip6' | 'unix'
-*	proto  = string | number
+* Desc:		Creates a socket to support the given family and protocol.
+*
+* Input:	family (string) 	'ip' | 'ipv6' | 'unix'
+*		proto (string number)	name or value of protocol
+*
+* Return:	sock (userdata)	socket, nil on error
+*		err (integer)	system error, 0 on success
 *
 **********************************************************************/
 
@@ -533,10 +579,37 @@ static int netlua_socketfd(lua_State *const L)
 }
 
 /***********************************************************************
-* 
-* XXX Experimental
 *
-***********************************************************************/
+* Usage:	addr,err = net.address2(host,[family = 'any'],[proto],[port])
+*
+* Desc:		Return a list of addresses for the given host.
+*
+* Input:	host (string) hostname, IPv4 or IPv6 address
+*		family (string)	'any' - return any address type    \
+*				'ip'  - return only IPv4 addresses \
+*				'ip6' - return only IPv6 addresses
+*		proto (string number) name or number of protocol
+*		port (string number)  name or number of port
+*
+* Return:	addr (table) array of results, nil on failure
+*		err (integer) network error, 0 on success
+*
+* Note:		Use net.errno[] to translate returned error.
+*
+* Examples:
+*		addr,err = net.address2('www.google.com')
+*		addr,err = net.address2('www.google.com','ip','tcp','www')
+*		addr,err = net.address2('127.0.0.1','ip','udp',53)
+*
+*		if not addr then
+*			print("ERROR",net.errno[err])
+*		else
+*			for i = 1 , #addr do
+*				print(addr[i])
+*			end
+*		end
+*
+**********************************************************************/
 
 static int netlua_address2(lua_State *const L)
 {
@@ -653,13 +726,24 @@ static int netlua_address2(lua_State *const L)
 
 /***********************************************************************
 *
-*       addr,err = net.address(address,proto[,port])
-*  
-*       address = ip (192.168.1.1) | ip6 (fc00::1) | unix (/dev/log)
-*	proto   = 'tcp','udp', ... 
-*	port	= string | number
+* Usage:	addr,err = net.address(address,proto[,port])
 *
-***********************************************************************/
+* Desc:		Create an address object.
+*
+* Input:	address (string)	IPv4, IPv6 or path
+*		proto (string number)	name of protocol, or number of protocol
+*		port (string number)	name or value of port
+*
+* Return:	addr (userdata)	address object, nil on error
+*		err (integer)	system error, 0 on success
+*
+* Examples:
+*
+*		addr,err = net.address('127.0.0.1','tcp',25)
+*		addr,err = net.address("fc00::1",'tcp','smtp')
+*		addr,err = net.address("192.168.1.1","ospf")
+*
+*********************************************************************/
 
 static int netlua_address(lua_State *const L)
 {
@@ -1031,10 +1115,16 @@ static int socklua___newindex(lua_State *const L)
 
 /*********************************************************************
 *
-*	addr,err = sock:peer(sock | integer)
+* Usage:	addr,err = sock:peer()
 *
-*	sock = net.socket(...)
-********************************************************************/
+* Desc:		Returns the remote address of the connection.
+*
+* Return:	addr (userdata) Address of the other side, nil on error
+*		err (integer) system error, 0 on success
+*
+* Note:		This only has meaning for connected connections.
+*
+*********************************************************************/
 
 static int socklua_peer(lua_State *const L)
 {
@@ -1068,10 +1158,16 @@ static int socklua_peer(lua_State *const L)
 
 /*********************************************************************
 *
-*	addr,err = sock:addr(sock | integer)
+* Usage:	addr,err = sock:addr()
 *
-*	sock = net.socket(...)
-********************************************************************/
+* Desc:		Returns the local address of the connection
+*
+* Return:	addr (userdata) Address of the local side
+*		err (integer) system err, 0 on success
+*
+* Note:		This only has meaning for connected connections.
+*
+**********************************************************************/
 
 static int socklua_addr(lua_State *const L)
 {
@@ -1105,10 +1201,13 @@ static int socklua_addr(lua_State *const L)
 
 /***********************************************************************
 *
-*	err = sock:bind(addr)
+* Usage:	err = sock:bind(addr)
 *
-*	sock = net.socket(...)
-*	addr = net.address(...)
+* Desc:		Bind an address to a socket
+*
+* Input:	addr (userdata) Address to bind to
+*
+* Return:	err (integer) system error, 0 on success
 *
 ***********************************************************************/
 
@@ -1181,10 +1280,13 @@ static int socklua_bind(lua_State *const L)
 
 /**********************************************************************
 *
-*	err = sock:connect(addr)
+* Usage:	err = sock:connect(addr)
 *
-*	sock = net.socket(...)
-*	addr = net.address(...)
+* Desc:		Make a connected socket.
+*
+* Input:	addr (userdata) Remote address
+*
+* Return:	err (integer) system error, 0 on success
 *
 **********************************************************************/
 
@@ -1198,7 +1300,6 @@ static int socklua_connect(lua_State *const L)
   lua_pushinteger(L,errno);
   return 1;
 }
-
 
 /**********************************************************************
 *
