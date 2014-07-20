@@ -16,7 +16,6 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <sysexits.h>
 
@@ -510,7 +509,6 @@ static int siglua_catch(lua_State *const L)
   if (lua_isuserdata(L,3))
   {
     sigset_t *set           = luaL_checkudata(L,3,TYPE_SIGSET);
-    syslog(LOG_DEBUG,"blockset=%08lX",(unsigned long)set->__val[0]);
     act.sa_mask             = *set;
     m_handlers[sig].blocked = *set;
   }
@@ -600,10 +598,7 @@ static int siglua_allow(lua_State *const L)
 static int siglua_block(lua_State *const L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-  {
-    syslog(LOG_DEBUG,"blocking %s",lua_tostring(L,i));
     sigrelse(slua_tosignal(L,i));
-  }
   return 0;
 }
 
