@@ -619,7 +619,7 @@ static int siglua_catch(lua_State *const L)
     m_handlers[sig].blocked = *set;
   }
   else
-    act.sa_flags = slua_toflags(L,3);
+    act.sa_flags |= slua_toflags(L,3);
   
   if (lua_isuserdata(L,4))
   {
@@ -628,7 +628,7 @@ static int siglua_catch(lua_State *const L)
     m_handlers[sig].blocked = *set;
   }
   else
-    act.sa_flags = slua_toflags(L,4);
+    act.sa_flags |= slua_toflags(L,4);
   
   act.sa_handler = signal_handler;  
   errno = 0;
