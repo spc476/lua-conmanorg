@@ -910,7 +910,10 @@ static int siglua_set(lua_State *const L)
   lua_setmetatable(L,-2);
   
   if (top == 0)
+  {
+    sigemptyset(set);
     return 1;
+  }
   
   if (lua_isboolean(L,1))
   {
