@@ -64,7 +64,26 @@ static const int m_magic_flags[] =
   MAGIC_ERROR
 };
 
-/**************************************************************************/
+/**************************************************************************
+*
+* Usage:	magicdb = magic.open([flag[,flag ...]])
+*
+* Desc:		Open the file magic database.
+*
+* Input:	flag (enum(flag))
+*			| 'debug'
+*			| 'symlink'
+*			| 'devices'
+*			| 'mime'
+*			| 'continue'
+*			| 'check'
+*			| 'preserve_atime'
+*			| 'raw'
+*			| 'error'
+*
+* Return:	magicdb (userdata(magic)) reference to magic database
+*
+*************************************************************************/
 
 static int magiclua_open(lua_State *const L)
 {
@@ -92,7 +111,13 @@ static int magiclua_open(lua_State *const L)
   return 1;
 }
 
-/**************************************************************************/
+/**************************************************************************
+*
+* Usage:	magicdb:close()
+*
+* Desc:		Close the file magic database.
+*
+*************************************************************************/
 
 static int magiclua_close(lua_State *const L)
 {
@@ -106,7 +131,16 @@ static int magiclua_close(lua_State *const L)
   return 0; 
 }
 
-/**************************************************************************/
+/**************************************************************************
+*
+* Usage:	error = magicdb:error()
+*
+* Desc:		Return the last error
+*
+* Return:	error (string) error message
+*
+***************************************************************************/
+
 static int magiclua_error(lua_State *const L)
 {
   const char *err;
@@ -120,7 +154,18 @@ static int magiclua_error(lua_State *const L)
   return 1;
 }
 
-/**************************************************************************/
+/**************************************************************************
+*
+* Usage:	okay,err = magicdb:setflags([flag[,flag...]])
+*
+* Desc:		Set flags on an open file magic database
+*
+* Input:	flag (enum(flag)) flags to set
+*
+* Return:	okay (boolean) true if successful, false on error
+*		err (integer) system error, 0 if success
+*
+*************************************************************************/
 
 static int magiclua_setflags(lua_State *const L)
 {
@@ -148,10 +193,22 @@ static int magiclua_setflags(lua_State *const L)
   }
   
   lua_pushboolean(L,true);
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
-/**************************************************************************/
+/**************************************************************************
+*
+* Usage:	okay,err = magicdb:load([file])
+*
+* Desc:		Load the file magic
+*
+* Input:	file (string/optional) filename of file containing magic
+*
+* Return:	okay (boolean) true if success, false if failre
+*		err (integer) system error, 0 if success
+*
+***************************************************************************/
 
 static int magiclua_load(lua_State *const L)
 {
@@ -173,6 +230,7 @@ static int magiclua_load(lua_State *const L)
   }
   
   lua_pushboolean(L,true);
+  lua_pushinteger(L,0);
   return 1;
 }
 
