@@ -86,6 +86,119 @@ static volatile lua_Hook      m_hook;
 static lua_State             *m_L;
 static struct datasig         m_handlers[NSIG];
 
+/**********************************************************************
+*
+* Map a signal back to a string.  This is a function and not a table because
+* I don't know the actual order (it can differ among systems), so I'm
+* relying upon the compiler to optimize this down for me.
+*
+***********************************************************************/
+
+static const char *sigtostr(int sig)
+{
+  switch(sig)
+  {
+    case SIGABRT: return "abrt";
+    case SIGFPE:  return "fpe";
+    case SIGILL:  return "ill";
+    case SIGINT:  return "int";
+    case SIGSEGV: return "segv";
+    case SIGTERM: return "term"; 
+
+#ifdef SIGALRM
+    case SIGALRM: return "alrm";
+#endif
+#ifdef SIGBUS
+    case SIGBUS: return "bus";
+#endif
+#ifdef SIGCHLD
+    case SIGCHLD: return "chld";
+#endif
+#ifdef SIGCLD
+#  ifndef __linux__
+    case SIGCLD: return "cld";
+#  endif
+#endif
+#ifdef SIGCONT
+    case SIGCONT: return "cont";
+#endif
+#ifdef SIGHUP
+    case SIGHUP: return "hup";
+#endif
+#ifdef SIGIO
+    case SIGIO:  return "io";
+#endif
+#ifdef SIGIOT
+#  ifndef __linux__
+    case SIGIOT: return "iot";
+#  endif
+#endif
+#ifdef SIGKILL
+    case SIGKILL: return "kill";
+#endif
+#ifdef SIGPIPE
+    case SIGPIPE: return "pipe";
+#endif
+#ifdef SIGPOLL
+#  ifndef __linux__
+    case SIGPOLL: return "poll";
+#  endif
+#endif
+#ifdef SIGPROF
+    case SIGPROF: return "prof";
+#endif
+#ifdef SIGPWR
+    case SIGPWR: return "pwr";
+#endif
+#ifdef SIGQUIT
+    case SIGQUIT: return "quit";
+#endif
+#ifdef SIGURG
+    case SIGURG: return "urg";
+#endif
+#ifdef SIGSTKFLT
+    case SIGSTKFLT: return "stkflt";
+#endif
+#ifdef SIGSTOP
+    case SIGSTOP: return "stop";
+#endif
+#ifdef SIGSYS
+    case SIGSYS: return "sys";
+#endif
+#ifdef SIGTRAP
+    case SIGTRAP: return "trap";
+#endif
+#ifdef SIGTSTP
+    case SIGTSTP: return "tstp";
+#endif
+#ifdef SIGTTIN
+    case SIGTTIN: return "ttin";
+#endif
+#ifdef SIGTTOU
+    case SIGTTOU: return "ttou";
+#endif
+#ifdef SIGUSR1
+    case SIGUSR1: return "usr1";
+#endif
+#ifdef SIGUSR2
+    case SIGUSR2: return "usr2";
+#endif
+#ifdef SIGVTALRM
+    case SIGVTALRM: return "vtalrm";
+#endif
+#ifdef SIGWINCH
+    case SIGWINCH: return "winch";
+#endif
+#ifdef SIGXCPU
+    case SIGXCPU: return "xcpu";
+#endif
+#ifdef SIGXFSZ
+    case SIGXFSZ: return "xfsz";
+#endif
+    default: return "(unknown)";
+  }
+}
+    
 /***************************************************************************
 *
 * The signal handler backend. We remove any Lua debug hooks (how we got here
@@ -112,7 +225,7 @@ static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
           m_handlers[i].triggered = 0;
           lua_pushinteger(L,m_handlers[i].coderef);
           lua_gettable(L,LUA_REGISTRYINDEX);      
-          lua_pushinteger(L,i);
+          lua_pushstring(L,sigtostr(i));
           if (lua_pcall(L,1,0,0) != 0)
             lua_error(L);
           sigprocmask(SIG_UNBLOCK,&m_handlers[i].blocked,NULL);
@@ -160,6 +273,165 @@ struct mapstrint
   const int         value;
 };
 
+static const struct mapstrint sigs[] =
+{
+  { "abort"		, SIGABRT	} ,	/* ANSI */
+  { "abrt"		, SIGABRT	} ,	/* ANSI */
+#ifdef SIGALRM
+  { "alarm"		, SIGALRM	} ,
+  { "alrm"		, SIGALRM	} ,
+#endif
+#ifdef SIGTRAP
+  { "breakpoint"	, SIGTRAP	} ,
+#endif
+#ifdef SIGBUS
+  { "bus"		, SIGBUS	} ,
+#endif
+#ifdef SIGCHLD
+  { "child"		, SIGCHLD	} ,
+  { "chld"		, SIGCHLD	} ,
+#endif
+#ifndef __linux__
+#  ifdef SIGCLD
+  { "cld"		, SIGCLD	} ,
+#  endif
+#endif
+#ifdef SIGCONT
+  { "cont"		, SIGCONT	} ,
+  { "continue"		, SIGCONT	} ,
+#endif
+#ifdef SIGSTKFLT
+  { "copstackfault"	, SIGSTKFLT	} ,
+#endif
+#ifdef SIGXCPU
+  { "cputime"		, SIGXCPU	} ,
+#endif
+#ifdef SIGEMT
+  { "emt"		, SIGEMT	} ,
+#endif
+#ifdef SIGLOST
+  { "filelock"		, SIGLOST	} ,
+#endif
+#ifdef SIGXFSZ
+  { "filesize"		, SIGXFSZ	} ,
+#endif
+  { "fpe"		, SIGFPE	} ,	/* ANSI */
+#ifdef SIGHUP
+  { "hangup"		, SIGHUP	} ,
+  { "hup"		, SIGHUP	} ,
+#endif
+  { "ill"		, SIGILL	} ,	/* ANSI */
+  { "illegal"		, SIGILL	} ,	/* ANSI */
+#ifdef SIGINFO
+  { "info"		, SIGINFO	} ,
+  { "information"	, SIGINFO	} ,
+#endif
+  { "int"		, SIGINT	} ,	/* ANSI */
+  { "interrupt"		, SIGINT	} ,	/* ANSI */
+#ifdef SIGIO
+  { "io"		, SIGIO		} ,
+#endif
+#ifndef __linux__
+#  ifdef SIGIOT
+  { "iot"		, SIGIOT	} ,
+#  endif
+#endif
+#ifdef SIGKILL
+  { "kill"		, SIGKILL	} ,
+#endif
+#ifdef SIGLOST
+  { "lost"		, SIGLOST	} ,
+#endif
+#ifdef SIGPIPE
+  { "pipe"		, SIGPIPE	} ,
+#endif
+#ifndef __linux__
+#  ifdef SIGPOLL
+  { "poll"		, SIGPOLL	} ,
+#  endif
+#endif
+#ifdef SIGPWR
+  { "power"		, SIGPWR	} ,
+#endif
+#ifdef SIGPROF
+  { "prof"		, SIGPROF	} ,
+  { "profile"		, SIGPROF	} ,
+#endif
+#ifdef SIGPWR
+  { "pwr"		, SIGPWR	} ,
+#endif
+#ifdef SIGQUIT
+  { "quit"		, SIGQUIT	} ,
+#endif
+  { "segv"		, SIGSEGV	} ,	/* ANSI */
+#ifdef SIGSTKFLT
+  { "stkflt"		, SIGSTKFLT	} ,
+#endif
+#ifdef SIGSTOP
+  { "stop"		, SIGSTOP	} ,
+#endif
+#ifdef SIGSYS
+  { "sys"		, SIGSYS	} ,
+#endif
+  { "term"		, SIGTERM	} ,	/* ANSI */
+  { "terminate"		, SIGTERM	} ,	/* ANSI */
+#ifdef SIGTRAP
+  { "trap"		, SIGTRAP	} ,
+#endif
+#ifdef SIGTSTP
+  { "tstp"		, SIGTSTP	} ,
+#endif
+#ifdef SIGTTIN
+  { "ttin"		, SIGTTIN	} ,
+#endif
+#ifdef SIGTTO
+  { "ttou"		, SIGTTOU	} ,
+  { "ttout"		, SIGTTOU	} ,
+#endif
+#ifdef SIGTTIN
+  { "ttyin"		, SIGTTIN	} ,
+#endif
+#ifdef SIGTTOU
+  { "ttyout"		, SIGTTOU	} ,    
+#endif
+#ifdef SIGTSTP
+  { "ttystop"		, SIGTSTP	} ,
+#endif
+#ifdef SIGUNUSED
+  { "unused"		, SIGUNUSED	} ,
+#endif
+#ifdef SIGURG
+  { "urg"		, SIGURG	} ,
+  { "urgent"		, SIGURG	} ,
+#endif
+#ifdef SIGUSR1
+  { "user1"		, SIGUSR1	} ,
+#endif
+#ifdef SIGUSR2
+  { "user2"		, SIGUSR2	} ,
+#endif
+#ifdef SIGUSR1
+  { "usr1"		, SIGUSR1	} ,
+#endif
+#ifdef SIGUSR2
+  { "usr2"		, SIGUSR2	} ,
+#endif
+#ifdef SIGVTALRM
+  { "vtalarm"		, SIGVTALRM	} ,
+  { "vtalrm"		, SIGVTALRM	} ,
+#endif
+#ifdef SIGWINCH
+  { "winch"		, SIGWINCH	} ,
+  { "windowchange"	, SIGWINCH	} ,
+#endif
+#ifdef SIGXCPU
+  { "xcpu"		, SIGXCPU	} ,
+#endif
+#ifdef SIGXFSZ
+  { "xfsz"		, SIGXFSZ	} ,
+#endif
+};
+
 /*--------------------------------------------------------------------*/
 
 static int mapstrintcmp(const void *needle,const void *haystack)
@@ -174,159 +446,6 @@ static int mapstrintcmp(const void *needle,const void *haystack)
 
 static int slua_tosignal(lua_State *const L,int idx)
 {
-  static const struct mapstrint sigs[] =
-  {
-    { "abort"		, SIGABRT	} ,	/* ANSI */
-    { "abrt"		, SIGABRT	} ,	/* ANSI */
-#ifdef SIGALRM
-    { "alarm"		, SIGALRM	} ,
-    { "alrm"		, SIGALRM	} ,
-#endif
-#ifdef SIGTRAP
-    { "breakpoint"	, SIGTRAP	} ,
-#endif
-#ifdef SIGBUS
-    { "bus"		, SIGBUS	} ,
-#endif
-#ifdef SIGCHLD
-    { "child"		, SIGCHLD	} ,
-    { "chld"		, SIGCHLD	} ,
-#endif
-#ifdef SIGCLD
-    { "cld"		, SIGCLD	} ,
-#endif
-#ifdef SIGCONT
-    { "cont"		, SIGCONT	} ,
-    { "continue"	, SIGCONT	} ,
-#endif
-#ifdef SIGSTKFLT
-    { "copstackfault"	, SIGSTKFLT	} ,
-#endif
-#ifdef SIGXCPU
-    { "cputime"		, SIGXCPU	} ,
-#endif
-#ifdef SIGEMT
-    { "emt"		, SIGEMT	} ,
-#endif
-#ifdef SIGLOST
-    { "filelock"	, SIGLOST	} ,
-#endif
-#ifdef SIGXFSZ
-    { "filesize"	, SIGXFSZ	} ,
-#endif
-    { "fpe"		, SIGFPE	} ,	/* ANSI */
-#ifdef SIGHUP
-    { "hangup"		, SIGHUP	} ,
-    { "hup"		, SIGHUP	} ,
-#endif
-    { "ill"		, SIGILL	} ,	/* ANSI */
-    { "illegal"		, SIGILL	} ,	/* ANSI */
-#ifdef SIGINFO
-    { "info"		, SIGINFO	} ,
-    { "information"	, SIGINFO	} ,
-#endif
-    { "int"		, SIGINT	} ,	/* ANSI */
-    { "interrupt"	, SIGINT	} ,	/* ANSI */
-#ifdef SIGIO
-    { "io"		, SIGIO		} ,
-#endif
-#ifdef SIGIOT
-    { "iot"		, SIGIOT	} ,
-#endif
-#ifdef SIGKILL
-    { "kill"		, SIGKILL	} ,
-#endif
-#ifdef SIGLOST
-    { "lost"		, SIGLOST	} ,
-#endif
-#ifdef SIGPIPE
-    { "pipe"		, SIGPIPE	} ,
-#endif
-#ifdef SIGPOLL
-    { "poll"		, SIGPOLL	} ,
-#endif
-#ifdef SIGPWR
-    { "power"		, SIGPWR	} ,
-#endif
-#ifdef SIGPROF
-    { "prof"		, SIGPROF	} ,
-    { "profile"		, SIGPROF	} ,
-#endif
-#ifdef SIGPWR
-    { "pwr"		, SIGPWR	} ,
-#endif
-#ifdef SIGQUIT
-    { "quit"		, SIGQUIT	} ,
-#endif
-    { "segv"		, SIGSEGV	} ,	/* ANSI */
-#ifdef SIGSTKFLT
-    { "stkflt"		, SIGSTKFLT	} ,
-#endif
-#ifdef SIGSTOP
-    { "stop"		, SIGSTOP	} ,
-#endif
-#ifdef SIGSYS
-    { "sys"		, SIGSYS	} ,
-#endif
-    { "term"		, SIGTERM	} ,	/* ANSI */
-    { "terminate"	, SIGTERM	} ,	/* ANSI */
-#ifdef SIGTRAP
-    { "trap"		, SIGTRAP	} ,
-#endif
-#ifdef SIGTSTP
-    { "tstp"		, SIGTSTP	} ,
-#endif
-#ifdef SIGTTIN
-    { "ttin"		, SIGTTIN	} ,
-#endif
-#ifdef SIGTTO
-    { "ttou"		, SIGTTOU	} ,
-    { "ttout"		, SIGTTOU	} ,
-#endif
-#ifdef SIGTTIN
-    { "ttyin"		, SIGTTIN	} ,
-#endif
-#ifdef SIGTTOU
-    { "ttyout"		, SIGTTOU	} ,    
-#endif
-#ifdef SIGTSTP
-    { "ttystop"		, SIGTSTP	} ,
-#endif
-#ifdef SIGUNUSED
-    { "unused"		, SIGUNUSED	} ,
-#endif
-#ifdef SIGURG
-    { "urg"		, SIGURG	} ,
-    { "urgent"		, SIGURG	} ,
-#endif
-#ifdef SIGUSR1
-    { "user1"		, SIGUSR1	} ,
-#endif
-#ifdef SIGUSR2
-    { "user2"		, SIGUSR2	} ,
-#endif
-#ifdef SIGUSR1
-    { "usr1"		, SIGUSR1	} ,
-#endif
-#ifdef SIGUSR2
-    { "usr2"		, SIGUSR2	} ,
-#endif
-#ifdef SIGVTALRM
-    { "vtalarm"		, SIGVTALRM	} ,
-    { "vtalrm"		, SIGVTALRM	} ,
-#endif
-#ifdef SIGWINCH
-    { "winch"		, SIGWINCH	} ,
-    { "windowchange"	, SIGWINCH	} ,
-#endif
-#ifdef SIGXCPU
-    { "xcpu"		, SIGXCPU	} ,
-#endif
-#ifdef SIGXFSZ
-    { "xfsz"		, SIGXFSZ	} ,
-#endif
-  };
-
   const struct mapstrint *entry = bsearch(
           luaL_checkstring(L,idx),
           sigs,
@@ -381,7 +500,7 @@ static int siglua_caught(lua_State *const L)
 *
 * Input:	signal (string) signal name
 *		handler (function(sig)/optional) handler for signal
-*		flags (table/optional) various flags:
+*		flags (string array/optional) various flags:
 *			* 'nochildstop'	if signal is 'child', do not
 *			|		receive notification when child
 *			|		prcess stops
@@ -400,10 +519,78 @@ static int siglua_caught(lua_State *const L)
 *
 *********************************************************************/
 
+static int slua_toflags(lua_State *const L,int idx)
+{
+  static const struct mapstrint tflags[] =
+  {
+    { "info"		, SA_SIGINFO	} ,
+    { "nochildstop"	, SA_NOCLDSTOP	} ,
+    { "nodefer"		, SA_NODEFER	} ,
+    { "nomask"		, SA_NOMASK	} ,
+    { "oneshot"		, SA_ONESHOT	} ,
+/*  { "onstack"		, SA_ONSTACK	} , */ /* need to think about this */
+    { "resethandler"	, SA_RESETHAND	} ,
+    { "restart"		, SA_RESTART	} ,
+  };
+  
+  if (lua_isnil(L,idx))
+    return 0;
+  
+  if (lua_isstring(L,idx))
+  {
+    const struct mapstrint *entry = bsearch(
+            lua_tostring(L,idx),
+            tflags,
+            sizeof(tflags) / sizeof(struct mapstrint),
+            sizeof(struct mapstrint),
+            mapstrintcmp
+    );
+    if (entry == NULL)
+      return luaL_error(L,"flag '%s' not supported",lua_tostring(L,idx));
+    else
+      return entry->value;
+  }
+  else if (lua_istable(L,idx))
+  {
+    const struct mapstrint *entry;
+    int                     flags;
+    int                     len;
+    int                     i;
+    
+    len   = lua_objlen(L,idx);
+    flags = 0;
+    
+    for (i = 1 ; i <= len; i++)
+    {
+      lua_pushinteger(L,i);
+      lua_gettable(L,idx);
+      entry = bsearch(
+                lua_tostring(L,-1),
+                tflags,
+                sizeof(tflags) / sizeof(struct mapstrint),
+                sizeof(struct mapstrint),
+                mapstrintcmp
+              );
+      if (entry == NULL)
+        return luaL_error(L,"flag '%s' not supported",lua_tostring(L,-1));
+      else
+        flags |= entry->value;
+    }
+    
+    return flags;
+  }
+  else
+    return luaL_error(L,"wrong type");
+}
+
+/*--------------------------------------------------------------------*/      
+
 static int siglua_catch(lua_State *const L)
 {
   struct sigaction act;
   int              sig;
+  
+  lua_settop(L,4);
   
   memset(&act,0,sizeof(act));
   sig = slua_tosignal(L,1);
@@ -422,6 +609,17 @@ static int siglua_catch(lua_State *const L)
     act.sa_mask             = *set;
     m_handlers[sig].blocked = *set;
   }
+  else
+    act.sa_flags = slua_toflags(L,3);
+  
+  if (lua_isuserdata(L,4))
+  {
+    sigset_t *set           = luaL_checkudata(L,4,TYPE_SIGSET);
+    act.sa_mask             = *set;
+    m_handlers[sig].blocked = *set;
+  }
+  else
+    act.sa_flags = slua_toflags(L,3);
   
   act.sa_handler = signal_handler;  
   errno = 0;
@@ -497,6 +695,33 @@ static int siglua_raise(lua_State *const L)
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
+}
+
+/**********************************************************************
+*
+* Usage:	defined = signal.defined(signal)
+*
+* Desc:		Return true or false if the given signal is defined
+*
+* Input:	signal (string) name of signal
+*
+* Return:	defined (boolean)
+*
+**********************************************************************/
+
+static int siglua_defined(lua_State *const L)
+{
+  lua_pushboolean(
+          L,
+          bsearch(
+                   luaL_checkstring(L,1),
+                   sigs,
+                   sizeof(sigs) / sizeof(struct mapstrint),
+                   sizeof(struct mapstrint),
+                   mapstrintcmp
+                  ) != NULL
+  );
+  return 1;
 }
 
 /**********************************************************************
@@ -646,7 +871,7 @@ static int siglua_suspend(lua_State *const L)
   lua_pushinteger(L,errno);
   return 1;
 }
-
+                
 /**********************************************************************
 * 
 * Usage:	set = signal.set([fill,][signal...])
@@ -818,6 +1043,7 @@ static const struct luaL_Reg m_sig_reg[] =
   { "ignore"	, siglua_ignore		} ,
   { "default"	, siglua_default	} ,
   { "raise"	, siglua_raise		} ,
+  { "defined"	, siglua_defined	} ,  
   { "SIGNAL"	, siglua_SIGNAL		} ,  
   { "allow"	, siglua_allow		} ,
   { "block"	, siglua_block		} ,
