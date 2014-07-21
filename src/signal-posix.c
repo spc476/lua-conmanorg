@@ -960,6 +960,14 @@ static int siglua_set(lua_State *const L)
 *
 ***********************************************************************/
 
+static int sigsetmeta___tostring(lua_State *const L)
+{
+  lua_pushfstring(L,"sigset (%p)",lua_touserdata(L,1));
+  return 1;
+}
+
+/**********************************************************************/
+
 static int sigsetmeta___index(lua_State *const L)
 {
   sigset_t *set = luaL_checkudata(L,1,TYPE_SIGSET);
@@ -1068,6 +1076,7 @@ static const struct luaL_Reg m_sig_reg[] =
 
 static const struct luaL_Reg m_sigset_meta[] =
 {
+  { "__tostring", sigsetmeta___tostring	} ,
   { "__index"	, sigsetmeta___index	} ,
   { "__newindex", sigsetmeta___newindex	} ,
   { "__add"	, sigsetmeta___add	} ,
