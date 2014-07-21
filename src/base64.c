@@ -251,7 +251,7 @@ static int b64meta_decode(lua_State *L)
 
 static int b64meta___tostring(lua_State *L)
 {
-  lua_pushfstring(L,"base64:%p",luaL_checkudata(L,1,TYPE_BASE64));
+  lua_pushfstring(L,"base64 (%p)",lua_touserdata(L,1));
   return 1;
 }
 

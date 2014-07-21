@@ -141,7 +141,7 @@ static int luametaiconv___call(lua_State *L)
 
 static int luametaiconv___tostring(lua_State *L)
 {
-  lua_pushfstring(L,"iconv (%p)",luaL_checkudata(L,1,TYPE_ICONV));
+  lua_pushfstring(L,"iconv (%p)",lua_touserdata(L,1));
   return 1;
 }
 

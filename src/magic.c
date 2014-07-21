@@ -264,11 +264,7 @@ static int magiclua___call(lua_State *const L)
 
 static int magiclua___tostring(lua_State *const L)
 {
-  magic_t *pm;
-  
-  assert(L != NULL);
-  pm = luaL_checkudata(L,1,TYPE_MAGIC);
-  lua_pushfstring(L,"MAGIC (%p)",(void *)pm);
+  lua_pushfstring(L,"magic (%p)",lua_touserdata(L,1));
   return 1;
 }
 

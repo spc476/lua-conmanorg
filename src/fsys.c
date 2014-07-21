@@ -429,7 +429,7 @@ static int fsys_getcwd(lua_State *L)
 
 static int dir_meta___tostring(lua_State *const L)
 {
-  lua_pushfstring(L,"DIR:%p",luaL_checkudata(L,1,TYPE_DIR));
+  lua_pushfstring(L,"directory (%p)",lua_touserdata(L,1));
   return 1;
 }
 

@@ -186,7 +186,7 @@ static int tcclua_dispose(lua_State *const L)
 
 static int tcclua___tostring(lua_State *const L)
 {
-  lua_pushfstring(L,"TCC:%p",luaL_checkudata(L,1,TYPE_TCC));
+  lua_pushfstring(L,"tcc (%p)",lua_touserdata(L,1));
   return 1;
 }
 

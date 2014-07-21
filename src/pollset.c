@@ -202,8 +202,7 @@ static int pollset_lua(lua_State *const L)
 
 static int polllua___tostring(lua_State *const L)
 {
-  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  lua_pushfstring(L,"SET:%d:%p",set->idx,(void *)set);
+  lua_pushfstring(L,"pollset (%p)",lua_touserdata(L,1));
   return 1;
 }
 
@@ -452,8 +451,7 @@ static int pollset_lua(lua_State *const L)
 
 static int polllua___tostring(lua_State *const L)
 {
-  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  lua_pushfstring(L,"SET:%d:%p",set->idx,(void *)set);
+  lua_pushfstring(L,"pollset (%p)",lua_touserdata(L,1));
   return 1;
 }
 
@@ -726,8 +724,7 @@ static int pollset_lua(lua_State *const L)
 
 static int polllua___tostring(lua_State *const L)
 {
-  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  lua_pushfstring(L,"SET:%d:%p",set->idx,(void *)set);
+  lua_pushfstring(L,"pollset (%p)",lua_touserdata(L,1));
   return 1;
 }
 

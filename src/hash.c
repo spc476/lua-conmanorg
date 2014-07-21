@@ -199,10 +199,7 @@ static int hashlua_sumhexa(lua_State *const L)
 
 static int hashlua___tostring(lua_State *const L)
 {
-  EVP_MD_CTX *ctx;
-  
-  ctx = luaL_checkudata(L,1,TYPE_HASH);
-  lua_pushfstring(L,"HASH:%p",(void *)ctx);
+  lua_pushfstring(L,"hash (%p)",lua_touserdata(L,1));
   return 1;
 }
 
