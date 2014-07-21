@@ -43,7 +43,7 @@ struct strintmap
 
 /*************************************************************************/
 
-const struct strintmap m_facilities[] =
+static const struct strintmap m_facilities[] =
 {
   { "auth"	, LOG_AUTH	} ,
   { "auth3"	, (13 << 3)	} ,
@@ -81,7 +81,7 @@ const struct strintmap m_facilities[] =
 
 #define MAX_FACILITY	(sizeof(m_facilities) / sizeof(struct strintmap))
 
-const struct strintmap m_levels[] = 
+static const struct strintmap m_levels[] = 
 {
   { "alert"	, LOG_ALERT	} ,
   { "crit"	, LOG_CRIT	} ,
@@ -99,7 +99,7 @@ const struct strintmap m_levels[] =
 
 #define MAX_LEVEL	(sizeof(m_levels) / sizeof(struct strintmap))
 
-char m_ident[1024];
+static char m_ident[1024];
 
 /************************************************************************/
 
