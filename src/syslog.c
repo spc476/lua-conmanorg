@@ -126,7 +126,24 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
     return 0;
 }
 
-/************************************************************************/
+/************************************************************************
+*
+* Usage:	syslog.open(ident,facility[,flags])
+*
+* Desc:		Establish the identyity string and default facility to
+*		log information under.
+*
+* Input:	ident (string) identity string
+*		facility (string number) facility to use.
+*		flags (table/optional) flags, fields are:
+*			| pid=true	log pid
+*			| cons=true	log to console
+*			| nodelay=true	open socket immediately
+*			| ndelay=true		"
+*			| odelay=true	wait before opening socket
+*			| nowait=true	log immediately
+*
+************************************************************************/
 
 static int syslog_open(lua_State *L)
 {
@@ -177,7 +194,13 @@ static int syslog_open(lua_State *L)
   return 0;
 }
 
-/***********************************************************************/
+/***********************************************************************
+*
+* Usage:	syslog.close()
+*
+* Desc:		Close the logging channel
+*
+* *********************************************************************/
 
 static int syslog_close(lua_State *L __attribute__((unused)))
 {
@@ -185,7 +208,17 @@ static int syslog_close(lua_State *L __attribute__((unused)))
   return 0;
 }
 
-/***********************************************************************/
+/***********************************************************************
+*
+* Usage:	syslog.log(level,format[,...])
+*		| syslog(level,format[,...])
+*
+* Desc:		Log information at a given level
+*
+* Input:	level (string number) level number
+*		format (string) format string
+*
+************************************************************************/
 
 static int syslog_log(lua_State *L)
 {
