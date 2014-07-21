@@ -185,6 +185,24 @@ struct mapstrint
   const int         value;
 };
 
+/*-------------------------------------------------
+; NOTE: the following list must be kept sorted.
+;--------------------------------------------------*/
+
+static const struct mapstrint sigs[] =
+{
+  { "abort"	, SIGABRT	} ,
+  { "abrt"	, SIGABRT	} ,
+  { "fpe"	, SIGFPE	} ,
+  { "ill"	, SIGILL	} ,
+  { "illegal"	, SIGILL	} ,
+  { "int"	, SIGINT	} ,
+  { "interrupt"	, SIGINT	} ,
+  { "segv"	, SIGSEGV	} ,
+  { "term"	, SIGTERM	} ,
+  { "terminate"	, SIGTERM	} ,
+};
+
 /*--------------------------------------------------------------------*/
 
 static int mapstrintcmp(const void *needle,const void *haystack)
@@ -198,25 +216,7 @@ static int mapstrintcmp(const void *needle,const void *haystack)
 /*--------------------------------------------------------------------*/
 
 static int slua_tosignal(lua_State *const L,int idx)
-{
-  /*-------------------------------------------------
-  ; NOTE: the following list must be kept sorted.
-  ;--------------------------------------------------*/
-  
-  static const struct mapstrint sigs[] =
-  {
-    { "abort"		, SIGABRT	} ,
-    { "abrt"		, SIGABRT	} ,
-    { "fpe"		, SIGFPE	} ,
-    { "ill"		, SIGILL	} ,
-    { "illegal"		, SIGILL	} ,
-    { "int"		, SIGINT	} ,
-    { "interrupt"	, SIGINT	} ,
-    { "segv"		, SIGSEGV	} ,
-    { "term"		, SIGTERM	} ,
-    { "terminate"	, SIGTERM	} ,
-  };
-  
+{  
   struct mapstrint *entry = bsearch(
           luaL_checkstring(L,idx),
           sigs,
@@ -397,6 +397,33 @@ static int siglua_raise(lua_State *const L)
 
 /**********************************************************************
 *
+* Usage:        defined = signal.defined(signal)
+*
+* Desc:         Return true or false if the given signal is defined
+*
+* Input:        signal (string) name of signal
+*
+* Return:       defined (boolean)
+*
+**********************************************************************/
+
+static int siglua_defined(lua_State *const L)
+{
+  lua_pushboolean(
+          L,
+          bsearch(
+                   luaL_checkstring(L,1),
+                   sigs,
+                   sizeof(sigs) / sizeof(struct mapstrint),
+                   sizeof(struct mapstrint),
+                   mapstrintcmp
+                  ) != NULL
+  );
+  return 1;
+}
+
+/**********************************************************************
+*
 * Usage:	implementation = signal.SIGNAL()
 *
 * Desc:		Return the implementation of this module.
@@ -420,6 +447,7 @@ static const struct luaL_Reg m_sig_reg[] =
   { "ignore"	, siglua_ignore		} ,
   { "default"	, siglua_default	} ,
   { "raise"	, siglua_raise		} ,
+  { "defined"	, siglua_defined	} ,
   { "SIGNAL"	, siglua_SIGNAL		} ,
   { NULL	, NULL			}
 };

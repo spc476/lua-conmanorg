@@ -35,10 +35,9 @@
           signal.set('int')
         )
         
-        signal.catch('int',function(sig) print("interrupt") end)
-        
+        signal.catch('int',function(sig) print("interrupt") end)        
         signal.raise('term')
-        
+
 *
 *********************************************************************/
 
@@ -206,6 +205,9 @@ static const char *sigtostr(int sig)
 * there's a function reference, call the function.  After all signals have 
 * been processed, restore any Lua debug hooks and continue.
 *
+* When the handler is finished, unblock the signals.  If there's an error in
+* the handler, signals will still be blocked.  Buyer beware.
+*
 ****************************************************************************/
 
 static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
@@ -243,6 +245,11 @@ static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
 * If not already handling signals, save any Lua debug hooks, then set one so
 * that anything that happens will trap to the signal backend.
 *
+* Also, even though the handler for this signal may have other signals
+* blocked that doesn't mean they'll be blocked when the actual handler runs
+* (since it runs in non-signal time).  So, in the handler, we block the set
+* of signals to ensure the behavior of blocked signals during the handler.
+*
 ****************************************************************************/
 
 static void signal_handler(int sig)
@@ -272,6 +279,10 @@ struct mapstrint
   const char *const text;
   const int         value;
 };
+
+/*-------------------------------------------------  
+; NOTE: the following list must be kept sorted.  
+;--------------------------------------------------*/  
 
 static const struct mapstrint sigs[] =
 {
