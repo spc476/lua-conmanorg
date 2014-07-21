@@ -459,7 +459,7 @@ int siglua_raise(lua_State *const L)
 {
   errno = 0;
   raise(luaL_checkinteger(L,1));
-  lua_pushbooleal(L,errno == 0);
+  lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
 }
