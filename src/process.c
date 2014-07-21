@@ -123,7 +123,7 @@ static const struct strint m_sigs[] =
 #ifdef SIGALRM
   { "ALRM"	, SIGALRM	} ,
 #endif
-#ifdef SIGBUG
+#ifdef SIGBUS
   { "BUS"	, SIGBUS	} ,
 #endif
 #ifdef SIGCHLD
