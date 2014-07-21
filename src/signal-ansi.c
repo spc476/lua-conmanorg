@@ -48,6 +48,10 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
+#  error This module is for Lua 5.1
+#endif
+
 /**********************************************************************
 *
 * No assumptions are being made about the actual SIG* values (they could be
