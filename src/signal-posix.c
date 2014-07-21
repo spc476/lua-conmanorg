@@ -395,7 +395,7 @@ static const struct mapstrint sigs[] =
 #ifdef SIGTTIN
   { "ttin"		, SIGTTIN	} ,
 #endif
-#ifdef SIGTTO
+#ifdef SIGTTOU
   { "ttou"		, SIGTTOU	} ,
   { "ttout"		, SIGTTOU	} ,
 #endif
