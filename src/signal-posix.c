@@ -517,11 +517,9 @@ static int siglua_caught(lua_State *const L)
 *			|		prcess stops
 *			* 'oneshot'	restore default action after handler
 *			* 'resethandler'		"
-*			* 'onstack'	use alternative stack
 *			* 'restart'	restart system calls
 *			* 'nomask'	do not mask this signal
 *			* 'nodefer'		"
-*			* 'info'	receive additonal information
 *		blocked (userdata(set)/optional) signals to block during
 *			| handler
 *
@@ -534,7 +532,7 @@ static int slua_toflags(lua_State *const L,int idx)
 {
   static const struct mapstrint tflags[] =
   {
-    { "info"		, SA_SIGINFO	} ,
+/*  { "info"		, SA_SIGINFO	} , */ /* need to think about this */
     { "nochildstop"	, SA_NOCLDSTOP	} ,
     { "nodefer"		, SA_NODEFER	} ,
     { "nomask"		, SA_NOMASK	} ,
