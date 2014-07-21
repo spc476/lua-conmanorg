@@ -1076,13 +1076,13 @@ static const struct luaL_Reg m_sigset_meta[] =
   { NULL	, NULL			}
 };
  
-int luaopen_signal(lua_State *const L)
+int luaopen_posix(lua_State *const L)
 {
   for (int i = 0 ; i < NSIG ; i++)
     m_handlers[i].coderef = LUA_NOREF;
   m_L = L; 
   luaL_newmetatable(L,TYPE_SIGSET);
   luaL_register(L,NULL,m_sigset_meta); 
-  luaL_register(L,"signal",m_sig_reg);
+  luaL_register(L,"org.conman.signal-posix",m_sig_reg);
   return 1;
 }

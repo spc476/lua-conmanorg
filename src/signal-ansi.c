@@ -452,10 +452,10 @@ static const struct luaL_Reg m_sig_reg[] =
   { NULL	, NULL			}
 };
 
-int luaopen_signal(lua_State *const L)
+int luaopen_ansi(lua_State *const L)
 {
   m_L = L;
-  luaL_register(L,"signal",m_sig_reg);
+  luaL_register(L,"org.conman.signal-ansi",m_sig_reg);
   return 1;
 }
 
