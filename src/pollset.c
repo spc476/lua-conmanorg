@@ -299,14 +299,17 @@ static int polllua_remove(lua_State *const L)
 
 static int polllua_events(lua_State *const L)
 {
-  pollset__t *set     = luaL_checkudata(L,1,TYPE_POLL);
-  int         timeout = luaL_optinteger(L,2,-1);
+  pollset__t *set      = luaL_checkudata(L,1,TYPE_POLL);
+  lua_Number  dtimeout = luaL_optnumber(L,2,-1.0);
+  int         timeout;
   int         count;
   size_t      idx;
   int         i;
   
-  if (timeout > 0)
-    timeout *= 1000;
+  if (dtimeout < 0)
+    timeout = -1;
+  else
+    timeout = (int)(dtimeout * 1000.0);
   
   struct epoll_event events[set->idx];
   
@@ -583,11 +586,14 @@ static int polllua_remove(lua_State *const L)
 
 static int polllua_events(lua_State *const L)
 {
-  pollset__t *set     = luaL_checkudata(L,1,TYPE_POLL);
-  int         timeout = luaL_optinteger(L,2,-1);
-  
-  if (timeout > 0)
-    timeout *= 1000;
+  pollset__t *set      = luaL_checkudata(L,1,TYPE_POLL);
+  lua_Number  dtimeout = luaL_optnumber(L,2,-1.0);
+  int         timeout;
+
+  if (dtimeout < 0)
+    timeout = -1;
+  else
+    timeout = (int)(dtimeout * 1000.0);  
   
   if (poll(set->set,set->idx,timeout) < 0)
   {
