@@ -30,6 +30,19 @@ else
 end
 
 -- *********************************************************************
+--
+-- Usage:	day = date.tojulianday([date])
+--
+-- Desc:	Convert a date to a Julian day.
+--
+-- Input:	date (table/optional) given date or current date
+--			* year  = 1999
+--			* month = 1..12
+--			* day   = 1 .. 31
+--
+-- Return:	day (number) Julian day
+-- 
+-- *********************************************************************
 
 function tojulianday(date)
   local date = date or os.date("*t")
@@ -48,6 +61,19 @@ function tojulianday(date)
 end
 
 -- **********************************************************************
+--
+-- Usage:	date = date.fromjulianday(day)
+--
+-- Desc:	Convert a Julian day to it's corresponding date
+--
+-- Input:	day (number) Julian day
+--
+-- Return:	date (table)
+--			* year  = ...
+--			* month = 1 .. 12
+--			* day   = 1 .. 31
+-- 
+-- *********************************************************************
 
 function fromjulianday(jd)
   local a = jd + 32044
@@ -67,6 +93,20 @@ function fromjulianday(jd)
 end
 
 -- ************************************************************************
+--
+-- Usage:	day = date.dayofweek(date)
+--
+-- Desc:	Calculate the day of the week (1 .. 7, 1 = Sunday) of
+--		the given date.
+--
+-- Input:	date (table)
+--			* year  = ...
+--			* month = 1 .. 12
+--			* day   = 1 .. 31
+--
+-- Return:	day (number) 1..7, 1 = Sunday
+-- 
+-- *********************************************************************
 
 function dayofweek(date)
   local a = floor((14 - date.month) / 12)
