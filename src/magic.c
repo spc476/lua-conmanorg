@@ -168,6 +168,9 @@ static int magicmeta_flags(lua_State *const L)
     flags |= m_magic_flags[luaL_checkoption(L,i,NULL,m_magic_options)];
   
   int rc = magic_setflags(*pm,flags);
+  if (rc == 0)
+    rc = magic_load(*pm,NULL);
+  
   lua_pushboolean(L,rc == 0);
   lua_pushinteger(L,rc);
   return 2;
