@@ -103,103 +103,67 @@ static const char *sigtostr(int sig)
 {
   switch(sig)
   {
-    case SIGABRT: return "abrt";
-    case SIGFPE:  return "fpe";
-    case SIGILL:  return "ill";
-    case SIGINT:  return "int";
-    case SIGSEGV: return "segv";
-    case SIGTERM: return "term"; 
+    case SIGABRT:   return "abrt";
+    case SIGFPE:    return "fpe";
+    case SIGILL:    return "ill";
+    case SIGINT:    return "int";
+    case SIGSEGV:   return "segv";
+    case SIGTERM:   return "term"; 
 
-#ifdef SIGALRM
-    case SIGALRM: return "alrm";
-#endif
-#ifdef SIGBUS
-    case SIGBUS: return "bus";
-#endif
-#ifdef SIGCHLD
-    case SIGCHLD: return "chld";
-#endif
-#ifdef SIGCLD
-#  ifndef __linux__
-    case SIGCLD: return "cld";
-#  endif
-#endif
-#ifdef SIGCONT
-    case SIGCONT: return "cont";
-#endif
-#ifdef SIGHUP
-    case SIGHUP: return "hup";
-#endif
-#ifdef SIGIO
-    case SIGIO:  return "io";
-#endif
-#ifdef SIGIOT
-#  ifndef __linux__
-    case SIGIOT: return "iot";
-#  endif
-#endif
-#ifdef SIGKILL
-    case SIGKILL: return "kill";
-#endif
-#ifdef SIGPIPE
-    case SIGPIPE: return "pipe";
-#endif
-#ifdef SIGPOLL
-#  ifndef __linux__
-    case SIGPOLL: return "poll";
-#  endif
-#endif
-#ifdef SIGPROF
-    case SIGPROF: return "prof";
+    case SIGALRM:   return "alrm";
+    case SIGBUS:    return "bus";
+    case SIGCHLD:   return "chld";
+    case SIGCONT:   return "cont";
+    case SIGHUP:    return "hup";
+    case SIGKILL:   return "kill";
+    case SIGPIPE:   return "pipe";
+    case SIGPOLL:   return "poll";
+    case SIGPROF:   return "prof";
+    case SIGQUIT:   return "quit";
+    case SIGURG:    return "urg";
+    case SIGSTOP:   return "stop";
+    case SIGSYS:    return "sys";
+    case SIGTRAP:   return "trap";
+    case SIGTSTP:   return "tstp";
+    case SIGTTIN:   return "ttin";
+    case SIGTTOU:   return "ttou";
+    case SIGUSR1:   return "usr1";
+    case SIGUSR2:   return "usr2";
+    case SIGVTALRM: return "vtalrm";
+    case SIGXCPU:   return "xcpu";
+    case SIGXFSZ:   return "xfsz";
+
+#ifdef SIGEMT
+    case SIGEMT: return "emt";
 #endif
 #ifdef SIGPWR
     case SIGPWR: return "pwr";
 #endif
-#ifdef SIGQUIT
-    case SIGQUIT: return "quit";
-#endif
-#ifdef SIGURG
-    case SIGURG: return "urg";
-#endif
 #ifdef SIGSTKFLT
     case SIGSTKFLT: return "stkflt";
-#endif
-#ifdef SIGSTOP
-    case SIGSTOP: return "stop";
-#endif
-#ifdef SIGSYS
-    case SIGSYS: return "sys";
-#endif
-#ifdef SIGTRAP
-    case SIGTRAP: return "trap";
-#endif
-#ifdef SIGTSTP
-    case SIGTSTP: return "tstp";
-#endif
-#ifdef SIGTTIN
-    case SIGTTIN: return "ttin";
-#endif
-#ifdef SIGTTOU
-    case SIGTTOU: return "ttou";
-#endif
-#ifdef SIGUSR1
-    case SIGUSR1: return "usr1";
-#endif
-#ifdef SIGUSR2
-    case SIGUSR2: return "usr2";
-#endif
-#ifdef SIGVTALRM
-    case SIGVTALRM: return "vtalrm";
 #endif
 #ifdef SIGWINCH
     case SIGWINCH: return "winch";
 #endif
-#ifdef SIGXCPU
-    case SIGXCPU: return "xcpu";
+#ifdef SIGLOST
+    case SIGLOST: return "lost";
 #endif
-#ifdef SIGXFSZ
-    case SIGXFSZ: return "xfsz";
+#ifdef SIGINFO
+    case SIGINFO: return "info";
 #endif
+
+#ifndef __linux__
+#  ifdef SIGCLD
+    case SIGCLD: return "cld";
+#  endif
+#  ifdef SIGIO
+    case SIGIO:  return "io";
+#  endif
+#  ifdef SIGIOT
+    case SIGIOT: return "iot";
+#  endif
+#endif
+
     default: return "(unknown)";
   }
 }
@@ -255,7 +219,6 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
          }
          break;
          
-#ifdef SIGBUS         
     case SIGBUS:
          switch(code)
          {
@@ -271,8 +234,7 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
            default:            break;
          }
          break;
-#endif
-#ifdef SIGTRAP
+
     case SIGTRAP:
          switch(code)
          {
@@ -287,8 +249,7 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
            default:          break;
          }
          break;
-#endif
-#ifdef SIGCHLD
+
     case SIGCHLD:
          switch(code)
          {
@@ -301,8 +262,7 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
            default:            break;
          }
          break;
-#endif
-#if defined(SIGPOLL)
+
     case SIGPOLL:
          switch(code)
          {
@@ -315,7 +275,6 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
            default:         break;
          }
          break;
-#endif
 
     default:
          break;
@@ -369,9 +328,7 @@ static void slua_pushinfo(lua_State *const L,siginfo_t *const info)
   
   switch(info->si_signo)
   {
-#ifdef SIGBUS
     case SIGBUS:
-#endif
     case SIGILL:
     case SIGFPE:
     case SIGSEGV:
@@ -379,14 +336,11 @@ static void slua_pushinfo(lua_State *const L,siginfo_t *const info)
          lua_setfield(L,-2,"addr");
          break;
 
-#if defined(SIGPOLL)
     case SIGPOLL:
          lua_pushnumber(L,info->si_band);
          lua_setfield(L,-2,"band");
          break;
-#endif
 
-#ifdef SIGCHLD
     case SIGCHLD:
          lua_createtable(L,0,8);
          lua_pushinteger(L,info->si_pid);
@@ -428,14 +382,13 @@ static void slua_pushinfo(lua_State *const L,siginfo_t *const info)
            lua_setfield(L,-2,"description");
            lua_pushliteral(L,"terminated");
            lua_setfield(L,-2,"status");
-#  ifdef WCOREDUMP
+#ifdef WCOREDUMP
            lua_pushboolean(L,WCOREDUMP(info->si_status));
            lua_setfield(L,-2,"core");
-#  endif
+#endif
          }
          lua_setfield(L,-2,"status");
          break;
-#endif
 
     default:
          break;
@@ -562,159 +515,118 @@ static const struct mapstrint sigs[] =
 {
   { "abort"		, SIGABRT	} ,	/* ANSI */
   { "abrt"		, SIGABRT	} ,	/* ANSI */
-#ifdef SIGALRM
   { "alarm"		, SIGALRM	} ,
   { "alrm"		, SIGALRM	} ,
-#endif
-#ifdef SIGTRAP
   { "breakpoint"	, SIGTRAP	} ,
-#endif
-#ifdef SIGBUS
   { "bus"		, SIGBUS	} ,
-#endif
-#ifdef SIGCHLD
   { "child"		, SIGCHLD	} ,
   { "chld"		, SIGCHLD	} ,
-#endif
+
 #ifndef __linux__
 #  ifdef SIGCLD
   { "cld"		, SIGCLD	} ,
 #  endif
 #endif
-#ifdef SIGCONT
+
   { "cont"		, SIGCONT	} ,
   { "continue"		, SIGCONT	} ,
-#endif
+
 #ifdef SIGSTKFLT
   { "copstackfault"	, SIGSTKFLT	} ,
 #endif
-#ifdef SIGXCPU
+
   { "cputime"		, SIGXCPU	} ,
-#endif
+
 #ifdef SIGEMT
   { "emt"		, SIGEMT	} ,
 #endif
+
 #ifdef SIGLOST
   { "filelock"		, SIGLOST	} ,
 #endif
-#ifdef SIGXFSZ
+
   { "filesize"		, SIGXFSZ	} ,
-#endif
   { "fpe"		, SIGFPE	} ,	/* ANSI */
-#ifdef SIGHUP
   { "hangup"		, SIGHUP	} ,
   { "hup"		, SIGHUP	} ,
-#endif
   { "ill"		, SIGILL	} ,	/* ANSI */
   { "illegal"		, SIGILL	} ,	/* ANSI */
+
 #ifdef SIGINFO
   { "info"		, SIGINFO	} ,
   { "information"	, SIGINFO	} ,
 #endif
+
   { "int"		, SIGINT	} ,	/* ANSI */
   { "interrupt"		, SIGINT	} ,	/* ANSI */
-#ifdef SIGIO
+
+#ifndef __linux__
+#  ifdef SIGIO
   { "io"		, SIGIO		} ,
+#  endif
 #endif
+
 #ifndef __linux__
 #  ifdef SIGIOT
   { "iot"		, SIGIOT	} ,
 #  endif
 #endif
-#ifdef SIGKILL
+
   { "kill"		, SIGKILL	} ,
-#endif
+
 #ifdef SIGLOST
   { "lost"		, SIGLOST	} ,
 #endif
-#ifdef SIGPIPE
+
   { "pipe"		, SIGPIPE	} ,
-#endif
-#ifndef __linux__
-#  ifdef SIGPOLL
   { "poll"		, SIGPOLL	} ,
-#  endif
-#endif
+
 #ifdef SIGPWR
   { "power"		, SIGPWR	} ,
 #endif
-#ifdef SIGPROF
+
   { "prof"		, SIGPROF	} ,
   { "profile"		, SIGPROF	} ,
-#endif
+
 #ifdef SIGPWR
   { "pwr"		, SIGPWR	} ,
 #endif
-#ifdef SIGQUIT
+
   { "quit"		, SIGQUIT	} ,
-#endif
   { "segv"		, SIGSEGV	} ,	/* ANSI */
+
 #ifdef SIGSTKFLT
   { "stkflt"		, SIGSTKFLT	} ,
 #endif
-#ifdef SIGSTOP
+
   { "stop"		, SIGSTOP	} ,
-#endif
-#ifdef SIGSYS
   { "sys"		, SIGSYS	} ,
-#endif
   { "term"		, SIGTERM	} ,	/* ANSI */
   { "terminate"		, SIGTERM	} ,	/* ANSI */
-#ifdef SIGTRAP
   { "trap"		, SIGTRAP	} ,
-#endif
-#ifdef SIGTSTP
   { "tstp"		, SIGTSTP	} ,
-#endif
-#ifdef SIGTTIN
   { "ttin"		, SIGTTIN	} ,
-#endif
-#ifdef SIGTTOU
   { "ttou"		, SIGTTOU	} ,
   { "ttout"		, SIGTTOU	} ,
-#endif
-#ifdef SIGTTIN
   { "ttyin"		, SIGTTIN	} ,
-#endif
-#ifdef SIGTTOU
   { "ttyout"		, SIGTTOU	} ,    
-#endif
-#ifdef SIGTSTP
   { "ttystop"		, SIGTSTP	} ,
-#endif
-#ifdef SIGUNUSED
-  { "unused"		, SIGUNUSED	} ,
-#endif
-#ifdef SIGURG
   { "urg"		, SIGURG	} ,
   { "urgent"		, SIGURG	} ,
-#endif
-#ifdef SIGUSR1
   { "user1"		, SIGUSR1	} ,
-#endif
-#ifdef SIGUSR2
   { "user2"		, SIGUSR2	} ,
-#endif
-#ifdef SIGUSR1
   { "usr1"		, SIGUSR1	} ,
-#endif
-#ifdef SIGUSR2
   { "usr2"		, SIGUSR2	} ,
-#endif
-#ifdef SIGVTALRM
   { "vtalarm"		, SIGVTALRM	} ,
   { "vtalrm"		, SIGVTALRM	} ,
-#endif
+
 #ifdef SIGWINCH
   { "winch"		, SIGWINCH	} ,
   { "windowchange"	, SIGWINCH	} ,
 #endif
-#ifdef SIGXCPU
+
   { "xcpu"		, SIGXCPU	} ,
-#endif
-#ifdef SIGXFSZ
   { "xfsz"		, SIGXFSZ	} ,
-#endif
 };
 
 /*--------------------------------------------------------------------*/
