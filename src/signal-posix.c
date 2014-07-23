@@ -76,6 +76,8 @@ struct datasig
   volatile sig_atomic_t triggered;
   int                   coderef;
   sigset_t              blocked;
+  siginfo_t             info;
+  bool                  use_info;
 };
 
 /**********************************************************************/
@@ -201,7 +203,245 @@ static const char *sigtostr(int sig)
     default: return "(unknown)";
   }
 }
+
+/************************************************************************
+*
+* Map a reason code to a string.  Again, because of implementation details,
+* I'm not going to assume the various codes don't overlap, so I'm going to
+* bake this cake by the book!  I certainly don't want a messy recipe.
+*
+*************************************************************************/
+
+static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
+{
+  switch(sig)
+  {
+    case SIGILL:
+         switch(code)
+         {
+           case ILL_ILLOPC: return "ILL_ILLOPC";
+           case ILL_ILLOPN: return "ILL_ILLOPN";
+           case ILL_ILLADR: return "ILL_ILLADR";
+           case ILL_ILLTRP: return "ILL_ILLTRP";
+           case ILL_PRVOPC: return "ILL_PRVOPC";
+           case ILL_PRVREG: return "ILL_PRVREG";
+           case ILL_COPROC: return "ILL_COPROC";
+           case ILL_BADSTK: return "ILL_BADSTK";
+           default:         break;
+         }
+         break;
+         
+    case SIGFPE:
+         switch(code)
+         {
+           case FPE_INTDIV: return "FPE_INTDIV";
+           case FPE_INTOVF: return "FPE_INTOVF";
+           case FPE_FLTDIV: return "FPE_FLTDIV";
+           case FPE_FLTOVF: return "FPE_FLTOVF";
+           case FPE_FLTUND: return "FPE_FLTUND";
+           case FPE_FLTRES: return "FPE_FLTRES";
+           case FPE_FLTINV: return "FPE_FLTINV";
+           case FPE_FLTSUB: return "FPE_FLTSUB";
+           default:         break;
+         }
+         break;
     
+    case SIGSEGV:
+         switch(code)
+         {
+           case SEGV_MAPERR: return "SEGV_MAPERR";
+           case SEGV_ACCERR: return "SEGV_ACCERR";
+           default:          break;
+         }
+         break;
+         
+#ifdef SIGBUS         
+    case SIGBUS:
+         switch(code)
+         {
+           case BUS_ADRALN:    return "BUS_ADRALN";
+           case BUS_ADRERR:    return "BUS_ADRERR";
+           case BUS_OBJERR:    return "BUS_OBJERR";
+#  ifdef BUS_MCEERR_AO
+           case BUS_MCEERR_AO: return "BUS_MCEEFF_AO";
+#  endif
+#  ifdef BUS_MCEERR_AR
+           case BUS_MCEERR_AR: return "BUS_MCEERR_AR";
+#  endif
+           default:            break;
+         }
+         break;
+#endif
+#ifdef SIGTRAP
+    case SIGTRAP:
+         switch(code)
+         {
+           case TRAP_BRKPT:  return "TRAP_BRKPT";
+           case TRAP_TRACE:  return "TRAP_TRACE";
+#  ifdef TRAP_BRANCH
+           case TRAP_BRANCH: return "TRAP_BRANCH";
+#  endif
+#  ifdef TRAP_HWBKPT
+           case TRAP_HWBKPT: return "TRAP_HWBKPT";
+#  endif
+           default:          break;
+         }
+         break;
+#endif
+#ifdef SIGCHLD
+    case SIGCHLD:
+         switch(code)
+         {
+           case CLD_EXITED:    return "CLD_EXITED";
+           case CLD_KILLED:    return "CLD_KILLED";
+           case CLD_DUMPED:    return "CLD_DUMPED";
+           case CLD_TRAPPED:   return "CLD_TRAPPED";
+           case CLD_STOPPED:   return "CLD_STOPPED";
+           case CLD_CONTINUED: return "CLD_CONTINUED";
+           default:            break;
+         }
+         break;
+#endif
+#if defined(SIGPOLL)
+    case SIGPOLL:
+         switch(code)
+         {
+           case POLL_IN:    return "POLL_IN";
+           case POLL_OUT:   return "POLL_OUT";
+           case POLL_MSG:   return "POLL_MSG";
+           case POLL_ERR:   return "POLL_ERR";
+           case POLL_PRI:   return "POLL_PRI";
+           case POLL_HUP:   return "POLL_HUP";
+           default:         break;
+         }
+         break;
+#endif
+
+    default:
+         break;
+  }
+  
+  switch(code)
+  {
+    case SI_USER:    return "SI_USER";
+    case SI_QUEUE:   return "SI_QUEUE";
+    case SI_TIMER:   return "SI_TIMER";
+    case SI_ASYNCIO: return "SI_ASYNCIO";
+    case SI_MESGQ:   return "SI_MESGQ";
+    default:         break;
+  }
+  
+  snprintf(dst,dstsiz,"%d",code);
+  return dst;
+}
+
+/***************************************************************************
+*
+* Push additional signal information onto the Lua stack.  This is a table
+* with the following fields:
+*
+*	signal (enum)	signal name
+*	errno  (number)	system error value
+*	code   (enum)	signal code
+*	status (table)	SIGCHLD only---child process status
+*		pid (number)	Process ID
+*		uid (number)	User ID
+*		rc  (number)	exit value or signal
+*		description (string/optional) signal description
+*		status (enum)	'terminated' | 'stopped' | 'normal'
+*		core (boolean/optional) core file dumped
+*	addr    (number/optional) address of faulting instruction
+*	band	(number/optional) band event (SIGPOLL or SIGIO)
+*
+**************************************************************************/
+
+static void slua_pushinfo(lua_State *const L,siginfo_t *const info)
+{
+  char code[65];
+  
+  lua_createtable(L,0,6);
+  lua_pushstring(L,sigtostr(info->si_signo));
+  lua_setfield(L,-2,"signal");
+  lua_pushinteger(L,info->si_errno);
+  lua_setfield(L,-2,"errno");
+  lua_pushstring(L,codetostr(info->si_signo,info->si_code,code,sizeof(code)));
+  lua_setfield(L,-2,"code");
+  
+  switch(info->si_signo)
+  {
+#ifdef SIGBUS
+    case SIGBUS:
+#endif
+    case SIGILL:
+    case SIGFPE:
+    case SIGSEGV:
+         lua_pushinteger(L,(intptr_t)info->si_addr);
+         lua_setfield(L,-2,"addr");
+         break;
+
+#if defined(SIGPOLL)
+    case SIGPOLL:
+         lua_pushnumber(L,info->si_band);
+         lua_setfield(L,-2,"band");
+         break;
+#endif
+
+#ifdef SIGCHLD
+    case SIGCHLD:
+         lua_createtable(L,0,8);
+         lua_pushinteger(L,info->si_pid);
+         lua_setfield(L,-2,"pid");
+         lua_pushinteger(L,info->si_uid);
+         lua_setfield(L,-2,"uid");
+         
+         if (WIFEXITED(info->si_status))
+         {
+           int rc = WEXITSTATUS(info->si_status);
+           lua_pushinteger(L,rc);
+           lua_setfield(L,-2,"rc");
+           lua_pushfstring(
+                L,
+                "%s %d",
+                (rc == EXIT_SUCCESS)
+                        ? "success"
+                        : "failure",
+                rc
+           );
+           lua_setfield(L,-2,"description");
+           lua_pushliteral(L,"normal");
+           lua_setfield(L,-2,"status");
+         }
+         else if (WIFSTOPPED(info->si_status))
+         {
+           lua_pushinteger(L,WSTOPSIG(info->si_status));
+           lua_setfield(L,-2,"rc");
+           lua_pushstring(L,strsignal(WSTOPSIG(info->si_status)));
+           lua_setfield(L,-2,"description");
+           lua_pushliteral(L,"stopped");
+           lua_setfield(L,-2,"status");
+         }
+         else if (WIFSIGNALED(info->si_status))
+         {
+           lua_pushinteger(L,WTERMSIG(info->si_status));
+           lua_setfield(L,-2,"rc");
+           lua_pushstring(L,strsignal(WTERMSIG(info->si_status)));
+           lua_setfield(L,-2,"description");
+           lua_pushliteral(L,"terminated");
+           lua_setfield(L,-2,"status");
+#  ifdef WCOREDUMP
+           lua_pushboolean(L,WCOREDUMP(info->si_status));
+           lua_setfield(L,-2,"core");
+#  endif
+         }
+         lua_setfield(L,-2,"status");
+         break;
+#endif
+
+    default:
+         break;
+  }
+}
+	
 /***************************************************************************
 *
 * The signal handler backend. We remove any Lua debug hooks (how we got here
@@ -230,9 +470,15 @@ static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
         {
           m_handlers[i].triggered = 0;
           lua_pushinteger(L,m_handlers[i].coderef);
-          lua_gettable(L,LUA_REGISTRYINDEX);      
+          lua_gettable(L,LUA_REGISTRYINDEX);
           lua_pushstring(L,sigtostr(i));
-          if (lua_pcall(L,1,0,0) != 0)
+          
+          if (m_handlers[i].use_info)
+            slua_pushinfo(L,&m_handlers[i].info);
+          else
+            lua_pushnil(L);
+          
+          if (lua_pcall(L,2,0,0) != 0)
             lua_error(L);
           sigprocmask(SIG_UNBLOCK,&m_handlers[i].blocked,NULL);
         }
@@ -268,6 +514,30 @@ static void signal_handler(int sig)
     lua_sethook(m_L,luasigstop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
   }
   
+  sigprocmask(SIG_BLOCK,&m_handlers[sig].blocked,NULL);
+  m_caught = m_signal = m_handlers[sig].triggered = 1;
+}
+
+/**********************************************************************
+*
+* Pretty much the same as the above signal handler, only with addtional
+* information
+*
+***********************************************************************/
+
+static void signal_action(int sig,siginfo_t *info,void *_ __attribute__((unused)))
+{
+  if (!m_bam)
+  {
+    m_bam = 1;
+    m_hookcount = lua_gethookcount(m_L);
+    m_hookmask  = lua_gethookmask (m_L);
+    m_hook      = lua_gethook     (m_L);
+    
+    lua_sethook(m_L,luasigstop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
+  }
+  
+  m_handlers[sig].info = *info;
   sigprocmask(SIG_BLOCK,&m_handlers[sig].blocked,NULL);
   m_caught = m_signal = m_handlers[sig].triggered = 1;
 }
@@ -536,7 +806,7 @@ static int slua_toflags(lua_State *const L,int idx)
 {
   static const struct mapstrint tflags[] =
   {
-/*  { "info"		, SA_SIGINFO	} , */ /* need to think about this */
+    { "info"		, SA_SIGINFO	} ,
     { "nochildstop"	, SA_NOCLDSTOP	} ,
     { "nodefer"		, SA_NODEFER	} ,
     { "nomask"		, SA_NOMASK	} ,
@@ -637,7 +907,17 @@ static int siglua_catch(lua_State *const L)
   if ((act.sa_flags & (SA_NODEFER | SA_NOMASK)) == 0)
     sigaddset(&m_handlers[sig].blocked,sig);  
   
-  act.sa_handler = signal_handler;  
+  if ((act.sa_flags & SA_SIGINFO) == SA_SIGINFO)
+  {
+    m_handlers[sig].use_info = true;
+    act.sa_sigaction = signal_action;
+  }
+  else
+  {
+    m_handlers[sig].use_info = false;
+    act.sa_handler = signal_handler;
+  }
+    
   errno = 0;
   sigaction(sig,&act,NULL);
   lua_pushboolean(L,errno == 0);
