@@ -1404,29 +1404,29 @@ static int socklua_recv(lua_State *const L)
   sockaddr_all__t *remaddr;
   socklen_t        remsize;
   sock__t         *sock;
-  struct pollfd    fdlist;
   char             buffer[65535uL];
   ssize_t          bytes;
-  int              timeout;
-  int              rc;
   
-  sock          = luaL_checkudata(L,1,TYPE_SOCK);
-  fdlist.events = POLLIN;
-  fdlist.fd     = sock->fh;
+  sock = luaL_checkudata(L,1,TYPE_SOCK);
   
-  if (lua_isnoneornil(L,2))
-    timeout = -1;
-  else
-    timeout = (int)(lua_tonumber(L,2) * 1000.0);
-  
-  rc = poll(&fdlist,1,timeout);
-  if (rc < 1)
+  if (lua_isnumber(L,2))
   {
-    int err = (rc == 0) ? ETIMEDOUT : errno;
-    lua_pushnil(L);
-    lua_pushnil(L);
-    lua_pushinteger(L,err);
-    return 3;
+    int           timeout = (int)(lua_tonumber(L,2) * 1000.0);
+    struct pollfd fdlist;
+    int           rc;
+    
+    fdlist.events = POLLIN;
+    fdlist.fd     = sock->fh;
+    
+    rc = poll(&fdlist,1,timeout);
+    if (rc < 1)
+    {
+      int err = (rc == 0) ? ETIMEDOUT : errno;
+      lua_pushnil(L);
+      lua_pushnil(L);
+      lua_pushinteger(L,err);
+      return 3;
+    }
   }
   
   remaddr = lua_newuserdata(L,sizeof(sockaddr_all__t));
@@ -1434,7 +1434,7 @@ static int socklua_recv(lua_State *const L)
   luaL_getmetatable(L,TYPE_ADDR);
   lua_setmetatable(L,-2);
   
-  bytes = recvfrom(fdlist.fd,buffer,sizeof(buffer),0,&remaddr->sa,&remsize);
+  bytes = recvfrom(sock->fh,buffer,sizeof(buffer),0,&remaddr->sa,&remsize);
   if (bytes < 0)
   {
     lua_pushnil(L);
