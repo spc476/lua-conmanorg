@@ -216,10 +216,10 @@ static const struct strint m_errors[] =
 
 static inline size_t	  Inet_addrlen	(sockaddr_all__t *const)                               __attribute__((nonnull));
 static inline socklen_t   Inet_len    	(sockaddr_all__t *const)                               __attribute__((nonnull));
-static inline socklen_t   Inet_lensa	(struct sockaddr *const)                               __attribute__((nonnull));
+static inline socklen_t   Inet_lensa	(struct sockaddr *const)                               __attribute__((nonnull,unused));
 static inline int         Inet_port   	(sockaddr_all__t *const)                               __attribute__((nonnull));
 static inline void        Inet_setport	(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1)));
-static inline void	  Inet_setportn	(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1)));
+static inline void	  Inet_setportn	(sockaddr_all__t *const,const int)                     __attribute__((nonnull(1),unused));
 static inline const char *Inet_addr   	(sockaddr_all__t *const restrict,char *const restrict) __attribute__((nonnull));
 static inline void	 *Inet_address	(sockaddr_all__t *const)                               __attribute__((nonnull));
 
@@ -1251,7 +1251,7 @@ static int socklua_bind(lua_State *const L)
     if (IN6_IS_ADDR_MULTICAST(&addr->sin6.sin6_addr))
     {
       unsigned int     on = 0;
-      struct ipv6_mreq mreq6;
+      struct ipv6_mreq mreq6 __attribute__((unused));
       
       if (setsockopt(sock->fh,IPPROTO_IPV6,IPV6_MULTICAST_LOOP,&on,sizeof(on)) < 0)
       {
@@ -1723,7 +1723,7 @@ static int net_toproto(lua_State *const L,const int idx)
     const char      *proto = lua_tostring(L,idx);
     struct protoent *presult;
     struct protoent  result;
-    char             tmp[BUFSIZ];
+    char             tmp[BUFSIZ] __attribute__((unused));
     
 #if defined(__SunOS)
     presult = getprotobyname_r(proto,&result,tmp,sizeof(tmp));
@@ -1755,7 +1755,7 @@ static int net_toport(lua_State *const L,int idx,const int proto)
     const char     *serv = lua_tostring(L,idx);
     struct servent *presult;
     struct servent  result;
-    char            tmp[BUFSIZ];
+    char            tmp[BUFSIZ] __attribute__((unused));
     
 #if defined(__SunOS)
     presult = getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp));
