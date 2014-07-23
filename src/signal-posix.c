@@ -634,6 +634,9 @@ static int siglua_catch(lua_State *const L)
   else
     act.sa_flags |= slua_toflags(L,4);
   
+  if ((act.sa_flags & (SA_NODEFER | SA_NOMASK)) == 0)
+    sigaddset(&m_handlers[sig].blocked,sig);  
+  
   act.sa_handler = signal_handler;  
   errno = 0;
   sigaction(sig,&act,NULL);
