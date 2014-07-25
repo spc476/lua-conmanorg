@@ -26,7 +26,6 @@
 #ifdef __linux
 #  define _BSD_SOURCE
 #  define _POSIX_SOURCE
-#  define _FORTIFY_SOURCE 0
 #  include <sys/ioctl.h>
 #  include <linux/sockios.h>
 #endif
