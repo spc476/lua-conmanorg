@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -96,6 +97,18 @@ struct strint
   const int         value;
 };
 
+typedef union
+{
+  char     c[sizeof(uint16_t)];
+  uint16_t i;
+} hns__u;
+
+typedef union
+{
+  char     c[sizeof(uint32_t)];
+  uint32_t i;
+} hnl__u;
+
 /************************************************************************/
 
 static int	err_meta___index	(lua_State *const) __attribute__((nonnull));
@@ -109,6 +122,10 @@ static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int      netlua_addressraw	(lua_State *const) __attribute__((nonnull));
+static int	netlua_htons		(lua_State *const) __attribute__((nonnull));
+static int	netlua_htonl		(lua_State *const) __attribute__((nonnull));
+static int	netlua_ntohs		(lua_State *const) __attribute__((nonnull));
+static int	netlua_ntohl		(lua_State *const) __attribute__((nonnull));
 
 static int	socklua___tostring	(lua_State *const) __attribute__((nonnull));
 static int	socklua___index		(lua_State *const) __attribute__((nonnull));
@@ -151,6 +168,10 @@ static const luaL_Reg m_net_reg[] =
   { "address2"		, netlua_address2	} ,
   { "address"		, netlua_address	} ,
   { "addressraw"	, netlua_addressraw	} ,
+  { "htons"		, netlua_htons		} ,
+  { "htonl"		, netlua_htonl		} ,
+  { "ntohs"		, netlua_ntohs		} ,
+  { "ntohl"		, netlua_ntohl		} ,
   { NULL		, NULL			}
 };
 
@@ -838,6 +859,66 @@ static int netlua_addressraw(lua_State *const L)
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
   return 2;
+}
+
+/***********************************************************************/
+
+static int netlua_htons(lua_State *const L)
+{
+  hns__u v;
+  
+  v.i = htons(luaL_checkinteger(L,1));
+  lua_pushlstring(L,v.c,sizeof(v.c));
+  return 1; 
+}
+
+/***********************************************************************/
+
+static int netlua_htonl(lua_State *const L)
+{
+  hnl__u v;
+  
+  v.i = htonl(luaL_checkinteger(L,1));
+  lua_pushlstring(L,v.c,sizeof(v.c));
+  return 1;
+}
+
+/***********************************************************************/
+
+static int netlua_ntohs(lua_State *const L)
+{
+  size_t      l;
+  const char *s = luaL_checklstring(L,1,&l);
+  hns__u      v;
+  
+  if (l == sizeof(uint16_t))
+  {
+    v.c[0] = s[0];
+    v.c[1] = s[1];
+    lua_pushinteger(L,ntohs(v.i));
+    return 1;
+  }
+  return luaL_error(L,"invalid 16-bit quantity");
+}
+
+/***********************************************************************/
+
+static int netlua_ntohl(lua_State *const L)
+{
+  size_t      l;
+  const char *s = luaL_checklstring(L,1,&l);
+  hnl__u      v;
+  
+  if (l == sizeof(uint32_t))
+  {
+    v.c[0] = s[0];
+    v.c[1] = s[1];
+    v.c[2] = s[2];
+    v.c[3] = s[3];
+    lua_pushnumber(L,ntohl(v.i));
+    return 1;
+  }
+  return luaL_error(L,"invalid 32-bit quantity");
 }
 
 /***********************************************************************/
