@@ -1662,6 +1662,16 @@ static int addrlua___index(lua_State *const L)
     else
       lua_pushstring(L,p);
   }
+  else if (strcmp(sidx,"addrbits") == 0)
+  {
+    switch(addr->sa.sa_family)
+    {
+      case AF_INET:  lua_pushlstring(L,(char *)&addr->sin.sin_addr.s_addr,sizeof(addr->sin.sin_addr.s_addr)); break;
+      case AF_INET6: lua_pushlstring(L,(char *)addr->sin6.sin6_addr.s6_addr,sizeof(addr->sin6.sin6_addr.s6_addr)); break;
+      case AF_UNIX:  lua_pushlstring(L,(char *)addr->ssun.sun_path,sizeof(addr->ssun.sun_path)); break;
+      default: assert(0); lua_pushnil(L); break;
+    }
+  }
   else if (strcmp(sidx,"port") == 0)
     lua_pushinteger(L,Inet_port(addr));
   else if (strcmp(sidx,"family") == 0)
