@@ -920,6 +920,17 @@ static int fsys_gexpand(lua_State *L)
 
 /************************************************************************/
 
+static int fsys_fileno(lua_State *L)
+{
+  lua_pushinteger(
+    L,
+    fileno(*(FILE **)luaL_checkudata(L,1,LUA_FILEHANDLE))
+  );
+  return 1;
+}
+
+/************************************************************************/
+
 static const struct luaL_Reg reg_fsys[] = 
 {
   { "symlink"	, fsys_symlink 	} ,
@@ -950,6 +961,7 @@ static const struct luaL_Reg reg_fsys[] =
   { "fnmatch"	, fsys_fnmatch	} ,
   { "expand"	, fsys_expand	} ,
   { "gexpand"	, fsys_gexpand	} ,
+  { "fileno"	, fsys_fileno	} ,
   { NULL	, NULL		}
 };
 
