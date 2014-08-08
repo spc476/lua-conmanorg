@@ -92,6 +92,26 @@ struct strint
 * PROCESS CREATION AND DESTRUCTION
 **********************************************************************/
 
+static int proclua_setsid(lua_State *const L)
+{
+  pid_t id = setsid();
+  
+  if (id == -1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushnumber(L,id);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/********************************************************************/
+
 static int proclua_fork(lua_State *const L)
 {
   pid_t child;
@@ -1289,6 +1309,7 @@ static const struct strint m_sysexits[] =
 
 static const struct luaL_Reg m_process_reg[] =
 {
+  { "setsid"		, proclua_setsid		} ,
   { "getuid"		, proclua_getuid		} ,
   { "getgid"		, proclua_getgid		} ,
   { "setuid"		, proclua_setuid		} ,
