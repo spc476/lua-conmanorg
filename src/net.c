@@ -1870,17 +1870,6 @@ static int net_toport(lua_State *const L,int idx,const int proto)
 
 int luaopen_org_conman_net(lua_State *const L)
 {
-  /*----------------------------------------------------------------------
-  ; I unilaterally block SIGPIPE.  Why?  Because it's a bad idea.  Sure,
-  ; it's fine if you only one have file descriptor where the other end can
-  ; disconnect, but when you have more than one?  Can you say "Charlie
-  ; Foxtrox"?
-  ;
-  ; By ignoring SIGPIPE, we ignore this whole mess.
-  ;------------------------------------------------------------------------*/
-  
-  signal(SIGPIPE,SIG_IGN);
-  
   luaL_newmetatable(L,TYPE_SOCK);
   luaL_register(L,NULL,m_sock_meta);
 
