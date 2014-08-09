@@ -43,6 +43,8 @@
 #  define CPU "(undefined)"
 #endif
 
+#include <limits.h>
+
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/time.h>
@@ -152,6 +154,33 @@ static const struct paths
 
 #define MAXPATH	( sizeof(mpaths) / sizeof(struct paths))
 
+static const struct strint
+{
+  const char *const name;
+  const int         value;
+} mvars[] =
+{
+  { "VERSION"		, _SC_VERSION		} ,
+  { "ARG_MAX"		, _SC_ARG_MAX		} ,
+  { "CHILD_MAX"		, _SC_CHILD_MAX		} ,
+  { "HOST_NAME_MAX"	, _SC_HOST_NAME_MAX	} ,
+  { "LOGIN_NAME_MAX"	, _SC_LOGIN_NAME_MAX	} ,
+  { "CLK_TCK"		, _SC_CLK_TCK		} ,
+  { "OPEN_MAX"		, _SC_OPEN_MAX		} ,
+  { "RE_DUP_MAX"	, _SC_RE_DUP_MAX	} ,
+  { "STREAM_MAX"	, _SC_STREAM_MAX	} ,
+  { "TTY_NAME_MAX"	, _SC_TTY_NAME_MAX	} ,
+  { "TZNAME_MAX"	, _SC_TZNAME_MAX	} ,
+  { "NGROUPS_MAX"	, _SC_NGROUPS_MAX	} ,
+  { "RTSIG_MAX"		, _SC_RTSIG_MAX		} ,
+  { "SIGQUEUE_MAX"	, _SC_SIGQUEUE_MAX	} ,
+  { "NAME_MAX"		, _PC_NAME_MAX		} ,
+  { "PATH_MAX"		, _PC_PATH_MAX		} ,
+  { "PIPE_BUF"		, _PC_PIPE_BUF		} ,
+};
+
+#define MAXVARS (sizeof(mvars) / sizeof(struct strint))
+
 /*************************************************************************/
 
 int luaopen_org_conman_sys(lua_State *const L)
@@ -200,6 +229,14 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_pushinteger(L,sysconf(_SC_PAGESIZE));
   lua_setfield(L,-2,"PAGESIZE");
 
+  lua_createtable(L,0,0);
+  for (i = 0 ; i < MAXVARS ; i++)
+  {
+    lua_pushinteger(L,sysconf(mvars[i].value));
+    lua_setfield(L,-2,mvars[i].name);
+  }
+  lua_setfield(L,-2,"POSIX");
+  
   lua_createtable(L,0,MAXPATH);
   for (i = 0 ; i < MAXPATH ; i++)
   {
