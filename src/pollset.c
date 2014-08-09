@@ -687,7 +687,6 @@ static void pollset_toevents(lua_State *const L,int idx,pollset__t *set,int fd)
       {
         case 'r': FD_SET(fd,&set->read);   break;
         case 'w': FD_SET(fd,&set->write);  break;
-        case 'p': FD_SET(fd,&set->except); break;
         case 'e': FD_SET(fd,&set->except); break;
         default:  break;
       }

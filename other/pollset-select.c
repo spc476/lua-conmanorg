@@ -78,7 +78,6 @@ static void selectset_toevents(
       {
         case 'r': FD_SET(fd,&set->read);   break;
         case 'w': FD_SET(fd,&set->write);  break;
-        case 'p': FD_SET(fd,&set->except); break;
         case 'e': FD_SET(fd,&set->except); break;
         default:  break;
       }
