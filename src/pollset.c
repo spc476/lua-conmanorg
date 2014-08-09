@@ -388,7 +388,12 @@ static int pollset_toevents(lua_State *const L,int idx)
     lua_getfield(L,idx,"priority");
     events |= lua_isboolean(L,-1) ? POLLPRI : 0;
     lua_getfield(L,idx,"error");
-    lua_pop(L,3);
+    events |= lua_isboolean(L,-1) ? POLLERR : 0;
+    lua_getfield(L,idx,"hangup");
+    events |= lua_isboolean(L,-1) ? POLLHUP : 0;
+    lua_getfield(L,idx,"invalid");
+    events |= lua_isboolean(L,-1) ? POLLNVAL : 0;
+    lua_pop(L,6);
   }
   else if (lua_isstring(L,idx))
   {
@@ -397,9 +402,12 @@ static int pollset_toevents(lua_State *const L,int idx)
     {
       switch(*flags)
       {
-        case 'r': events |= POLLIN;  break;
-        case 'w': events |= POLLOUT; break;
-        case 'p': events |= POLLPRI; break;
+        case 'r': events |= POLLIN;   break;
+        case 'w': events |= POLLOUT;  break;
+        case 'p': events |= POLLPRI;  break;
+        case 'e': events |= POLLERR;  break;
+        case 'h': events |= POLLHUP;  break;
+        case 'i': events |= PULLNVAL; break;
         default:  break;
       }
     }
