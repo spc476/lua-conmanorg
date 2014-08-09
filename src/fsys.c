@@ -929,6 +929,86 @@ static int fsys_fileno(lua_State *L)
   return 1;
 }
 
+/************************************************************************
+*
+* Usage:	value,err = fsys.pathconf(filespec,var)
+*
+* Desc:		Return data about a specific value for an open file 
+*		descriptor.
+*
+* Input:	filespec (string userdata(FILE)) name of a file
+*			| or an open file
+*		var (string/enum)
+*			* link     maximum number of links to the file
+*			* canon    maximum size of a formatted input line
+*			* input    maximum size of an input line
+*			* name     size of filename in current directory
+*			* path     size of relative path
+*			* pipe     size of pipe buffer
+*			* chown    <> 0 if chown cannot be used on this file
+*			* trunc    <> 0 if filenames longer than 'name' 
+*					| generates an error
+*			* vdisable <> 0 if special character processing can 
+*					| be disabled
+*
+* Return:	value (number) value for specific value (only if err is 0)
+*		err (integer) system error, 0 if successful
+*
+************************************************************************/
+
+static const char *const m_pathconfopts[] =
+{
+  "link",
+  "canon",
+  "input",
+  "name",
+  "path",
+  "pipe",
+  "chown",
+  "trunc",
+  "vdisable",
+  NULL
+};
+
+static const int m_pathconfmap[] =
+{
+  _PC_LINK_MAX,
+  _PC_MAX_CANON,
+  _PC_MAX_INPUT,
+  _PC_NAME_MAX,
+  _PC_PATH_MAX,
+  _PC_PIPE_BUF,
+  _PC_CHOWN_RESTRICTED,
+  _PC_NO_TRUNC,
+  _PC_VDISABLE
+};
+
+static int fsys_pathconf(lua_State *L)
+{
+  long res;
+  
+  if (lua_type(L,1) == LUA_TUSERDATA)
+  {
+    int fh   = fileno(*(FILE **)luaL_checkudata(L,1,LUA_FILEHANDLE));
+    int name = m_pathconfmap[luaL_checkoption(L,2,NULL,m_pathconfopts)];
+    
+    errno = 0;
+    res   = fpathconf(fh,name);
+  }
+  else if (lua_type(L,1) == LUA_TSTRING)
+  {
+    const char *path = lua_tostring(L,1);
+    int         name = m_pathconfmap[luaL_checkoption(L,2,NULL,m_pathconfopts)];
+    
+    errno = 0;
+    res   = pathconf(path,name);
+  }
+  
+  lua_pushnumber(L,res);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
 /************************************************************************/
 
 static const struct luaL_Reg reg_fsys[] = 
@@ -962,6 +1042,7 @@ static const struct luaL_Reg reg_fsys[] =
   { "expand"	, fsys_expand	} ,
   { "gexpand"	, fsys_gexpand	} ,
   { "fileno"	, fsys_fileno	} ,
+  { "pathconf"	, fsys_pathconf	} ,
   { NULL	, NULL		}
 };
 
