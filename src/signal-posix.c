@@ -677,6 +677,9 @@ static int siglua_caught(lua_State *const L)
   if (lua_isnoneornil(L,1))
   {
     lua_pushboolean(L,m_caught != 0);
+    for (int i = 0 ; i < NSIG ; i++)
+      m_handlers[i].triggered = 0;
+      
     m_caught = 0;
     return 1;
   }

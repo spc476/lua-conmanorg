@@ -257,7 +257,13 @@ static int siglua_caught(lua_State *const L)
   if (lua_isnoneornil(L,1))
   {
     lua_pushboolean(L,m_caught != 0);
-    m_caught = 0;
+    m_caught      = 0;
+    m_caught_abrt = 0;
+    m_caught_fpe  = 0;
+    m_caught_ill  = 0;
+    m_caught_int  = 0;
+    m_caught_segv = 0;
+    m_caught_term = 0;
     return 1;
   }
   
