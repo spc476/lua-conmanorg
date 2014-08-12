@@ -311,23 +311,24 @@ static int siglua_catch(lua_State *const L)
   }
   
   luaL_unref(L,LUA_REGISTRYINDEX,ref);
+  ref = LUA_NOREF;
   
   if (lua_isfunction(L,2))
   {
     lua_pushvalue(L,2);
     ref = luaL_ref(L,LUA_REGISTRYINDEX);
-      
-    switch(sig)
-    {
-      case SIGABRT: m_ref_abrt = ref; break;
-      case SIGFPE:  m_ref_fpe  = ref; break;
-      case SIGILL:  m_ref_ill  = ref; break;
-      case SIGINT:  m_ref_int  = ref; break;
-      case SIGSEGV: m_ref_segv = ref; break;
-      case SIGTERM: m_ref_term = ref; break;
-      default:                        break;
-    } 
   }
+        
+  switch(sig)
+  {
+    case SIGABRT: m_ref_abrt = ref; break;
+    case SIGFPE:  m_ref_fpe  = ref; break;
+    case SIGILL:  m_ref_ill  = ref; break;
+    case SIGINT:  m_ref_int  = ref; break;
+    case SIGSEGV: m_ref_segv = ref; break;
+    case SIGTERM: m_ref_term = ref; break;
+    default:                        break;
+  } 
   
   signal(sig,signal_handler);
   lua_pushboolean(L,1);
@@ -351,7 +352,25 @@ static int siglua_ignore(lua_State *const L)
   int i;
   
   for (i = 1 ; i <= top ; i++)
-    signal(slua_tosignal(L,i),SIG_IGN);
+  {
+    int sig = slua_tosignal(L,i);
+    int *pref;
+    
+    switch(sig)
+    {
+      case SIGABRT: pref = &m_ref_abrt; break;
+      case SIGFPE:  pref = &m_ref_fpe;  break;
+      case SIGILL:  pref = &m_ref_ill;  break;
+      case SIGINT:  pref = &m_ref_int;  break;
+      case SIGSEGV: pref = &m_ref_segv; break;
+      case SIGTERM: pref = &m_ref_term; break;
+      default:                          break;
+    }
+    
+    luaL_unref(L,LUA_REGISTRYINDEX,*pref);
+    signal(sig,SIG_IGN);
+    *pref = LUA_NOREF;
+  }
   return 0;
 }
 
@@ -371,7 +390,25 @@ static int siglua_default(lua_State *const L)
   int i;
   
   for (i = 1 ; i <= top ; i++)
-    signal(slua_tosignal(L,i),SIG_DFL);
+  {
+    int sig = slua_tosignal(L,i);
+    int *pref;
+    
+    switch(sig)
+    {
+      case SIGABRT: pref = &m_ref_abrt; break;
+      case SIGFPE:  pref = &m_ref_fpe;  break;
+      case SIGILL:  pref = &m_ref_ill;  break;
+      case SIGINT:  pref = &m_ref_int;  break;
+      case SIGSEGV: pref = &m_ref_segv; break;
+      case SIGTERM: pref = &m_ref_term; break;
+      default:                          break;
+    }
+
+    luaL_unref(L,LUA_REGISTRYINDEX,*pref);
+    signal(sig,SIG_DFL);
+    *pref = LUA_NOREF;
+  }
   return 0;
 }
 

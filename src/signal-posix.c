@@ -797,6 +797,8 @@ static int siglua_catch(lua_State *const L)
     lua_pushvalue(L,2);
     m_handlers[sig].coderef = luaL_ref(L,LUA_REGISTRYINDEX);
   }
+  else
+    m_handlers[sig].coderef = LUA_NOREF;
   
   if (lua_isuserdata(L,3))
   {
@@ -853,6 +855,7 @@ static int siglua_ignore(lua_State *const L)
   {
     int sig = slua_tosignal(L,i);
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
+    m_handlers[sig].coderef = LUA_NOREF;
     sigignore(sig);
   }
   
@@ -875,6 +878,7 @@ static int siglua_default(lua_State *const L)
   {
     int sig = slua_tosignal(L,i);    
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
+    m_handlers[sig].coderef = LUA_NOREF;
     sigset(sig,SIG_DFL);
   }
   
