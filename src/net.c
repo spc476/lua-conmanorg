@@ -1684,6 +1684,22 @@ static int addrlua___index(lua_State *const L)
     else
       lua_pushstring(L,p);
   }
+  else if (strcmp(sidx,"daddr") == 0)
+  {
+    const char *p;
+    char        taddr[INET6_ADDRSTRLEN];
+    
+    p = Inet_addr(addr,taddr);
+    if (p == NULL)
+      lua_pushnil(L);
+    else
+    {
+      if (addr->sa.sa_family == AF_INET6)
+        lua_pushfstring(L,"[%s]",p);
+      else
+        lua_pushstring(L,p);
+    }
+  }   
   else if (strcmp(sidx,"addrbits") == 0)
   {
     switch(addr->sa.sa_family)
