@@ -1627,6 +1627,39 @@ static int socklua_fd(lua_State *const L)
 
 /***********************************************************************/
 
+static int addrmeta_display(lua_State *const L)
+{
+  sockaddr_all__t *addr    = luaL_checkudata(L,1,TYPE_ADDR);
+  int              defport = luaL_optinteger(L,2,0);
+  int              port    = Inet_port(addr);
+  char             taddr[INET6_ADDRSTRLEN];
+  
+  if (port == defport)
+  {
+    switch(addr->sa.sa_family)
+    {
+      case AF_INET:  lua_pushfstring(L,"%s",Inet_addr(addr,taddr));   break;
+      case AF_INET6: lua_pushfstring(L,"[%s]",Inet_addr(addr,taddr)); break;
+      case AF_UNIX:  lua_pushfstring(L,"%s",Inet_addr(addr,taddr));   break;
+      default: assert(0); lua_pushstring(L,"unknown");                break;
+    }
+  }
+  else
+  {
+    switch(addr->sa.sa_family)
+    {
+      case AF_INET:  lua_pushfstring(L,"%s:%d",Inet_addr(addr,taddr),port);   break;
+      case AF_INET6: lua_pushfstring(L,"[%s]:%d",Inet_addr(addr,taddr),port); break;
+      case AF_UNIX:  lua_pushfstring(L,"%s",Inet_addr(addr,taddr));           break;
+      default: assert(0); lua_pushstring(L,"unknown");                        break;
+    }
+  }
+  
+  return 1;
+}
+  
+/***********************************************************************/  
+
 static int addrlua___index(lua_State *const L)
 {
   sockaddr_all__t *addr;
@@ -1673,6 +1706,8 @@ static int addrlua___index(lua_State *const L)
       default: assert(0); lua_pushnil(L); break;
     }   
   }
+  else if (strcmp(sidx,"display") == 0)
+    lua_pushcfunction(L,addrmeta_display);
   else
     lua_pushnil(L);
   
