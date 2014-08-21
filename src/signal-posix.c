@@ -57,6 +57,8 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <assert.h>
+
 #include <unistd.h>
 #include <sysexits.h>
 
@@ -73,100 +75,20 @@
 
 struct datasig
 {
-  volatile sig_atomic_t triggered;
-  int                   coderef;
-  sigset_t              blocked;
-  siginfo_t             info;
-  bool                  use_info;
+  lua_State             *L;
+  const char            *name;
+  int                    fref;
+  int                    cref;
+  volatile sig_atomic_t  triggered;
+  sigset_t               blocked;
+  siginfo_t              info;
+  bool                   use_info;
 };
 
 /**********************************************************************/
 
-static volatile sig_atomic_t  m_caught;
-static volatile sig_atomic_t  m_signal;
-static volatile sig_atomic_t  m_bam;
-static volatile int           m_hookcount;
-static volatile int           m_hookmask;
-static volatile lua_Hook      m_hook;
-static lua_State             *m_L;
-static struct datasig         m_handlers[NSIG];
-
-/**********************************************************************
-*
-* Map a signal back to a string.  This is a function and not a table because
-* I don't know the actual order (it can differ among systems), so I'm
-* relying upon the compiler to optimize this down for me.
-*
-***********************************************************************/
-
-static const char *sigtostr(int sig)
-{
-  switch(sig)
-  {
-    case SIGABRT:   return "abrt";
-    case SIGFPE:    return "fpe";
-    case SIGILL:    return "ill";
-    case SIGINT:    return "int";
-    case SIGSEGV:   return "segv";
-    case SIGTERM:   return "term"; 
-
-    case SIGALRM:   return "alrm";
-    case SIGBUS:    return "bus";
-    case SIGCHLD:   return "chld";
-    case SIGCONT:   return "cont";
-    case SIGHUP:    return "hup";
-    case SIGKILL:   return "kill";
-    case SIGPIPE:   return "pipe";
-    case SIGPOLL:   return "poll";
-    case SIGPROF:   return "prof";
-    case SIGQUIT:   return "quit";
-    case SIGURG:    return "urg";
-    case SIGSTOP:   return "stop";
-    case SIGSYS:    return "sys";
-    case SIGTRAP:   return "trap";
-    case SIGTSTP:   return "tstp";
-    case SIGTTIN:   return "ttin";
-    case SIGTTOU:   return "ttou";
-    case SIGUSR1:   return "usr1";
-    case SIGUSR2:   return "usr2";
-    case SIGVTALRM: return "vtalrm";
-    case SIGXCPU:   return "xcpu";
-    case SIGXFSZ:   return "xfsz";
-
-#ifdef SIGEMT
-    case SIGEMT: return "emt";
-#endif
-#ifdef SIGPWR
-    case SIGPWR: return "pwr";
-#endif
-#ifdef SIGSTKFLT
-    case SIGSTKFLT: return "stkflt";
-#endif
-#ifdef SIGWINCH
-    case SIGWINCH: return "winch";
-#endif
-#ifdef SIGLOST
-    case SIGLOST: return "lost";
-#endif
-#ifdef SIGINFO
-    case SIGINFO: return "info";
-#endif
-
-#ifndef __linux__
-#  ifdef SIGCLD
-    case SIGCLD: return "cld";
-#  endif
-#  ifdef SIGIO
-    case SIGIO:  return "io";
-#  endif
-#  ifdef SIGIOT
-    case SIGIOT: return "iot";
-#  endif
-#endif
-
-    default: return "(unknown)";
-  }
-}
+static volatile sig_atomic_t m_signal;
+static struct datasig        m_handlers[NSIG];
 
 /************************************************************************
 *
@@ -314,12 +236,16 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
 *
 **************************************************************************/
 
-static void slua_pushinfo(lua_State *const L,siginfo_t *const info)
+static void slua_pushinfo(
+        lua_State  *const L,
+        siginfo_t  *const info,
+        const char *const name
+)
 {
   char code[65];
   
   lua_createtable(L,0,6);
-  lua_pushstring(L,sigtostr(info->si_signo));
+  lua_pushstring(L,name);
   lua_setfield(L,-2,"signal");
   lua_pushinteger(L,info->si_errno);
   lua_setfield(L,-2,"errno");
@@ -407,7 +333,7 @@ static void slua_pushinfo(lua_State *const L,siginfo_t *const info)
 *
 ****************************************************************************/
 
-static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
+static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
 {
   lua_sethook(L,NULL,0,0);
   
@@ -419,28 +345,26 @@ static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
     {
       if (m_handlers[i].triggered)
       {
-        if (m_handlers[i].coderef != LUA_NOREF)
+        if (m_handlers[i].fref != LUA_NOREF)
         {
+          assert(m_handlers[i].L != NULL);
           m_handlers[i].triggered = 0;
-          lua_pushinteger(L,m_handlers[i].coderef);
-          lua_gettable(L,LUA_REGISTRYINDEX);
-          lua_pushstring(L,sigtostr(i));
+          lua_pushinteger(m_handlers[i].L,m_handlers[i].fref);
+          lua_gettable(m_handlers[i].L,LUA_REGISTRYINDEX);
+          lua_pushstring(m_handlers[i].L,m_handlers[i].name);
           
           if (m_handlers[i].use_info)
-            slua_pushinfo(L,&m_handlers[i].info);
+            slua_pushinfo(m_handlers[i].L,&m_handlers[i].info,m_handlers[i].name);
           else
-            lua_pushnil(L);
+            lua_pushnil(m_handlers[i].L);
           
-          if (lua_pcall(L,2,0,0) != 0)
-            lua_error(L);
+          if (lua_pcall(m_handlers[i].L,2,0,0) != 0)
+            lua_error(m_handlers[i].L);
           sigprocmask(SIG_UNBLOCK,&m_handlers[i].blocked,NULL);
         }
       }
     }
   }
-  
-  lua_sethook(L,m_hook,m_hookmask,m_hookcount);
-  m_bam = 0;
 }
 
 /***************************************************************************
@@ -457,18 +381,16 @@ static void luasigstop(lua_State *L,lua_Debug *ar __attribute__((unused)))
 
 static void signal_handler(int sig)
 {
-  if (!m_bam)
-  {
-    m_bam       = 1;
-    m_hookcount = lua_gethookcount(m_L);
-    m_hookmask  = lua_gethookmask (m_L);
-    m_hook      = lua_gethook     (m_L);
-    
-    lua_sethook(m_L,luasigstop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
-  }
+  assert(m_handlers[sig].L != NULL);
+  lua_sethook(
+          m_handlers[sig].L,
+          luasigbackend,
+          LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,
+          1
+  );
   
+  m_handlers[sig].triggered = m_signal = 1;
   sigprocmask(SIG_BLOCK,&m_handlers[sig].blocked,NULL);
-  m_caught = m_signal = m_handlers[sig].triggered = 1;
 }
 
 /**********************************************************************
@@ -480,19 +402,18 @@ static void signal_handler(int sig)
 
 static void signal_action(int sig,siginfo_t *info,void *_ __attribute__((unused)))
 {
-  if (!m_bam)
-  {
-    m_bam = 1;
-    m_hookcount = lua_gethookcount(m_L);
-    m_hookmask  = lua_gethookmask (m_L);
-    m_hook      = lua_gethook     (m_L);
-    
-    lua_sethook(m_L,luasigstop,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
-  }
+  assert(m_handlers[sig].L != NULL);
   
-  m_handlers[sig].info = *info;
+  lua_sethook(
+          m_handlers[sig].L,
+          luasigbackend,
+          LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,
+          1
+  );
+  
+  m_handlers[sig].info      = *info;
+  m_handlers[sig].triggered = m_signal = 1;
   sigprocmask(SIG_BLOCK,&m_handlers[sig].blocked,NULL);
-  m_caught = m_signal = m_handlers[sig].triggered = 1;
 }
 
 /**********************************************************************
@@ -593,6 +514,7 @@ static const struct mapstrint sigs[] =
 #endif
 
   { "quit"		, SIGQUIT	} ,
+  { "segfault"		, SIGSEGV	} ,
   { "segv"		, SIGSEGV	} ,	/* ANSI */
 
 #ifdef SIGSTKFLT
@@ -641,7 +563,7 @@ static int mapstrintcmp(const void *needle,const void *haystack)
 
 /*--------------------------------------------------------------------*/
 
-static int slua_tosignal(lua_State *const L,int idx)
+static int slua_tosignal(lua_State *const L,int idx,const char **ps)
 {
   const struct mapstrint *entry = bsearch(
           luaL_checkstring(L,idx),
@@ -654,7 +576,11 @@ static int slua_tosignal(lua_State *const L,int idx)
   if (entry == NULL)
     return luaL_error(L,"signal '%s' not supported",lua_tostring(L,idx));
   else
+  {
+    if (ps != NULL)
+      *ps = entry->text;
     return entry->value;
+  }
 }
 
 /**********************************************************************
@@ -676,18 +602,22 @@ static int siglua_caught(lua_State *const L)
 {
   if (lua_isnoneornil(L,1))
   {
-    lua_pushboolean(L,m_caught != 0);
-    for (int i = 0 ; i < NSIG ; i++)
+    sig_atomic_t caught = 0;
+    
+    for (size_t i = 1 ; i < NSIG ; i++)
+    {
+      caught |= m_handlers[i].triggered;
       m_handlers[i].triggered = 0;
-      
-    m_caught = 0;
+    }
+    
+    lua_pushboolean(L,caught);
     return 1;
   }
   
-  int sig = slua_tosignal(L,1);  
+  int sig = slua_tosignal(L,1,NULL);  
+  
   lua_pushboolean(L,m_handlers[sig].triggered != 0);
   m_handlers[sig].triggered = 0;
-  m_caught                  = 0;
   return 1;  
 }
 
@@ -785,60 +715,82 @@ static int slua_toflags(lua_State *const L,int idx)
 
 static int siglua_catch(lua_State *const L)
 {
-  struct sigaction act;
-  int              sig;
+  const char       *name;
+  int               sig = slua_tosignal(L,1,&name);
+  struct datasig    ds;
+  struct datasig    ods;
+  struct sigaction  act;
+  
+  ds.L         = L;
+  ds.name      = name;
+  ds.fref      = LUA_NOREF;
+  ds.cref      = LUA_NOREF;
+  ds.triggered = 0;
+  ds.use_info  = false;
+  sigemptyset(&ds.blocked);
+  memset(&act,0,sizeof(act));
   
   lua_settop(L,4);
   
-  memset(&act,0,sizeof(act));
-  sig = slua_tosignal(L,1);
-  
-  luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
-
   if (lua_isfunction(L,2))
   {
     lua_pushvalue(L,2);
-    m_handlers[sig].coderef = luaL_ref(L,LUA_REGISTRYINDEX);
+    ds.fref = luaL_ref(L,LUA_REGISTRYINDEX);
+    lua_pushthread(L);
+    ds.cref = luaL_ref(L,LUA_REGISTRYINDEX);
   }
-  else
-    m_handlers[sig].coderef = LUA_NOREF;
   
   if (lua_isuserdata(L,3))
   {
-    sigset_t *set           = luaL_checkudata(L,3,TYPE_SIGSET);
-    act.sa_mask             = *set;
-    m_handlers[sig].blocked = *set;
+    sigset_t *set = luaL_checkudata(L,3,TYPE_SIGSET);
+    act.sa_mask   = *set;
+    ds.blocked    = *set;
   }
   else
     act.sa_flags |= slua_toflags(L,3);
   
   if (lua_isuserdata(L,4))
   {
-    sigset_t *set           = luaL_checkudata(L,4,TYPE_SIGSET);
-    act.sa_mask             = *set;
-    m_handlers[sig].blocked = *set;
+    sigset_t *set = luaL_checkudata(L,4,TYPE_SIGSET);
+    act.sa_mask   = *set;
+    ds.blocked    = *set;
   }
   else
     act.sa_flags |= slua_toflags(L,4);
   
   if ((act.sa_flags & (SA_NODEFER | SA_NOMASK)) == 0)
-    sigaddset(&m_handlers[sig].blocked,sig);  
+    sigaddset(&ds.blocked,sig);  
   
   if ((act.sa_flags & SA_SIGINFO) == SA_SIGINFO)
   {
-    m_handlers[sig].use_info = true;
+    ds.use_info      = true;
     act.sa_sigaction = signal_action;
   }
   else
   {
-    m_handlers[sig].use_info = false;
+    ds.use_info    = false;
     act.sa_handler = signal_handler;
   }
+  
+  ods = m_handlers[sig];
+  m_handlers[sig] = ds;
+  
+  if (sigaction(sig,&act,NULL) < 0)
+  {
+    m_handlers[sig] = ods;
+    luaL_unref(L,LUA_REGISTRYINDEX,ds.cref);
+    luaL_unref(L,LUA_REGISTRYINDEX,ds.fref);
+    lua_pushboolean(L,0);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    luaL_unref(L,LUA_REGISTRYINDEX,ods.cref);
+    luaL_unref(L,LUA_REGISTRYINDEX,ods.fref);
+    lua_pushboolean(L,1);
+    lua_pushinteger(L,0);
+  }
     
-  errno = 0;
-  sigaction(sig,&act,NULL);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -856,10 +808,17 @@ static int siglua_ignore(lua_State *const L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
   {
-    int sig = slua_tosignal(L,i);
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
-    m_handlers[sig].coderef = LUA_NOREF;
+    int sig = slua_tosignal(L,i,NULL);
     sigignore(sig);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
+    sigemptyset(&m_handlers[sig].blocked);
+    m_handlers[sig].fref      = LUA_NOREF;
+    m_handlers[sig].cref      = LUA_NOREF;
+    m_handlers[sig].triggered = 0;
+    m_handlers[sig].L         = NULL;
+    m_handlers[sig].name      = NULL;
+    m_handlers[sig].use_info  = false;
   }
   
   return 0;
@@ -879,10 +838,17 @@ static int siglua_default(lua_State *const L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
   {
-    int sig = slua_tosignal(L,i);    
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].coderef);
-    m_handlers[sig].coderef = LUA_NOREF;
+    int sig = slua_tosignal(L,i,NULL);
     sigset(sig,SIG_DFL);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
+    sigemptyset(&m_handlers[sig].blocked);
+    m_handlers[sig].fref      = LUA_NOREF;
+    m_handlers[sig].cref      = LUA_NOREF;
+    m_handlers[sig].triggered = 0;
+    m_handlers[sig].L         = NULL;
+    m_handlers[sig].name      = NULL;
+    m_handlers[sig].use_info  = false;
   }
   
   return 0;
@@ -906,7 +872,7 @@ static int siglua_default(lua_State *const L)
 static int siglua_raise(lua_State *const L)
 {
   errno = 0;
-  raise(slua_tosignal(L,1));
+  raise(slua_tosignal(L,1,NULL));
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
@@ -968,7 +934,7 @@ static int siglua_SIGNAL(lua_State *const L)
 static int siglua_allow(lua_State *const L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-    sigrelse(slua_tosignal(L,i));
+    sigrelse(slua_tosignal(L,i,NULL));
   return 0;
 }    
 
@@ -985,7 +951,7 @@ static int siglua_allow(lua_State *const L)
 static int siglua_block(lua_State *const L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-    sighold(slua_tosignal(L,i));
+    sighold(slua_tosignal(L,i,NULL));
   return 0;
 }
 
@@ -1068,23 +1034,26 @@ static int siglua_pending(lua_State *const L)
 
 /**********************************************************************
 *
-* Usage:	err = signal.suspend(set)
+* Usage:	okay,err = signal.suspend(set)
 *
 * Desc:		Temporarily replace signal mask with set, then wait for
 *		a signal.  Upon signal, restore the original signal mask
 *
 * Input:	set (userdata(set)) set of signals
 *
-* Return:	err (integer) system error, never 0.
+* Return:	okay (boolean) true if no error
+*		err (integer) system error, never 0.
 *
 **********************************************************************/
 
 static int siglua_suspend(lua_State *const L)
 {
   sigset_t *set = luaL_checkudata(L,1,TYPE_SIGSET);
+  errno         = 0;
   sigsuspend(set);
+  lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
-  return 1;
+  return 2;
 }
                 
 /**********************************************************************
@@ -1144,7 +1113,7 @@ static int siglua_set(lua_State *const L)
   }
   
   for (int i = start ; i <= top ; i++)
-    (*setsig)(set,slua_tosignal(L,i));
+    (*setsig)(set,slua_tosignal(L,i,NULL));
   
   return 1;
 }
@@ -1179,7 +1148,7 @@ static int sigsetmeta___index(lua_State *const L)
   sigset_t *set = luaL_checkudata(L,1,TYPE_SIGSET);
   
   if (lua_isstring(L,2))
-    lua_pushboolean(L,sigismember(set,slua_tosignal(L,2)));
+    lua_pushboolean(L,sigismember(set,slua_tosignal(L,2,NULL)));
   else
     lua_pushnil(L);
   return 1;
@@ -1193,9 +1162,9 @@ static int sigsetmeta___newindex(lua_State *const L)
   bool        set    = lua_toboolean(L,3);
   
   if (set)
-    sigaddset(sig,slua_tosignal(L,2));
+    sigaddset(sig,slua_tosignal(L,2,NULL));
   else
-    sigdelset(sig,slua_tosignal(L,2));
+    sigdelset(sig,slua_tosignal(L,2,NULL));
   return 0;
 }
 
@@ -1294,8 +1263,16 @@ static const struct luaL_Reg m_sigset_meta[] =
 int luaopen_posix(lua_State *const L)
 {
   for (int i = 0 ; i < NSIG ; i++)
-    m_handlers[i].coderef = LUA_NOREF;
-  m_L = L; 
+  {
+    m_handlers[i].fref      = LUA_NOREF;
+    m_handlers[i].cref      = LUA_NOREF;
+    m_handlers[i].triggered = 0;
+    m_handlers[i].L         = NULL;
+    m_handlers[i].name      = NULL;
+    m_handlers[i].use_info  = false;
+    sigemptyset(&m_handlers[i].blocked);
+  }
+
   luaL_newmetatable(L,TYPE_SIGSET);
   luaL_register(L,NULL,m_sigset_meta); 
   luaL_register(L,"org.conman.signal-posix",m_sig_reg);

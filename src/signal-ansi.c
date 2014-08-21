@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -52,38 +53,94 @@
 #  error This module is for Lua 5.1
 #endif
 
-/**********************************************************************
-*
-* No assumptions are being made about the actual SIG* values (they could be
-* consecutive, they could not be.  That's why I have separate variagbles for
-* each signal.  Sure, it's a bit verbose, but it's a more portable approach.
-*
-***********************************************************************/
+#define MAX_SIG	6
 
-  /* modified in signal handler, thus the volatile modifier */
-  
-static volatile int           m_hookcount;
-static volatile int           m_hookmask;
-static volatile lua_Hook      m_hook;
-static volatile sig_atomic_t  m_bam;
-static volatile sig_atomic_t  m_signal;
-static volatile sig_atomic_t  m_caught;
-static volatile sig_atomic_t  m_caught_abrt;
-static volatile sig_atomic_t  m_caught_fpe;
-static volatile sig_atomic_t  m_caught_ill;
-static volatile sig_atomic_t  m_caught_int;
-static volatile sig_atomic_t  m_caught_segv;
-static volatile sig_atomic_t  m_caught_term;
+/**********************************************************************/
 
-  /* set under more controlled circumstances */
+struct datasig
+{
+  lua_State             *L;
+  const char            *name;
+  int                    fref;
+  int                    cref;
+  volatile sig_atomic_t  triggered;
+};
+
+/************************************************************************
+*
+* No assumpiton is made about the actual SIG* values (they could
+* consecutive, they could not be).  So work around the fact that we can't
+* assume the SIG* values are consecutive.
+*
+**************************************************************************/
+
+static const int m_sigvalue[] =
+{
+  SIGABRT,
+  SIGFPE,
+  SIGILL,
+  SIGINT,
+  SIGSEGV,
+  SIGTERM
+};
+
+struct mapstrint
+{
+  const char *const text;
+  const int         value;
+};
+
+static const struct mapstrint sigs[] =
+{
+  { "abort"	, 0 } ,
+  { "abrt"	, 0 } ,
+  { "fpe"	, 1 } ,
+  { "ill"	, 2 } ,
+  { "illegal"	, 2 } ,
+  { "int"	, 3 } ,
+  { "interrupt"	, 3 } ,
+  { "segfault"	, 4 } ,
+  { "segv"	, 4 } ,
+  { "term"	, 5 } ,
+  { "terminate"	, 5 } ,
+};
+
+/*--------------------------------------------------------------------*/
+
+static int mapstrintcmp(const void *needle,const void *haystack)
+{
+  const char             *key   = needle;
+  const struct mapstrint *value = haystack;
   
-static int                    m_ref_abrt = LUA_NOREF;
-static int                    m_ref_fpe  = LUA_NOREF;
-static int                    m_ref_ill  = LUA_NOREF;
-static int                    m_ref_int  = LUA_NOREF;
-static int                    m_ref_segv = LUA_NOREF;
-static int                    m_ref_term = LUA_NOREF;
-static lua_State             *m_L;
+  return strcmp(key,value->text);
+}
+
+/*--------------------------------------------------------------------*/
+
+static int slua_tosignal(lua_State *L,int idx,const char **ps)
+{
+  const struct mapstrint *entry = bsearch(
+          luaL_checkstring(L,idx),
+          sigs,
+          sizeof(sigs) / sizeof(struct mapstrint),
+          sizeof(struct mapstrint),
+          mapstrintcmp
+  );
+  
+  if (entry == NULL)
+    return luaL_error(L,"signal '%s' not supported",lua_tostring(L,idx));
+  else
+  {
+    if (ps != NULL)
+      *ps = entry->text;
+    return entry->value;
+  }
+}
+
+/**********************************************************************/
+
+static volatile sig_atomic_t m_signal;
+static struct datasig        m_handlers[MAX_SIG];
 
 /***************************************************************************
 *
@@ -96,44 +153,29 @@ static lua_State             *m_L;
 
 static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
 {
-  volatile sig_atomic_t *ps;
-  const char            *sig;
-  int                    ref;
-  
   lua_sethook(L,NULL,0,0);
   
   while(m_signal)
   {
     m_signal = 0;
     
-    if (m_caught_abrt)
-      ref = m_ref_abrt , sig = "abrt" , ps = &m_caught_abrt;
-    else if (m_caught_fpe)
-      ref = m_ref_fpe  , sig = "fpe"  , ps = &m_caught_fpe;
-    else if (m_caught_ill)
-      ref = m_ref_ill  , sig = "ill"  , ps = &m_caught_ill;
-    else if (m_caught_int)
-      ref = m_ref_int  , sig = "int"  , ps = &m_caught_int;
-    else if (m_caught_segv)
-      ref = m_ref_segv , sig = "segv" , ps = &m_caught_segv;
-    else if (m_caught_term)
-      ref = m_ref_term , sig = "term" , ps = &m_caught_term;
-    else
-      continue;
-    
-    if (ref != LUA_NOREF)
+    for (size_t i = 0 ; i < MAX_SIG ; i++)
     {
-      *ps = 0;
-      lua_pushinteger(L,ref);
-      lua_gettable(L,LUA_REGISTRYINDEX);
-      lua_pushstring(L,sig);
-      if (lua_pcall(L,1,0,0) != 0)
-        lua_error(L);
+      if (m_handlers[i].triggered)
+      {
+        if (m_handlers[i].fref != LUA_NOREF)
+        {
+          assert(m_handlers[i].L != NULL);
+          m_handlers[i].triggered = 0;
+          lua_pushinteger(m_handlers[i].L,m_handlers[i].fref);
+          lua_gettable(m_handlers[i].L,LUA_REGISTRYINDEX);
+          lua_pushstring(m_handlers[i].L,m_handlers[i].name);
+          if (lua_pcall(m_handlers[i].L,1,0,0) != 0)
+            lua_error(m_handlers[i].L);
+        }
+      }
     }
   }
-  
-  lua_sethook(L,m_hook,m_hookmask,m_hookcount);
-  m_bam = 0;
 }
 
 /***************************************************************************
@@ -151,88 +193,23 @@ static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
 
 static void signal_handler(int sig)
 {
-  if (!m_bam)
-  {
-    m_bam = 1;
-    m_hookcount = lua_gethookcount(m_L);
-    m_hookmask  = lua_gethookmask (m_L);
-    m_hook      = lua_gethook     (m_L);
-    
-    lua_sethook(m_L,luasigbackend,LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,1);
-  }
+  size_t isig;
   
+  for (isig = 0 ; isig < MAX_SIG ; isig++)
+    if (m_sigvalue[isig] == sig) break;
+  
+  assert(isig               <  MAX_SIG);  
+  assert(m_handlers[isig].L != NULL);
+  
+  lua_sethook(
+          m_handlers[isig].L,
+          luasigbackend,
+          LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,
+          1
+  );
+  
+  m_handlers[isig].triggered = m_signal = 1;  
   signal(sig,signal_handler);
-
-  m_signal = m_caught = 1;
-
-  switch(sig)
-  {
-    case SIGABRT: m_caught_abrt = 1; break;
-    case SIGFPE:  m_caught_fpe  = 1; break;
-    case SIGILL:  m_caught_ill  = 1; break;
-    case SIGINT:  m_caught_int  = 1; break;
-    case SIGSEGV: m_caught_segv = 1; break;
-    case SIGTERM: m_caught_term = 1; break;
-    default:                         break;
-  }
-}
-
-/**********************************************************************
-*
-* Function to map a string to a signal value.
-*
-***********************************************************************/
-
-struct mapstrint
-{
-  const char *const text;
-  const int         value;
-};
-
-/*-------------------------------------------------
-; NOTE: the following list must be kept sorted.
-;--------------------------------------------------*/
-
-static const struct mapstrint sigs[] =
-{
-  { "abort"	, SIGABRT	} ,
-  { "abrt"	, SIGABRT	} ,
-  { "fpe"	, SIGFPE	} ,
-  { "ill"	, SIGILL	} ,
-  { "illegal"	, SIGILL	} ,
-  { "int"	, SIGINT	} ,
-  { "interrupt"	, SIGINT	} ,
-  { "segv"	, SIGSEGV	} ,
-  { "term"	, SIGTERM	} ,
-  { "terminate"	, SIGTERM	} ,
-};
-
-/*--------------------------------------------------------------------*/
-
-static int mapstrintcmp(const void *needle,const void *haystack)
-{
-  const char             *key   = needle;
-  const struct mapstrint *value = haystack;
-  
-  return strcmp(key,value->text);
-}
-
-/*--------------------------------------------------------------------*/
-
-static int slua_tosignal(lua_State *const L,int idx)
-{  
-  struct mapstrint *entry = bsearch(
-          luaL_checkstring(L,idx),
-          sigs,
-          sizeof(sigs) / sizeof(struct mapstrint),
-          sizeof(struct mapstrint),
-          mapstrintcmp
-        );
-  
-  if (entry == NULL)
-    return luaL_error(L,"signal '%s' not supported",lua_tostring(L,idx));
-  else
-    return entry->value;
 }
 
 /**********************************************************************
@@ -252,34 +229,24 @@ static int slua_tosignal(lua_State *const L,int idx)
 
 static int siglua_caught(lua_State *const L)
 {
-  int caught;
-  
   if (lua_isnoneornil(L,1))
   {
-    lua_pushboolean(L,m_caught != 0);
-    m_caught      = 0;
-    m_caught_abrt = 0;
-    m_caught_fpe  = 0;
-    m_caught_ill  = 0;
-    m_caught_int  = 0;
-    m_caught_segv = 0;
-    m_caught_term = 0;
+    sig_atomic_t caught = 0;
+    
+    for (size_t i = 0 ; i < MAX_SIG ; i++)
+    {
+      caught |= m_handlers[i].triggered;
+      m_handlers[i].triggered = 0;
+    }
+    
+    lua_pushboolean(L,caught);
     return 1;
   }
   
-  switch(slua_tosignal(L,1))
-  {
-    case SIGABRT: caught = (m_caught_abrt != 0); m_caught_abrt = 0; break;
-    case SIGFPE:  caught = (m_caught_fpe  != 0); m_caught_fpe  = 0; break;
-    case SIGILL:  caught = (m_caught_ill  != 0); m_caught_ill  = 0; break;
-    case SIGINT:  caught = (m_caught_int  != 0); m_caught_int  = 0; break;
-    case SIGSEGV: caught = (m_caught_segv != 0); m_caught_segv = 0; break;
-    case SIGTERM: caught = (m_caught_term != 0); m_caught_term = 0; break;
-    default:      caught = 0;                                       break;
-  }
-  
-  lua_pushboolean(L,caught);
-  m_caught = 0;
+  int sig = slua_tosignal(L,1,NULL);
+
+  lua_pushboolean(L,m_handlers[sig].triggered);
+  m_handlers[sig].triggered = 0;
   return 1;
 }
 
@@ -300,45 +267,155 @@ static int siglua_caught(lua_State *const L)
 
 static int siglua_catch(lua_State *const L)
 {
-  int sig;
-  int ref;
+  const char     *name;
+  int             sig = slua_tosignal(L,1,&name);
+  struct datasig  ds;
+  struct datasig  ods;
   
-  sig = slua_tosignal(L,1);
-  
-  switch(sig)
-  {
-    case SIGABRT: ref = m_ref_abrt; m_ref_abrt = LUA_NOREF; break;
-    case SIGFPE:  ref = m_ref_fpe;  m_ref_fpe  = LUA_NOREF; break;
-    case SIGILL:  ref = m_ref_ill;  m_ref_ill  = LUA_NOREF; break;
-    case SIGINT:  ref = m_ref_int;  m_ref_int  = LUA_NOREF; break;
-    case SIGSEGV: ref = m_ref_segv; m_ref_segv = LUA_NOREF; break;
-    case SIGTERM: ref = m_ref_term; m_ref_term = LUA_NOREF; break;
-    default:                                                break;
-  }
-  
-  luaL_unref(L,LUA_REGISTRYINDEX,ref);
-  ref = LUA_NOREF;
+  ds.L         = L;
+  ds.name      = name;
+  ds.fref      = LUA_NOREF;
+  ds.cref      = LUA_NOREF;
+  ds.triggered = 0;
   
   if (lua_isfunction(L,2))
   {
     lua_pushvalue(L,2);
-    ref = luaL_ref(L,LUA_REGISTRYINDEX);
+    ds.fref = luaL_ref(L,LUA_REGISTRYINDEX);
+    lua_pushthread(L);
+    ds.cref = luaL_ref(L,LUA_REGISTRYINDEX);
   }
-        
-  switch(sig)
-  {
-    case SIGABRT: m_ref_abrt = ref; break;
-    case SIGFPE:  m_ref_fpe  = ref; break;
-    case SIGILL:  m_ref_ill  = ref; break;
-    case SIGINT:  m_ref_int  = ref; break;
-    case SIGSEGV: m_ref_segv = ref; break;
-    case SIGTERM: m_ref_term = ref; break;
-    default:                        break;
-  } 
   
-  signal(sig,signal_handler);
-  lua_pushboolean(L,1);
-  lua_pushinteger(L,0);
+  ods = m_handlers[sig];
+  m_handlers[sig] = ds;
+  
+  if (signal(m_sigvalue[sig],signal_handler) == SIG_ERR)
+  {
+    m_handlers[sig] = ods;
+    luaL_unref(L,LUA_REGISTRYINDEX,ds.cref);
+    luaL_unref(L,LUA_REGISTRYINDEX,ds.fref);
+    lua_pushboolean(L,0);
+    lua_pushinteger(L,EINVAL);
+  }
+  else
+  {
+    luaL_unref(L,LUA_REGISTRYINDEX,ods.cref);
+    luaL_unref(L,LUA_REGISTRYINDEX,ods.fref);
+    lua_pushboolean(L,1);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/**********************************************************************
+*
+* Usage:	ohandler,okay = signal.catch(signal[,handler])
+*
+* Desc:		Catch a signal.  If no handler is given, set a flag
+*		that signal.catch() can check.
+*
+* Input:	signal (string) name of signal
+*		handler (function string/optional) handler for signal
+*			| == 'ignore' ignore signal
+*			| == 'default' set default action
+*			| == function , call Lua function
+*
+* Return:	ohandler (function string) previous handler (can be nil)
+*		okay (integer) 0 if okay, system error otherwise
+*
+***********************************************************************/
+
+static int xsiglua_catch(lua_State *L)
+{
+  const char      *name;
+  int              sig = slua_tosignal(L,1,&name);
+  struct datasig   ds;	/* new signal handler data */
+  struct datasig   ods;	/* old signal handler data */
+  void           (*handler)(int);
+  void           (*rethand)(int);
+  
+  lua_settop(L,2);  
+  lua_pushinteger(L,m_handlers[sig].fref);
+  lua_gettable(L,LUA_REGISTRYINDEX);
+  
+  if (lua_type(L,2) == LUA_TNIL)
+  {
+    ds.L         = L;
+    ds.name      = name;
+    ds.fref      = LUA_NOREF;
+    ds.cref      = LUA_NOREF;
+    ds.triggered = 0;
+    handler = signal_handler;
+  }
+  else if (lua_type(L,2) == LUA_TSTRING)
+  {
+    ds.L         = NULL;
+    ds.name      = NULL;
+    ds.fref      = LUA_NOREF;
+    ds.cref      = LUA_NOREF;
+    ds.triggered = 0;
+    
+    if (strcmp(lua_tostring(L,2),"ignore") == 0)
+      handler = SIG_IGN;
+    else if (strcmp(lua_tostring(L,2),"default") == 0)
+      handler = SIG_DFL;
+    else
+      return luaL_error(L,"handler '%s' illegal",lua_tostring(L,2));    
+  }
+  else if (lua_type(L,2) == LUA_TFUNCTION)
+  {
+    ds.L    = L;
+    ds.name = name;
+    lua_pushvalue(L,2);
+    ds.fref = luaL_ref(L,LUA_REGISTRYINDEX);
+    lua_pushthread(L);
+    ds.cref = luaL_ref(L,LUA_REGISTRYINDEX);
+    ds.triggered = 0;
+    handler = signal_handler;
+  }
+  else
+    return luaL_error(L,"type error");
+
+  /*----------------------------------------------------------------------
+  ; cache the old handler data, then store the new handler data.  We then
+  ; set the signal.  If there's an error, no harm, no foul, we just
+  ; unreference the new data and keep the old around, otherwise, we
+  ; unreference the old data.
+  ;-----------------------------------------------------------------------*/
+  
+  ods = m_handlers[sig];
+  m_handlers[sig] = ds;
+  
+  rethand = signal(m_sigvalue[sig],handler);
+  
+  if (rethand == SIG_ERR)
+  {
+    m_handlers[sig] = ods;	/* keep this around */
+    luaL_unref(L,LUA_REGISTRYINDEX,ds.cref);	/* unref the new stuff */
+    luaL_unref(L,LUA_REGISTRYINDEX,ds.fref);
+    lua_pushnil(L);
+    lua_pushinteger(L,EINVAL);
+    return 2;
+  }
+  else if (rethand == SIG_IGN)
+  {
+    lua_pushliteral(L,"ignore");
+    lua_pushinteger(L,0);
+  }
+  else if (rethand == SIG_DFL)
+  {
+    lua_pushliteral(L,"default");
+    lua_pushinteger(L,0);
+  }
+  else
+  {
+    lua_pushvalue(L,3);
+    lua_pushinteger(L,0);
+  }
+  
+  luaL_unref(L,LUA_REGISTRYINDEX,ods.cref);
+  luaL_unref(L,LUA_REGISTRYINDEX,ods.fref);
   return 2;
 }
 
@@ -359,23 +436,16 @@ static int siglua_ignore(lua_State *const L)
   
   for (i = 1 ; i <= top ; i++)
   {
-    int sig = slua_tosignal(L,i);
-    int *pref;
     
-    switch(sig)
-    {
-      case SIGABRT: pref = &m_ref_abrt; break;
-      case SIGFPE:  pref = &m_ref_fpe;  break;
-      case SIGILL:  pref = &m_ref_ill;  break;
-      case SIGINT:  pref = &m_ref_int;  break;
-      case SIGSEGV: pref = &m_ref_segv; break;
-      case SIGTERM: pref = &m_ref_term; break;
-      default:                          break;
-    }
-    
-    luaL_unref(L,LUA_REGISTRYINDEX,*pref);
-    signal(sig,SIG_IGN);
-    *pref = LUA_NOREF;
+    int sig = slua_tosignal(L,1,NULL);
+    signal(m_sigvalue[sig],SIG_IGN);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
+    m_handlers[sig].fref      = LUA_NOREF;
+    m_handlers[sig].cref      = LUA_NOREF;
+    m_handlers[sig].triggered = 0;
+    m_handlers[sig].L         = NULL;
+    m_handlers[sig].name      = NULL;
   }
   return 0;
 }
@@ -397,23 +467,15 @@ static int siglua_default(lua_State *const L)
   
   for (i = 1 ; i <= top ; i++)
   {
-    int sig = slua_tosignal(L,i);
-    int *pref;
-    
-    switch(sig)
-    {
-      case SIGABRT: pref = &m_ref_abrt; break;
-      case SIGFPE:  pref = &m_ref_fpe;  break;
-      case SIGILL:  pref = &m_ref_ill;  break;
-      case SIGINT:  pref = &m_ref_int;  break;
-      case SIGSEGV: pref = &m_ref_segv; break;
-      case SIGTERM: pref = &m_ref_term; break;
-      default:                          break;
-    }
-
-    luaL_unref(L,LUA_REGISTRYINDEX,*pref);
-    signal(sig,SIG_DFL);
-    *pref = LUA_NOREF;
+    int sig = slua_tosignal(L,1,NULL);
+    signal(m_sigvalue[sig],SIG_DFL);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
+    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
+    m_handlers[sig].fref      = LUA_NOREF;
+    m_handlers[sig].cref      = LUA_NOREF;
+    m_handlers[sig].triggered = 0;
+    m_handlers[sig].L         = NULL;
+    m_handlers[sig].name      = NULL;
   }
   return 0;
 }
@@ -436,7 +498,7 @@ static int siglua_default(lua_State *const L)
 static int siglua_raise(lua_State *const L)
 {
   errno = 0;
-  raise(slua_tosignal(L,1));
+  raise(m_sigvalue[slua_tosignal(L,1,NULL)]);
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
@@ -464,8 +526,9 @@ static int siglua_defined(lua_State *const L)
                    sizeof(sigs) / sizeof(struct mapstrint),
                    sizeof(struct mapstrint),
                    mapstrintcmp
-                  ) != NULL
+                ) != NULL
   );
+  
   return 1;
 }
 
@@ -491,6 +554,7 @@ static const struct luaL_Reg m_sig_reg[] =
 {
   { "caught"	, siglua_caught		} ,
   { "catch"	, siglua_catch		} ,
+  { "xcatch"	, xsiglua_catch		} ,
   { "ignore"	, siglua_ignore		} ,
   { "default"	, siglua_default	} ,
   { "raise"	, siglua_raise		} ,
@@ -501,7 +565,15 @@ static const struct luaL_Reg m_sig_reg[] =
 
 int luaopen_ansi(lua_State *const L)
 {
-  m_L = L;
+  for (size_t i = 0 ; i < MAX_SIG ; i++)
+  {
+    m_handlers[i].fref      = LUA_NOREF;
+    m_handlers[i].cref      = LUA_NOREF;
+    m_handlers[i].triggered = 0;
+    m_handlers[i].L         = NULL;
+    m_handlers[i].name      = NULL;
+  }
+  
   luaL_register(L,"org.conman.signal-ansi",m_sig_reg);
   return 1;
 }
