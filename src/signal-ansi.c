@@ -310,117 +310,6 @@ static int siglua_catch(lua_State *const L)
 
 /**********************************************************************
 *
-* Usage:	ohandler,okay = signal.catch(signal[,handler])
-*
-* Desc:		Catch a signal.  If no handler is given, set a flag
-*		that signal.catch() can check.
-*
-* Input:	signal (string) name of signal
-*		handler (function string/optional) handler for signal
-*			| == 'ignore' ignore signal
-*			| == 'default' set default action
-*			| == function , call Lua function
-*
-* Return:	ohandler (function string) previous handler (can be nil)
-*		okay (integer) 0 if okay, system error otherwise
-*
-***********************************************************************/
-
-static int xsiglua_catch(lua_State *L)
-{
-  const char      *name;
-  int              sig = slua_tosignal(L,1,&name);
-  struct datasig   ds;	/* new signal handler data */
-  struct datasig   ods;	/* old signal handler data */
-  void           (*handler)(int);
-  void           (*rethand)(int);
-  
-  lua_settop(L,2);  
-  lua_pushinteger(L,m_handlers[sig].fref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
-  
-  if (lua_type(L,2) == LUA_TNIL)
-  {
-    ds.L         = L;
-    ds.name      = name;
-    ds.fref      = LUA_NOREF;
-    ds.cref      = LUA_NOREF;
-    ds.triggered = 0;
-    handler = signal_handler;
-  }
-  else if (lua_type(L,2) == LUA_TSTRING)
-  {
-    ds.L         = NULL;
-    ds.name      = NULL;
-    ds.fref      = LUA_NOREF;
-    ds.cref      = LUA_NOREF;
-    ds.triggered = 0;
-    
-    if (strcmp(lua_tostring(L,2),"ignore") == 0)
-      handler = SIG_IGN;
-    else if (strcmp(lua_tostring(L,2),"default") == 0)
-      handler = SIG_DFL;
-    else
-      return luaL_error(L,"handler '%s' illegal",lua_tostring(L,2));    
-  }
-  else if (lua_type(L,2) == LUA_TFUNCTION)
-  {
-    ds.L    = L;
-    ds.name = name;
-    lua_pushvalue(L,2);
-    ds.fref = luaL_ref(L,LUA_REGISTRYINDEX);
-    lua_pushthread(L);
-    ds.cref = luaL_ref(L,LUA_REGISTRYINDEX);
-    ds.triggered = 0;
-    handler = signal_handler;
-  }
-  else
-    return luaL_error(L,"type error");
-
-  /*----------------------------------------------------------------------
-  ; cache the old handler data, then store the new handler data.  We then
-  ; set the signal.  If there's an error, no harm, no foul, we just
-  ; unreference the new data and keep the old around, otherwise, we
-  ; unreference the old data.
-  ;-----------------------------------------------------------------------*/
-  
-  ods = m_handlers[sig];
-  m_handlers[sig] = ds;
-  
-  rethand = signal(m_sigvalue[sig],handler);
-  
-  if (rethand == SIG_ERR)
-  {
-    m_handlers[sig] = ods;	/* keep this around */
-    luaL_unref(L,LUA_REGISTRYINDEX,ds.cref);	/* unref the new stuff */
-    luaL_unref(L,LUA_REGISTRYINDEX,ds.fref);
-    lua_pushnil(L);
-    lua_pushinteger(L,EINVAL);
-    return 2;
-  }
-  else if (rethand == SIG_IGN)
-  {
-    lua_pushliteral(L,"ignore");
-    lua_pushinteger(L,0);
-  }
-  else if (rethand == SIG_DFL)
-  {
-    lua_pushliteral(L,"default");
-    lua_pushinteger(L,0);
-  }
-  else
-  {
-    lua_pushvalue(L,3);
-    lua_pushinteger(L,0);
-  }
-  
-  luaL_unref(L,LUA_REGISTRYINDEX,ods.cref);
-  luaL_unref(L,LUA_REGISTRYINDEX,ods.fref);
-  return 2;
-}
-
-/**********************************************************************
-*
 * Usage:	signal.ignore(signal[,signal...])
 *
 * Desc:		Causes system to ignore one or more signals
@@ -554,7 +443,6 @@ static const struct luaL_Reg m_sig_reg[] =
 {
   { "caught"	, siglua_caught		} ,
   { "catch"	, siglua_catch		} ,
-  { "xcatch"	, xsiglua_catch		} ,
   { "ignore"	, siglua_ignore		} ,
   { "default"	, siglua_default	} ,
   { "raise"	, siglua_raise		} ,
