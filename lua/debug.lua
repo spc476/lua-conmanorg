@@ -21,7 +21,7 @@
 
 module("org.conman.debug",package.seeall)
 
-EDITOR = os.getenv("EDITOR") or "/bin/vi"
+EDITOR = os.getenv("VISUAL") or os.getenv("EDITOR") or "/bin/vi"
 
 -- *********************************************************************
 
