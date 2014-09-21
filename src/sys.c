@@ -177,6 +177,7 @@ static const struct strint
   { "NAME_MAX"		, _PC_NAME_MAX		} ,
   { "PATH_MAX"		, _PC_PATH_MAX		} ,
   { "PIPE_BUF"		, _PC_PIPE_BUF		} ,
+  { "PAGESIZE"		, _SC_PAGESIZE		} ,
 };
 
 #define MAXVARS (sizeof(mvars) / sizeof(struct strint))
@@ -225,9 +226,6 @@ int luaopen_org_conman_sys(lua_State *const L)
   lua_pushinteger(L,1);
 #endif
   lua_setfield(L,-2,"CORES");
-
-  lua_pushinteger(L,sysconf(_SC_PAGESIZE));
-  lua_setfield(L,-2,"PAGESIZE");
 
   lua_createtable(L,0,0);
   for (i = 0 ; i < MAXVARS ; i++)
