@@ -856,12 +856,13 @@ static int siglua_default(lua_State *const L)
 
 /**********************************************************************
 *
-* Usage:        okay,err = signal.raise(signal)
+* Usage:        okay,err = signal.raise(signal[,pid])
 *
 * Desc:         Triggers the given signal.
 *
 * Input:        signal (string) name of signal
-*
+*		pid (integer/optional)	process ID to send signal to
+* 
 * Return:       okay (boolean)  true of okay, false otherwise
 *               err (integer)   error value
 *
@@ -871,10 +872,20 @@ static int siglua_default(lua_State *const L)
 
 static int siglua_raise(lua_State *const L)
 {
-  errno = 0;
-  raise(slua_tosignal(L,1,NULL));
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
+  if (lua_gettop(L) == 1)
+  {
+    errno = 0;
+    raise(slua_tosignal(L,1,NULL));
+    lua_pushboolean(L,errno == 0);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    errno = 0;
+    kill(luaL_checkinteger(L,2),slua_tosignal(L,1,NULL));
+    lua_pushboolean(L,errno == 0);
+    lua_pushinteger(L,errno);
+  }
   return 2;
 }
 
