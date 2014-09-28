@@ -322,25 +322,6 @@ static int proclua_exit(lua_State *const L)
 
 /***********************************************************************/
 
-static int proclua_kill(lua_State *const L)
-{
-  pid_t child;
-  int   sig;
-  
-  assert(L != NULL);
-
-  child = luaL_checkinteger(L,1);
-  sig   = luaL_optint(L,2,SIGTERM);
-  errno = 0;
-  
-  kill(child,sig);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/******************************************************************/
-
 static int proclua_wait(lua_State *const L)
 {
   pid_t child;
@@ -1322,7 +1303,6 @@ static const struct luaL_Reg m_process_reg[] =
   { "gettimeofday"	, proclua_gettimeofday		} ,
   { "sleep"		, proclua_sleep			} ,
   { "sleepres"		, proclua_sleepres		} ,
-  { "kill"		, proclua_kill			} ,
   { "exec"		, proclua_exec			} ,
   { "times"		, proclua_times			} ,
   { "getrusage"		, proclua_getrusage		} ,
