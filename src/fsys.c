@@ -601,14 +601,29 @@ static int fsys_dirname(lua_State *L)
 
 /***********************************************************************/
 
+static int fsyslib_close(lua_State *L)
+{
+  FILE **pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  fclose(*pfp);
+  *pfp = NULL;
+  lua_pushboolean(L,1);
+  return 1;
+}
+
 static int fsys_openfd(lua_State *L)
 {
   FILE **pfp;
+  
+  lua_settop(L,3);
   
   pfp  = lua_newuserdata(L,sizeof(FILE *));
   *pfp = NULL;	/* see comments in fsys_pipe() */
   luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
+  lua_createtable(L,0,0);
+  lua_pushcfunction(L,fsyslib_close);
+  lua_setfield(L,-2,"__close");
+  lua_setfenv(L,-2);
   
   *pfp = fdopen(
   		luaL_checkinteger(L,1),
@@ -668,12 +683,20 @@ static int fsys_pipe(lua_State *L)
   *pfpread = NULL;
   luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
-  lua_setfield(L,-2,"read");
+  lua_createtable(L,0,0);
+  lua_pushcfunction(L,fsyslib_close);
+  lua_setfield(L,-2,"__close");
+  lua_setfenv(L,-2);
+  lua_setfield(L,-2,"read");  
   
   pfpwrite  = lua_newuserdata(L,sizeof(FILE *));
   *pfpwrite = NULL;
   luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
+  lua_createtable(L,0,0);
+  lua_pushcfunction(L,fsyslib_close);
+  lua_setfield(L,-2,"__close");
+  lua_setfenv(L,-2);
   lua_setfield(L,-2,"write");
   
   /*---------------------------------------------------------------------
