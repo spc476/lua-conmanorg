@@ -614,7 +614,7 @@ static int fsys_openfd(lua_State *L)
 {
   FILE **pfp;
   
-  lua_settop(L,3);
+  lua_settop(L,2);
   
   pfp  = lua_newuserdata(L,sizeof(FILE *));
   *pfp = NULL;	/* see comments in fsys_pipe() */
