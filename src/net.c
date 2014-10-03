@@ -560,7 +560,7 @@ static int netlua_socketfile(lua_State *const L)
   FILE    **pfp  = luaL_checkudata(L,1,LUA_FILEHANDLE);
   sock__t  *sock = lua_newuserdata(L,sizeof(sock__t));
   
-  sock->fh = fileno(*pfp);  
+  sock->fh = fileno(*pfp);
   luaL_getmetatable(L,TYPE_SOCK);
   lua_setmetatable(L,-2);
   lua_pushinteger(L,0);
