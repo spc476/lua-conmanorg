@@ -119,6 +119,7 @@ static int	netlua_interfaces	(lua_State *const) __attribute__((nonnull));
 static int	netlua_socket		(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfile	(lua_State *const) __attribute__((nonnull));
 static int	netlua_socketfd		(lua_State *const) __attribute__((nonnull));
+static int	netlua_socketpair	(lua_State *const) __attribute__((nonnull));
 static int	netlua_address2		(lua_State *const) __attribute__((nonnull));
 static int	netlua_address		(lua_State *const) __attribute__((nonnull));
 static int      netlua_addressraw	(lua_State *const) __attribute__((nonnull));
@@ -165,6 +166,7 @@ static const luaL_Reg m_net_reg[] =
   { "socket"		, netlua_socket		} ,
   { "socketfile"	, netlua_socketfile	} ,
   { "socketfd"		, netlua_socketfd	} ,
+  { "socketpair"	, netlua_socketpair	} ,
   { "address2"		, netlua_address2	} ,
   { "address"		, netlua_address	} ,
   { "addressraw"	, netlua_addressraw	} ,
@@ -585,6 +587,57 @@ static int netlua_socketfd(lua_State *const L)
   lua_pushinteger(L,0);
 
   return 2;
+}
+
+/***********************************************************************
+*
+* Usage:	sock1,sock2,err = net.socketpair([dgram])
+*
+* Desc:		Create a pair of connected sockets
+*
+* Input:	dgram (boolean/optional) true if datagram semantics required
+*
+* Return:	sock1 (userdata(socket))
+*		sock2 (userdata(socket))
+*		err (ineteger) system error, 0 if okay
+*
+************************************************************************/
+
+static int netlua_socketpair(lua_State *const L)
+{
+  int      type;
+  int      sv[2];
+  sock__t *s1;
+  sock__t *s2;
+  
+  lua_settop(L,1);
+  type = lua_toboolean(L,1)
+       ? SOCK_DGRAM
+       : SOCK_STREAM
+       ;
+  
+  s1     = lua_newuserdata(L,sizeof(sock__t));
+  s1->fh = -1;
+  luaL_getmetatable(L,TYPE_SOCK);
+  lua_setmetatable(L,-2);
+  
+  s2     = lua_newuserdata(L,sizeof(sock__t));
+  s2->fh = -1;
+  luaL_getmetatable(L,TYPE_SOCK);
+  lua_setmetatable(L,-2);
+  
+  if (socketpair(AF_UNIX,type,0,sv) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 3;
+  }
+  
+  s1->fh = sv[0];
+  s2->fh = sv[1];
+  lua_pushinteger(L,0);
+  return 3;
 }
 
 /***********************************************************************
