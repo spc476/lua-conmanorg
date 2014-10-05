@@ -17,6 +17,22 @@
 *
 * Comments, questions and criticisms can be sent to: sean@conman.org
 *
+* ==================================================================
+*
+* Module:	org.conman.syslog
+*
+* Desc:		Lua interface to syslog()
+*
+* Example:
+*
+
+	syslog = require "org.conman.syslog"
+
+	syslog.open("myprog",'local1') -- optional
+	syslog('debug',"The time is now %s",os.date("%c"))
+	syslog.close() -- optional
+
+*
 *********************************************************************/
 
 #include <string.h>
