@@ -295,6 +295,8 @@ static const struct luaL_Reg reg_syslog[] =
 
 int luaopen_org_conman_syslog(lua_State *L)
 {
+  size_t i;
+
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.syslog",reg_syslog);
 #else
@@ -302,7 +304,7 @@ int luaopen_org_conman_syslog(lua_State *L)
 #endif
 
   lua_createtable(L,0,MAX_FACILITY);
-  for (size_t i = 0 ; i < MAX_FACILITY; i++)
+  for (i = 0 ; i < MAX_FACILITY; i++)
   {
     lua_pushinteger(L,m_facilities[i].value);
     lua_setfield(L,-2,m_facilities[i].name);
@@ -310,7 +312,7 @@ int luaopen_org_conman_syslog(lua_State *L)
   lua_setfield(L,-2,"facility");
 
   lua_createtable(L,0,MAX_LEVEL);
-  for (size_t i = 0 ; i < MAX_LEVEL; i++)
+  for (i = 0 ; i < MAX_LEVEL; i++)
   {
     lua_pushinteger(L,m_levels[i].value);
     lua_setfield(L,-2,m_levels[i].name);
