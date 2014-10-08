@@ -144,10 +144,7 @@ static struct datasig        m_handlers[MAX_SIG];
 
 /***************************************************************************
 *
-* The signal handler backend. We remove any Lua debug hooks (how we got here
-* in the first place) then figure out which signal was triggered.  If
-* there's a function reference, call the function.  After all signals have
-* been processed, restore any Lua debug hooks and continue.
+* The signal handler backend---call the registered signal callback.
 *
 ****************************************************************************/ 
 
@@ -180,10 +177,10 @@ static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
 
 /***************************************************************************
 *
-* If not already handling signals, save any Lua debug hooks, then set one so
-* that anything that happens will trap to the signal backend.  We then
-* re-establish the signal handler [1] and set a flag for which signal was
-* triggered.
+* Set a Lua debug hook to get control at the next available time (a call, a
+* return, one Lua VM cycle) so we can call the registered callback (if any). 
+* We then re-establish the signal handler [1] and set a flag for which
+* signal was triggered.
 *
 * [1]	The signal() handler is reset upon delivery.  Because of this, there
 *	is a potential to lose a signal.  But what can you do with ANSI C
