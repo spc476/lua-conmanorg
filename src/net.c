@@ -1803,8 +1803,8 @@ static int addrlua___tostring(lua_State *const L)
          lua_pushfstring(L,"unix:%s",Inet_addr(addr,taddr));
          break;
     default:
-         assert(0);
-         lua_pushstring(L,"unknown:");
+         lua_pushfstring(L,"unknown:%d",addr->sa.sa_family);
+         break;
   }
   return 1;
 }
