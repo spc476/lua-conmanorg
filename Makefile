@@ -66,6 +66,7 @@ all : lib		\
 	lib/base64.so	\
 	lib/signal-ansi.so  \
 	lib/signal-posix.so \
+	lib/clock.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -104,6 +105,9 @@ lib/process.so : src/process.c
 lib/tcc.so : src/tcc.c
 	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -ltcc
 
+lib/clock.so : src/clock.c
+	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lrt
+
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
 	/bin/rm -rf lib/*
@@ -136,6 +140,7 @@ install : all
 	install lib/base64.so  $(LUALIB)/org/conman
 	install lib/signal-ansi.so  $(LUALIB)/org/conman
 	install lib/signal-posix.so $(LUALIB)/org/conman
+	install lib/clock.so   $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
