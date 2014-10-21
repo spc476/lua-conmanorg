@@ -17,6 +17,13 @@
 --
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
+-- --------------------------------------------------------------------
+--
+-- Some standards for options.  First, long options:
+--	http://www.gnu.org/prep/standards/standards.html#Option-Table
+--
+-- And now for short options:
+--	http://www.catb.org/~esr/writings/taoup/html/ch10s05.html
 -- ********************************************************************
 
 module("org.conman.getopt",package.seeall)
