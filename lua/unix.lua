@@ -34,19 +34,21 @@ local function etcpasswd()
   local users = {}
 
   for line in io.lines('/etc/passwd') do
-    local next  = line:gmatch "([^:]*):?" 
-    local user  = {}
-    
-    user.userid = next()
-    user.passwd = next()
-    user.uid    = tonumber(next())
-    user.gid    = tonumber(next())
-    user.name   = next()
-    user.home   = next()
-    user.shell  = next()
-    
-    users[user.userid] = user
-    users[user.uid]    = user
+    if not line:match "^#" then
+      local next  = line:gmatch "([^:]*):?" 
+      local user  = {}
+      
+      user.userid = next()
+      user.passwd = next()
+      user.uid    = tonumber(next())
+      user.gid    = tonumber(next())
+      user.name   = next()
+      user.home   = next()
+      user.shell  = next()
+      
+      users[user.userid] = user
+      users[user.uid]    = user
+    end
   end
   
   return users
@@ -58,23 +60,25 @@ local function etcgroup()
   local groups = {}
 
   for line in io.lines('/etc/group') do
-    local next   = line:gmatch "([^:]*):?"
-    local group  = {}
-    
-    group.name   = next()
-    group.passwd = next()
-    group.gid    = tonumber(next())
-    group.users  = {}
-    
-    local list = next()
-    if list then
-      for user in list:gmatch("([^,]*),?") do
-        group.users[#group.users + 1] = user
+    if not line:match "^#" then
+      local next   = line:gmatch "([^:]*):?"
+      local group  = {}
+      
+      group.name   = next()
+      group.passwd = next()
+      group.gid    = tonumber(next())
+      group.users  = {}
+      
+      local list = next()
+      if list then
+        for user in list:gmatch("([^,]*),?") do
+          group.users[#group.users + 1] = user
+        end
       end
+      
+      groups[group.name] = group
+      groups[group.gid]  = group
     end
-    
-    groups[group.name] = group
-    groups[group.gid]  = group
   end
     
   return groups
