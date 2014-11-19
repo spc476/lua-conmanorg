@@ -1026,6 +1026,11 @@ static int fsys_pathconf(lua_State *L)
     errno = 0;
     res   = pathconf(path,name);
   }
+  else
+  {
+    errno = EINVAL;
+    res   = -1;
+  }
   
   lua_pushnumber(L,res);
   lua_pushinteger(L,errno);
