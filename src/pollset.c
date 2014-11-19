@@ -407,7 +407,7 @@ static int pollset_toevents(lua_State *const L,int idx)
         case 'p': events |= POLLPRI;  break;
         case 'e': events |= POLLERR;  break;
         case 'h': events |= POLLHUP;  break;
-        case 'i': events |= PULLNVAL; break;
+        case 'i': events |= POLLNVAL; break;
         default:  break;
       }
     }
