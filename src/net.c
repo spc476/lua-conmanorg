@@ -264,6 +264,7 @@ static inline socklen_t Inet_len(sockaddr_all__t *const addr)
 
 /*----------------------------------------------------------------------*/
 
+static inline socklen_t Inet_lensa(struct sockaddr *) __attribute__((unused));
 static inline socklen_t Inet_lensa(struct sockaddr *const addr)
 {
   assert(addr != NULL);
@@ -309,6 +310,7 @@ static inline void Inet_setport(sockaddr_all__t *const addr,const int port)
 
 /*----------------------------------------------------------------------*/
 
+static inline void Inet_setportn(sockaddr_all__t *,const int) __attribute__((unused));
 static inline void Inet_setportn(sockaddr_all__t *const addr,const int port)
 {
   assert(addr != NULL);
