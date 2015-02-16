@@ -159,7 +159,7 @@ function dump_value(name,value,path,level,marked)
       return string.format("%s%s = loadstring(%q),\n",lead,name,func)
     end    
   elseif type(value) == "thread" then
-    return string.format("%s%s = THREAD\n",lead.name)
+    return string.format("%s%s = THREAD\n",lead,name)
   elseif type(value) == "userdata" then
     return string.format("%s%s = %s\n",lead,name,tostring(value))
   else
