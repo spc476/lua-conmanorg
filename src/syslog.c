@@ -61,56 +61,50 @@ struct strintmap
 
 static const struct strintmap m_facilities[] =
 {
-  { "auth"	, LOG_AUTH	} ,
-  { "auth3"	, (13 << 3)	} ,
-  { "auth4"	, (14 << 3)	} ,
-#ifdef LOG_AUTHPRIV
-  { "authpriv"	, LOG_AUTHPRIV	} ,
-#else
-  { "authpriv"	, (10 << 3)	} ,
-#endif
-  { "cron"	, LOG_CRON	} ,
-  { "cron2"	, (15 << 3)	} ,
-  { "daemon"	, LOG_DAEMON	} ,
-#ifdef LOG_FTP
-  { "ftp"	, LOG_FTP	} ,
-#else
-  { "ftp"	, (11 << 3)	} ,
-#endif
-  { "kernel"	, ( 0 << 3)	} ,
-  { "local0"	, LOG_LOCAL0	} ,
-  { "local1"	, LOG_LOCAL1	} ,
-  { "local2"	, LOG_LOCAL2	} ,
-  { "local3"	, LOG_LOCAL3	} ,
-  { "local4"	, LOG_LOCAL4	} ,
-  { "local5"	, LOG_LOCAL5	} ,
-  { "local6"	, LOG_LOCAL6	} ,
-  { "local7"	, LOG_LOCAL7	} ,
-  { "lpr"	, LOG_LPR	} ,
-  { "mail"	, LOG_MAIL	} ,
-  { "news"	, LOG_NEWS	} ,
-  { "ntp"	, (12 << 3)	} ,
-  { "syslog"	, LOG_SYSLOG	} ,
-  { "user"	, LOG_USER	} ,
-  { "uucp"	, LOG_UUCP	} ,
+  { "auth"	, ( 4 << 3) } ,
+  { "auth2"	, (10 << 3) } ,
+  { "auth3"	, (13 << 3) } ,
+  { "auth4"	, (14 << 3) } ,
+  { "authpriv"	, (10 << 3) } ,
+  { "cron"	, ( 9 << 3) } ,
+  { "cron1"	, ( 9 << 3) } ,
+  { "cron2"	, (15 << 3) } ,
+  { "daemon"	, ( 3 << 3) } ,
+  { "ftp"	, (11 << 3) } ,
+  { "kernel"	, ( 0 << 3) } ,
+  { "local0"	, (16 << 3) } ,
+  { "local1"	, (17 << 3) } ,
+  { "local2"	, (18 << 3) } ,
+  { "local3"	, (19 << 3) } ,
+  { "local4"	, (20 << 3) } ,
+  { "local5"	, (21 << 3) } ,
+  { "local6"	, (22 << 3) } ,
+  { "local7"	, (23 << 3) } ,
+  { "lpr"	, ( 6 << 3) } ,
+  { "mail"	, ( 2 << 3) } ,
+  { "news"	, ( 7 << 3) } ,
+  { "ntp"	, (12 << 3) } ,
+  { "syslog"	, ( 5 << 3) } ,
+  { "user"	, ( 1 << 3) } ,
+  { "uucp"	, ( 8 << 3) } ,
 };
 
 #define MAX_FACILITY	(sizeof(m_facilities) / sizeof(struct strintmap))
 
 static const struct strintmap m_levels[] = 
 {
-  { "alert"	, LOG_ALERT	} ,
-  { "crit"	, LOG_CRIT	} ,
-  { "critical"	, LOG_CRIT	} ,
-  { "debug"	, LOG_DEBUG	} ,
-  { "emerg"	, LOG_EMERG	} ,
-  { "emergency"	, LOG_EMERG	} ,
-  { "err"	, LOG_ERR	} ,
-  { "error"	, LOG_ERR	} ,
-  { "info"	, LOG_INFO	} ,
-  { "notice"	, LOG_NOTICE	} ,
-  { "warn"	, LOG_WARNING	} ,
-  { "warning"	, LOG_WARNING	} ,
+  { "alert"	, 1	} ,
+  { "crit"	, 2	} ,
+  { "critical"	, 2	} ,
+  { "debug"	, 7	} ,
+  { "emerg"	, 0	} ,
+  { "emergency"	, 0	} ,
+  { "err"	, 3	} ,
+  { "error"	, 3	} ,
+  { "info"	, 6	} ,
+  { "notice"	, 5	} ,
+  { "warn"	, 4	} ,
+  { "warning"	, 4	} ,
 };
 
 #define MAX_LEVEL	(sizeof(m_levels) / sizeof(struct strintmap))
@@ -150,7 +144,7 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
 *		log information under.
 *
 * Input:	ident (string) identity string
-*		facility (string number) facility to use.
+*		facility (string) facility to use.
 *		flags (table/optional) flags, fields are:
 *			| pid=true	log pid
 *			| cons=true	log to console
@@ -163,31 +157,20 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
 
 static int syslog_open(lua_State *L)
 {
-  const char *ident;
-  size_t      sident;
-  int         options;
-  int         facility;
+  struct strintmap *map;
+  const char       *name;
+  const char       *ident;
+  size_t            sident;
+  int               options;
+  int               facility;
   
   ident = luaL_checklstring(L,1,&sident);
-  if (lua_type(L,2) == LUA_TNUMBER)
-  {
-    facility = lua_tointeger(L,2);
-    if ((facility < 0) || (facility > 191))
-      return luaL_error(L,"invalid facility %d",facility);
-  }
-  else if (lua_type(L,2) == LUA_TSTRING)
-  {
-    struct strintmap *map;
-    const char       *name;
-    
-    name = lua_tostring(L,2);
-    map  = bsearch(name,m_facilities,MAX_FACILITY,sizeof(struct strintmap),sim_cmp);
-    if (map == NULL)
-      return luaL_error(L,"invalid facility '%s'",name);
-    facility = map->value;
-  }
-  else
-    return luaL_error(L,"number or string expected, got %s",luaL_typename(L,2));
+  name  = luaL_checkstring(L,2);
+  map   = bsearch(name,m_facilities,MAX_FACILITY,sizeof(struct strintmap),sim_cmp);
+  if (map == NULL)
+    return luaL_error(L,"invalid facility '%s'",name);
+
+  facility = map->value;
   
   options = 0;
   if (lua_type(L,3) == LUA_TTABLE)
@@ -231,34 +214,22 @@ static int syslog_close(lua_State *L __attribute__((unused)))
 *
 * Desc:		Log information at a given level
 *
-* Input:	level (string number) level number
+* Input:	level (string) level
 *		format (string) format string
 *
 ************************************************************************/
 
 static int syslog_log(lua_State *L)
 {
-  int level;
+  struct strintmap *map;
+  const char       *name;
+  int               level;
   
-  if (lua_type(L,1) == LUA_TNUMBER)
-  {
-    level = lua_tointeger(L,1);
-    if ((level < 0) || (level > 7))
-      return luaL_error(L,"invalid level %d",level);
-  }
-  else if (lua_type(L,1) == LUA_TSTRING)
-  {
-    struct strintmap *map;
-    const char       *name;
-    
-    name = lua_tostring(L,1);
-    map  = bsearch(name,m_levels,MAX_LEVEL,sizeof(struct strintmap),sim_cmp);
-    if (map == NULL)
-      return luaL_error(L,"invalid level '%s'",name);
-    level = map->value;
-  }
-  else
-    return luaL_error(L,"number or string expected, got %s",luaL_typename(L,1));
+  name = luaL_checkstring(L,1);
+  map  = bsearch(name,m_levels,MAX_LEVEL,sizeof(struct strintmap),sim_cmp);
+  if (map == NULL)
+    return luaL_error(L,"invalid level '%s'",name);
+  level = map->value;
 
   /*------------------------------------------------------------------------
   ; shove string.format() onto the stack to format the message, which
@@ -295,29 +266,11 @@ static const struct luaL_Reg reg_syslog[] =
 
 int luaopen_org_conman_syslog(lua_State *L)
 {
-  size_t i;
-
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.syslog",reg_syslog);
 #else
   luaL_newlib(L,reg_syslog);
 #endif
-
-  lua_createtable(L,0,MAX_FACILITY);
-  for (i = 0 ; i < MAX_FACILITY; i++)
-  {
-    lua_pushinteger(L,m_facilities[i].value);
-    lua_setfield(L,-2,m_facilities[i].name);
-  }
-  lua_setfield(L,-2,"facility");
-
-  lua_createtable(L,0,MAX_LEVEL);
-  for (i = 0 ; i < MAX_LEVEL; i++)
-  {
-    lua_pushinteger(L,m_levels[i].value);
-    lua_setfield(L,-2,m_levels[i].name);
-  }
-  lua_setfield(L,-2,"level");
 
   lua_newtable(L);
   lua_pushcfunction(L,syslog___call);
