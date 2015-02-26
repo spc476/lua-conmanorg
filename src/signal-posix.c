@@ -185,6 +185,7 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
          }
          break;
 
+#ifdef SIGPOLL
     case SIGPOLL:
          switch(code)
          {
@@ -197,6 +198,7 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
            default:         break;
          }
          break;
+#endif
 
     default:
          break;
@@ -262,10 +264,12 @@ static void slua_pushinfo(
          lua_setfield(L,-2,"addr");
          break;
 
+#ifdef SIGPOLL
     case SIGPOLL:
          lua_pushnumber(L,info->si_band);
          lua_setfield(L,-2,"band");
          break;
+#endif
 
     case SIGCHLD:
          lua_createtable(L,0,8);
@@ -500,7 +504,10 @@ static const struct mapstrint sigs[] =
 #endif
 
   { "pipe"		, SIGPIPE	} ,
+  
+#ifdef SIGPOLL
   { "poll"		, SIGPOLL	} ,
+#endif
 
 #ifdef SIGPWR
   { "power"		, SIGPWR	} ,
@@ -654,8 +661,12 @@ static int slua_toflags(lua_State *const L,int idx)
     { "info"		, SA_SIGINFO	} ,
     { "nochildstop"	, SA_NOCLDSTOP	} ,
     { "nodefer"		, SA_NODEFER	} ,
+#ifdef SA_NOMASK
     { "nomask"		, SA_NOMASK	} ,
+#endif
+#ifdef SA_ONESHOT
     { "oneshot"		, SA_ONESHOT	} ,
+#endif
 /*  { "onstack"		, SA_ONSTACK	} , */ /* need to think about this */
     { "resethandler"	, SA_RESETHAND	} ,
     { "restart"		, SA_RESTART	} ,
@@ -713,6 +724,12 @@ static int slua_toflags(lua_State *const L,int idx)
 
 /*--------------------------------------------------------------------*/      
 
+#ifdef __APPLE__
+#  define FLAGSIG	SA_NODEFER
+#else
+#  define FLAGSIG	(SA_NODEFER | SA_NOMASK)
+#endif
+
 static int siglua_catch(lua_State *const L)
 {
   const char       *name;
@@ -758,7 +775,7 @@ static int siglua_catch(lua_State *const L)
   else
     act.sa_flags |= slua_toflags(L,4);
   
-  if ((act.sa_flags & (SA_NODEFER | SA_NOMASK)) == 0)
+  if ((act.sa_flags & FLAGSIG) == 0)
     sigaddset(&ds.blocked,sig);  
   
   if ((act.sa_flags & SA_SIGINFO) == SA_SIGINFO)
