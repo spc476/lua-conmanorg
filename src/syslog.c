@@ -152,6 +152,7 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
 *			| ndelay=true		"
 *			| odelay=true	wait before opening socket
 *			| nowait=true	log immediately
+*			| perror=true	log to stderr as well
 *
 ************************************************************************/
 
@@ -181,6 +182,9 @@ static int syslog_open(lua_State *L)
     options |= check_boolean(L , 3 , "ndelay" , LOG_NDELAY);
     options |= check_boolean(L , 3 , "odelay" , LOG_ODELAY);
     options |= check_boolean(L , 3 , "nowait" , LOG_NOWAIT);
+#ifdef LOG_PERROR
+    options |= check_boolean(L , 3 , "perror" , LOG_PERROR);
+#endif
   }
   
   if (sident > sizeof(m_ident) - 1)
