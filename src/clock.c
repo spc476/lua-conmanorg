@@ -85,6 +85,17 @@
 * Return:	amount (number) amount of time (in seconds) of minimal
 *			| tick.
 *
+* =========================================================================
+*
+* Usage:	okay,err = clock.itmer(time)
+*
+* Desc:		Set up a repeating interval timer every time seconds.
+*
+* Input:	time (number) number of seconds until next SIGALRM
+*
+* Return:	okay (boolean) true if success, false if failure
+*		err (integer) 0 if success, otherwise system error number.
+*
 *****************************************************************************/
 
 #ifdef __GNUC__
@@ -93,6 +104,8 @@
 
 #include <time.h>
 #include <math.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <unistd.h>
 #include <sys/time.h>
@@ -259,12 +272,54 @@ static int clocklua_resolution(lua_State *L)
 
 /**************************************************************************/
 
+static int clocklua_itimer(lua_State *L)
+{
+  struct itimerval set;
+  double           interval;
+  double           seconds;
+  double           fract;
+  
+  if (lua_isnumber(L,1))
+    interval = lua_tonumber(L,1);
+  else if (lua_isstring(L,1))
+  {
+    const char *v = lua_tostring(L,1);
+    char       *p;
+    
+    interval = strtod(v,&p);
+    switch(*p)
+    {
+      case 's': break;
+      case 'm': interval *=    60.0; break;
+      case 'h': interval *=  3600.0; break;
+      case 'd': interval *= 86400.0; break;
+      default:  break;
+    }
+  }
+  else
+    interval = 0.0;
+  
+  fract = modf(interval,&seconds);
+  
+  set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
+  set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
+  
+  errno = 0;
+  setitimer(ITIMER_REAL,&set,NULL);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/**************************************************************************/
+
 static const struct luaL_Reg m_clock_reg[] =
 {
   { "sleep"		, clocklua_sleep	} ,
   { "get"		, clocklua_get		} ,
   { "set"		, clocklua_set		} ,
-  { "resolution"	, clocklua_resolution	} ,  
+  { "resolution"	, clocklua_resolution	} ,
+  { "itimer"		, clocklua_itimer	} ,
   { NULL		, NULL			}
 };
 

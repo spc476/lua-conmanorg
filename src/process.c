@@ -999,113 +999,14 @@ static int proclua_setgid(lua_State *const L)
 }
 
 /************************************************************************
-* PROCESS TIME RELATED ROUTINES
+* MISC PROCESS ROUTINES
 *************************************************************************/
-
-static int proclua_gettimeofday(lua_State *const L)
-{
-  struct timeval now;
-  
-  gettimeofday(&now,NULL);
-  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
-  return 1;
-}
-
-/*********************************************************************/
-
-static int proclua_sleep(lua_State *const L)
-{
-  struct timespec interval;
-  struct timespec left;
-  double          param;
-  double          seconds;
-  double          fract;
-  
-  assert(L != NULL);
-  
-  param            = luaL_checknumber(L,1);
-  fract            = modf(param,&seconds);
-  interval.tv_sec  = (time_t)seconds;
-  interval.tv_nsec = (long)(fract * 1000000000.0);
-  
-  if (nanosleep(&interval,&left) < 0)
-  {
-    lua_pushnumber(L,param);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  lua_pushnumber(L,(double)left.tv_sec + (((double)left.tv_nsec) / 1000000000.0));
-  lua_pushinteger(L,0);
-  return 2;    
-}
-
-/***********************************************************************/
-
-static int proclua_sleepres(lua_State *const L)
-{
-#ifdef __APPLE__
-  lua_pushnumber(L,0.01);
-#else
-  struct timespec res;
-
-  assert(L != NULL);
-  
-  clock_getres(CLOCK_REALTIME,&res);
-  lua_pushnumber(L,(double)res.tv_sec + (((double)res.tv_nsec) / 1000000000.0));
-#endif
-  return 1;  
-}
-
-
-/**********************************************************************/
 
 static int proclua_pause(lua_State *const L)
 {
   pause();
   lua_pushinteger(L,errno);
   return 1;
-}
-
-/**********************************************************************/
-
-static int proclua_itimer(lua_State *const L)
-{
-  struct itimerval set;
-  double           interval;
-  double           seconds;
-  double           fract;
-  
-  if (lua_isnumber(L,1))
-    interval = lua_tonumber(L,1);
-  else if (lua_isstring(L,1))
-  {
-    const char *v = lua_tostring(L,1);
-    char       *p;
-    
-    interval = strtod(v,&p);
-    switch(*p)
-    {
-      case 's': break;
-      case 'm': interval *=    60.0; break;
-      case 'h': interval *=  3600.0; break;
-      case 'd': interval *= 86400.0; break;
-      default:  break;
-    }
-  }
-  else
-    interval = 0.0;
-  
-  fract = modf(interval,&seconds);
-  
-  set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
-  set.it_value.tv_usec = set.it_interval.tv_usec = fract * 1000000.0;
-  
-  errno = 0;
-  setitimer(ITIMER_REAL,&set,NULL);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
 }
 
 /*********************************************************************
@@ -1300,14 +1201,10 @@ static const struct luaL_Reg m_process_reg[] =
   { "wait"		, proclua_wait			} ,
   { "waitusage"		, proclua_waitusage		} ,
   { "waitid"		, proclua_waitid		} ,
-  { "gettimeofday"	, proclua_gettimeofday		} ,
-  { "sleep"		, proclua_sleep			} ,
-  { "sleepres"		, proclua_sleepres		} ,
   { "exec"		, proclua_exec			} ,
   { "times"		, proclua_times			} ,
   { "getrusage"		, proclua_getrusage		} ,
   { "pause"		, proclua_pause			} ,
-  { "itimer"		, proclua_itimer		} ,
   { "getaffinity"	, proclua_getaffinity		} ,
   { "setaffinity"	, proclua_setaffinity		} ,
   { NULL		, NULL				} 
