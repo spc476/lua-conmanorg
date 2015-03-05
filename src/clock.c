@@ -113,6 +113,13 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if !defined(CLOCK_IMPL_REALTIME) && !defined(CLOCK_IMPL_GETTIMEOFDAY)
+#  ifdef CLOCK_REALTIME
+#    define CLOCK_IMPL_REALTIME
+#  else
+#    define CLOCK_IMPL_GETTIMEOFDAY
+#  endif
+#endif
 
 /**************************************************************************
 *
@@ -120,7 +127,7 @@
 *
 **************************************************************************/
 
-#ifdef CLOCK_REALTIME
+#ifdef CLOCK_IMPL_REALTIME
 #define IMPLEMENTATION	"clock_gettime"
 
 const char *m_clocks[] =
