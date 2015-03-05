@@ -34,43 +34,13 @@
 
 #define TYPE_POLL	"org.conman.pollset"
 
-/********************************************************************/
-
-static int	pollset_lua		(lua_State *const) __attribute__((nonnull));
-static int	polllua___tostring	(lua_State *const) __attribute__((nonnull));
-static int	polllua___gc		(lua_State *const) __attribute__((nonnull));
-static int	polllua_insert		(lua_State *const) __attribute__((nonnull));
-static int	polllua_update		(lua_State *const) __attribute__((nonnull));
-static int	polllua_remove		(lua_State *const) __attribute__((nonnull));
-static int	polllua_events		(lua_State *const) __attribute__((nonnull));
-static int	polllua__POLL		(lua_State *const) __attribute__((nonnull));
-
-/**********************************************************************/
-
-static const luaL_Reg m_polllua[] =
-{
-  { "__tostring"	, polllua___tostring	} ,
-  { "__gc"		, polllua___gc		} ,
-  { "insert"		, polllua_insert	} ,
-  { "update"		, polllua_update	} ,
-  { "remove"		, polllua_remove	} ,
-  { "events"		, polllua_events	} ,
-  { "POLL"		, polllua__POLL		} ,
-  { NULL		, NULL			}
-};
-
-/**********************************************************************/
-
-int luaopen_org_conman_pollset(lua_State *const L)
-{
-  luaL_newmetatable(L,TYPE_POLL);
-  luaL_register(L,NULL,m_polllua);
-  lua_pushvalue(L,-1);
-  lua_setfield(L,-1,"__index");
-  
-  lua_pushcfunction(L,pollset_lua);
-  return 1;
-}
+#if !defined(POLLSET_IMPL_EPOLL) && !defined(POLLSET_IMPL_POLL) && !defined(POLLSET_IMPL_SELECT)
+#  ifdef __linux
+#    define POLLSET_IMPL_EPOLL
+#  else
+#    define POLLSET_IMPL_POLL
+#  endif
+#endif
 
 /************************************************************************
 *
@@ -90,7 +60,8 @@ int luaopen_org_conman_pollset(lua_State *const L)
 *
 *************************************************************************/
 
-#ifdef __linux
+#ifdef POLLSET_IMPL_EPOLL
+#define POLLSET_IMPL	"epoll"
 
 #include <unistd.h>
 #include <sys/epoll.h>
@@ -340,14 +311,6 @@ static int polllua_events(lua_State *const L)
   return 2;
 }
 
-/**********************************************************************/
-
-static int polllua__POLL(lua_State *const L)
-{
-  lua_pushliteral(L,"epoll");
-  return 1;
-}
-
 #endif
 
 /*********************************************************************
@@ -360,7 +323,8 @@ static int polllua__POLL(lua_State *const L)
 * probably a good reason for it.  
 *********************************************************************/
 
-#ifndef __linux
+#ifdef POLLSET_IMPL_POLL
+#define POLLSET_IMPL	"poll"
 
 #include <string.h>
 #include <poll.h>
@@ -631,14 +595,6 @@ static int polllua_events(lua_State *const L)
   return 2;
 }
 
-/**********************************************************************/
-
-static int polllua__POLL(lua_State *const L)
-{
-  lua_pushliteral(L,"poll");
-  return 1;
-}
-
 #endif
 
 /**********************************************************************
@@ -648,7 +604,8 @@ static int polllua__POLL(lua_State *const L)
 *
 ***********************************************************************/
 
-#ifdef X_O_REALLY
+#ifdef POLLSET_IMPL_SELECT
+#define POLLSET_IMPL	"select"
 
 #include <math.h>
 #include <sys/select.h>
@@ -885,14 +842,32 @@ static int polllua_events(lua_State *const L)
   return 2;
 }
 
+#endif
+
 /**********************************************************************/
 
-static int polllua__POLL(lua_State *const L)
+static const luaL_Reg m_polllua[] =
 {
-  lua_pushliteral(L,"select");
+  { "__tostring"	, polllua___tostring	} ,
+  { "__gc"		, polllua___gc		} ,
+  { "insert"		, polllua_insert	} ,
+  { "update"		, polllua_update	} ,
+  { "remove"		, polllua_remove	} ,
+  { "events"		, polllua_events	} ,
+  { NULL		, NULL			}
+};
+
+int luaopen_org_conman_pollset(lua_State *const L)
+{
+  luaL_newmetatable(L,TYPE_POLL);
+  luaL_register(L,NULL,m_polllua);
+  lua_pushliteral(L,POLLSET_IMPL);
+  lua_setfield(L,-2,"IMPLEMENTATION");
+  lua_pushvalue(L,-1);
+  lua_setfield(L,-1,"__index");
+  
+  lua_pushcfunction(L,pollset_lua);
   return 1;
 }
-
-#endif
 
 /**********************************************************************/

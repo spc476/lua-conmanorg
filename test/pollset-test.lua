@@ -19,8 +19,7 @@ io.stdout:write("Testing minimal (select) level of support\n")
 io.stdout:write("\ttesting type of implementation ... ")
 do
 	set     = pollset()
-	local x = set.POLL()	-- just exists
-	assert(x)
+	assert(set.IMPLEMENTATION)
 	io.stdout:write("GO!\n")
 end
 
