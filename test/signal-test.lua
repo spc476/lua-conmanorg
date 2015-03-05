@@ -1,6 +1,5 @@
 
---signal = require "org.conman.signal-ansi"
-signal = require "org.conman.signal-posix"
+signal = require "org.conman.signal"
 
 x = signal.SIGNAL()	-- just exists
 assert(x)
