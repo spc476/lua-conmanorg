@@ -109,8 +109,6 @@ static const struct strintmap m_levels[] =
 
 #define MAX_LEVEL	(sizeof(m_levels) / sizeof(struct strintmap))
 
-static char m_ident[1024];
-
 /************************************************************************/
 
 static int sim_cmp(const void *needle,const void *haystack)
@@ -161,11 +159,10 @@ static int syslog_open(lua_State *L)
   struct strintmap *map;
   const char       *name;
   const char       *ident;
-  size_t            sident;
   int               options;
   int               facility;
   
-  ident = luaL_checklstring(L,1,&sident);
+  ident = luaL_checkstring(L,1);
   name  = luaL_checkstring(L,2);
   map   = bsearch(name,m_facilities,MAX_FACILITY,sizeof(struct strintmap),sim_cmp);
   if (map == NULL)
@@ -187,13 +184,9 @@ static int syslog_open(lua_State *L)
 #endif
   }
   
-  if (sident > sizeof(m_ident) - 1)
-    sident = sizeof(m_ident) - 1;
-  
-  memcpy(m_ident,ident,sident);
-  m_ident[sident] = '\0';
-  
-  openlog(m_ident,options,facility);
+  lua_pushvalue(L,1);
+  lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:ident");  
+  openlog(ident,options,facility);
   return 0;
 }
 
@@ -205,9 +198,11 @@ static int syslog_open(lua_State *L)
 *
 * *********************************************************************/
 
-static int syslog_close(lua_State *L __attribute__((unused)))
+static int syslog_close(lua_State *L)
 {
   closelog();
+  lua_pushnil(L);
+  lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:ident");
   return 0;
 }
 
