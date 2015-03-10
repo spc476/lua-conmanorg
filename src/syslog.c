@@ -125,8 +125,8 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
 {
   int b;
   
-  lua_getfield(L,3,field);
-  b = lua_toboolean(L,index);
+  lua_getfield(L,index,field);
+  b = lua_toboolean(L,-1);
   lua_pop(L,1);
   if (b)
     return def;
