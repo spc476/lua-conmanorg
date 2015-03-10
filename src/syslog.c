@@ -183,12 +183,7 @@ static int syslog_open(lua_State *L)
     options |= check_boolean(L , 3 , "perror" , LOG_PERROR);
 #else
     lua_getfield(L,3,"perror");
-    if (lua_toboolean(L,-1))
-    {
-      lua_pushboolean(L,1);
-      lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
-    }
-    lua_pop(L,1);
+    lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
 #endif
   }
   
