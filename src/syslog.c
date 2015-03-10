@@ -181,6 +181,14 @@ static int syslog_open(lua_State *L)
     options |= check_boolean(L , 3 , "nowait" , LOG_NOWAIT);
 #ifdef LOG_PERROR
     options |= check_boolean(L , 3 , "perror" , LOG_PERROR);
+#else
+    lua_getfield(L,3,"perror");
+    if (lua_toboolean(L,-1))
+    {
+      lua_pushboolean(L,1);
+      lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
+    }
+    lua_pop(L,1);
 #endif
   }
   
@@ -203,6 +211,10 @@ static int syslog_close(lua_State *L)
   closelog();
   lua_pushnil(L);
   lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:ident");
+#ifndef LOG_PERROR
+  lua_pushnil(L);
+  lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
+#endif
   return 0;
 }
 
@@ -241,6 +253,12 @@ static int syslog_log(lua_State *L)
   lua_insert(L,2);
   lua_call(L,lua_gettop(L) - 2,1);
   syslog(level,"%s",lua_tostring(L,-1));
+
+#ifndef LOG_PERROR
+  lua_getfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
+  if (lua_toboolean(L,-1))
+    fprintf(stderr,"%s %s\n",name,lua_tostring(L,-2));
+#endif
 
   return 0;
 }
