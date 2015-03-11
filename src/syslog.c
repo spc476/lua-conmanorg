@@ -35,6 +35,7 @@
 *
 *********************************************************************/
 
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -109,6 +110,26 @@ static const struct strintmap m_levels[] =
 
 #define MAX_LEVEL	(sizeof(m_levels) / sizeof(struct strintmap))
 
+static const struct strintmap m_opts[] =
+{
+  { "pid"	, LOG_PID	} ,
+  { "cons"	, LOG_CONS	} ,
+  { "console"	, LOG_CONS	} ,
+  { "nodelay"	, LOG_NDELAY	} ,
+  { "ndelay"	, LOG_NDELAY	} ,
+  { "odelay"	, LOG_ODELAY	} ,
+  { "nowait"	, LOG_NOWAIT	} ,
+#ifdef LOG_PERROR
+  { "perror"	, LOG_PERROR	} ,
+  { "stderr"	, LOG_PERROR	} ,
+#else
+  { "perror"	, -1		} ,
+  { "stderr"	, -1		} ,
+#endif
+};
+
+#define MAX_OPT		(sizeof(m_opts) / sizeof(struct strintmap))
+
 /************************************************************************/
 
 static int sim_cmp(const void *needle,const void *haystack)
@@ -117,21 +138,6 @@ static int sim_cmp(const void *needle,const void *haystack)
   const struct strintmap *map = haystack;
   
   return strcmp(key,map->name);
-}
-
-/************************************************************************/
-
-static int check_boolean(lua_State *L,int index,const char *field,int def)
-{
-  int b;
-  
-  lua_getfield(L,index,field);
-  b = lua_toboolean(L,-1);
-  lua_pop(L,1);
-  if (b)
-    return def;
-  else
-    return 0;
 }
 
 /************************************************************************
@@ -143,14 +149,15 @@ static int check_boolean(lua_State *L,int index,const char *field,int def)
 *
 * Input:	ident (string) identity string
 *		facility (string) facility to use.
-*		flags (table/optional) flags, fields are:
-*			| pid=true	log pid
-*			| cons=true	log to console
-*			| nodelay=true	open socket immediately
-*			| ndelay=true		"
-*			| odelay=true	wait before opening socket
-*			| nowait=true	log immediately
-*			| perror=true	log to stderr as well
+*		flags (table/optional) array of enum
+*			| pid		log pid
+*			| cons		log to console
+*			| nodelay	open socket immediately
+*			| ndelay		"
+*			| odelay	wait before opening socket
+*			| nowait	log immediately
+*			| perror	log to stderr as well
+*			| stderr		"
 *
 ************************************************************************/
 
@@ -173,18 +180,45 @@ static int syslog_open(lua_State *L)
   options = 0;
   if (lua_type(L,3) == LUA_TTABLE)
   {
-    options |= check_boolean(L , 3 , "pid"    , LOG_PID);
-    options |= check_boolean(L , 3 , "cons"   , LOG_CONS);
-    options |= check_boolean(L , 3 , "nodelay", LOG_NDELAY);
-    options |= check_boolean(L , 3 , "ndelay" , LOG_NDELAY);
-    options |= check_boolean(L , 3 , "odelay" , LOG_ODELAY);
-    options |= check_boolean(L , 3 , "nowait" , LOG_NOWAIT);
-#ifdef LOG_PERROR
-    options |= check_boolean(L , 3 , "perror" , LOG_PERROR);
+    size_t max;
+    
+#if LUA_VERSION_NUM == 501
+    max = lua_objlen(L,3);
 #else
-    lua_getfield(L,3,"perror");
-    lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
+    lua_len(L,3);
+    max = lua_tointeger(L,-1);
+    lua_pop(L,1);
 #endif
+
+    for (size_t i = 1 ; i <= max ; i++)
+    {
+      lua_pushinteger(L,i);
+      lua_gettable(L,3);
+      map = bsearch(
+                     luaL_checkstring(L,-1),
+                     m_opts,
+                     MAX_OPT,
+                     sizeof(struct strintmap),
+                     sim_cmp
+                    );
+     
+      if (map != NULL)
+      {
+#ifndef LOG_PERROR
+        if (map->value == -1)
+        {
+          lua_pushboolean(L,true);
+          lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
+        }
+        else
+#endif
+        {
+          options |= map->value;
+        }
+      }
+      
+      lua_pop(L,1);
+    }    
   }
   
   lua_pushvalue(L,1);
