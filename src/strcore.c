@@ -36,8 +36,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define DEF_MARGIN	78
@@ -62,7 +62,11 @@ static const luaL_Reg m_strcore_reg[] =
 
 int luaopen_org_conman_strcore(lua_State *const L)
 {
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.string",m_strcore_reg);
+#else
+  luaL_newlib(L,m_strcore_reg);
+#endif
   return 1;
 }
 

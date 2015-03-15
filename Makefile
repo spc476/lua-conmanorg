@@ -66,6 +66,7 @@ all : lib		\
 	lib/base64.so	\
 	lib/signal.so	\
 	lib/clock.so	\
+	lib/ptscore.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -90,6 +91,7 @@ lib/sys.so     : src/sys.c
 lib/strcore.so : src/strcore.c
 lib/base64.so  : src/base64.c
 lib/signal.so  : src/signal.c
+lib/ptscore.so : src/ptscore.c
 
 lib/hash.so : src/hash.c
 	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lcrypto
@@ -138,6 +140,7 @@ install : all
 	install lib/base64.so  $(LUALIB)/org/conman
 	install lib/signal.so  $(LUALIB)/org/conman
 	install lib/clock.so   $(LUALIB)/org/conman
+	install lib/ptscore.so $(LUALIB)/org/conman
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman

@@ -550,7 +550,7 @@ static const struct strint m_errors[] =
 
 static int errno___index(lua_State *L)
 {
-  lua_pushstring(L,strerror(luaL_checkint(L,2)));
+  lua_pushstring(L,strerror(luaL_checkinteger(L,2)));
   return 1;
 }
 

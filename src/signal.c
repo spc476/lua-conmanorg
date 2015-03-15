@@ -55,8 +55,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #if !defined(SIGNAL_ANSI) && !defined(SIGNAL_POSIX)
@@ -1124,7 +1124,11 @@ static int slua_toflags(lua_State *const L,int idx)
     int                     len;
     int                     i;
     
-    len   = lua_objlen(L,idx);
+#if LUA_VERSION_NUM == 501
+    len = lua_objlen(L,idx);
+#else
+    len = lua_rawlen(L,idx);
+#endif
     flags = 0;
     
     for (i = 1 ; i <= len; i++)
@@ -1730,8 +1734,13 @@ int luaopen_org_conman_signal(lua_State *const L)
   }
 
   luaL_newmetatable(L,TYPE_SIGSET);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,m_sigset_meta); 
   luaL_register(L,"org.conman.signal-posix",m_sig_reg);
+#else
+  luaL_setfuncs(L,m_sigset_meta,0);
+  luaL_newlib(L,m_sig_reg);
+#endif
   return 1;
 }
 

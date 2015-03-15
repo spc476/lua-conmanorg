@@ -59,8 +59,8 @@
 #  include <sys/procset.h>
 #endif
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define TYPE_LIMIT_HARD	"org.conman.process:rlimit_hard"
@@ -179,8 +179,12 @@ static int proclua_exec(lua_State *const L)
   
   binary = luaL_checkstring(L,1);
   luaL_checktype(L,2,LUA_TTABLE);
-  
+
+#if LUA_VERSION_NUM == 501  
   argc = lua_objlen(L,2) + 2;
+#else
+  argc = lua_rawlen(L,2) + 2;
+#endif
   argv = malloc(argc * sizeof(char *));
   if (argv == NULL)
   {
@@ -317,7 +321,7 @@ static int proclua_exit(lua_State *const L)
 {
   assert(L != NULL);
   
-  _exit(luaL_optint(L,1,EXIT_SUCCESS));
+  _exit(luaL_optinteger(L,1,EXIT_SUCCESS));
 }
 
 /***********************************************************************/
@@ -1234,7 +1238,8 @@ static const struct luaL_Reg m_slimit_meta[] =
 int luaopen_org_conman_process(lua_State *const L)
 {
   assert(L != NULL);
-  
+
+#if LUA_VERSION_NUM == 501  
   luaL_newmetatable(L,TYPE_LIMIT_HARD);
   luaL_register(L,NULL,m_hlimit_meta);
   
@@ -1242,6 +1247,15 @@ int luaopen_org_conman_process(lua_State *const L)
   luaL_register(L,NULL,m_slimit_meta);
   
   luaL_register(L,"org.conman.process",m_process_reg);
+#else
+  luaL_newmetatable(L,TYPE_LIMIT_HARD);
+  luaL_setfuncs(L,m_hlimit_meta,0);
+  
+  luaL_newmetatable(L,TYPE_LIMIT_SOFT);
+  luaL_setfuncs(L,m_slimit_meta,0);
+
+  luaL_newlib(L,m_process_reg);  
+#endif
 
   lua_createtable(L,0,0);
   for (size_t i = 0 ; m_sysexits[i].text != NULL ; i++)
@@ -1265,7 +1279,11 @@ int luaopen_org_conman_process(lua_State *const L)
   lua_setfield(L,-2,"limits");
   
   lua_createtable(L,0,0);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,m_process_meta);
+#else
+  luaL_newlib(L,m_process_meta);
+#endif
   lua_setmetatable(L,-2);
     
   return 1;

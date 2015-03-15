@@ -332,7 +332,11 @@ static const struct luaL_Reg m_clock_reg[] =
 
 int luaopen_org_conman_clock(lua_State *const L)
 {
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.clock",m_clock_reg);
+#else
+  luaL_newlib(L,m_clock_reg);
+#endif
   lua_pushliteral(L,IMPLEMENTATION);
   lua_setfield(L,-2,"IMPLEMENTATION");
   return 1;

@@ -65,8 +65,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define TYPE_SOCK	"org.conman.net:sock"
@@ -449,8 +449,12 @@ static int err_meta___index(lua_State *const L)
         lua_pushvalue(L,-1);
         lua_setfield(L,-3,i->ifa_name);
       }
-    
+
+#if LUA_VERSION_NUM == 501    
       lua_pushinteger(L,lua_objlen(L,-1) + 1);
+#else
+      lua_pushinteger(L,lua_rawlen(L,-1) + 1);
+#endif
       lua_createtable(L,0,0);
     
       addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
@@ -1469,7 +1473,7 @@ static int socklua_listen(lua_State *const L)
   sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   
   errno = 0;
-  listen(sock->fh,luaL_optint(L,2,5));
+  listen(sock->fh,luaL_optinteger(L,2,5));
   lua_pushinteger(L,errno);
   return 1;
 }
@@ -1965,6 +1969,7 @@ static int net_toport(lua_State *const L,int idx,const int proto)
 
 int luaopen_org_conman_net(lua_State *const L)
 {
+#if LUA_VERSION_NUM == 501
   luaL_newmetatable(L,TYPE_SOCK);
   luaL_register(L,NULL,m_sock_meta);
 
@@ -1972,6 +1977,16 @@ int luaopen_org_conman_net(lua_State *const L)
   luaL_register(L,NULL,m_addr_meta);
   
   luaL_register(L,"org.conman.net",m_net_reg);
+#else
+  luaL_newmetatable(L,TYPE_SOCK);
+  luaL_setfuncs(L,m_sock_meta,0);
+
+  luaL_newmetatable(L,TYPE_ADDR);
+  luaL_setfuncs(L,m_addr_meta,0);
+  
+  luaL_newlib(L,m_net_reg);
+#endif
+
   lua_createtable(L,0,0);
   for (size_t i = 0 ; m_errors[i].text != NULL ; i++)
   {

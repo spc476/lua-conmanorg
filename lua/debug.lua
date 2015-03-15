@@ -19,7 +19,22 @@
 --
 -- ********************************************************************
 
-module("org.conman.debug",package.seeall)
+local os       = require "os"
+local debug    = require "debug"
+local io       = require "io"
+local string   = require "string"
+local _VERSION = _VERSION
+local exit     = exit
+
+local loadstring
+
+if _VERSION == "Lua 5.1" then
+  loadstring = _G.loadstring
+  module("org.conman.debug")
+else
+  loadstring = load
+  _ENV = {}
+end
 
 EDITOR = os.getenv("VISUAL") or os.getenv("EDITOR") or "/bin/vi"
 
@@ -157,4 +172,10 @@ function hexdump(t,f,bias)
     out:write("\n")
     offset = offset+16
   end
+end
+
+-- ********************************************************************
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV
 end

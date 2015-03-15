@@ -46,8 +46,8 @@
 #include <fnmatch.h>
 #include <wordexp.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define TYPE_DIR	"org.conman.fsys:dir"
@@ -603,15 +603,24 @@ static int fsys_dirname(lua_State *L)
 
 static int fsyslib_close(lua_State *L)
 {
+#if LUA_VERSION_NUM == 501
   FILE **pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
   fclose(*pfp);
   *pfp = NULL;
   lua_pushboolean(L,1);
   return 1;
+#else
+  luaL_Stream *pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  fclose(pfp->f);
+  pfp->closef = NULL;
+  lua_pushboolean(L,1);
+  return 1;
+#endif
 }
 
 static int fsys_openfd(lua_State *L)
 {
+#if LUA_VERSION_NUM == 501
   FILE **pfp;
   
   lua_settop(L,2);
@@ -638,13 +647,38 @@ static int fsys_openfd(lua_State *L)
   }
   
   lua_pushinteger(L,0);
-  return 2;  
+  return 2;
+#else
+  luaL_Stream *pfp;
+  
+  lua_settop(L,2);
+  
+  pfp         = lua_newuserdata(L,sizeof(luaL_Stream));
+  pfp->f      = NULL;
+  pfp->closef = NULL;
+  
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_setmetatable(L,-2);
+  
+  pfp->f = fdopen(luaL_checkinteger(L,1),luaL_checkstring(L,2));
+  if (pfp->f == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  pfp->closef = fsyslib_close;
+  lua_pushinteger(L,0);
+  return 2;
+#endif
 }
 
 /***********************************************************************/
 
 static int fsys_pipe(lua_State *L)
 {
+#if LUA_VERSION_NUM == 501
   FILE **pfpread;
   FILE **pfpwrite;
   FILE  *fpr;
@@ -742,6 +776,75 @@ static int fsys_pipe(lua_State *L)
   
   lua_pushinteger(L,0);
   return 2;
+#else
+  luaL_Stream *readp;
+  luaL_Stream *writep;
+  FILE        *fpr;
+  FILE        *fpw;
+  int          fh[2];
+  char        *rm;
+  char        *wm;
+  
+  if (lua_isboolean(L,1))
+  {
+    rm = "rb";
+    wm = "wb";
+  }
+  else
+  {
+    rm = "r";
+    wm = "w";
+  }
+  
+  lua_createtable(L,0,2);
+  
+  readp         = lua_newuserdata(L,sizeof(luaL_Stream));
+  readp->f      = NULL;
+  readp->closef = NULL;
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_setmetatable(L,-2);
+  lua_setfield(L,-2,"read");
+  
+  writep         = lua_newuserdata(L,sizeof(luaL_Stream));
+  writep->f      = NULL;
+  writep->closef = NULL;
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_setmetatable(L,-2);
+  lua_setfield(L,-2,"write");
+  
+  if (pipe(fh) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  fpr = fdopen(fh[0],rm);
+  if (fpr == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    close(fh[1]);
+    close(fh[0]);
+    return 2;
+  }
+  
+  fpw = fdopen(fh[1],wm);
+  if (fpw == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    close(fh[1]);
+    fclose(fpr);
+    return 2;
+  }
+  
+  readp->f  = fpr;
+  writep->f = fpw;
+  
+  lua_pushinteger(L,0);
+  return 2;
+#endif
 }
 
 /***********************************************************************/
@@ -1089,16 +1192,30 @@ static const luaL_Reg m_expand_meta[] =
   { NULL		, NULL			}
 };
 
+#if LUA_VERSION_NUM == 501
+#  define luaL_newlib(lua,reg) luaL_register(lua,NULL,reg)
+#endif
+
 int luaopen_org_conman_fsys(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_DIR);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,m_dir_meta);
+#else
+  luaL_setfuncs(L,m_dir_meta,0);
+#endif
+
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
   
   luaL_newmetatable(L,TYPE_EXPAND);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,m_expand_meta);
-  
+#else
+  luaL_setfuncs(L,m_expand_meta,0);
+#endif
+
+#if LUA_VERSION_NUM == 501  
   /*------------------------------------------------------------------------
   ; the Lua io module requires a unique environment.  Let's crib it (we grab
   ; it from io.open()) and use it for ourselves.  This way, when we attempt
@@ -1109,8 +1226,11 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_getfield(L,-1,"open");
   lua_getfenv(L,-1);
   lua_replace(L, LUA_ENVIRONINDEX);
-  
   luaL_register(L,"org.conman.fsys",reg_fsys);
+#else
+  luaL_newlib(L,reg_fsys);
+#endif
+
   lua_pushinteger(L,STDIN_FILENO);
   lua_setfield(L,-2,"STDIN");
   lua_pushinteger(L,STDOUT_FILENO);

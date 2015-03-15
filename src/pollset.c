@@ -28,8 +28,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define TYPE_POLL	"org.conman.pollset"
@@ -860,7 +860,11 @@ static const luaL_Reg m_polllua[] =
 int luaopen_org_conman_pollset(lua_State *const L)
 {
   luaL_newmetatable(L,TYPE_POLL);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,m_polllua);
+#else
+  luaL_setfuncs(L,m_polllua,0);
+#endif
   lua_pushliteral(L,POLLSET_IMPL);
   lua_setfield(L,-2,"IMPLEMENTATION");
   lua_pushvalue(L,-1);

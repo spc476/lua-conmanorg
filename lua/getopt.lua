@@ -26,7 +26,14 @@
 --	http://www.catb.org/~esr/writings/taoup/html/ch10s05.html
 -- ********************************************************************
 
-module("org.conman.getopt",package.seeall)
+local _VERSION = _VERSION
+local type     = type
+
+if _VERSION == "Lua 5.1" then
+  module("org.conman.getopt")
+else
+  _ENV = {}
+end
 
 local SHORT_OPT = 1
 local LONG_OPT  = 2
@@ -133,3 +140,7 @@ function getopt(arg,options,err)
 end
 
 -- ***********************************************************************
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV
+end

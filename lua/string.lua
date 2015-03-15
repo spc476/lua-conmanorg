@@ -19,16 +19,24 @@
 --
 -- ********************************************************************
 
-local require = require
-local type    = type
+local _VERSION = _VERSION
+local require  = require
+local type     = type
 
 local string = require "string"
 local table  = require "table"
 local io     = require "io"
 
-module("org.conman.string")
-
-require "org.conman.strcore"
+if _VERSION == "Lua 5.1" then
+  module("org.conman.string")
+  require "org.conman.strcore"
+else
+  _ENV = {}
+  local x   = require "org.conman.strcore"
+  wrapt     = x.wrapt
+  metaphone = x.metaphone
+  soundex   = x.soundex
+end
 
 function split(s,delim)
   local results = {}
@@ -78,4 +86,8 @@ function wrap(s,margin,lead)
   
   table.insert(res,1,lead)
   return table.concat(res,"\n" .. lead)
+end
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV
 end

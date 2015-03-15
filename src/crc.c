@@ -25,8 +25,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 /**********************************************************/
@@ -127,7 +127,12 @@ static const struct luaL_Reg reg_crc[] =
 
 int luaopen_org_conman_crc(lua_State *L)
 {
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.crc",reg_crc);
+#else
+  luaL_newlib(L,reg_crc);
+#endif
+
   lua_pushinteger(L,0xFFFFFFFFuL);
   lua_setfield(L,-2,"INITCRC32");
   

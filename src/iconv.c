@@ -57,6 +57,10 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
+#endif
+
 #define TYPE_ICONV	"org.conman.iconv:iconv"
 
 /**************************************************************************/
@@ -166,8 +170,12 @@ static const struct luaL_Reg reg_iconv_meta[] =
 int luaopen_org_conman_iconv(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_ICONV);
-  luaL_register(L,NULL,reg_iconv_meta);  
-  lua_pushcfunction(L,luaiconv_open);  
+#if LUA_VERSION_NUM == 501
+  luaL_register(L,NULL,reg_iconv_meta);
+#else
+  luaL_setfuncs(L,reg_iconv_meta,0);
+#endif
+  lua_pushcfunction(L,luaiconv_open);
   return 1;
 }
 

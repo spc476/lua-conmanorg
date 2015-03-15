@@ -41,8 +41,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define TYPE_MAGIC	"org.conman.fsys.magic:It's Magic!"
@@ -306,7 +306,11 @@ int luaopen_org_conman_fsys_magic(lua_State *const L)
   }
   
   luaL_newmetatable(L,TYPE_MAGIC);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,mmagic_reg_meta);
+#else
+  luaL_setfuncs(L,mmagic_reg_meta,0);
+#endif
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
   

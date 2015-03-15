@@ -52,8 +52,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define TYPE_BASE64	"org.conman.base64:base64"
@@ -313,7 +313,11 @@ static const struct luaL_Reg mb64_meta[] =
 int luaopen_org_conman_base64(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_BASE64);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,mb64_meta);
+#else
+  luaL_setfuncs(L,mb64_meta,0);
+#endif
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
   

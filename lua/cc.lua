@@ -19,6 +19,7 @@
 --
 -- ********************************************************************
 
+local _VERSION     = _VERSION
 local tcc          = require "org.conman.tcc"
 local package      = package
 local table        = table
@@ -28,7 +29,11 @@ local string       = string
 local pairs        = pairs
 local setmetatable = setmetatable
 
-module("org.conman.cc")
+if _VERSION == "Lua 5.1" then
+  module("org.conman.cc")
+else
+  _ENV = {}
+end
 
 package.ccpath = "/usr/loca/share/lua/5.1/?.c;/usr/local/lib/lua/5.1/?.c"
 
@@ -217,4 +222,8 @@ function compile(fname,code,isfile,defines)
   end
   
   return nil
+end
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV
 end

@@ -29,8 +29,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM != 501
-#  error This module is for Lua 5.1
+#if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
+#  error You need to compile against Lua 5.1 or higher
 #endif
 
 #define TYPE_HASH	"org.conman.hash:hash"
@@ -230,12 +230,21 @@ int luaopen_org_conman_hash(lua_State *const L)
   OpenSSL_add_all_digests();
   
   luaL_newmetatable(L,TYPE_HASH);
+#if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,hashlua_meta);
+#else
+  luaL_setfuncs(L,hashlua_meta,0);
+#endif
+
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
-  
+
+#if LUA_VERSION_NUM == 501  
   luaL_register(L,"org.conman.hash",hashlua);
-  
+#else
+  luaL_newlib(L,hashlua);
+#endif
+
   lua_createtable(L,0,7);
   lua_pushinteger(L,128);
   lua_setfield(L,-2,"md2");
