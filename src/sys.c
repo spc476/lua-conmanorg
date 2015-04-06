@@ -184,6 +184,66 @@ static const struct strint
 
 /*************************************************************************/
 
+#ifdef __linux__
+# include <string.h>
+# include <errno.h>
+# include <sys/sysinfo.h>
+
+  static int sys_sysinfo(lua_State *L)
+  {
+    struct sysinfo info;
+    
+    memset(&info,0,sizeof(info));
+    if (sysinfo(&info) < 0)
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,errno);
+      return 2;
+    }
+    
+    lua_createtable(L,0,12);
+    lua_createtable(L,3,0);
+    lua_pushinteger(L,1);
+    lua_pushinteger(L,info.loads[0]);
+    lua_settable(L,-3);
+    lua_pushinteger(L,2);
+    lua_pushinteger(L,info.loads[1]);
+    lua_settable(L,-3);
+    lua_pushinteger(L,3);
+    lua_pushinteger(L,info.loads[2]);
+    lua_settable(L,-3);
+    lua_setfield(L,-2,"load");
+    
+    lua_pushnumber(L,info.uptime);
+    lua_setfield(L,-2,"uptime");
+    lua_pushnumber(L,info.totalram);
+    lua_setfield(L,-2,"totalram");
+    lua_pushnumber(L,info.freeram);
+    lua_setfield(L,-2,"freeram");
+    lua_pushnumber(L,info.sharedram);
+    lua_setfield(L,-2,"sharedram");
+    lua_pushnumber(L,info.bufferram);
+    lua_setfield(L,-2,"bufferram");
+    lua_pushnumber(L,info.totalswap);
+    lua_setfield(L,-2,"totalswap");
+    lua_pushnumber(L,info.freeswap);
+    lua_setfield(L,-2,"freeswap");
+    lua_pushinteger(L,info.procs);
+    lua_setfield(L,-2,"procs");
+    lua_pushnumber(L,info.totalhigh);
+    lua_setfield(L,-2,"totalhigh");
+    lua_pushnumber(L,info.freehigh);
+    lua_setfield(L,-2,"freehigh");
+    lua_pushinteger(L,info.mem_unit);
+    lua_setfield(L,-2,"mem_unit");
+    
+    lua_pushinteger(L,0);
+    return 2;
+  }
+#endif
+
+/*************************************************************************/
+
 int luaopen_org_conman_sys(lua_State *const L)
 {
   struct utsname buffer;
@@ -242,6 +302,11 @@ int luaopen_org_conman_sys(lua_State *const L)
     lua_setfield(L,-2,mpaths[i].name);
   }
   lua_setfield(L,-2,"PATHS");
+
+#ifdef __linux__
+  lua_pushcfunction(L,sys_sysinfo);
+  lua_setfield(L,-2,"getinfo");
+#endif
   
   return 1;
 }
