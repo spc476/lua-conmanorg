@@ -92,15 +92,13 @@ lib/strcore.so : src/strcore.c
 lib/base64.so  : src/base64.c
 lib/signal.so  : src/signal.c
 lib/ptscore.so : src/ptscore.c
+lib/process.so : src/process.c
 
 lib/hash.so : src/hash.c
 	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lcrypto
 
 lib/magic.so : src/magic.c
 	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lmagic
-
-lib/process.so : src/process.c
-	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lrt
 
 lib/tcc.so : src/tcc.c
 	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -ltcc
