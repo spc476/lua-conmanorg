@@ -112,18 +112,19 @@ static const struct strintmap m_levels[] =
 
 static const struct strintmap m_opts[] =
 {
-  { "pid"	, LOG_PID	} ,
   { "cons"	, LOG_CONS	} ,
   { "console"	, LOG_CONS	} ,
-  { "nodelay"	, LOG_NDELAY	} ,
   { "ndelay"	, LOG_NDELAY	} ,
-  { "odelay"	, LOG_ODELAY	} ,
+  { "nodelay"	, LOG_NDELAY	} ,
   { "nowait"	, LOG_NOWAIT	} ,
+  { "odelay"	, LOG_ODELAY	} ,
 #ifdef LOG_PERROR
   { "perror"	, LOG_PERROR	} ,
+  { "pid"	, LOG_PID	} ,
   { "stderr"	, LOG_PERROR	} ,
 #else
   { "perror"	, -1		} ,
+  { "pid"	, LOG_PID	} ,
   { "stderr"	, -1		} ,
 #endif
 };
@@ -222,7 +223,7 @@ static int syslog_open(lua_State *L)
   }
   
   lua_pushvalue(L,1);
-  lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:ident");  
+  lua_setfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:ident");
   openlog(ident,options,facility);
   return 0;
 }
