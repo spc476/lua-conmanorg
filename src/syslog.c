@@ -169,6 +169,7 @@ static int syslog_open(lua_State *L)
   const char       *ident;
   int               options;
   int               facility;
+  size_t            i;
   
   ident = luaL_checkstring(L,1);
   name  = luaL_checkstring(L,2);
@@ -191,7 +192,7 @@ static int syslog_open(lua_State *L)
     lua_pop(L,1);
 #endif
 
-    for (size_t i = 1 ; i <= max ; i++)
+    for (i = 1 ; i <= max ; i++)
     {
       lua_pushinteger(L,i);
       lua_gettable(L,3);
