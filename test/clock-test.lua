@@ -1,7 +1,7 @@
 
 local clock   = require "org.conman.clock"
 local process = require "org.conman.process"
-local signal  = require "org.conman.signal-posix"
+local signal  = require "org.conman.signal"
 
 local child = process.fork()
 if not child then
