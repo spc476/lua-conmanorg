@@ -404,11 +404,8 @@ static int siglua_default(lua_State *const L)
 
 static int siglua_raise(lua_State *const L)
 {
-  errno = 0;
-  raise(m_sigvalue[slua_tosignal(L,1,NULL)]);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
+  lua_pushboolean(L,raise(m_sigvalue[slua_tosignal(L,1,NULL)]) == 0);
+  return 1;
 }
 
 /**********************************************************************
@@ -1322,20 +1319,11 @@ static int siglua_default(lua_State *const L)
 static int siglua_raise(lua_State *const L)
 {
   if (lua_gettop(L) == 1)
-  {
-    errno = 0;
-    raise(slua_tosignal(L,1,NULL));
-    lua_pushboolean(L,errno == 0);
-    lua_pushinteger(L,errno);
-  }
+    lua_pushboolean(L,raise(slua_tosignal(L,1,NULL)) == 0);
   else
-  {
-    errno = 0;
-    kill(luaL_checkinteger(L,2),slua_tosignal(L,1,NULL));
-    lua_pushboolean(L,errno == 0);
-    lua_pushinteger(L,errno);
-  }
-  return 2;
+    lua_pushboolean(L,kill(luaL_checkinteger(L,2),slua_tosignal(L,1,NULL)) == 0);
+    
+  return 1;
 }
 
 /**********************************************************************
