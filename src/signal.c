@@ -188,8 +188,7 @@ static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
           lua_pushinteger(m_handlers[i].L,m_handlers[i].fref);
           lua_gettable(m_handlers[i].L,LUA_REGISTRYINDEX);
           lua_pushstring(m_handlers[i].L,m_handlers[i].name);
-          if (lua_pcall(m_handlers[i].L,1,0,0) != 0)
-            lua_error(m_handlers[i].L);
+          lua_call(m_handlers[i].L,1,0);
         }
       }
     }
@@ -787,8 +786,7 @@ static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
           else
             lua_pushnil(m_handlers[i].L);
           
-          if (lua_pcall(m_handlers[i].L,2,0,0) != 0)
-            lua_error(m_handlers[i].L);
+          lua_call(m_handlers[i].L,2,0);
           sigprocmask(SIG_UNBLOCK,&m_handlers[i].blocked,NULL);
         }
       }
