@@ -80,10 +80,8 @@
 
 struct datasig
 {
-  lua_State             *L;
   const char            *name;
   int                    fref;
-  int                    cref;
   volatile sig_atomic_t  triggered;
 };
 
@@ -160,8 +158,9 @@ static int slua_tosignal(lua_State *L,int idx,const char **ps)
 
 /**********************************************************************/
 
-static volatile sig_atomic_t m_signal;
-static struct datasig        m_handlers[MAX_SIG];
+static volatile sig_atomic_t  m_signal;
+static struct datasig         m_handlers[MAX_SIG];
+static lua_State             *m_L;
 
 /***************************************************************************
 *
@@ -183,12 +182,11 @@ static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
       {
         if (m_handlers[i].fref != LUA_NOREF)
         {
-          assert(m_handlers[i].L != NULL);
           m_handlers[i].triggered = 0;
-          lua_pushinteger(m_handlers[i].L,m_handlers[i].fref);
-          lua_gettable(m_handlers[i].L,LUA_REGISTRYINDEX);
-          lua_pushstring(m_handlers[i].L,m_handlers[i].name);
-          lua_call(m_handlers[i].L,1,0);
+          lua_pushinteger(L,m_handlers[i].fref);
+          lua_gettable(L,LUA_REGISTRYINDEX);
+          lua_pushstring(L,m_handlers[i].name);
+          lua_call(L,1,0);
         }
       }
     }
@@ -215,11 +213,10 @@ static void signal_handler(int sig)
   for (isig = 0 ; isig < MAX_SIG ; isig++)
     if (m_sigvalue[isig] == sig) break;
   
-  assert(isig               <  MAX_SIG);  
-  assert(m_handlers[isig].L != NULL);
+  assert(isig <  MAX_SIG);  
   
   lua_sethook(
-          m_handlers[isig].L,
+          m_L,
           luasigbackend,
           LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,
           1
@@ -289,18 +286,14 @@ static int siglua_catch(lua_State *const L)
   struct datasig  ds;
   struct datasig  ods;
   
-  ds.L         = L;
   ds.name      = name;
   ds.fref      = LUA_NOREF;
-  ds.cref      = LUA_NOREF;
   ds.triggered = 0;
   
   if (lua_isfunction(L,2))
   {
     lua_pushvalue(L,2);
     ds.fref = luaL_ref(L,LUA_REGISTRYINDEX);
-    lua_pushthread(L);
-    ds.cref = luaL_ref(L,LUA_REGISTRYINDEX);
   }
   
   ods = m_handlers[sig];
@@ -309,14 +302,12 @@ static int siglua_catch(lua_State *const L)
   if (signal(m_sigvalue[sig],signal_handler) == SIG_ERR)
   {
     m_handlers[sig] = ods;
-    luaL_unref(L,LUA_REGISTRYINDEX,ds.cref);
     luaL_unref(L,LUA_REGISTRYINDEX,ds.fref);
     lua_pushboolean(L,0);
     lua_pushinteger(L,EINVAL);
   }
   else
   {
-    luaL_unref(L,LUA_REGISTRYINDEX,ods.cref);
     luaL_unref(L,LUA_REGISTRYINDEX,ods.fref);
     lua_pushboolean(L,1);
     lua_pushinteger(L,0);
@@ -346,11 +337,8 @@ static int siglua_ignore(lua_State *const L)
     int sig = slua_tosignal(L,1,NULL);
     signal(m_sigvalue[sig],SIG_IGN);
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
     m_handlers[sig].fref      = LUA_NOREF;
-    m_handlers[sig].cref      = LUA_NOREF;
     m_handlers[sig].triggered = 0;
-    m_handlers[sig].L         = NULL;
     m_handlers[sig].name      = NULL;
   }
   return 0;
@@ -376,11 +364,8 @@ static int siglua_default(lua_State *const L)
     int sig = slua_tosignal(L,1,NULL);
     signal(m_sigvalue[sig],SIG_DFL);
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
     m_handlers[sig].fref      = LUA_NOREF;
-    m_handlers[sig].cref      = LUA_NOREF;
     m_handlers[sig].triggered = 0;
-    m_handlers[sig].L         = NULL;
     m_handlers[sig].name      = NULL;
   }
   return 0;
@@ -470,13 +455,12 @@ int luaopen_org_conman_signal(lua_State *const L)
   for (size_t i = 0 ; i < MAX_SIG ; i++)
   {
     m_handlers[i].fref      = LUA_NOREF;
-    m_handlers[i].cref      = LUA_NOREF;
     m_handlers[i].triggered = 0;
-    m_handlers[i].L         = NULL;
     m_handlers[i].name      = NULL;
   }
   
   luaL_register(L,"org.conman.signal-ansi",m_sig_reg);
+  m_L = L;
   return 1;
 }
 
@@ -499,10 +483,8 @@ int luaopen_org_conman_signal(lua_State *const L)
 
 struct datasig
 {
-  lua_State             *L;
   const char            *name;
   int                    fref;
-  int                    cref;
   volatile sig_atomic_t  triggered;
   sigset_t               blocked;
   siginfo_t              info;
@@ -511,9 +493,9 @@ struct datasig
 
 /**********************************************************************/
 
-static volatile sig_atomic_t m_signal;
-static struct datasig        m_handlers[NSIG];
-
+static volatile sig_atomic_t  m_signal;
+static struct datasig         m_handlers[NSIG];
+static lua_State             *m_L;
 /************************************************************************
 *
 * Map a reason code to a string.  Again, because of implementation details,
@@ -775,18 +757,17 @@ static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
       {
         if (m_handlers[i].fref != LUA_NOREF)
         {
-          assert(m_handlers[i].L != NULL);
           m_handlers[i].triggered = 0;
-          lua_pushinteger(m_handlers[i].L,m_handlers[i].fref);
-          lua_gettable(m_handlers[i].L,LUA_REGISTRYINDEX);
-          lua_pushstring(m_handlers[i].L,m_handlers[i].name);
+          lua_pushinteger(L,m_handlers[i].fref);
+          lua_gettable(L,LUA_REGISTRYINDEX);
+          lua_pushstring(L,m_handlers[i].name);
           
           if (m_handlers[i].use_info)
-            slua_pushinfo(m_handlers[i].L,&m_handlers[i].info,m_handlers[i].name);
+            slua_pushinfo(L,&m_handlers[i].info,m_handlers[i].name);
           else
-            lua_pushnil(m_handlers[i].L);
+            lua_pushnil(L);
           
-          lua_call(m_handlers[i].L,2,0);
+          lua_call(L,2,0);
           sigprocmask(SIG_UNBLOCK,&m_handlers[i].blocked,NULL);
         }
       }
@@ -808,9 +789,8 @@ static void luasigbackend(lua_State *L,lua_Debug *ar __attribute__((unused)))
 
 static void signal_handler(int sig)
 {
-  assert(m_handlers[sig].L != NULL);
   lua_sethook(
-          m_handlers[sig].L,
+          m_L,
           luasigbackend,
           LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,
           1
@@ -829,10 +809,8 @@ static void signal_handler(int sig)
 
 static void signal_action(int sig,siginfo_t *info,void *_ __attribute__((unused)))
 {
-  assert(m_handlers[sig].L != NULL);
-  
   lua_sethook(
-          m_handlers[sig].L,
+          m_L,
           luasigbackend,
           LUA_MASKCALL | LUA_MASKRET | LUA_MASKCOUNT,
           1
@@ -1165,10 +1143,8 @@ static int siglua_catch(lua_State *const L)
   struct datasig    ods;
   struct sigaction  act;
   
-  ds.L         = L;
   ds.name      = name;
   ds.fref      = LUA_NOREF;
-  ds.cref      = LUA_NOREF;
   ds.triggered = 0;
   ds.use_info  = false;
   sigemptyset(&ds.blocked);
@@ -1180,8 +1156,6 @@ static int siglua_catch(lua_State *const L)
   {
     lua_pushvalue(L,2);
     ds.fref = luaL_ref(L,LUA_REGISTRYINDEX);
-    lua_pushthread(L);
-    ds.cref = luaL_ref(L,LUA_REGISTRYINDEX);
   }
   
   if (lua_isuserdata(L,3))
@@ -1222,14 +1196,12 @@ static int siglua_catch(lua_State *const L)
   if (sigaction(sig,&act,NULL) < 0)
   {
     m_handlers[sig] = ods;
-    luaL_unref(L,LUA_REGISTRYINDEX,ds.cref);
     luaL_unref(L,LUA_REGISTRYINDEX,ds.fref);
     lua_pushboolean(L,0);
     lua_pushinteger(L,errno);
   }
   else
   {
-    luaL_unref(L,LUA_REGISTRYINDEX,ods.cref);
     luaL_unref(L,LUA_REGISTRYINDEX,ods.fref);
     lua_pushboolean(L,1);
     lua_pushinteger(L,0);
@@ -1255,12 +1227,9 @@ static int siglua_ignore(lua_State *const L)
     int sig = slua_tosignal(L,i,NULL);
     sigignore(sig);
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
     sigemptyset(&m_handlers[sig].blocked);
     m_handlers[sig].fref      = LUA_NOREF;
-    m_handlers[sig].cref      = LUA_NOREF;
     m_handlers[sig].triggered = 0;
-    m_handlers[sig].L         = NULL;
     m_handlers[sig].name      = NULL;
     m_handlers[sig].use_info  = false;
   }
@@ -1285,12 +1254,9 @@ static int siglua_default(lua_State *const L)
     int sig = slua_tosignal(L,i,NULL);
     sigset(sig,SIG_DFL);
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
-    luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].cref);
     sigemptyset(&m_handlers[sig].blocked);
     m_handlers[sig].fref      = LUA_NOREF;
-    m_handlers[sig].cref      = LUA_NOREF;
     m_handlers[sig].triggered = 0;
-    m_handlers[sig].L         = NULL;
     m_handlers[sig].name      = NULL;
     m_handlers[sig].use_info  = false;
   }
@@ -1711,9 +1677,7 @@ int luaopen_org_conman_signal(lua_State *const L)
   for (int i = 0 ; i < NSIG ; i++)
   {
     m_handlers[i].fref      = LUA_NOREF;
-    m_handlers[i].cref      = LUA_NOREF;
     m_handlers[i].triggered = 0;
-    m_handlers[i].L         = NULL;
     m_handlers[i].name      = NULL;
     m_handlers[i].use_info  = false;
     sigemptyset(&m_handlers[i].blocked);
@@ -1727,6 +1691,7 @@ int luaopen_org_conman_signal(lua_State *const L)
   luaL_setfuncs(L,m_sigset_meta,0);
   luaL_newlib(L,m_sig_reg);
 #endif
+  m_L = L;
   return 1;
 }
 
