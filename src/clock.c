@@ -338,7 +338,7 @@ int luaopen_org_conman_clock(lua_State *const L)
   luaL_newlib(L,m_clock_reg);
 #endif
   lua_pushliteral(L,IMPLEMENTATION);
-  lua_setfield(L,-2,"IMPLEMENTATION");
+  lua_setfield(L,-2,"_implementation");
   return 1;
 }
 

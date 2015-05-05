@@ -19,7 +19,7 @@ io.stdout:write("Testing minimal (select) level of support\n")
 io.stdout:write("\ttesting type of implementation ... ")
 do
 	set     = pollset()
-	assert(set.IMPLEMENTATION)
+	assert(set._implementation)
 	io.stdout:write("GO!\n")
 end
 

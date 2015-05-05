@@ -1,15 +1,24 @@
 
 signal = require "org.conman.signal"
 
-x = signal.SIGNAL()	-- just exists
-assert(x)
-
 -- ----------------------------------------------------------------------
 -- The signal API, reguardless of implementation, should support at least
 -- this level of activity.
 -- ----------------------------------------------------------------------
 
 io.stdout:write("Testing ANSI level support\n")
+io.stdout:write("\ttesting for known functions ...")
+io.stdout:flush()
+
+assert(type(signal._implementation) == 'string')
+assert(type(signal.caught)          == 'function')
+assert(type(signal.catch)           == 'function')
+assert(type(signal.ignore)          == 'function')
+assert(type(signal.default)         == 'function')
+assert(type(signal.raise)           == 'function')
+assert(type(signal.defined)         == 'function')
+
+io.stdout:write(" GO!\n")
 
 for _,sig in ipairs { 
 	'abrt' , 'fpe' , 'ill' , 'int' , 'segv' , 'term' ,
@@ -71,16 +80,26 @@ end
 -- The only other API we have is POSIX.  
 -- --------------------------------------------------------------
 
-if x == 'ANSI' then
+if signal._implementation == 'ANSI' then
   os.exit(0)
 end
 
-if x ~= 'POSIX' then
+if signal._implementation ~= 'POSIX' then
   io.stdout:write("NEED TO WRITE TESTS FOR ",x,"\n")
   os.exit(1)
 end
 
 io.stdout:write("Testing for POSIX level support\n")
+io.stdout:write("\ttesting for known functions ...")
+
+assert(type(signal.allow)   == 'function')
+assert(type(signal.block)   == 'function')
+assert(type(signal.mask)    == 'function')
+assert(type(signal.pending) == 'function')
+assert(type(signal.suspend) == 'function')
+assert(type(signal.set)     == 'function')
+
+io.stdout:write("GO!\n")
 io.stdout:write("\ttesting signal sets ... ")
 
 local a = signal.set('term','int') 

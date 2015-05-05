@@ -866,7 +866,7 @@ int luaopen_org_conman_pollset(lua_State *const L)
   luaL_setfuncs(L,m_polllua,0);
 #endif
   lua_pushliteral(L,POLLSET_IMPL);
-  lua_setfield(L,-2,"IMPLEMENTATION");
+  lua_setfield(L,-2,"_implementation");
   lua_pushvalue(L,-1);
   lua_setfield(L,-1,"__index");
   

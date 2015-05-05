@@ -420,22 +420,6 @@ static int siglua_defined(lua_State *const L)
   return 1;
 }
 
-/**********************************************************************
-*
-* Usage:	implementation = signal.SIGNAL()
-*
-* Desc:		Return the implementation of this module.
-*
-* Return:	implementation (string) "ANSI"
-*
-**********************************************************************/
-
-static int siglua_SIGNAL(lua_State *const L)
-{
-  lua_pushliteral(L,"ANSI");
-  return 1;
-}
-
 /**********************************************************************/
 
 static const struct luaL_Reg m_sig_reg[] =
@@ -446,7 +430,6 @@ static const struct luaL_Reg m_sig_reg[] =
   { "default"	, siglua_default	} ,
   { "raise"	, siglua_raise		} ,
   { "defined"	, siglua_defined	} ,
-  { "SIGNAL"	, siglua_SIGNAL		} ,
   { NULL	, NULL			}
 };
 
@@ -460,6 +443,9 @@ int luaopen_org_conman_signal(lua_State *const L)
   }
   
   luaL_register(L,"org.conman.signal-ansi",m_sig_reg);
+  lua_pushliteral(L,"ANSI");
+  lua_setfield(L,-2,"_implementation");
+  
   m_L = L;
   return 1;
 }
@@ -1319,22 +1305,6 @@ static int siglua_defined(lua_State *const L)
 
 /**********************************************************************
 *
-* Usage:        implementation = signal.SIGNAL()
-*
-* Desc:         Return the implementation of this module.
-*
-* Return:       implementation (string) "POSIX"
-*
-**********************************************************************/
-
-static int siglua_SIGNAL(lua_State *const L)
-{
-  lua_pushliteral(L,"POSIX");
-  return 1;
-}
-
-/**********************************************************************
-*
 * Usage:        signal.allow(signal[,signal...])
 *
 * Desc:         Allow the given signals to be sent
@@ -1651,7 +1621,6 @@ static const struct luaL_Reg m_sig_reg[] =
   { "default"	, siglua_default	} ,
   { "raise"	, siglua_raise		} ,
   { "defined"	, siglua_defined	} ,  
-  { "SIGNAL"	, siglua_SIGNAL		} ,  
   { "allow"	, siglua_allow		} ,
   { "block"	, siglua_block		} ,
   { "mask"	, siglua_mask		} ,
@@ -1691,6 +1660,8 @@ int luaopen_org_conman_signal(lua_State *const L)
   luaL_setfuncs(L,m_sigset_meta,0);
   luaL_newlib(L,m_sig_reg);
 #endif
+  lua_pushliteral(L,"POSIX");
+  lua_setfield(L,-2,"_implementation");
   m_L = L;
   return 1;
 }
