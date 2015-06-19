@@ -328,6 +328,9 @@ static int polllua_events(lua_State *const L)
 
 #include <string.h>
 #include <poll.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
 
 typedef struct
 {
@@ -459,10 +462,27 @@ static int polllua_insert(lua_State *const L)
     size_t         newmax;
     lua_Alloc      allocf;
     void          *ud;
+    struct rlimit  limit;
+    
+    if (getrlimit(RLIMIT_NOFILE,&limit) < 0)
+    {
+      lua_pushinteger(L,errno);
+      return 1;
+    }
+    
+    if (set->max == limit.rlim_cur)
+    {
+      lua_pushinteger(L,ENOMEM);
+      return 1;
+    }
     
     allocf = lua_getallocf(L,&ud);
     newmax = set->max + 10;
-    new    = (*allocf)(
+    
+    if (newmax > limit.rlim_cur)
+      newmax = limit.rlim_cur;
+    
+    new = (*allocf)(
     		ud,
     		set->set,
     		set->max * sizeof(struct pollfd),
