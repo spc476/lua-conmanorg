@@ -212,8 +212,12 @@ static int proclua_exec(lua_State *const L)
     envp = NULL;
     envc = 0;
     envm = 0;
-  
-    luaL_checktype(L,3,LUA_TTABLE);
+    
+    if (lua_type(L,3) != LUA_TTABLE)
+    {
+      free(argv);
+      luaL_checktype(L,3,LUA_TTABLE);
+    }
 
     lua_pushnil(L);
     while(lua_next(L,3) != 0)
