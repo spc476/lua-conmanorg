@@ -76,35 +76,12 @@ lib :
 	mkdir lib
 
 lib/%.so : src/%.c
-	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $<
+	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< $(LDLIBS)
 
-lib/env.so     : src/env.c
-lib/errno.so   : src/errno.c
-lib/fsys.so    : src/fsys.c
-lib/math.so    : src/math.c
-lib/syslog.so  : src/syslog.c
-lib/iconv.so   : src/iconv.c
-lib/crc.so     : src/crc.c
-lib/net.so     : src/net.c
-lib/pollset.so : src/pollset.c
-lib/sys.so     : src/sys.c
-lib/strcore.so : src/strcore.c
-lib/base64.so  : src/base64.c
-lib/signal.so  : src/signal.c
-lib/ptscore.so : src/ptscore.c
-lib/process.so : src/process.c
-
-lib/hash.so : src/hash.c
-	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lcrypto
-
-lib/magic.so : src/magic.c
-	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lmagic
-
-lib/tcc.so : src/tcc.c
-	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -ltcc
-
-lib/clock.so : src/clock.c
-	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< -lrt
+lib/hash.so    : LDLIBS = -lcrypto
+lib/magic.so   : LDLIBS = -lmagic
+lib/tcc.so     : LDLIBS = -ltcc
+lib/clock.so   : LDLIBS = -lrt
 
 clean:
 	/bin/rm -rf *~ lua/*~ src/*~ build/*~
@@ -143,4 +120,3 @@ install : all
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman
 	/bin/rm -rf $(LUALUA)/org/conman
-	
