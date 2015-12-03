@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <errno.h>
+#include <time.h>
 #include <assert.h>
 
 #include <lua.h>
@@ -39,6 +40,7 @@ static int math_randomseed(lua_State *const L)
 {
   char         *seedbank;
   char         *seedbank_file;
+  char         *seedbank_log;
   unsigned int  seed;
   
   assert(L != NULL);
@@ -143,6 +145,21 @@ math_randomseed_normal:
     else
       return luaL_error(L,"SEEDBANK_FILE: %s",strerror(errno));
   }
+  
+  seedbank_log = getenv("SEEDBANK_LOG");
+  if (seedbank_log != NULL)
+  {
+    FILE *fp = fopen(seedbank_log,"a");
+    if (fp != NULL)
+    {
+      time_t now = time(NULL);
+      char   buffer[20];
+      
+      strftime(buffer,sizeof(buffer),"%Y-%m-%dT%H:%M:%S",localtime(&now));
+      fprintf(fp,"%s: %u\n",buffer,seed);
+      fclose(fp);
+    }
+  }      
   
   srand(seed);
   lua_pushnumber(L,seed);
