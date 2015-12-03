@@ -20,6 +20,7 @@
 *********************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include <errno.h>
@@ -36,31 +37,111 @@
 
 static int math_randomseed(lua_State *const L)
 {
+  char         *seedbank;
+  char         *seedbank_file;
   unsigned int  seed;
   
   assert(L != NULL);
   
-  if (!lua_isboolean(L,1) && lua_isnumber(L,1))
-    seed = lua_tonumber(L,1);
+  /*--------------------------------------------------------------------
+  ; The idea for this is from https://github.com/catseye/seedbank
+  ;
+  ; But slightly modified.  If SEEDBANK_SEED is an integer, that's used
+  ; as the seeed.  If SEEDBANK_FILE is set and SEEDBANK_SEED=LAST, then
+  ; the contents of $SEEDBANK_FILE is used.  Otherwise, the older methods
+  ; are used (so this is new functionality).
+  ;
+  ; In either case, if SEEDBANK_FILE is set, then the seed (however
+  ; selected) will be saved in that file.  I'm not sure of the security
+  ; implications of this---a malicious user can set either environment
+  ; variable to cause problems, but if a malicious user can do that, I
+  ; suspect you have other issues.
+  ;--------------------------------------------------------------------*/
+  
+  seedbank = getenv("SEEDBANK_SEED");
+  
+  if (seedbank != NULL)
+  {
+    char          *ep;
+    unsigned long  val;
+    char           buffer[64];
+    
+    if (strcmp(seedbank,"LAST") == 0)
+    {
+      seedbank_file = getenv("SEEDBANK_FILE");
+      if (seedbank_file != NULL)
+      {
+        FILE *fp = fopen(seedbank_file,"r");
+        
+        /*------------------------------------------------------------------
+        ; most common error---file doesn't exist.  But there's not real easy
+        ; way to check for that condition only.  So in some bizarre cases,
+        ; not reporting an error may fail us here.  Well, if we had issues
+        ; reading, we might have issues writing, so let's hope the check
+        ; below finds an issue.
+        ;
+        ; But we still need a seed.  So let's skip ahead (GOTO WARNING!).
+        ;------------------------------------------------------------------*/
+        
+        if (fp != NULL)
+        {
+          memset(buffer,0,sizeof(buffer));
+          fgets(buffer,sizeof(buffer),fp);
+          fclose(fp);
+          seedbank = buffer;
+        }
+        else
+          goto math_randomseed_normal;
+      }
+    }
+    
+    errno = 0;
+    val   = strtoul(seedbank,&ep,10);
+    if (errno != 0)
+      return luaL_error(L,"SEEDBANK_SEED not a valid number");
+    if (val > UINT_MAX)
+      return luaL_error(L,"SEEDBANK_SEED range exceeded");
+    
+    seed = val;
+  }
   else
   {
-    FILE *fp;
-    
-    if (lua_toboolean(L,1))
-    {
-      fp = fopen("/dev/random","rb");
-      if (fp == NULL)
-        return luaL_error(L,"The NSA is keeping you from seeding your RNG");
-    }
+math_randomseed_normal:
+    if (!lua_isboolean(L,1) && lua_isnumber(L,1))
+      seed = lua_tonumber(L,1);
     else
     {
-      fp = fopen("/dev/urandom","rb");
-      if (fp == NULL)
-        return luaL_error(L,"cannot seed RNG");
+      FILE *fp;
+      
+      if (lua_toboolean(L,1))
+      {
+        fp = fopen("/dev/random","rb");
+        if (fp == NULL)
+          return luaL_error(L,"The NSA is keeping you from seeding your RNG");
+      }
+      else
+      {
+        fp = fopen("/dev/urandom","rb");
+        if (fp == NULL)
+          return luaL_error(L,"cannot seed RNG");
+      }
+      
+      fread(&seed,sizeof(seed),1,fp);
+      fclose(fp);
     }
-    
-    fread(&seed,sizeof(seed),1,fp);
-    fclose(fp);
+  }
+  
+  seedbank_file = getenv("SEEDBANK_FILE");
+  if (seedbank_file)
+  {
+    FILE *fp = fopen(seedbank_file,"w");
+    if (fp != NULL)
+    {
+      fprintf(fp,"%u\n",seed);
+      fclose(fp);
+    }
+    else
+      return luaL_error(L,"SEEDBANK_FILE: %s",strerror(errno));
   }
   
   srand(seed);
