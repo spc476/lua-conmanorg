@@ -462,6 +462,9 @@ int luaopen_org_conman_signal(lua_State *const L)
 
 #include <stdbool.h>
 #include <unistd.h>
+#ifdef __SunOS
+#  include <sys/wait.h>
+#endif
 
 #define TYPE_SIGSET	"org.conman.signal:sigset"
 
@@ -1115,7 +1118,7 @@ static int slua_toflags(lua_State *const L,int idx)
 
 /*--------------------------------------------------------------------*/      
 
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__SunOS)
 #  define FLAGSIG	SA_NODEFER
 #else
 #  define FLAGSIG	(SA_NODEFER | SA_NOMASK)
