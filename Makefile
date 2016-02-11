@@ -33,6 +33,7 @@ ifeq ($(UNAME),SunOS)
   CFLAGS = -g -mt -m64 -I /usr/sfw/include
   LFLAGS =
   SHARED = -G -xcode=pic32
+  lib/net.so : LDLIBS = -lsocket -lnsl
 endif
 
 ifeq ($(UNAME),Darwin)
