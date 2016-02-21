@@ -46,7 +46,7 @@
 
 static int	strcore_wrapt		(lua_State *const);
 static int	strcore_metaphone	(lua_State *const);
-static int	strcore_soundex		(lua_State *cosnt);
+static int	strcore_soundex		(lua_State *const);
 
 /************************************************************************/
 
