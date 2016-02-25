@@ -1286,7 +1286,7 @@ int luaopen_org_conman_process(lua_State *const L)
 #if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,m_process_meta);
 #else
-  luaL_newlib(L,m_process_meta);
+  luaL_setfuncs(L,m_process_meta,0);
 #endif
   lua_setmetatable(L,-2);
     
