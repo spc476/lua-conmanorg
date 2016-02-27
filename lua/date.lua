@@ -123,6 +123,33 @@ function dayofweek(date)
 end
 
 -- ************************************************************************
+--
+-- Usage:	max = day.daysinmonth(date)
+--
+-- Desc:	Calculate the maximum day in a month
+--
+-- Input:	date (table)
+--			* year  = ...
+--			* month = 1 .. 12
+--
+-- Return:	max (number) 1 .. 28,29,30,31 (depends upon month)
+--
+-- *********************************************************************
+
+local maxdays = { 31 , 0 , 31 , 30 , 31 , 30 , 31 , 31 , 30 , 31 , 30 , 31 }
+
+function daysinmonth(date)
+  if date.month == 2 then
+    if     date.year % 400 == 0 then return 29
+    elseif date.year % 100 == 0 then return 28
+    elseif date.year %   4 == 0 then return 29
+    else                             return 28 end
+  else
+    return maxdays[date.month]
+  end
+end
+
+-- ************************************************************************
 
 if _VERSION >= "Lua 5.2" then
   return _ENV
