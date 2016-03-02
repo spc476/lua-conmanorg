@@ -135,9 +135,6 @@ static int      socklua_peer		(lua_State *const) __attribute__((nonnull));
 static int	socklua_addr		(lua_State *const) __attribute__((nonnull));
 static int	socklua_bind		(lua_State *const) __attribute__((nonnull));
 static int	socklua_connect		(lua_State *const) __attribute__((nonnull));
-#ifdef TCP_FASTOPEN
-static int	socklua_fastconnect	(lua_State *const) __attribute__((nonnull));
-#endif
 static int	socklua_listen		(lua_State *const) __attribute__((nonnull));
 static int	socklua_accept		(lua_State *const) __attribute__((nonnull));
 static int	socklua_recv		(lua_State *const) __attribute__((nonnull));
@@ -187,9 +184,6 @@ static const luaL_Reg m_sock_meta[] =
   { "addr"		, socklua_addr		} ,
   { "bind"		, socklua_bind		} ,
   { "connect"		, socklua_connect	} ,
-#ifdef TCP_FASTOPEN
-  { "fastconnect"	, socklua_fastconnect	} ,
-#endif
   { "listen"		, socklua_listen	} ,
   { "accept"		, socklua_accept	} ,
   { "recv"		, socklua_recv		} ,
@@ -1012,12 +1006,6 @@ static const struct sockoptions m_sockoptions[] =
   { "debug"		, SOL_SOCKET 	, 0		, SO_DEBUG		, SOPT_FLAG 	, true , true  } ,
   { "dontroute"		, SOL_SOCKET 	, 0		, SO_DONTROUTE		, SOPT_FLAG 	, true , true  } ,
   { "error"		, SOL_SOCKET 	, 0		, SO_ERROR		, SOPT_INT  	, true , false } ,
-#ifdef TCP_FASTOPEN
-  /*---------------------------------------------------
-  ; read http://lwn.net/Articles/508865/ for more info
-  ;----------------------------------------------------*/
-  { "fastopen"		, SOL_TCP	, 0		, TCP_FASTOPEN		, SOPT_INT	, true , true  } ,
-#endif
   { "keepalive"		, SOL_SOCKET 	, 0		, SO_KEEPALIVE		, SOPT_FLAG 	, true , true  } ,
   { "linger"		, SOL_SOCKET 	, 0		, SO_LINGER		, SOPT_LINGER	, true , true  } ,
   { "maxsegment"	, IPPROTO_TCP	, 0		, TCP_MAXSEG		, SOPT_INT	, true , true  } ,
@@ -1428,37 +1416,6 @@ static int socklua_connect(lua_State *const L)
   lua_pushinteger(L,errno);
   return 1;
 }
-
-/**********************************************************************
-*
-*	bytes,err = sock:fastconnect(addr,data)
-*
-*	sock = net.socket(...)
-*	addr = net.address(...)
-*
-**********************************************************************/
-
-#ifdef TCP_FASTOPEN
-  static int socklua_fastconnect(lua_State *const L)
-  {
-    sock__t         *sock   = luaL_checkudata(L,1,TYPE_SOCK);
-    sockaddr_all__t *remote = luaL_checkudata(L,2,TYPE_ADDR);
-    size_t           bufsiz;
-    const char      *buffer = luaL_checklstring(L,3,&bufsiz);
-    struct sockaddr *remaddr;
-    socklen_t        remsize;
-    ssize_t          bytes;
-    
-    remaddr = &remote->sa;
-    remsize = Inet_len(remote);
-    errno   = 0;
-    bytes   = sendto(sock->fh,buffer,bufsiz,MSG_FASTOPEN,remaddr,remsize);
-    
-    lua_pushinteger(L,bytes);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-#endif
 
 /**********************************************************************
 *
