@@ -64,6 +64,7 @@ int luaopen_org_conman_env(lua_State *L)
   {
     char   *value = strchr(environ[i],'=');
     size_t  len;
+    int     type;
     
     if (value != NULL)
     {
@@ -76,9 +77,28 @@ int luaopen_org_conman_env(lua_State *L)
       value = "";
     }
     
+    /*---------------------------------------------------------------------
+    ; http://lwn.net/Articles/678148/
+    ;
+    ; The gist---if two environment variables exist with the same name,
+    ; getenv() will return the first one, while languages like Perl and Lua,
+    ; which dump everythinig into hash, will typically return the second
+    ; value, which could be exploited.  So we duplicate the behavior of
+    ; getenv() and only save the environment variable if it already hasn't
+    ; been set.
+    ;----------------------------------------------------------------------*/
+    
     lua_pushlstring(L,environ[i],len);
-    lua_pushstring(L,value);
-    lua_settable(L,-3);
+    lua_gettable(L,-2);
+    type = lua_type(L,-1);
+    lua_pop(L,1);
+    
+    if (type == LUA_TNIL)
+    {
+      lua_pushlstring(L,environ[i],len);
+      lua_pushstring(L,value);
+      lua_settable(L,-3);
+    }
   }
   
   return 1;
