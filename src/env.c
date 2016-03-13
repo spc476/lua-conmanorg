@@ -62,12 +62,22 @@ int luaopen_org_conman_env(lua_State *L)
 
   for (i = 0 ; environ[i] != NULL ; i++)
   {
-    char *value = strchr(environ[i],'=');
-
-    assert(value != NULL);
-
-    lua_pushlstring(L,environ[i],(size_t)(value - environ[i]));
-    lua_pushstring(L,value + 1);
+    char   *value = strchr(environ[i],'=');
+    size_t  len;
+    
+    if (value != NULL)
+    {
+      len = (size_t)(value - environ[i]);
+      value++;
+    }
+    else
+    {
+      len   = strlen(environ[i]);
+      value = "";
+    }
+    
+    lua_pushlstring(L,environ[i],len);
+    lua_pushstring(L,value);
     lua_settable(L,-3);
   }
   
