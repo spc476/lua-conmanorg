@@ -43,8 +43,8 @@ ifeq ($(UNAME),Darwin)
   SHARED = -shared -fPIC -undefined dynamic_lookup -all_load
 endif
 
-LUALUA = /usr/local/share/lua/5.1
-LUALIB = /usr/local/lib/lua/5.1
+LUALUA = /usr/local/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+LUALIB = /usr/local/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
 
 .PHONY:	all clean install remove
 
