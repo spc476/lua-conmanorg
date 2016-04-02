@@ -47,6 +47,8 @@
 static int	strcore_wrapt		(lua_State *const);
 static int	strcore_metaphone	(lua_State *const);
 static int	strcore_soundex		(lua_State *const);
+static int	strcore_compare		(lua_State *const);
+static int	strcore_comparen	(lua_State *const);
 
 /************************************************************************/
 
@@ -55,6 +57,8 @@ static const luaL_Reg m_strcore_reg[] =
   { "wrapt"	, strcore_wrapt		} ,
   { "metaphone"	, strcore_metaphone	} ,
   { "soundex"	, strcore_soundex	} ,
+  { "compare"	, strcore_compare	} ,
+  { "comparen"	, strcore_comparen	} ,
   { NULL	, NULL			}
 };
 
@@ -400,3 +404,34 @@ static int strcore_metaphone(lua_State *const L)
 
 /************************************************************************/
 
+static int strcore_compare(lua_State *const L)
+{
+  lua_pushinteger(
+          L,
+          strcmp(
+                  luaL_checkstring(L,1),
+                  luaL_checkstring(L,2)
+                )
+  );
+  return 1;
+}
+             
+/************************************************************************/
+
+static int strcore_comparen(lua_State *const L)
+{
+  size_t      destsz;
+  size_t      srcsz;
+  size_t      len;
+  const char *dest = luaL_checklstring(L,1,&destsz);
+  const char *src  = luaL_checklstring(L,2,&srcsz);
+  
+  len = (destsz < srcsz)
+      ? destsz
+      : srcsz
+      ;
+  lua_pushinteger(L,strncmp(dest,src,len));
+  return 1;
+}
+
+/************************************************************************/

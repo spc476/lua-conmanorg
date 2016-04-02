@@ -36,6 +36,8 @@ else
   wrapt     = x.wrapt
   metaphone = x.metaphone
   soundex   = x.soundex
+  compare   = x.compare
+  comparen  = x.comparen
 end
 
 function split(s,delim)
