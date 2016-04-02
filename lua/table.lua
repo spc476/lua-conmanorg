@@ -93,6 +93,41 @@ end
 
 -- *************************************************************
 
+local char_trans =
+{
+  ['\a'] = '\\a',
+  ['\b'] = '\\b',
+  ['\t'] = '\\t',
+  ['\n'] = '\\n',
+  ['\v'] = '\\v',
+  ['\f'] = '\\f',
+  ['\r'] = '\\r',
+  ['"']  = '\\"',
+  ['\\'] = '\\\\',
+}
+
+function safestring(v)
+  if type(v) == 'string' then
+    return '"' .. v:gsub(".",function(c)
+      if char_trans[c] then
+        return char_trans[c]
+      end
+      
+      local b = c:byte()
+      
+      if b < 32 or b > 126 then
+        return string.format("\\%d",b)
+      else
+        return c
+      end
+    end) .. '"'
+  else
+    return tostring(v)
+  end
+end
+
+-- *************************************************************
+
 function dump_value(name,value,path,level,marked)
 
   local function conv_cntl(s)
@@ -112,6 +147,8 @@ function dump_value(name,value,path,level,marked)
     return ""
   elseif type(name) == "number" then
     name = string.format("[%d]",name)
+  else
+    name = safestring(name)
   end
   
   if type(value) == "nil" then 
@@ -121,8 +158,8 @@ function dump_value(name,value,path,level,marked)
   elseif type(value) == "number" then
     return string.format("%s%s = %f,\n",lead,name,value)
   elseif type(value) == "string" then
-    value = string.gsub(value,"%c",conv_cntl)
-    return string.format("%s%s = %q,\n",lead,name,value)
+    value = safestring(value)
+    return string.format("%s%s = %s,\n",lead,name,value)
   elseif type(value) == "table" then
   
     if marked[tostring(value)] ~= nil then 
