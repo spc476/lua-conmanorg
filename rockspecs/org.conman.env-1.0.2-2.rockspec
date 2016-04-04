@@ -1,5 +1,5 @@
 package = "org.conman.env"
-version = "1.0.2-1"
+version = "1.0.2-2"
 
 source = 
 {
@@ -20,7 +20,7 @@ description =
 
 dependencies =
 {
-  "lua >= 5.1, < 5.3",
+  "lua >= 5.1, < 5.4",
 }
 
 build =
