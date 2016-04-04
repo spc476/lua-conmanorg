@@ -1,5 +1,5 @@
 package = "org.conman.errno"
-version = "1.0.1-0"
+version = "1.0.1-1"
 
 source = 
 {
@@ -20,7 +20,7 @@ description =
 
 dependencies =
 {
-  "lua >= 5.1, < 5.3",
+  "lua >= 5.1, < 5.4",
 }
 
 build =
