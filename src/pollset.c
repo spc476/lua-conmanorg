@@ -603,7 +603,7 @@ static int polllua_events(lua_State *const L)
     if (set->set[i].revents != 0)
     {
       lua_pushnumber(L,idx++);
-      pollset_pushevents(L,set->set[i].events);
+      pollset_pushevents(L,set->set[i].revents);
       lua_pushinteger(L,set->set[i].fd);
       lua_gettable(L,-5);
       lua_setfield(L,-2,"obj");
