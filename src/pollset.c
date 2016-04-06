@@ -653,6 +653,8 @@ static void pollset_toevents(lua_State *const L,int idx,pollset__t *set,int fd)
     if (lua_isboolean(L,-1)) FD_SET(fd,&set->write);
     lua_getfield(L,idx,"except");
     if (lua_isboolean(L,-1)) FD_SET(fd,&set->except);
+    lua_getfield(L,idx,"hangup");
+    if (lua_isboolean(L,-1)) FD_SET(fd,&set->except);
     lua_pop(L,3);
   }
   else if (lua_isstring(L,idx))
@@ -664,6 +666,7 @@ static void pollset_toevents(lua_State *const L,int idx,pollset__t *set,int fd)
       {
         case 'r': FD_SET(fd,&set->read);   break;
         case 'w': FD_SET(fd,&set->write);  break;
+        case 'h':
         case 'e': FD_SET(fd,&set->except); break;
         default:  break;
       }
