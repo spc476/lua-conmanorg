@@ -78,10 +78,10 @@ function edit(f)
     
     src = line .. "\n"
     
-    repeat
+    while count < info.lastlinedefined do
       src = src .. f:read("*l") .. "\n"
       count = count + 1
-    until count == info.lastlinedefined
+    end
     
     f:close()
   else
