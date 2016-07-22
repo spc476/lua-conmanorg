@@ -116,7 +116,7 @@ function safestring(v)
       local b = c:byte()
       
       if b < 32 or b > 126 then
-        return string.format("\\%d",b)
+        return string.format("\\%03d",b)
       else
         return c
       end
