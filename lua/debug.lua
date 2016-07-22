@@ -25,6 +25,7 @@ local io       = require "io"
 local string   = require "string"
 local _VERSION = _VERSION
 local exit     = exit
+local dofile   = dofile
 
 local loadstring
 
