@@ -112,6 +112,67 @@ static int proclua_setsid(lua_State *const L)
 
 /********************************************************************/
 
+static int proclua_setpgid(lua_State *const L)
+{
+  errno = 0;
+  setpgid(luaL_optinteger(L,1,0),luaL_optinteger(L,2,0));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/********************************************************************/
+
+static int proclua_getpgid(lua_State *const L)
+{
+  pid_t id = getpgid(luaL_optinteger(L,1,0));
+  if (id == -1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushnumber(L,id);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/********************************************************************/
+
+static int proclua_setpgrp(lua_State *const L)
+{
+  errno = 0;
+  setpgrp();
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/********************************************************************/
+
+static int proclua_getpgrp(lua_State *const L)
+{
+  pid_t id = getpgrp();
+  
+  if (id == -1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushnumber(L,id);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/********************************************************************/
+
 static int proclua_fork(lua_State *const L)
 {
   pid_t child;
@@ -1200,6 +1261,10 @@ static const struct strint m_sysexits[] =
 static const struct luaL_Reg m_process_reg[] =
 {
   { "setsid"		, proclua_setsid		} ,
+  { "setpgid"		, proclua_setpgid		} ,
+  { "getpgid"		, proclua_getpgid		} ,
+  { "setpgrp"		, proclua_setpgrp		} ,
+  { "getpgrp"		, proclua_getpgrp		} ,
   { "getuid"		, proclua_getuid		} ,
   { "getgid"		, proclua_getgid		} ,
   { "setuid"		, proclua_setuid		} ,
