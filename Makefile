@@ -43,8 +43,13 @@ ifeq ($(UNAME),Darwin)
   SHARED = -shared -fPIC -undefined dynamic_lookup -all_load
 endif
 
-LUALUA = /usr/local/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
-LUALIB = /usr/local/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+INSTALL         = /usr/bin/install
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA    = $(INSTALL) -m 644 
+prefix          = /usr/local
+
+LUALUA = $(prefix)/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+LUALIB = $(prefix)/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
 
 .PHONY:	all clean install remove
 
@@ -90,34 +95,34 @@ clean:
 	/bin/rm -rf build/bin2c
 
 install : all
-	install -d $(LUALUA)/org/conman	
-	install -d $(LUALUA)/org/conman/dns
-	install -d $(LUALUA)/org/conman/zip
-	install lua/*.lua $(LUALUA)/org/conman	
-	install lua/dns/*.lua $(LUALUA)/org/conman/dns
-	install lua/zip/*.lua $(LUALUA)/org/conman/zip
-	install -d $(LUALIB)/org/conman
-	install -d $(LUALIB)/org/conman/fsys
-	install lib/env.so     $(LUALIB)/org/conman
-	install lib/errno.so   $(LUALIB)/org/conman
-	install lib/fsys.so    $(LUALIB)/org/conman
-	install lib/math.so    $(LUALIB)/org/conman
-	install lib/syslog.so  $(LUALIB)/org/conman
-	install lib/iconv.so   $(LUALIB)/org/conman
-	install lib/crc.so     $(LUALIB)/org/conman
-	install lib/hash.so    $(LUALIB)/org/conman
-	install lib/magic.so   $(LUALIB)/org/conman/fsys
-	install lib/process.so $(LUALIB)/org/conman
-	install lib/net.so     $(LUALIB)/org/conman
-	install lib/pollset.so $(LUALIB)/org/conman
-	install lib/tcc.so     $(LUALIB)/org/conman
-	install lib/sys.so     $(LUALIB)/org/conman
-	install lib/strcore.so $(LUALIB)/org/conman
-	install lib/base64.so  $(LUALIB)/org/conman
-	install lib/signal.so  $(LUALIB)/org/conman
-	install lib/clock.so   $(LUALIB)/org/conman
-	install lib/ptscore.so $(LUALIB)/org/conman
+	$(INSTALL) -d $(DESTDIR)$(LUALUA)/org/conman	
+	$(INSTALL) -d $(DESTDIR)$(LUALUA)/org/conman/dns
+	$(INSTALL) -d $(DESTDIR)$(LUALUA)/org/conman/zip
+	$(INSTALL) -d $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL) -d $(DESTDIR)$(LUALIB)/org/conman/fsys
+	$(INSTALL_PROGRAM) lib/env.so     $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/errno.so   $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/fsys.so    $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/math.so    $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/syslog.so  $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/iconv.so   $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/crc.so     $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/hash.so    $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/magic.so   $(DESTDIR)$(LUALIB)/org/conman/fsys
+	$(INSTALL_PROGRAM) lib/process.so $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/net.so     $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/pollset.so $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/tcc.so     $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/sys.so     $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/strcore.so $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/base64.so  $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/signal.so  $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/clock.so   $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_PROGRAM) lib/ptscore.so $(DESTDIR)$(LUALIB)/org/conman
+	$(INSTALL_DATA)    lua/*.lua      $(DESTDIR)$(LUALUA)/org/conman	
+	$(INSTALL_DATA)    lua/dns/*.lua  $(DESTDIR)$(LUALUA)/org/conman/dns
+	$(INSTALL_DATA)    lua/zip/*.lua  $(DESTDIR)$(LUALUA)/org/conman/zip
 
 remove:
-	/bin/rm -rf $(LUALIB)/org/conman
-	/bin/rm -rf $(LUALUA)/org/conman
+	$(RM) -r $(DESTDIR)$(LUALIB)/org/conman
+	$(RM) -r $(DESTDIR)$(LUALUA)/org/conman
