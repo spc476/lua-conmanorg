@@ -25,7 +25,7 @@ ifeq ($(UNAME),Linux)
   CC     = gcc -std=c99
   CFLAGS = -g -Wall -Wextra -pedantic
   LFLAGS = 
-  SHARED = -shared -fPIC
+  SHARED = -fPIC -shared
 endif
 
 ifeq ($(UNAME),SunOS)
@@ -40,7 +40,7 @@ ifeq ($(UNAME),Darwin)
   CC     = gcc -std=c99
   CFLAGS = -g -Wall -Wextra -pedantic
   LFLAGS =
-  SHARED = -shared -fPIC -undefined dynamic_lookup -all_load
+  SHARED = -fPIC -undefined dynamic_lookup -all_load
 endif
 
 INSTALL         = /usr/bin/install
@@ -48,8 +48,8 @@ INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA    = $(INSTALL) -m 644 
 prefix          = /usr/local
 
-LUALUA = $(prefix)/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
-LUALIB = $(prefix)/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+LUADIR = $(prefix)/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+LIBDIR = $(prefix)/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
 
 .PHONY:	all clean install remove
 
@@ -95,34 +95,34 @@ clean:
 	/bin/rm -rf build/bin2c
 
 install : all
-	$(INSTALL) -d $(DESTDIR)$(LUALUA)/org/conman	
-	$(INSTALL) -d $(DESTDIR)$(LUALUA)/org/conman/dns
-	$(INSTALL) -d $(DESTDIR)$(LUALUA)/org/conman/zip
-	$(INSTALL) -d $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL) -d $(DESTDIR)$(LUALIB)/org/conman/fsys
-	$(INSTALL_PROGRAM) lib/env.so     $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/errno.so   $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/fsys.so    $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/math.so    $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/syslog.so  $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/iconv.so   $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/crc.so     $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/hash.so    $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/magic.so   $(DESTDIR)$(LUALIB)/org/conman/fsys
-	$(INSTALL_PROGRAM) lib/process.so $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/net.so     $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/pollset.so $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/tcc.so     $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/sys.so     $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/strcore.so $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/base64.so  $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/signal.so  $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/clock.so   $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_PROGRAM) lib/ptscore.so $(DESTDIR)$(LUALIB)/org/conman
-	$(INSTALL_DATA)    lua/*.lua      $(DESTDIR)$(LUALUA)/org/conman	
-	$(INSTALL_DATA)    lua/dns/*.lua  $(DESTDIR)$(LUALUA)/org/conman/dns
-	$(INSTALL_DATA)    lua/zip/*.lua  $(DESTDIR)$(LUALUA)/org/conman/zip
+	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman	
+	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman/dns
+	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman/zip
+	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/org/conman/fsys
+	$(INSTALL_PROGRAM) lib/env.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/errno.so   $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/fsys.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/math.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/syslog.so  $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/iconv.so   $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/crc.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/hash.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/magic.so   $(DESTDIR)$(LIBDIR)/org/conman/fsys
+	$(INSTALL_PROGRAM) lib/process.so $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/net.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/pollset.so $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/tcc.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/sys.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/strcore.so $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/base64.so  $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/signal.so  $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/clock.so   $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/ptscore.so $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_DATA)    lua/*.lua      $(DESTDIR)$(LUADIR)/org/conman	
+	$(INSTALL_DATA)    lua/dns/*.lua  $(DESTDIR)$(LUADIR)/org/conman/dns
+	$(INSTALL_DATA)    lua/zip/*.lua  $(DESTDIR)$(LUADIR)/org/conman/zip
 
 remove:
-	$(RM) -r $(DESTDIR)$(LUALIB)/org/conman
-	$(RM) -r $(DESTDIR)$(LUALUA)/org/conman
+	$(RM) -r $(DESTDIR)$(LIBDIR)/org/conman
+	$(RM) -r $(DESTDIR)$(LUADIR)/org/conman
