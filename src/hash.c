@@ -58,7 +58,7 @@ static int hash_hexa(
 
 /************************************************************************/
 
-static int hashlua_init(lua_State *const L)
+static int hashlua_new(lua_State *const L)
 {
   const EVP_MD *m;
   EVP_MD_CTX   *ctx;
@@ -207,7 +207,7 @@ static int hashlua___tostring(lua_State *const L)
 
 static const struct luaL_Reg hashlua[] =
 {
-  { "new"	, hashlua_init		} ,
+  { "new"	, hashlua_new		} ,
   { "update"	, hashlua_update	} ,
   { "final"	, hashlua_final		} ,
   { "sum"	, hashlua_sum		} ,
