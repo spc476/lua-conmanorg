@@ -18,8 +18,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-#define TYPE_TERMIOS	"org.conman.pts:termios"
-#define INT(x)	{ #x , x }
+#define TYPE_TERMIOS    "org.conman.pts:termios"
+#define INT(x)  { #x , x }
 
 /*************************************************************************/
 
@@ -52,7 +52,7 @@ static void xlua_createconst(
 {
   idx = lua_absindex(L,idx);
   lua_createtable(L,0,0);
-  for (size_t i = 0 ; list[i].name != NULL ; i++)  
+  for (size_t i = 0 ; list[i].name != NULL ; i++)
   {
     lua_pushinteger(L,list[i].value);
     lua_setfield(L,-2,list[i].name);
@@ -118,7 +118,7 @@ static int pts_getsize(lua_State *L)
   lua_pushinteger(L,errno);
   return 3;
 }
-  
+
 /*************************************************************************/
 
 static int pts_setsize(lua_State *L)
@@ -229,7 +229,7 @@ static int pts_flow(lua_State *L)
   return 1;
 }
 
-/*************************************************************************/  
+/*************************************************************************/
 
 static int pts_read(lua_State *L)
 {
@@ -254,21 +254,21 @@ static int pts_read(lua_State *L)
 
 static const luaL_Reg m_pts_reg[] =
 {
-  { "getpt"	, pts_getpt	} ,
-  { "grantpt"	, pts_grantpt	} ,
-  { "unlockpt"	, pts_unlockpt	} ,
-  { "ptsname"	, pts_ptsname	} ,
-  { "getsize"	, pts_getsize	} ,
-  { "setsize"	, pts_setsize	} ,
-  { "session"	, pts_session	} ,
-  { "getattr"	, pts_getattr	} ,
-  { "setattr"	, pts_setattr	} ,
-  { "rawattr"	, pts_rawattr	} ,
-  { "drain"	, pts_drain	} ,
-  { "flush"	, pts_flush	} ,
-  { "flow"	, pts_flow	} ,
-  { "read"	, pts_read	} ,
-  { NULL	, NULL		}
+  { "getpt"     , pts_getpt     } ,
+  { "grantpt"   , pts_grantpt   } ,
+  { "unlockpt"  , pts_unlockpt  } ,
+  { "ptsname"   , pts_ptsname   } ,
+  { "getsize"   , pts_getsize   } ,
+  { "setsize"   , pts_setsize   } ,
+  { "session"   , pts_session   } ,
+  { "getattr"   , pts_getattr   } ,
+  { "setattr"   , pts_setattr   } ,
+  { "rawattr"   , pts_rawattr   } ,
+  { "drain"     , pts_drain     } ,
+  { "flush"     , pts_flush     } ,
+  { "flow"      , pts_flow      } ,
+  { "read"      , pts_read      } ,
+  { NULL        , NULL          }
 };
 
 static const xlua_Const m_iflags[] =
@@ -287,7 +287,7 @@ static const xlua_Const m_iflags[] =
   INT(IXANY),
   INT(IXOFF),
   INT(IMAXBEL),
-  { NULL , 0 } 
+  { NULL , 0 }
 };
 
 static const xlua_Const m_oflags[] =

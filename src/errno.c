@@ -22,12 +22,12 @@
 * This module is nothing more than an array of error values (as found in
 * errno.h).
 *
-	-- get the numeric value of EDOM
-	err = org.conman.errno.EDOM
-	
-	-- print the human readable explaination for err
-	print(org.conman.errno[err])
-
+        -- get the numeric value of EDOM
+        err = org.conman.errno.EDOM
+        
+        -- print the human readable explaination for err
+        print(org.conman.errno[err])
+        
 *
 *********************************************************************/
 
@@ -51,11 +51,11 @@ struct strint
 
 /***************************************************************************/
 
-static const struct strint m_errors[] = 
+static const struct strint m_errors[] =
 {
   { "EDOM"   , EDOM   } ,
   { "ERANGE" , ERANGE } ,
-
+  
 #ifdef __STDC_VERSION__
 #  if __STDC_VERSION__ >= 199901L
   { "EILSEQ" , EILSEQ } ,
@@ -63,7 +63,7 @@ static const struct strint m_errors[] =
 #elif defined(EILSEQ)
   { "EILSEQ" , EILSEQ },
 #endif
-  
+
 #ifdef EACCES
     { "EACCES" , EACCES } ,
 #endif
@@ -557,9 +557,9 @@ static int errno___index(lua_State *L)
 /***********************************************************************/
 
 #if LUA_VERSION_NUM == 501
-  static const struct luaL_Reg m_reg_errno[] = 
+  static const struct luaL_Reg m_reg_errno[] =
   {
-    { NULL	, NULL		 }
+    { NULL      , NULL           }
   };
 #endif
 
@@ -568,7 +568,7 @@ static int errno___index(lua_State *L)
 int luaopen_org_conman_errno(lua_State *L)
 {
   size_t i;
-
+  
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.errno",m_reg_errno);
 #else

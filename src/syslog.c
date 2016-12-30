@@ -19,19 +19,19 @@
 *
 * ==================================================================
 *
-* Module:	org.conman.syslog
+* Module:       org.conman.syslog
 *
-* Desc:		Lua interface to syslog()
+* Desc:         Lua interface to syslog()
 *
 * Example:
 *
 
-	syslog = require "org.conman.syslog"
-
-	syslog.open("myprog",'local1') -- optional
-	syslog('debug',"The time is now %s",os.date("%c"))
-	syslog.close() -- optional
-
+        syslog = require "org.conman.syslog"
+        
+        syslog.open("myprog",'local1') -- optional
+        syslog('debug',"The time is now %s",os.date("%c"))
+        syslog.close() -- optional
+        
 *
 *********************************************************************/
 
@@ -62,74 +62,74 @@ struct strintmap
 
 static const struct strintmap m_facilities[] =
 {
-  { "auth"	, ( 4 << 3) } ,
-  { "auth2"	, (10 << 3) } ,
-  { "auth3"	, (13 << 3) } ,
-  { "auth4"	, (14 << 3) } ,
-  { "authpriv"	, (10 << 3) } ,
-  { "cron"	, ( 9 << 3) } ,
-  { "cron1"	, ( 9 << 3) } ,
-  { "cron2"	, (15 << 3) } ,
-  { "daemon"	, ( 3 << 3) } ,
-  { "ftp"	, (11 << 3) } ,
-  { "kernel"	, ( 0 << 3) } ,
-  { "local0"	, (16 << 3) } ,
-  { "local1"	, (17 << 3) } ,
-  { "local2"	, (18 << 3) } ,
-  { "local3"	, (19 << 3) } ,
-  { "local4"	, (20 << 3) } ,
-  { "local5"	, (21 << 3) } ,
-  { "local6"	, (22 << 3) } ,
-  { "local7"	, (23 << 3) } ,
-  { "lpr"	, ( 6 << 3) } ,
-  { "mail"	, ( 2 << 3) } ,
-  { "news"	, ( 7 << 3) } ,
-  { "ntp"	, (12 << 3) } ,
-  { "syslog"	, ( 5 << 3) } ,
-  { "user"	, ( 1 << 3) } ,
-  { "uucp"	, ( 8 << 3) } ,
+  { "auth"      , ( 4 << 3) } ,
+  { "auth2"     , (10 << 3) } ,
+  { "auth3"     , (13 << 3) } ,
+  { "auth4"     , (14 << 3) } ,
+  { "authpriv"  , (10 << 3) } ,
+  { "cron"      , ( 9 << 3) } ,
+  { "cron1"     , ( 9 << 3) } ,
+  { "cron2"     , (15 << 3) } ,
+  { "daemon"    , ( 3 << 3) } ,
+  { "ftp"       , (11 << 3) } ,
+  { "kernel"    , ( 0 << 3) } ,
+  { "local0"    , (16 << 3) } ,
+  { "local1"    , (17 << 3) } ,
+  { "local2"    , (18 << 3) } ,
+  { "local3"    , (19 << 3) } ,
+  { "local4"    , (20 << 3) } ,
+  { "local5"    , (21 << 3) } ,
+  { "local6"    , (22 << 3) } ,
+  { "local7"    , (23 << 3) } ,
+  { "lpr"       , ( 6 << 3) } ,
+  { "mail"      , ( 2 << 3) } ,
+  { "news"      , ( 7 << 3) } ,
+  { "ntp"       , (12 << 3) } ,
+  { "syslog"    , ( 5 << 3) } ,
+  { "user"      , ( 1 << 3) } ,
+  { "uucp"      , ( 8 << 3) } ,
 };
 
-#define MAX_FACILITY	(sizeof(m_facilities) / sizeof(struct strintmap))
+#define MAX_FACILITY    (sizeof(m_facilities) / sizeof(struct strintmap))
 
-static const struct strintmap m_levels[] = 
+static const struct strintmap m_levels[] =
 {
-  { "alert"	, 1	} ,
-  { "crit"	, 2	} ,
-  { "critical"	, 2	} ,
-  { "debug"	, 7	} ,
-  { "emerg"	, 0	} ,
-  { "emergency"	, 0	} ,
-  { "err"	, 3	} ,
-  { "error"	, 3	} ,
-  { "info"	, 6	} ,
-  { "notice"	, 5	} ,
-  { "warn"	, 4	} ,
-  { "warning"	, 4	} ,
+  { "alert"     , 1     } ,
+  { "crit"      , 2     } ,
+  { "critical"  , 2     } ,
+  { "debug"     , 7     } ,
+  { "emerg"     , 0     } ,
+  { "emergency" , 0     } ,
+  { "err"       , 3     } ,
+  { "error"     , 3     } ,
+  { "info"      , 6     } ,
+  { "notice"    , 5     } ,
+  { "warn"      , 4     } ,
+  { "warning"   , 4     } ,
 };
 
-#define MAX_LEVEL	(sizeof(m_levels) / sizeof(struct strintmap))
+#define MAX_LEVEL       (sizeof(m_levels) / sizeof(struct strintmap))
 
 static const struct strintmap m_opts[] =
 {
-  { "cons"	, LOG_CONS	} ,
-  { "console"	, LOG_CONS	} ,
-  { "ndelay"	, LOG_NDELAY	} ,
-  { "nodelay"	, LOG_NDELAY	} ,
-  { "nowait"	, LOG_NOWAIT	} ,
-  { "odelay"	, LOG_ODELAY	} ,
+  { "cons"      , LOG_CONS      } ,
+  { "console"   , LOG_CONS      } ,
+  { "ndelay"    , LOG_NDELAY    } ,
+  { "nodelay"   , LOG_NDELAY    } ,
+  { "nowait"    , LOG_NOWAIT    } ,
+  { "odelay"    , LOG_ODELAY    } ,
 #ifdef LOG_PERROR
-  { "perror"	, LOG_PERROR	} ,
-  { "pid"	, LOG_PID	} ,
-  { "stderr"	, LOG_PERROR	} ,
+  { "perror"    , LOG_PERROR    } ,
+  { "pid"       , LOG_PID       } ,
+  { "stderr"    , LOG_PERROR    } ,
 #else
-  { "perror"	, -1		} ,
-  { "pid"	, LOG_PID	} ,
-  { "stderr"	, -1		} ,
+  { "perror"    , -1            } ,
+  { "pid"       , LOG_PID       } ,
+  { "stderr"    , -1            } ,
 #endif
 };
 
-#define MAX_OPT		(sizeof(m_opts) / sizeof(struct strintmap))
+#define MAX_OPT         (sizeof(m_opts) / sizeof(struct strintmap))
 
 /************************************************************************/
 
@@ -143,22 +143,22 @@ static int sim_cmp(const void *needle,const void *haystack)
 
 /************************************************************************
 *
-* Usage:	syslog.open(ident,facility[,flags])
+* Usage:        syslog.open(ident,facility[,flags])
 *
-* Desc:		Establish the identyity string and default facility to
-*		log information under.
+* Desc:         Establish the identyity string and default facility to
+*               log information under.
 *
-* Input:	ident (string) identity string
-*		facility (string) facility to use.
-*		flags (table/optional) array of enum
-*			| pid		log pid
-*			| cons		log to console
-*			| nodelay	open socket immediately
-*			| ndelay		"
-*			| odelay	wait before opening socket
-*			| nowait	log immediately
-*			| perror	log to stderr as well
-*			| stderr		"
+* Input:        ident (string) identity string
+*               facility (string) facility to use.
+*               flags (table/optional) array of enum
+*                       | pid           log pid
+*                       | cons          log to console
+*                       | nodelay       open socket immediately
+*                       | ndelay                "
+*                       | odelay        wait before opening socket
+*                       | nowait        log immediately
+*                       | perror        log to stderr as well
+*                       | stderr                "
 *
 ************************************************************************/
 
@@ -176,7 +176,7 @@ static int syslog_open(lua_State *L)
   map   = bsearch(name,m_facilities,MAX_FACILITY,sizeof(struct strintmap),sim_cmp);
   if (map == NULL)
     return luaL_error(L,"invalid facility '%s'",name);
-
+    
   facility = map->value;
   
   options = 0;
@@ -203,7 +203,7 @@ static int syslog_open(lua_State *L)
                      sizeof(struct strintmap),
                      sim_cmp
                     );
-     
+                    
       if (map != NULL)
       {
 #ifndef LOG_PERROR
@@ -220,7 +220,7 @@ static int syslog_open(lua_State *L)
       }
       
       lua_pop(L,1);
-    }    
+    }
   }
   
   lua_pushvalue(L,1);
@@ -231,9 +231,9 @@ static int syslog_open(lua_State *L)
 
 /***********************************************************************
 *
-* Usage:	syslog.close()
+* Usage:        syslog.close()
 *
-* Desc:		Close the logging channel
+* Desc:         Close the logging channel
 *
 * *********************************************************************/
 
@@ -251,13 +251,13 @@ static int syslog_close(lua_State *L)
 
 /***********************************************************************
 *
-* Usage:	syslog.log(level,format[,...])
-*		| syslog(level,format[,...])
+* Usage:        syslog.log(level,format[,...])
+*               | syslog(level,format[,...])
 *
-* Desc:		Log information at a given level
+* Desc:         Log information at a given level
 *
-* Input:	level (string) level
-*		format (string) format string
+* Input:        level (string) level
+*               format (string) format string
 *
 ************************************************************************/
 
@@ -272,7 +272,7 @@ static int syslog_log(lua_State *L)
   if (map == NULL)
     return luaL_error(L,"invalid level '%s'",name);
   level = map->value;
-
+  
   /*------------------------------------------------------------------------
   ; shove string.format() onto the stack to format the message, which
   ; comprises the rest of the paramters.  Call it, then print the resulting
@@ -284,7 +284,7 @@ static int syslog_log(lua_State *L)
   lua_insert(L,2);
   lua_call(L,lua_gettop(L) - 2,1);
   syslog(level,"%s",lua_tostring(L,-1));
-
+  
 #ifndef LOG_PERROR
   lua_getfield(L,LUA_REGISTRYINDEX,"org.conman.syslog:perror");
   if (lua_toboolean(L,-1))
@@ -298,7 +298,7 @@ static int syslog_log(lua_State *L)
 
 static int syslog___call(lua_State *L)
 {
-  lua_remove(L,1);	/* remove table */
+  lua_remove(L,1);      /* remove table */
   return syslog_log(L);
 }
 
@@ -306,10 +306,10 @@ static int syslog___call(lua_State *L)
 
 static const struct luaL_Reg reg_syslog[] =
 {
-  { "open"	, syslog_open   } ,
-  { "close"	, syslog_close	} ,
-  { "log"	, syslog_log	} ,
-  { NULL	, NULL		} ,
+  { "open"      , syslog_open   } ,
+  { "close"     , syslog_close  } ,
+  { "log"       , syslog_log    } ,
+  { NULL        , NULL          } ,
 };
 
 int luaopen_org_conman_syslog(lua_State *L)
@@ -324,7 +324,7 @@ int luaopen_org_conman_syslog(lua_State *L)
   lua_pushcfunction(L,syslog___call);
   lua_setfield(L,-2,"__call");
   lua_setmetatable(L,-2);
-
+  
   return 1;
 }
 

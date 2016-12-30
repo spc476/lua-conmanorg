@@ -19,27 +19,27 @@
 *
 * ==================================================================
 *
-*	base64 = require "org.conman.base64" {
-*			last   = "+/",
-*			pad    = "=",
-*			len    = 76,
-*			ignore = true
-*		      }
+*       base64 = require "org.conman.base64" {
+*                       last   = "+/",
+*                       pad    = "=",
+*                       len    = 76,
+*                       ignore = true
+*                     }
 *
-*	x = base64:encode("blahblahblah")
-*	y = base64:decode("blahblahblah")
+*       x = base64:encode("blahblahblah")
+*       y = base64:decode("blahblahblah")
 *
 * The default encoder/decoder (if base64() is called with no parameters) is
 * what people normally expect of base64.  The parameters are there to handle
 * the other dozen variants of base64 that are defined.  The parameters given
 * above are the current default values.
 
-	base64 = require "org.conman.base64"()
-	msg = "This is a test"
-	enc = base64:encode(msg)
-	dec = base64:decode(enc)
-	print(msg == dec)
-
+        base64 = require "org.conman.base64"()
+        msg = "This is a test"
+        enc = base64:encode(msg)
+        dec = base64:decode(enc)
+        print(msg == dec)
+        
 *
 *********************************************************************/
 
@@ -56,7 +56,7 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_BASE64	"org.conman.base64:base64"
+#define TYPE_BASE64     "org.conman.base64:base64"
 
 typedef struct
 {
@@ -71,7 +71,7 @@ typedef struct
 static const char *const mbase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                   "abcdefghijklmnopqrstuvwxyz"
                                   "0123456789+/";
-
+                                  
 /**********************************************************************/
 
 static int b64meta_encode(lua_State *L)
@@ -101,7 +101,7 @@ static int b64meta_encode(lua_State *L)
            B = (data[0] << 4) & 0x30;
            assert(A < 64);
            assert(B < 64);
-      
+           
            luaL_addchar(&b,b64->transtable[A]);
            luaL_addchar(&b,b64->transtable[B]);
            if (b64->pad)
@@ -111,7 +111,7 @@ static int b64meta_encode(lua_State *L)
            }
            luaL_pushresult(&b);
            return 1;
-      
+           
       case 2:
            A =  (data[0] >> 2);
            B = ((data[0] << 4) & 0x30) | ((data[1] >> 4) );
@@ -125,10 +125,10 @@ static int b64meta_encode(lua_State *L)
            luaL_addchar(&b,b64->transtable[B]);
            luaL_addchar(&b,b64->transtable[C]);
            if (b64->pad)
-             luaL_addchar(&b,b64->pad);       
+             luaL_addchar(&b,b64->pad);
            luaL_pushresult(&b);
            return 1;
-      
+           
       default:
            A =  (data[0] >> 2) ;
            B = ((data[0] << 4) & 0x30) | ((data[1] >> 4) );
@@ -161,10 +161,10 @@ static int b64meta_encode(lua_State *L)
 /**********************************************************************/
 
 static bool Ib64_readout(
-	const base64__s  *b64,
-	uint8_t          *pr,
-	size_t           *skip,
-	const char      **pdata
+        const base64__s  *b64,
+        uint8_t          *pr,
+        size_t           *skip,
+        const char      **pdata
 )
 {
   const char *data = *pdata;
@@ -178,7 +178,7 @@ static bool Ib64_readout(
       *pr = 0;
       return true;
     }
-  
+    
     if (*data == b64->pad)
     {
       (*skip)++;
@@ -186,7 +186,7 @@ static bool Ib64_readout(
       *pr    = b64->pad;
       return true;
     }
-  
+    
     p = strchr(b64->transtable,*data);
     if (p)
     {
@@ -203,10 +203,10 @@ static bool Ib64_readout(
 /**********************************************************************/
 
 static bool Ib64_readout4(
-	const base64__s  *b64,
-	uint8_t          *pr,
-	size_t           *skip,
-	const char      **pdata
+        const base64__s  *b64,
+        uint8_t          *pr,
+        size_t           *skip,
+        const char      **pdata
 )
 {
   size_t i;
@@ -230,9 +230,9 @@ static int b64meta_decode(lua_State *L)
   b64  = luaL_checkudata(L,1,TYPE_BASE64);
   data = luaL_checkstring(L,2);
   skip = 0;
- 
+  
   luaL_buffinit(L,&b);
-
+  
   while(*data)
   {
     if (!Ib64_readout4(b64,buf,&skip,&data))
@@ -262,7 +262,7 @@ static int b64lua(lua_State *L)
   base64__s *b64;
   
   lua_settop(L,1);
-
+  
   b64         = lua_newuserdata(L,sizeof(base64__s));
   b64->len    = 76;
   b64->pad    = '=';
@@ -291,7 +291,7 @@ static int b64lua(lua_State *L)
     lua_getfield(L,1,"ignore");
     if (lua_isboolean(L,-1))
       b64->ignore = lua_toboolean(L,-1);
-    
+      
     lua_pop(L,4);
   }
   
@@ -304,10 +304,10 @@ static int b64lua(lua_State *L)
 
 static const struct luaL_Reg mb64_meta[] =
 {
-  { "encode"		, b64meta_encode 	} ,
-  { "decode"		, b64meta_decode 	} ,
-  { "__tostring"	, b64meta___tostring	} ,
-  { NULL		, NULL 			}
+  { "encode"            , b64meta_encode        } ,
+  { "decode"            , b64meta_decode        } ,
+  { "__tostring"        , b64meta___tostring    } ,
+  { NULL                , NULL                  }
 };
 
 int luaopen_org_conman_base64(lua_State *L)

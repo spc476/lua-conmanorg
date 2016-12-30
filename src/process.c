@@ -63,8 +63,8 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_LIMIT_HARD	"org.conman.process:rlimit_hard"
-#define TYPE_LIMIT_SOFT	"org.conman.process:rlimit_soft"
+#define TYPE_LIMIT_HARD "org.conman.process:rlimit_hard"
+#define TYPE_LIMIT_SOFT "org.conman.process:rlimit_soft"
 
 #ifndef __GNUC__
 #  define __attribute__(x)
@@ -72,12 +72,12 @@
 
 #if ULONG_MAX > 4294967295uL
 #  if ULONG_MAX > 9007199254740992uL
-#    define MAX_RESOURCE_LIMIT	9007199254740992uL
+#    define MAX_RESOURCE_LIMIT  9007199254740992uL
 #  else
-#    define MAX_RESOURCE_LIMIT	RLIM_INFINITY
+#    define MAX_RESOURCE_LIMIT  RLIM_INFINITY
 #  endif
 #else
-#  define MAX_RESOURCE_LIMIT	RLIM_INFINITY
+#  define MAX_RESOURCE_LIMIT    RLIM_INFINITY
 #endif
 
 /**********************************************************************/
@@ -197,7 +197,7 @@ static int proc_execfree(char **argv,char **envp,size_t envc)
 {
   for (size_t i = 0 ; i < envc ; i++)
     free(envp[i]);
-  
+    
   free(envp);
   free(argv);
   
@@ -219,13 +219,13 @@ static bool proc_growenvp(char ***penvp,size_t *psize)
   
   if (new == NULL)
     return false;
-  
+    
   *penvp = new;
   *psize = nsize;
   return true;
 }
 
-/******************************************************************/  
+/******************************************************************/
 
 static int proclua_exec(lua_State *const L)
 {
@@ -240,8 +240,8 @@ static int proclua_exec(lua_State *const L)
   
   binary = luaL_checkstring(L,1);
   luaL_checktype(L,2,LUA_TTABLE);
-
-#if LUA_VERSION_NUM == 501  
+  
+#if LUA_VERSION_NUM == 501
   argc = lua_objlen(L,2) + 2;
 #else
   argc = lua_rawlen(L,2) + 2;
@@ -265,7 +265,7 @@ static int proclua_exec(lua_State *const L)
   
   envc = 0;
   envm = 0;
-
+  
   if (lua_isnoneornil(L,3))
     envp = environ;
   else
@@ -279,7 +279,7 @@ static int proclua_exec(lua_State *const L)
       free(argv);
       luaL_checktype(L,3,LUA_TTABLE);
     }
-
+    
     lua_pushnil(L);
     while(lua_next(L,3) != 0)
     {
@@ -287,17 +287,17 @@ static int proclua_exec(lua_State *const L)
       size_t      nsize;
       const char *value;
       size_t      vsize;
-    
+      
       name  = lua_tolstring(L,-2,&nsize);
       value = lua_tolstring(L,-1,&vsize);
-    
+      
       if ((envc == envm) && !proc_growenvp(&envp,&envm))
       {
         proc_execfree(argv,envp,envc);
         lua_pushinteger(L,ENOMEM);
         return 1;
       }
-
+      
       envp[envc] = malloc(nsize + vsize + 3);
       if (envp[envc] == NULL)
       {
@@ -305,11 +305,11 @@ static int proclua_exec(lua_State *const L)
         lua_pushinteger(L,ENOMEM);
         return 1;
       }
-    
+      
       sprintf(envp[envc++],"%s=%s",name,value);
       lua_pop(L,1);
     }
-  
+    
     if ((envc == envm) && !proc_growenvp(&envp,&envm))
     {
       proc_execfree(argv,envp,envc);
@@ -330,9 +330,9 @@ static int proclua_exec(lua_State *const L)
 /******************************************************************/
 
 static void proc_pushstatus(
-	lua_State *const L,
-	const pid_t      pid,
-	int              status
+        lua_State *const L,
+        const pid_t      pid,
+        int              status
 )
 {
   lua_createtable(L,0,0);
@@ -345,12 +345,12 @@ static void proc_pushstatus(
     lua_pushinteger(L,rc);
     lua_setfield(L,-2,"rc");
     lua_pushfstring(
-    	L,
-    	"%s %d",
-    	(rc == EXIT_SUCCESS)
-    		? "success"
-    		: "failure",
-    	rc
+        L,
+        "%s %d",
+        (rc == EXIT_SUCCESS)
+                ? "success"
+                : "failure",
+        rc
     );
     lua_setfield(L,-2,"description");
     lua_pushliteral(L,"normal");
@@ -399,9 +399,9 @@ static int proclua_wait(lua_State *const L)
   int   rc;
   
   child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2) 
-  		? WUNTRACED | WCONTINUED | WNOHANG 
-  		: WUNTRACED | WCONTINUED;
+  flag  = lua_toboolean(L,2)
+                ? WUNTRACED | WCONTINUED | WNOHANG
+                : WUNTRACED | WCONTINUED;
   rc    = waitpid(child,&status,flag);
   if (rc == -1)
   {
@@ -416,7 +416,7 @@ static int proclua_wait(lua_State *const L)
     lua_pushinteger(L,0);
     return 2;
   }
-
+  
   proc_pushstatus(L,rc,status);
   lua_pushinteger(L,0);
   return 2;
@@ -425,8 +425,8 @@ static int proclua_wait(lua_State *const L)
 /*********************************************************************/
 
 static void proc_pushrusage(
-	lua_State     *const restrict L,
-	struct rusage *const restrict usage
+        lua_State     *const restrict L,
+        struct rusage *const restrict usage
 )
 {
   lua_createtable(L,0,0);
@@ -454,7 +454,7 @@ static void proc_pushrusage(
   
   lua_pushnumber(L,usage->ru_majflt);
   lua_setfield(L,-2,"hardfaults");
-
+  
   lua_pushnumber(L,usage->ru_nswap);
   lua_setfield(L,-2,"swapped");
   
@@ -489,11 +489,11 @@ static int proclua_waitusage(lua_State *const L)
   int           status;
   int           flag;
   int           rc;
-
+  
   child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2) 
-  		? WUNTRACED | WCONTINUED | WNOHANG 
-  		: WUNTRACED | WCONTINUED ;
+  flag  = lua_toboolean(L,2)
+                ? WUNTRACED | WCONTINUED | WNOHANG
+                : WUNTRACED | WCONTINUED ;
   rc    = wait4(child,&status,flag,&usage);
   if (rc == -1)
   {
@@ -512,7 +512,7 @@ static int proclua_waitusage(lua_State *const L)
   }
   
   proc_pushstatus(L,rc,status);
-  proc_pushrusage(L,&usage);  
+  proc_pushrusage(L,&usage);
   return 2;
 }
 
@@ -526,9 +526,9 @@ static int proclua_waitid(lua_State *const L)
   int       flag;
   
   child = luaL_checkinteger(L,1);
-  flag  = lua_toboolean(L,2) 
-  	? WEXITED | WSTOPPED | WCONTINUED | WNOHANG
-  	: WEXITED | WSTOPPED | WCONTINUED;
+  flag  = lua_toboolean(L,2)
+        ? WEXITED | WSTOPPED | WCONTINUED | WNOHANG
+        : WEXITED | WSTOPPED | WCONTINUED;
   idtype = (child == 0) ? P_ALL : P_PID;
   
   memset(&info,0,sizeof(info));
@@ -592,14 +592,14 @@ static int proclua_times(lua_State *const L)
     lua_pushinteger(L,errno);
     return 2;
   }
-
+  
   lua_createtable(L,0,4);
   lua_pushnumber(L,tms.tms_utime);
   lua_setfield(L,-2,"utime");
   lua_pushnumber(L,tms.tms_stime);
   lua_setfield(L,-2,"stime");
   lua_pushnumber(L,tms.tms_cutime);
-  lua_setfield(L,-2,"cutime"); 
+  lua_setfield(L,-2,"cutime");
   lua_pushnumber(L,tms.tms_cstime);
   lua_setfield(L,-2,"cstime");
   
@@ -685,15 +685,15 @@ static int proclua_meta___newindex(lua_State *const L)
 /*********************************************************************/
 
 static bool limit_trans(
-	int        *const restrict pret,
-	const char *const restrict tag
+        int        *const restrict pret,
+        const char *const restrict tag
 )
 {
   assert(pret != NULL);
   assert(tag  != NULL);
   
   if (strcmp(tag,"core") == 0)
-    *pret = RLIMIT_CORE; 
+    *pret = RLIMIT_CORE;
   else if (strcmp(tag,"cpu") == 0)
     *pret = RLIMIT_CPU;
   else if (strcmp(tag,"data") == 0)
@@ -715,9 +715,9 @@ static bool limit_trans(
 /**********************************************************************/
 
 static bool limit_valid_suffix(
-	lua_Number *const restrict pval,
-	const int                  key,
-	const char *const restrict unit
+        lua_Number *const restrict pval,
+        const int                  key,
+        const char *const restrict unit
 )
 {
   assert(pval != NULL);
@@ -731,7 +731,7 @@ static bool limit_valid_suffix(
           || (key == RLIMIT_STACK)
           || (key == RLIMIT_AS)
         );
-  
+        
   switch(key)
   {
     case RLIMIT_CPU:
@@ -746,10 +746,10 @@ static bool limit_valid_suffix(
            default: return false;
          }
          return true;
-           
+         
     case RLIMIT_NOFILE:
          return (*unit == '\0');
-           
+         
     case RLIMIT_CORE:
     case RLIMIT_DATA:
     case RLIMIT_FSIZE:
@@ -768,7 +768,7 @@ static bool limit_valid_suffix(
          
     default:
          return false;
-  }  
+  }
 }
 
 /******************************************************************/
@@ -787,7 +787,7 @@ static int hlimitlua_meta___index(lua_State *const L)
   
   if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
-  
+    
   rc = getrlimit(key,&limit);
   if (rc == -1)
   {
@@ -800,7 +800,7 @@ static int hlimitlua_meta___index(lua_State *const L)
     lua_pushnumber(L,HUGE_VAL);
   else
     lua_pushnumber(L,limit.rlim_max);
-
+    
   return 1;
 }
 
@@ -812,7 +812,7 @@ static int hlimitlua_meta___newindex(lua_State *const L)
   const char    *tkey;
   int            key;
   lua_Number     ival;
-
+  
   assert(L != NULL);
   
   luaL_checkudata(L,1,TYPE_LIMIT_HARD);
@@ -820,23 +820,23 @@ static int hlimitlua_meta___newindex(lua_State *const L)
   
   if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
-
+    
   if (lua_isnumber(L,3))
     ival = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
     const char *tval;
     const char *unit;
-
+    
     tval = lua_tostring(L,3);
     ival = strtod(tval,(char **)&unit);
-
+    
     if (!limit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
-  } 
+  }
   else
     return luaL_error(L,"Non-supported type");
-  
+    
   if (ival >= MAX_RESOURCE_LIMIT)
   {
     limit.rlim_cur = RLIM_INFINITY;
@@ -868,7 +868,7 @@ static int slimitlua_meta___index(lua_State *const L)
   
   if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
-  
+    
   rc = getrlimit(key,&limit);
   if (rc == -1)
   {
@@ -903,7 +903,7 @@ static int slimitlua_meta___newindex(lua_State *const L)
   
   if (!limit_trans(&key,tkey))
     return luaL_error(L,"Illegal limit resource: %s",tkey);
-  
+    
   if (lua_isnumber(L,3))
     ival = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
@@ -915,19 +915,19 @@ static int slimitlua_meta___newindex(lua_State *const L)
     ival = strtod(tval,(char **)&unit);
     if (!limit_valid_suffix(&ival,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
-  } 
+  }
   else
     return luaL_error(L,"Non-supported type");
-
+    
   if (ival >= MAX_RESOURCE_LIMIT)
     limit.rlim_cur = RLIM_INFINITY;
   else
     limit.rlim_cur = ival;
-  
+    
   rc = getrlimit(key,&climit);
   if (rc == -1)
     return 0;
-  
+    
   limit.rlim_max = climit.rlim_max;
   setrlimit(key,&limit);
   return 0;
@@ -943,18 +943,18 @@ static int proclua_getuid(lua_State *const L)
   uid_t uid;
   uid_t euid;
   uid_t suid;
-
+  
   getresuid(&uid,&euid,&suid);
   lua_pushinteger(L,uid);
   lua_pushinteger(L,euid);
   lua_pushinteger(L,suid);
-
+  
 #else
 
   lua_pushinteger(L,getuid());
   lua_pushinteger(L,geteuid());
   lua_pushinteger(L,-1);
-
+  
 #endif
   return 3;
 }
@@ -968,17 +968,17 @@ static int proclua_getgid(lua_State *const L)
   gid_t egid;
   gid_t sgid;
   
-  getresgid(&gid,&egid,&sgid);  
+  getresgid(&gid,&egid,&sgid);
   lua_pushinteger(L,gid);
   lua_pushinteger(L,egid);
   lua_pushinteger(L,sgid);
-
+  
 #else
 
   lua_pushinteger(L,getgid());
   lua_pushinteger(L,getegid());
   lua_pushinteger(L,-1);
-
+  
 #endif
   return 3;
 }
@@ -1004,22 +1004,22 @@ static int proclua_setuid(lua_State *const L)
 #else
   uid_t uid;
   uid_t euid;
-
+  
   uid  = luaL_checkinteger(L,1);
   euid = luaL_optinteger(L,2,-1);
-
+  
   if (setuid(uid) < 0)
   {
     lua_pushinteger(L,errno);
     return 1;
   }
-
+  
   if (seteuid(uid) < 0)
   {
     lua_pushinteger(L,errno);
     return 1;
   }
-
+  
   lua_pushinteger(L,0);
   return 1;
 #endif
@@ -1046,22 +1046,22 @@ static int proclua_setgid(lua_State *const L)
 #else
   gid_t gid;
   gid_t egid;
-
+  
   gid  = luaL_checkinteger(L,1);
   egid = luaL_optinteger(L,2,-1);
-
+  
   if (setgid(gid) < 0)
   {
     lua_pushinteger(L,errno);
     return 1;
   }
-
+  
   if (setegid(egid) < 0)
   {
     lua_pushinteger(L,errno);
     return 1;
   }
-
+  
   lua_pushinteger(L,0);
   return 1;
 #endif
@@ -1107,7 +1107,7 @@ static int proclua_getaffinity(lua_State *const L)
   }
   lua_pushinteger(L,0);
   return 2;
-
+  
 #elif defined(__SunOS)
 
   processorid_t id;
@@ -1129,7 +1129,7 @@ static int proclua_getaffinity(lua_State *const L)
   lua_pushnil(L);
   lua_pushinteger(L,ENOSYS);
   return 2;
-
+  
 #endif
 }
 
@@ -1164,22 +1164,22 @@ static int proclua_setaffinity(lua_State *const L)
     for (i = 2 ; max > 0 ; i++ , max--)
       if (lua_isnumber(L,i))
         CPU_SET(lua_tointeger(L,i) - 1,&set);
-  } 
+  }
   
   errno = 0;
   sched_setaffinity(pid,sizeof(set),&set);
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
-
+  
 #elif defined(__SunOS)
 
   errno = 0;
   processor_bind(
-  	P_PID,
-  	luaL_optinteger(L,1,P_MYID),
-  	luaL_checkinteger(L,2),
-  	NULL
+        P_PID,
+        luaL_optinteger(L,1,P_MYID),
+        luaL_checkinteger(L,2),
+        NULL
   );
   
   lua_pushboolean(L,errno == 0);
@@ -1199,9 +1199,9 @@ static int proclua_setaffinity(lua_State *const L)
 
 static const struct strint m_sysexits[] =
 {
-  { "SUCCESS"	, EXIT_SUCCESS	} ,
-  { "FAILURE"	, EXIT_FAILURE	} ,
-
+  { "SUCCESS"   , EXIT_SUCCESS  } ,
+  { "FAILURE"   , EXIT_FAILURE  } ,
+  
 #ifdef EX_OK
   { "OK" , EX_OK } ,
 #else
@@ -1260,55 +1260,55 @@ static const struct strint m_sysexits[] =
 
 static const struct luaL_Reg m_process_reg[] =
 {
-  { "setsid"		, proclua_setsid		} ,
-  { "setpgid"		, proclua_setpgid		} ,
-  { "getpgid"		, proclua_getpgid		} ,
-  { "setpgrp"		, proclua_setpgrp		} ,
-  { "getpgrp"		, proclua_getpgrp		} ,
-  { "getuid"		, proclua_getuid		} ,
-  { "getgid"		, proclua_getgid		} ,
-  { "setuid"		, proclua_setuid		} ,
-  { "setgid"		, proclua_setgid		} ,
-  { "exit"		, proclua_exit			} ,
-  { "fork"		, proclua_fork			} ,
-  { "wait"		, proclua_wait			} ,
-  { "waitusage"		, proclua_waitusage		} ,
-  { "waitid"		, proclua_waitid		} ,
-  { "exec"		, proclua_exec			} ,
-  { "times"		, proclua_times			} ,
-  { "getrusage"		, proclua_getrusage		} ,
-  { "pause"		, proclua_pause			} ,
-  { "getaffinity"	, proclua_getaffinity		} ,
-  { "setaffinity"	, proclua_setaffinity		} ,
-  { NULL		, NULL				} 
+  { "setsid"            , proclua_setsid                } ,
+  { "setpgid"           , proclua_setpgid               } ,
+  { "getpgid"           , proclua_getpgid               } ,
+  { "setpgrp"           , proclua_setpgrp               } ,
+  { "getpgrp"           , proclua_getpgrp               } ,
+  { "getuid"            , proclua_getuid                } ,
+  { "getgid"            , proclua_getgid                } ,
+  { "setuid"            , proclua_setuid                } ,
+  { "setgid"            , proclua_setgid                } ,
+  { "exit"              , proclua_exit                  } ,
+  { "fork"              , proclua_fork                  } ,
+  { "wait"              , proclua_wait                  } ,
+  { "waitusage"         , proclua_waitusage             } ,
+  { "waitid"            , proclua_waitid                } ,
+  { "exec"              , proclua_exec                  } ,
+  { "times"             , proclua_times                 } ,
+  { "getrusage"         , proclua_getrusage             } ,
+  { "pause"             , proclua_pause                 } ,
+  { "getaffinity"       , proclua_getaffinity           } ,
+  { "setaffinity"       , proclua_setaffinity           } ,
+  { NULL                , NULL                          }
 };
 
 static const struct luaL_Reg m_process_meta[] =
 {
-  { "__index"		, proclua_meta___index		} ,
-  { "__newindex"	, proclua_meta___newindex	} ,
-  { NULL		, NULL				}
+  { "__index"           , proclua_meta___index          } ,
+  { "__newindex"        , proclua_meta___newindex       } ,
+  { NULL                , NULL                          }
 };
 
 static const struct luaL_Reg m_hlimit_meta[] =
 {
-  { "__index" 		, hlimitlua_meta___index	} ,
-  { "__newindex"	, hlimitlua_meta___newindex	} ,
-  { NULL		, NULL				}
+  { "__index"           , hlimitlua_meta___index        } ,
+  { "__newindex"        , hlimitlua_meta___newindex     } ,
+  { NULL                , NULL                          }
 };
 
 static const struct luaL_Reg m_slimit_meta[] =
 {
-  { "__index"		, slimitlua_meta___index	} ,
-  { "__newindex"	, slimitlua_meta___newindex	} ,
-  { NULL		, NULL				}
+  { "__index"           , slimitlua_meta___index        } ,
+  { "__newindex"        , slimitlua_meta___newindex     } ,
+  { NULL                , NULL                          }
 };
 
 int luaopen_org_conman_process(lua_State *const L)
 {
   assert(L != NULL);
-
-#if LUA_VERSION_NUM == 501  
+  
+#if LUA_VERSION_NUM == 501
   luaL_newmetatable(L,TYPE_LIMIT_HARD);
   luaL_register(L,NULL,m_hlimit_meta);
   
@@ -1322,8 +1322,8 @@ int luaopen_org_conman_process(lua_State *const L)
   
   luaL_newmetatable(L,TYPE_LIMIT_SOFT);
   luaL_setfuncs(L,m_slimit_meta,0);
-
-  luaL_newlib(L,m_process_reg);  
+  
+  luaL_newlib(L,m_process_reg);
 #endif
 
   lua_createtable(L,0,0);
@@ -1333,7 +1333,7 @@ int luaopen_org_conman_process(lua_State *const L)
     lua_setfield(L,-2,m_sysexits[i].text);
   }
   lua_setfield(L,-2,"EXIT");
-
+  
   lua_createtable(L,0,2);
   lua_newuserdata(L,sizeof(int));
   luaL_getmetatable(L,TYPE_LIMIT_HARD);
@@ -1354,7 +1354,7 @@ int luaopen_org_conman_process(lua_State *const L)
   luaL_setfuncs(L,m_process_meta,0);
 #endif
   lua_setmetatable(L,-2);
-    
+  
   return 1;
 }
 

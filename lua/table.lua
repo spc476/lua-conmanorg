@@ -1,47 +1,47 @@
 -- ***************************************************************
 --
 -- Copyright 2010 by Sean Conner.  All Rights Reserved.
--- 
+--
 -- This library is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by
 -- the Free Software Foundation; either version 3 of the License, or (at your
 -- option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful, but
 -- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 -- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 -- License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public License
 -- along with this library; if not, see <http://www.gnu.org/licenses/>.
 --
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- ********************************************************************
+-- luacheck: globals show safestring dump_value dump keepset
+-- luacheck: ignore 611
 
 local _VERSION     = _VERSION
+local math         = require "math"
+local string       = require "string"
+local io           = require "io"
 local pairs        = pairs
-local math         = math
 local tostring     = tostring
-local string       = string
 local type         = type
-local io           = io
 local print        = print
-
-local type         = type
 local pcall        = pcall
 local getmetatable = getmetatable
 
 if _VERSION == "Lua 5.1" then
   module("org.conman.table")
 else
-  _ENV = {}
+  _ENV = {} -- luacheck: ignore
 end
 
 -- *******************************************************************
 
 function show(l,fout)
-  local fout = fout or io.stdout
+  fout = fout or io.stdout
   local maxkeylen = 0
   local maxvallen = 0
   
@@ -129,19 +129,10 @@ end
 -- *************************************************************
 
 function dump_value(name,value,path,level,marked)
-
-  local function conv_cntl(s)
-    if s == "\n" then
-      return "\\n"
-    else
-      return "\\?"
-    end
-  end
-
-  local path   = path   or ""
-  local level  = level  or 0
-  local marked = marked or {}
-  local lead   = string.rep(" ",level)
+  path       = path   or ""
+  level      = level  or 0
+  marked     = marked or {}
+  local lead = string.rep(" ",level)
   
   if type(name) == "nil" then
     return ""
@@ -151,8 +142,8 @@ function dump_value(name,value,path,level,marked)
     name = safestring(name)
   end
   
-  if type(value) == "nil" then 
-    return "" 
+  if type(value) == "nil" then
+    return ""
   elseif type(value) == "boolean" then
     return string.format("%s%s = %s,\n",lead,name,tostring(value))
   elseif type(value) == "number" then
@@ -162,7 +153,7 @@ function dump_value(name,value,path,level,marked)
     return string.format("%s%s = %s,\n",lead,name,value)
   elseif type(value) == "table" then
   
-    if marked[tostring(value)] ~= nil then 
+    if marked[tostring(value)] ~= nil then
       return string.format("%s%s = %s,\n",lead,name,marked[tostring(value)])
     else
       if path == "" then
@@ -187,14 +178,14 @@ function dump_value(name,value,path,level,marked)
       s = s .. string.format("\n",lead)
     end
     return s
-
+    
   elseif type(value) == "function" then
     local err,func = pcall(string.dump,value)
     if err == false then
       return ""
     else
       return string.format("%s%s = loadstring(%q),\n",lead,name,func)
-    end    
+    end
   elseif type(value) == "thread" then
     return string.format("%s%s = THREAD\n",lead,name)
   elseif type(value) == "userdata" then
@@ -227,6 +218,6 @@ end
 -- ************************************************************
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV
+  return _ENV -- luacheck: ignore
 end
 

@@ -32,7 +32,7 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_POLL	"org.conman.pollset"
+#define TYPE_POLL       "org.conman.pollset"
 
 #if !defined(POLLSET_IMPL_EPOLL) && !defined(POLLSET_IMPL_POLL) && !defined(POLLSET_IMPL_SELECT)
 #  ifdef __linux
@@ -61,7 +61,7 @@
 *************************************************************************/
 
 #ifdef POLLSET_IMPL_EPOLL
-#define POLLSET_IMPL	"epoll"
+#define POLLSET_IMPL    "epoll"
 
 #include <unistd.h>
 #include <sys/epoll.h>
@@ -119,7 +119,7 @@ static int pollset_toevents(lua_State *const L,int idx)
     events |= EPOLLIN;
   else
     return luaL_error(L,"expected table or string");
-  
+    
   return events;
 }
 
@@ -214,7 +214,7 @@ static int polllua_insert(lua_State *const L)
     lua_pushvalue(L,2);
   else
     lua_pushvalue(L,4);
-  
+    
   lua_settable(L,-3);
   
   set->idx++;
@@ -233,7 +233,7 @@ static int polllua_update(lua_State *const L)
   lua_settop(L,3);
   
   event.events  = pollset_toevents(L,3);
-  event.data.fd = fh;  
+  event.data.fd = fh;
   errno         = 0;
   
   epoll_ctl(set->efh,EPOLL_CTL_MOD,fh,&event);
@@ -281,7 +281,7 @@ static int polllua_events(lua_State *const L)
     timeout = -1;
   else
     timeout = (int)(dtimeout * 1000.0);
-  
+    
   struct epoll_event events[set->idx];
   
   count = epoll_wait(set->efh,events,set->idx,timeout);
@@ -304,7 +304,7 @@ static int polllua_events(lua_State *const L)
     lua_pushinteger(L,events[i].data.fd);
     lua_gettable(L,-5);
     lua_setfield(L,-2,"obj");
-    lua_settable(L,-3);    
+    lua_settable(L,-3);
   }
   
   lua_pushinteger(L,0);
@@ -320,11 +320,11 @@ static int polllua_events(lua_State *const L)
 * This implementation uses the memory allocation functions for the
 * given Lua state.  I felt this was a Good Idea(TM), since if a Lua
 * instance is using a particular memory allocation scheme, there is
-* probably a good reason for it.  
+* probably a good reason for it.
 *********************************************************************/
 
 #ifdef POLLSET_IMPL_POLL
-#define POLLSET_IMPL	"poll"
+#define POLLSET_IMPL    "poll"
 
 #include <string.h>
 #include <poll.h>
@@ -383,7 +383,7 @@ static int pollset_toevents(lua_State *const L,int idx)
     events |= POLLIN;
   else
     return luaL_error(L,"expected table or string");
-  
+    
   return events;
 }
 
@@ -443,7 +443,7 @@ static int polllua___gc(lua_State *const L)
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
   allocf = lua_getallocf(L,&ud);
-  (*allocf)(ud,set->set,set->max * sizeof(struct pollfd),0);  
+  (*allocf)(ud,set->set,set->max * sizeof(struct pollfd),0);
   return 0;
 }
 
@@ -481,14 +481,14 @@ static int polllua_insert(lua_State *const L)
     
     if (newmax > limit.rlim_cur)
       newmax = limit.rlim_cur;
-    
+      
     new = (*allocf)(
-    		ud,
-    		set->set,
-    		set->max * sizeof(struct pollfd),
-    		newmax   * sizeof(struct pollfd)
-    	);
-    
+                ud,
+                set->set,
+                set->max * sizeof(struct pollfd),
+                newmax   * sizeof(struct pollfd)
+        );
+        
     if (new == NULL)
     {
       lua_pushinteger(L,ENOMEM);
@@ -510,9 +510,9 @@ static int polllua_insert(lua_State *const L)
     lua_pushvalue(L,2);
   else
     lua_pushvalue(L,4);
-  
+    
   lua_settable(L,-3);
-
+  
   set->idx++;
   lua_pushinteger(L,0);
   return 1;
@@ -557,7 +557,7 @@ static int polllua_remove(lua_State *const L)
       lua_pushinteger(L,fh);
       lua_pushnil(L);
       lua_settable(L,-3);
-    
+      
       memmove(
                &set->set[i],
                &set->set[i+1],
@@ -581,12 +581,12 @@ static int polllua_events(lua_State *const L)
   pollset__t *set      = luaL_checkudata(L,1,TYPE_POLL);
   lua_Number  dtimeout = luaL_optnumber(L,2,-1.0);
   int         timeout;
-
+  
   if (dtimeout < 0)
     timeout = -1;
   else
-    timeout = (int)(dtimeout * 1000.0);  
-  
+    timeout = (int)(dtimeout * 1000.0);
+    
   if (poll(set->set,set->idx,timeout) < 0)
   {
     lua_pushnil(L);
@@ -607,7 +607,7 @@ static int polllua_events(lua_State *const L)
       lua_pushinteger(L,set->set[i].fd);
       lua_gettable(L,-5);
       lua_setfield(L,-2,"obj");
-      lua_settable(L,-3);      
+      lua_settable(L,-3);
     }
   }
   
@@ -625,7 +625,7 @@ static int polllua_events(lua_State *const L)
 ***********************************************************************/
 
 #ifdef POLLSET_IMPL_SELECT
-#define POLLSET_IMPL	"select"
+#define POLLSET_IMPL    "select"
 
 #include <math.h>
 #include <sys/select.h>
@@ -758,7 +758,7 @@ static int polllua_insert(lua_State *const L)
     lua_pushvalue(L,2);
   else
     lua_pushvalue(L,4);
-  
+    
   lua_settable(L,-3);
   
   set->idx++;
@@ -847,7 +847,7 @@ static int polllua_events(lua_State *const L)
   lua_pushinteger(L,set->ref);
   lua_gettable(L,LUA_REGISTRYINDEX);
   
-  lua_createtable(L,set->idx,0);  
+  lua_createtable(L,set->idx,0);
   for (idx = 1 , i = set->min ; i <= set->max ; i++)
   {
     if (FD_ISSET(i,&read) || FD_ISSET(i,&write) || FD_ISSET(i,&except))
@@ -871,13 +871,13 @@ static int polllua_events(lua_State *const L)
 
 static const luaL_Reg m_polllua[] =
 {
-  { "__tostring"	, polllua___tostring	} ,
-  { "__gc"		, polllua___gc		} ,
-  { "insert"		, polllua_insert	} ,
-  { "update"		, polllua_update	} ,
-  { "remove"		, polllua_remove	} ,
-  { "events"		, polllua_events	} ,
-  { NULL		, NULL			}
+  { "__tostring"        , polllua___tostring    } ,
+  { "__gc"              , polllua___gc          } ,
+  { "insert"            , polllua_insert        } ,
+  { "update"            , polllua_update        } ,
+  { "remove"            , polllua_remove        } ,
+  { "events"            , polllua_events        } ,
+  { NULL                , NULL                  }
 };
 
 int luaopen_org_conman_pollset(lua_State *const L)

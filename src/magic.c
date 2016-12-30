@@ -19,16 +19,16 @@
 *
 * ==================================================================
 *
-* Module:	org.conman.fsys.magic
+* Module:       org.conman.fsys.magic
 *
-* Desc:		Wrapper for the file magic library
+* Desc:         Wrapper for the file magic library
 *
 * Example:
 *
-		magic = require "org.conman.fsys.magic"
-		print(magic ".")
-		magic:flags('mime')
-		print(magic ".")
+                magic = require "org.conman.fsys.magic"
+                print(magic ".")
+                magic:flags('mime')
+                print(magic ".")
 *
 *************************************************************************/
 
@@ -45,19 +45,19 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_MAGIC	"org.conman.fsys.magic:It's Magic!"
+#define TYPE_MAGIC      "org.conman.fsys.magic:It's Magic!"
 
 /**************************************************************************
 *
-* Usage:	filetype = magic(filedata[,isbuffer])
+* Usage:        filetype = magic(filedata[,isbuffer])
 *
-* Desc:		Return filetype
+* Desc:         Return filetype
 *
-* Input:	filedata (string) the filename, or contents of a file
-*		isbuffer (boolean/optional) true if filedata is contents of
-*				| a file, otherwise, nil or false
+* Input:        filedata (string) the filename, or contents of a file
+*               isbuffer (boolean/optional) true if filedata is contents of
+*                               | a file, otherwise, nil or false
 *
-* Return:	filetype (string) description of file contents
+* Return:       filetype (string) description of file contents
 *
 **************************************************************************/
 
@@ -76,7 +76,7 @@ static int magicmeta___call(lua_State *const L)
     lua_pushstring(L,magic_buffer(*pm,filedata,size));
   else
     lua_pushstring(L,magic_file(*pm,filedata));
-
+    
   return 1;
 }
 
@@ -98,11 +98,11 @@ static int magicmeta___gc(lua_State *const L)
 
 /**************************************************************************
 *
-* Usage:	error = magicdb:error()
+* Usage:        error = magicdb:error()
 *
-* Desc:		Return the last error
+* Desc:         Return the last error
 *
-* Return:	error (string) error message
+* Return:       error (string) error message
 *
 ***************************************************************************/
 
@@ -114,14 +114,14 @@ static int magicmeta_error(lua_State *const L)
 
 /**************************************************************************
 *
-* Usage:	okay,err = magicdb:setflags([flag[,flag...]])
+* Usage:        okay,err = magicdb:setflags([flag[,flag...]])
 *
-* Desc:		Set flags on an open file magic database
+* Desc:         Set flags on an open file magic database
 *
-* Input:	flag (enum(flag)) flags to set
+* Input:        flag (enum(flag)) flags to set
 *
-* Return:	okay (boolean) true if successful, false on error
-*		err (integer) system error, 0 if success
+* Return:       okay (boolean) true if successful, false on error
+*               err (integer) system error, 0 if success
 *
 *************************************************************************/
 
@@ -166,11 +166,11 @@ static int magicmeta_flags(lua_State *const L)
   
   for (int top = lua_gettop(L) , i = 2 ; i <= top ; i++)
     flags |= m_magic_flags[luaL_checkoption(L,i,NULL,m_magic_options)];
-  
+    
   int rc = magic_setflags(*pm,flags);
   if (rc == 0)
     rc = magic_load(*pm,NULL);
-  
+    
   lua_pushboolean(L,rc == 0);
   lua_pushinteger(L,rc);
   return 2;
@@ -178,14 +178,14 @@ static int magicmeta_flags(lua_State *const L)
 
 /**************************************************************************
 *
-* Usage:	okay,err = magicdb:load([dbpath])
+* Usage:        okay,err = magicdb:load([dbpath])
 *
-* Desc:		Load the file magic databases
+* Desc:         Load the file magic databases
 *
-* Input:	dbpath (string/optional) colon delimeted list of databse files
+* Input:        dbpath (string/optional) colon delimeted list of databse files
 *
-* Return:	okay (boolean) true if success, false if failre
-*		err (integer) system error, 0 if success
+* Return:       okay (boolean) true if success, false if failre
+*               err (integer) system error, 0 if success
 *
 ***************************************************************************/
 
@@ -195,7 +195,7 @@ static int magicmeta_load(lua_State *const L)
             *(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC),
             luaL_optstring(L,2,NULL)
           );
-  
+          
   lua_pushboolean(L,rc == 0);
   lua_pushinteger(L,rc);
   return 2;
@@ -203,14 +203,14 @@ static int magicmeta_load(lua_State *const L)
 
 /**************************************************************************
 *
-* Usage:	okay,err = magic:compile([dbpath])
+* Usage:        okay,err = magic:compile([dbpath])
 *
-* Desc:		Compile the colon delimeted list of database files.  
+* Desc:         Compile the colon delimeted list of database files.
 *
-* Input:	dbpath (string/optional) colon delimeted list of db files
+* Input:        dbpath (string/optional) colon delimeted list of db files
 *
-* Return:	okay (boolean) true if okay, false if error
-*		err (integer) system errir, 0 on success
+* Return:       okay (boolean) true if okay, false if error
+*               err (integer) system errir, 0 on success
 *
 **************************************************************************/
 
@@ -220,7 +220,7 @@ static int magicmeta_compile(lua_State *const L)
             *(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC),
             luaL_optstring(L,2,NULL)
           );
-  
+          
   lua_pushboolean(L,rc == 0);
   lua_pushinteger(L,rc);
   return 2;
@@ -228,15 +228,15 @@ static int magicmeta_compile(lua_State *const L)
 
 /**************************************************************************
 *
-* Usage:	okay,err = magic:check([dbpath])
+* Usage:        okay,err = magic:check([dbpath])
 *
-* Desc:		Check validity of entries in the colon delimeted list of
-*		database files.
+* Desc:         Check validity of entries in the colon delimeted list of
+*               database files.
 *
-* Input:	dbpath (string/optional) colon delimeted list of databse files
+* Input:        dbpath (string/optional) colon delimeted list of databse files
 *
-* Return:	okay (boolean) true if okay, false if error
-*		err (integer) system error, 0 on success
+* Return:       okay (boolean) true if okay, false if error
+*               err (integer) system error, 0 on success
 *
 ***************************************************************************/
 
@@ -246,7 +246,7 @@ static int magicmeta_check(lua_State *const L)
               *(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC),
               luaL_optstring(L,2,NULL)
             );
-  
+            
   lua_pushboolean(L,rc == 0);
   lua_pushinteger(L,rc);
   return 2;
@@ -254,11 +254,11 @@ static int magicmeta_check(lua_State *const L)
 
 /**************************************************************************
 *
-* Usage:	error = magic:errno()
+* Usage:        error = magic:errno()
 *
-* Desc:		Return the error from the last operation
+* Desc:         Return the error from the last operation
 *
-* Return:	error (integer) system error, 0 if no error
+* Return:       error (integer) system error, 0 if no error
 *
 ***************************************************************************/
 
@@ -272,17 +272,17 @@ static int magicmeta_errno(lua_State *const L)
 
 static const struct luaL_Reg mmagic_reg_meta[] =
 {
-  { "__call"		, magicmeta___call	} ,
-  { "__tostring"	, magicmeta___tostring	} ,
-  { "__gc"		, magicmeta___gc	} ,
-  { "close"		, magicmeta___gc	} ,
-  { "error"		, magicmeta_error	} ,
-  { "flags"		, magicmeta_flags	} ,
-  { "load"		, magicmeta_load	} ,
-  { "compile"		, magicmeta_compile	} ,
-  { "check"		, magicmeta_check	} ,
-  { "errno"		, magicmeta_errno	} ,
-  { NULL		, NULL			}
+  { "__call"            , magicmeta___call      } ,
+  { "__tostring"        , magicmeta___tostring  } ,
+  { "__gc"              , magicmeta___gc        } ,
+  { "close"             , magicmeta___gc        } ,
+  { "error"             , magicmeta_error       } ,
+  { "flags"             , magicmeta_flags       } ,
+  { "load"              , magicmeta_load        } ,
+  { "compile"           , magicmeta_compile     } ,
+  { "check"             , magicmeta_check       } ,
+  { "errno"             , magicmeta_errno       } ,
+  { NULL                , NULL                  }
 };
 
 /*************************************************************************/
@@ -298,7 +298,7 @@ int luaopen_org_conman_fsys_magic(lua_State *const L)
   
   if (m == NULL)
     return 0;
-
+    
   if (magic_load(m,NULL) != 0)
   {
     magic_close(m);
@@ -316,7 +316,7 @@ int luaopen_org_conman_fsys_magic(lua_State *const L)
   
   pm  = lua_newuserdata(L,sizeof(magic_t));
   *pm = m;
-    
+  
   lua_pushvalue(L,-2);
   lua_setmetatable(L,-2);
   return 1;

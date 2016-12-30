@@ -112,7 +112,7 @@ static int crc32(lua_State *L)
   
   while(size--)
     crc = (crc >> 8) ^ m_crc32_table[ (crc ^ *p++) & 0xFF ];
-  
+    
   lua_pushinteger(L,crc);
   return 1;
 }
@@ -121,8 +121,8 @@ static int crc32(lua_State *L)
 
 static const struct luaL_Reg reg_crc[] =
 {
-  { "crc32"	, crc32 },
-  { NULL	, NULL	} 
+  { "crc32"     , crc32 },
+  { NULL        , NULL  }
 };
 
 int luaopen_org_conman_crc(lua_State *L)

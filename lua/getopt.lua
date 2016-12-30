@@ -1,17 +1,17 @@
 -- ***************************************************************
 --
 -- Copyright 2010 by Sean Conner.  All Rights Reserved.
--- 
+--
 -- This library is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by
 -- the Free Software Foundation; either version 3 of the License, or (at your
 -- option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful, but
 -- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 -- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 -- License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public License
 -- along with this library; if not, see <http://www.gnu.org/licenses/>.
 --
@@ -20,11 +20,13 @@
 -- --------------------------------------------------------------------
 --
 -- Some standards for options.  First, long options:
---	http://www.gnu.org/prep/standards/standards.html#Option-Table
+--      http://www.gnu.org/prep/standards/standards.html#Option-Table
 --
 -- And now for short options:
---	http://www.catb.org/~esr/writings/taoup/html/ch10s05.html
+--      http://www.catb.org/~esr/writings/taoup/html/ch10s05.html
 -- ********************************************************************
+-- luacheck: globals getopt
+-- luacheck: ignore 611
 
 local _VERSION = _VERSION
 local type     = type
@@ -32,7 +34,7 @@ local type     = type
 if _VERSION == "Lua 5.1" then
   module("org.conman.getopt")
 else
-  _ENV = {}
+  _ENV = {} -- luacheck: ignore
 end
 
 local SHORT_OPT = 1
@@ -48,11 +50,11 @@ local function long_match(lnopt,arg,i,err)
   
   tag,value = arg[i]:match("^%-%-([^%=]+)%=?(.*)")
   
-  if lnopt == nil then 
+  if lnopt == nil then
     err(tag)
     return i + 1
   end
-
+  
   if lnopt[ARGUMENT] then
     if value == "" then
       i = i + 1
@@ -61,15 +63,17 @@ local function long_match(lnopt,arg,i,err)
   else
     value = nil
   end
-
+  
   lnopt[CALLBACK](value)
-
+  
   return i + 1
 end
 
 -- ***********************************************************************
 
 local function short_match(shopt,arg,i,err)
+  local value
+  
   for n = 2 , #arg[i] do
     local opt = arg[i]:sub(n,n)
     
@@ -94,17 +98,17 @@ local function short_match(shopt,arg,i,err)
     end
   end
   return i + 1
-end 
+end
 
 -- ***********************************************************************
 
 function getopt(arg,options,err)
-  local shopt     = {}
-  local lnopt     = {}
-  local err       = err or function(opt)
+  local shopt = {}
+  local lnopt = {}
+  err          = err or function(opt)
                              io.stderr:write("unsupported option: ",opt,"\n")
                            end
-  
+                           
   for i = 1 , #options do
     shopt[options[i][SHORT_OPT]] = options[i]
     if options[i][LONG_OPT] ~= nil then
@@ -142,5 +146,5 @@ end
 -- ***********************************************************************
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV
+  return _ENV -- luacheck: ignore
 end

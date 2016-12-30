@@ -39,12 +39,12 @@
 * An example follows.
 *
 
-	iconv = require "org.conman.iconv"
-	trans = iconv("utf-8","iso-8859-1") -- convert from ISO-8859-1
-	x     = "This is \225 test"	-- string in ISO-8859-1
-	y     = trans(x)		-- string now in UTF-8
-	print(y)
-
+        iconv = require "org.conman.iconv"
+        trans = iconv("utf-8","iso-8859-1") -- convert from ISO-8859-1
+        x     = "This is \225 test"     -- string in ISO-8859-1
+        y     = trans(x)                -- string now in UTF-8
+        print(y)
+        
 *
 *********************************************************************/
 
@@ -61,7 +61,7 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_ICONV	"org.conman.iconv:iconv"
+#define TYPE_ICONV      "org.conman.iconv:iconv"
 
 /**************************************************************************/
 
@@ -89,7 +89,7 @@ static int luaiconv_open(lua_State *L)
   
   luaL_getmetatable(L,TYPE_ICONV);
   lua_setmetatable(L,-2);
-  lua_pushinteger(L,0);  
+  lua_pushinteger(L,0);
   return 2;
 }
 
@@ -139,8 +139,8 @@ static int luametaiconv___call(lua_State *L)
   luaL_pushresult(&buf);
   lua_pushinteger(L,0);
   return 2;
-}  
-      
+}
+
 /*************************************************************************/
 
 static int luametaiconv___tostring(lua_State *L)
@@ -161,10 +161,10 @@ static int luametaiconv___gc(lua_State *L)
 
 static const struct luaL_Reg reg_iconv_meta[] =
 {
-  { "__call"		, luametaiconv___call		} ,
-  { "__tostring"	, luametaiconv___tostring	} ,
-  { "__gc"		, luametaiconv___gc		} ,
-  { NULL		, NULL				}
+  { "__call"            , luametaiconv___call           } ,
+  { "__tostring"        , luametaiconv___tostring       } ,
+  { "__gc"              , luametaiconv___gc             } ,
+  { NULL                , NULL                          }
 };
 
 int luaopen_org_conman_iconv(lua_State *L)

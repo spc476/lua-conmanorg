@@ -40,26 +40,26 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define DEF_MARGIN	78
+#define DEF_MARGIN      78
 
 /************************************************************************/
 
-static int	strcore_wrapt		(lua_State *const);
-static int	strcore_metaphone	(lua_State *const);
-static int	strcore_soundex		(lua_State *const);
-static int	strcore_compare		(lua_State *const);
-static int	strcore_comparen	(lua_State *const);
+static int      strcore_wrapt           (lua_State *const);
+static int      strcore_metaphone       (lua_State *const);
+static int      strcore_soundex         (lua_State *const);
+static int      strcore_compare         (lua_State *const);
+static int      strcore_comparen        (lua_State *const);
 
 /************************************************************************/
 
 static const luaL_Reg m_strcore_reg[] =
 {
-  { "wrapt"	, strcore_wrapt		} ,
-  { "metaphone"	, strcore_metaphone	} ,
-  { "soundex"	, strcore_soundex	} ,
-  { "compare"	, strcore_compare	} ,
-  { "comparen"	, strcore_comparen	} ,
-  { NULL	, NULL			}
+  { "wrapt"     , strcore_wrapt         } ,
+  { "metaphone" , strcore_metaphone     } ,
+  { "soundex"   , strcore_soundex       } ,
+  { "compare"   , strcore_compare       } ,
+  { "comparen"  , strcore_comparen      } ,
+  { NULL        , NULL                  }
 };
 
 /************************************************************************/
@@ -77,8 +77,8 @@ int luaopen_org_conman_strcore(lua_State *const L)
 /************************************************************************/
 
 static bool find_break_point(
-	size_t     *const restrict pidx,
-	const char *const restrict txt
+        size_t     *const restrict pidx,
+        const char *const restrict txt
 )
 {
   size_t idx;
@@ -86,10 +86,10 @@ static bool find_break_point(
   assert(pidx  != NULL);
   assert(*pidx >  0);
   assert(txt   != NULL);
-
+  
   for (idx = *pidx ; idx ; idx--)
     if (isspace(txt[idx])) break;
-  
+    
   if (idx)
   {
     *pidx = idx + 1;
@@ -138,7 +138,7 @@ static int strcore_wrapt(lua_State *const L)
   return 1;
 }
 
-/************************************************************************/  
+/************************************************************************/
 
 static int strcore_soundex(lua_State *const L)
 {
@@ -167,7 +167,7 @@ static int strcore_soundex(lua_State *const L)
   {
     if (strchr(ignore,c) != NULL)
       continue;
-    
+      
     for (size_t i = 0 ; i < 6 ; i++)
     {
       if (strchr(use[i],c) != NULL)
@@ -181,7 +181,7 @@ static int strcore_soundex(lua_State *const L)
   }
   
   lua_pushlstring(L,sdx,4);
-  return 1;  
+  return 1;
 }
 
 /************************************************************************/
@@ -217,10 +217,10 @@ static int strcore_metaphone(lua_State *const L)
   ntrans[0] = '\0';
   
   for (
-    n = ntrans + 1 , n_end = ntrans + wordsize + 1; 
+    n = ntrans + 1 , n_end = ntrans + wordsize + 1;
     (*word != '\0') && (n < n_end);
     word++
-  )  
+  )
   {
     if (isalpha(*word))
       *n++ = toupper(*word);
@@ -240,37 +240,37 @@ static int strcore_metaphone(lua_State *const L)
   
   switch (*n)
   {
-    case 'P': 
-    case 'K': 
+    case 'P':
+    case 'K':
     case 'G':
-         if (n[1] == 'N') 
-           *n++ = '\0';  
+         if (n[1] == 'N')
+           *n++ = '\0';
          break;
-      
+         
     case 'A':
          if (n[1] == 'E')
            *n++ = '\0';
          break;
-      
+         
     case 'W':
          if (n[1] == 'R')
            *n++ = '\0';
-         else if (n[1] == 'H')	/* bug fix - 19991121.1056 spc */
+         else if (n[1] == 'H')  /* bug fix - 19991121.1056 spc */
          {
            n[1] = *n;
            *n++  = '\0';
-         } 
+         }
          break;
-      
+         
     case 'X':
          *n = 'S';
          break;
-  }     
+  }
   
   /* Now, iterate over the string, stopping at the end of the string or
    * when we have computed sufficient characters.
    */
-  
+   
   bool KSFlag = false;
   
   for (n_start = n ; n <= n_end ; n++)
@@ -279,7 +279,7 @@ static int strcore_metaphone(lua_State *const L)
     {
       KSFlag = false;
       if (*n)
-        luaL_addchar(&metaph,*n);      
+        luaL_addchar(&metaph,*n);
     }
     else
     {
@@ -292,7 +292,7 @@ static int strcore_metaphone(lua_State *const L)
         if (*n)
           luaL_addchar(&metaph,*n);
       }
-      else 
+      else
       {
         switch (*n)
         {
@@ -319,7 +319,7 @@ static int strcore_metaphone(lua_State *const L)
                     luaL_addchar(&metaph,'K');
                 }
                break;
-             
+               
           case 'D':
                luaL_addchar(&metaph,((n[1] == 'G') && frontv(n[2])) ? 'J' : 'T');
                break;
@@ -333,7 +333,7 @@ static int strcore_metaphone(lua_State *const L)
                else if (n[1] == 'H' && !noghf(n[-1]) && (n[-4]) != 'H')
                      luaL_addchar(&metaph,'F');
                break;
-
+               
           case 'H':
                if (!varson(n[-1]) && (!vowel(n[-1]) || vowel(n[1])))
                  luaL_addchar(&metaph,'H');
@@ -353,7 +353,7 @@ static int strcore_metaphone(lua_State *const L)
                break;
                
           case 'S':
-               luaL_addchar(&metaph,((n[1] == 'H') || ((n[1] == 'I') && 
+               luaL_addchar(&metaph,((n[1] == 'H') || ((n[1] == 'I') &&
                       (((n[2] == 'O') || (n[2] == 'A'))))) ? 'X' : 'S');
                break;
                
@@ -380,7 +380,7 @@ static int strcore_metaphone(lua_State *const L)
                break;
                
           case 'X':
-               if (n == n_start) 
+               if (n == n_start)
                  luaL_addchar(&metaph,'S');
                else
                 {
@@ -392,14 +392,14 @@ static int strcore_metaphone(lua_State *const L)
               case 'Z':
                 luaL_addchar(&metaph,'S');
                 break;
-                                  
+                
         }
       }
     }
   }
   
   luaL_pushresult(&metaph);
-  return 1; 
+  return 1;
 }
 
 /************************************************************************/
@@ -415,7 +415,7 @@ static int strcore_compare(lua_State *const L)
   );
   return 1;
 }
-             
+
 /************************************************************************/
 
 static int strcore_comparen(lua_State *const L)

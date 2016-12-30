@@ -50,8 +50,8 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_DIR	"org.conman.fsys:dir"
-#define TYPE_EXPAND	"org.conman.fsys:expand"
+#define TYPE_DIR        "org.conman.fsys:dir"
+#define TYPE_EXPAND     "org.conman.fsys:expand"
 
 /*************************************************************************/
 
@@ -102,7 +102,7 @@ static int fsys_link(lua_State *L)
 {
   const char *old = luaL_checkstring(L,1);
   const char *new = luaL_checkstring(L,2);
-
+  
   errno = 0;
   link(old,new);
   lua_pushboolean(L,errno == 0);
@@ -131,7 +131,7 @@ static int fsys_readlink(lua_State *L)
   return 2;
 }
 
-/*********************************************************************/  
+/*********************************************************************/
 
 static int fsys_mknod(lua_State *L)
 {
@@ -152,7 +152,7 @@ static int fsys_mkfifo(lua_State *L)
   for ( ; *value ; bit >>= 1 , value++)
     if (*value != '-')
       mode |= bit;
-  
+      
   errno = 0;
   mkfifo(fname,mode);
   lua_pushboolean(L,errno == 0);
@@ -226,19 +226,19 @@ static void impl_dumpstat(lua_State *L,struct stat *status)
   
   lua_createtable(L,0,13);
   
-  impl_setfield(L,"st_dev"	, status->st_dev);
-  impl_setfield(L,"st_ino"	, status->st_ino);
-  impl_setfield(L,"st_mode"	, status->st_mode);
-  impl_setfield(L,"st_nlink"	, status->st_nlink);
-  impl_setfield(L,"st_uid"	, status->st_uid);
-  impl_setfield(L,"st_gid"	, status->st_gid);
-  impl_setfield(L,"st_rdev"	, status->st_rdev);
-  impl_setfield(L,"st_size"	, status->st_size);
-  impl_setfield(L,"st_blksize"	, status->st_blksize);
-  impl_setfield(L,"st_blocks"	, status->st_blocks);
-  impl_setfield(L,"st_atime"	, status->st_atime);
-  impl_setfield(L,"st_mtime"	, status->st_mtime);
-  impl_setfield(L,"st_ctime"	, status->st_ctime);
+  impl_setfield(L,"st_dev"      , status->st_dev);
+  impl_setfield(L,"st_ino"      , status->st_ino);
+  impl_setfield(L,"st_mode"     , status->st_mode);
+  impl_setfield(L,"st_nlink"    , status->st_nlink);
+  impl_setfield(L,"st_uid"      , status->st_uid);
+  impl_setfield(L,"st_gid"      , status->st_gid);
+  impl_setfield(L,"st_rdev"     , status->st_rdev);
+  impl_setfield(L,"st_size"     , status->st_size);
+  impl_setfield(L,"st_blksize"  , status->st_blksize);
+  impl_setfield(L,"st_blocks"   , status->st_blocks);
+  impl_setfield(L,"st_atime"    , status->st_atime);
+  impl_setfield(L,"st_mtime"    , status->st_mtime);
+  impl_setfield(L,"st_ctime"    , status->st_ctime);
   
   if (S_ISREG(status->st_mode))
     lua_pushliteral(L,"file");
@@ -306,8 +306,8 @@ static int fsys_stat(lua_State *L)
   }
   else
     return luaL_error(L,"invalid file handle");
-
-  impl_dumpstat(L,&status);  
+    
+  impl_dumpstat(L,&status);
   lua_pushinteger(L,0);
   return 2;
 }
@@ -346,7 +346,7 @@ static int fsys_chmod(lua_State *L)
   for ( ; *value ; bit >>= 1 , value++)
     if (*value != '-')
       mode |= bit;
-
+      
   errno = 0;
   chmod(fname,mode);
   lua_pushboolean(L,errno == 0);
@@ -370,7 +370,7 @@ static int fsys_umask(lua_State *L)
   for ( ; *value ; bit >>= 1 , value++)
     if (*value != '-')
       mask |= bit;
-
+      
   mask     = umask(mask);
   perms[0] = (mask & S_IRUSR) ? 'r' : '-';
   perms[1] = (mask & S_IWUSR) ? 'w' : '-';
@@ -381,7 +381,7 @@ static int fsys_umask(lua_State *L)
   perms[6] = (mask & S_IROTH) ? 'r' : '-';
   perms[7] = (mask & S_IWOTH) ? 'w' : '-';
   perms[8] = (mask & S_IXOTH) ? 'x' : '-';
-
+  
   lua_pushlstring(L,perms,9);
   return 1;
 }
@@ -482,7 +482,7 @@ static int dir_meta_next(lua_State *const L)
         return 1;
       }
     }
-  }  
+  }
 }
 
 /*************************************************************************/
@@ -527,7 +527,7 @@ static int fsys__safename(lua_State *L)
 {
   const char *old;
   size_t      len;
- 
+  
   old = luaL_checklstring(L,1,&len);
   char buffer[len + 1];
   
@@ -626,7 +626,7 @@ static int fsys_openfd(lua_State *L)
   lua_settop(L,2);
   
   pfp  = lua_newuserdata(L,sizeof(FILE *));
-  *pfp = NULL;	/* see comments in fsys_pipe() */
+  *pfp = NULL;  /* see comments in fsys_pipe() */
   luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
   lua_createtable(L,0,0);
@@ -635,10 +635,10 @@ static int fsys_openfd(lua_State *L)
   lua_setfenv(L,-2);
   
   *pfp = fdopen(
-  		luaL_checkinteger(L,1),
-  		luaL_checkstring(L,2)
-  	);
-  
+                luaL_checkinteger(L,1),
+                luaL_checkstring(L,2)
+        );
+        
   if (*pfp == NULL)
   {
     lua_pushnil(L);
@@ -686,7 +686,7 @@ static int fsys_pipe(lua_State *L)
   int    fh[2];
   char  *rm;
   char  *wm;
-
+  
   /*------------------------------------------------------------------------
   ; This is done first because there may not be a paramter, and if we create
   ; the return data, we might get behavior we weren't expecting.
@@ -721,7 +721,7 @@ static int fsys_pipe(lua_State *L)
   lua_pushcfunction(L,fsyslib_close);
   lua_setfield(L,-2,"__close");
   lua_setfenv(L,-2);
-  lua_setfield(L,-2,"read");  
+  lua_setfield(L,-2,"read");
   
   pfpwrite  = lua_newuserdata(L,sizeof(FILE *));
   *pfpwrite = NULL;
@@ -866,7 +866,7 @@ static void *checkutype(lua_State *const L,int idx,const char *tname)
   }
   return NULL;
 }
-  
+
 /***********************************************************************/
 
 static int getfh(lua_State *const L,int idx)
@@ -876,11 +876,11 @@ static int getfh(lua_State *const L,int idx)
   p = checkutype(L,idx,LUA_FILEHANDLE);
   if (p != NULL)
     return fileno(*(FILE **)p);
-  
+    
   p = checkutype(L,idx,"org.conman.net:sock");
   if (p != NULL)
     return *(int *)p;
-  
+    
   return luaL_error(L,"not a file nor a socket");
 }
 
@@ -895,12 +895,12 @@ static int fsys_dup(lua_State *L)
     orig = getfh(L,1);
   else
     orig = luaL_checkinteger(L,1);
-  
+    
   if (lua_isuserdata(L,2))
     copy = getfh(L,2);
   else
     copy = luaL_checkinteger(L,2);
-  
+    
   errno = 0;
   dup2(orig,copy);
   lua_pushboolean(L,errno == 0);
@@ -909,7 +909,7 @@ static int fsys_dup(lua_State *L)
   return 2;
 }
 
-/**************************************************************************/  
+/**************************************************************************/
 
 static int fsys_isfile(lua_State *L)
 {
@@ -945,8 +945,8 @@ static int fsys_fnmatch(lua_State *L)
 int fsys_expand(lua_State *L)
 {
   const char *pattern = luaL_checkstring(L,1);
-  int         undef   = lua_toboolean(L,2) 
-                      ? WRDE_NOCMD | WRDE_UNDEF 
+  int         undef   = lua_toboolean(L,2)
+                      ? WRDE_NOCMD | WRDE_UNDEF
                       : WRDE_NOCMD
                       ;
   wordexp_t exp;
@@ -1008,7 +1008,7 @@ static int expand_meta_next(lua_State *L)
     lua_pushstring(L,data->exp.we_wordv[data->idx++]);
   else
     lua_pushnil(L);
-
+    
   return 1;
 }
 
@@ -1025,14 +1025,14 @@ static int fsys_gexpand(lua_State *L)
   
   lua_pushcfunction(L,expand_meta_next);
   
-  data = lua_newuserdata(L,sizeof(struct myexpand));  
+  data = lua_newuserdata(L,sizeof(struct myexpand));
   luaL_getmetatable(L,TYPE_EXPAND);
   lua_setmetatable(L,-2);
   
   if (wordexp(pattern,&data->exp,undef) < 0)
   {
     /*-------------------------------------------------------------
-    ; we can do this since data has a __gc method attached to it.  
+    ; we can do this since data has a __gc method attached to it.
     ;-------------------------------------------------------------*/
     
     lua_pop(L,1);
@@ -1040,7 +1040,7 @@ static int fsys_gexpand(lua_State *L)
   }
   else
     data->idx = 0;
-
+    
   return 2;
 }
 
@@ -1057,28 +1057,28 @@ static int fsys_fileno(lua_State *L)
 
 /************************************************************************
 *
-* Usage:	value,err = fsys.pathconf(filespec,var)
+* Usage:        value,err = fsys.pathconf(filespec,var)
 *
-* Desc:		Return data about a specific value for an open file 
-*		descriptor.
+* Desc:         Return data about a specific value for an open file
+*               descriptor.
 *
-* Input:	filespec (string userdata(FILE)) name of a file
-*			| or an open file
-*		var (string/enum)
-*			* link     maximum number of links to the file
-*			* canon    maximum size of a formatted input line
-*			* input    maximum size of an input line
-*			* name     size of filename in current directory
-*			* path     size of relative path
-*			* pipe     size of pipe buffer
-*			* chown    <> 0 if chown cannot be used on this file
-*			* trunc    <> 0 if filenames longer than 'name' 
-*					| generates an error
-*			* vdisable <> 0 if special character processing can 
-*					| be disabled
+* Input:        filespec (string userdata(FILE)) name of a file
+*                       | or an open file
+*               var (string/enum)
+*                       * link     maximum number of links to the file
+*                       * canon    maximum size of a formatted input line
+*                       * input    maximum size of an input line
+*                       * name     size of filename in current directory
+*                       * path     size of relative path
+*                       * pipe     size of pipe buffer
+*                       * chown    <> 0 if chown cannot be used on this file
+*                       * trunc    <> 0 if filenames longer than 'name'
+*                                       | generates an error
+*                       * vdisable <> 0 if special character processing can
+*                                       | be disabled
 *
-* Return:	value (number) value for specific value (only if err is 0)
-*		err (integer) system error, 0 if successful
+* Return:       value (number) value for specific value (only if err is 0)
+*               err (integer) system error, 0 if successful
 *
 ************************************************************************/
 
@@ -1142,54 +1142,54 @@ static int fsys_pathconf(lua_State *L)
 
 /************************************************************************/
 
-static const struct luaL_Reg reg_fsys[] = 
+static const struct luaL_Reg reg_fsys[] =
 {
-  { "symlink"	, fsys_symlink 	} ,
-  { "link"	, fsys_link	} ,
-  { "readlink"	, fsys_readlink	} ,
-  { "mknod"	, fsys_mknod	} ,
-  { "mkfifo"	, fsys_mkfifo	} ,
-  { "mkdir"	, fsys_mkdir	} ,
-  { "rmdir"	, fsys_rmdir	} ,
-  { "utime"	, fsys_utime	} ,
-  { "stat"	, fsys_stat	} ,
-  { "lstat"	, fsys_lstat	} ,
-  { "umask"	, fsys_umask	} ,
-  { "chmod"	, fsys_chmod	} ,
-  { "access"	, fsys_access	} ,
-  { "opendir"	, fsys_opendir	} ,
-  { "chroot"	, fsys_chroot	} ,
-  { "chdir"     , fsys_chdir	} ,
-  { "getcwd"	, fsys_getcwd   } ,
-  { "dir"	, fsys_dir	} ,
-  { "_safename"	, fsys__safename} ,
-  { "basename"	, fsys_basename	} ,
-  { "dirname"	, fsys_dirname	} ,
-  { "openfd"	, fsys_openfd	} ,
-  { "pipe"	, fsys_pipe	} ,
-  { "dup"	, fsys_dup	} ,
-  { "isfile"	, fsys_isfile	} ,
-  { "fnmatch"	, fsys_fnmatch	} ,
-  { "expand"	, fsys_expand	} ,
-  { "gexpand"	, fsys_gexpand	} ,
-  { "fileno"	, fsys_fileno	} ,
-  { "pathconf"	, fsys_pathconf	} ,
-  { NULL	, NULL		}
+  { "symlink"   , fsys_symlink  } ,
+  { "link"      , fsys_link     } ,
+  { "readlink"  , fsys_readlink } ,
+  { "mknod"     , fsys_mknod    } ,
+  { "mkfifo"    , fsys_mkfifo   } ,
+  { "mkdir"     , fsys_mkdir    } ,
+  { "rmdir"     , fsys_rmdir    } ,
+  { "utime"     , fsys_utime    } ,
+  { "stat"      , fsys_stat     } ,
+  { "lstat"     , fsys_lstat    } ,
+  { "umask"     , fsys_umask    } ,
+  { "chmod"     , fsys_chmod    } ,
+  { "access"    , fsys_access   } ,
+  { "opendir"   , fsys_opendir  } ,
+  { "chroot"    , fsys_chroot   } ,
+  { "chdir"     , fsys_chdir    } ,
+  { "getcwd"    , fsys_getcwd   } ,
+  { "dir"       , fsys_dir      } ,
+  { "_safename" , fsys__safename} ,
+  { "basename"  , fsys_basename } ,
+  { "dirname"   , fsys_dirname  } ,
+  { "openfd"    , fsys_openfd   } ,
+  { "pipe"      , fsys_pipe     } ,
+  { "dup"       , fsys_dup      } ,
+  { "isfile"    , fsys_isfile   } ,
+  { "fnmatch"   , fsys_fnmatch  } ,
+  { "expand"    , fsys_expand   } ,
+  { "gexpand"   , fsys_gexpand  } ,
+  { "fileno"    , fsys_fileno   } ,
+  { "pathconf"  , fsys_pathconf } ,
+  { NULL        , NULL          }
 };
 
 static const luaL_Reg m_dir_meta[] =
 {
-  { "__tostring"	, dir_meta___tostring 	} ,
-  { "__gc"		, dir_meta___gc		} ,
-  { "rewind"		, dir_meta_rewind	} ,
-  { "next"		, dir_meta_next		} ,
-  { NULL		, NULL			}
+  { "__tostring"        , dir_meta___tostring   } ,
+  { "__gc"              , dir_meta___gc         } ,
+  { "rewind"            , dir_meta_rewind       } ,
+  { "next"              , dir_meta_next         } ,
+  { NULL                , NULL                  }
 };
 
 static const luaL_Reg m_expand_meta[] =
 {
-  { "__gc"		, expand_meta___gc	} ,
-  { NULL		, NULL			}
+  { "__gc"              , expand_meta___gc      } ,
+  { NULL                , NULL                  }
 };
 
 #if LUA_VERSION_NUM == 501
@@ -1215,7 +1215,7 @@ int luaopen_org_conman_fsys(lua_State *L)
   luaL_setfuncs(L,m_expand_meta,0);
 #endif
 
-#if LUA_VERSION_NUM == 501  
+#if LUA_VERSION_NUM == 501
   /*------------------------------------------------------------------------
   ; the Lua io module requires a unique environment.  Let's crib it (we grab
   ; it from io.open()) and use it for ourselves.  This way, when we attempt

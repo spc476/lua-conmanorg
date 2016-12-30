@@ -19,9 +19,9 @@
 *
 * ==================================================================
 *
-* Module:	org.conman.clock
+* Module:       org.conman.clock
 *
-* Desc:		Wrapper for the POSIX time functions.
+* Desc:         Wrapper for the POSIX time functions.
 *
 * Example:
 *
@@ -29,72 +29,72 @@
                 clock.sleep(4) -- sleep for four seconds
                 print(clock.resolution()) -- minimum sleep time
 *
-* Note:		The 'clocktype' parameter is ignored if the implementation
-*		is 'gettimeofay'.  
+* Note:         The 'clocktype' parameter is ignored if the implementation
+*               is 'gettimeofay'.
 *
 * =========================================================================
 *
-* Usage:	remaining = clock.sleep(amount[,clocktype])
+* Usage:        remaining = clock.sleep(amount[,clocktype])
 *
-* Desc:		Pause the current process for amount seconds
+* Desc:         Pause the current process for amount seconds
 *
-* Input:	amount (number) number of seconds to pause
-*		clocktype (enum/optional)
-*			'realtime'  (default) walltime clock
-*			'monotonic' a monotomically increasing clock
+* Input:        amount (number) number of seconds to pause
+*               clocktype (enum/optional)
+*                       'realtime'  (default) walltime clock
+*                       'monotonic' a monotomically increasing clock
 *
-* Return:	remaining (number) number of seconds left of original
-*			| amount (say, if process was interrupted by a
-*			| signal).
-*
-* =========================================================================
-*
-* Usage:	now = clock.get([clocktype])
-*
-* Desc:		Get the current time or elaspsed time since boot
-*
-* Input:	clocktype (enum/optional)
-*			'realtime'  (default) walltime
-*			'monotonic' time since boot
-*
-* Return:	now (number) current time or elapsed time since boot
+* Return:       remaining (number) number of seconds left of original
+*                       | amount (say, if process was interrupted by a
+*                       | signal).
 *
 * =========================================================================
 *
-* Usage:	clock.set(time[,clocktype])
+* Usage:        now = clock.get([clocktype])
 *
-* Desc:		Set the current time (must be root)
+* Desc:         Get the current time or elaspsed time since boot
 *
-* Input:	time (number) current time
-*		clocktype (enum/optional)
-*			'realtime' (default) walltime
-*			'monotonic' time since boot
-* 
-* Note:		only 'realtime' clock supports this call.
+* Input:        clocktype (enum/optional)
+*                       'realtime'  (default) walltime
+*                       'monotonic' time since boot
 *
-* =========================================================================
-*
-* Usage:	amount = clock.resolution([clocktype])
-*
-* Desc:		Return the minimum "tick time" of the given clock
-*
-* Input:	clocktype (enum/optional)
-*			'realtime' (default) walltime clock
-*			'monotonic' time since boot
-*
-* Return:	amount (number) amount of time (in seconds) of minimal
-*			| tick.
+* Return:       now (number) current time or elapsed time since boot
 *
 * =========================================================================
 *
-* Usage:	okay,err = clock.itmer(time)
+* Usage:        clock.set(time[,clocktype])
 *
-* Desc:		Set up a repeating interval timer every time seconds.
+* Desc:         Set the current time (must be root)
 *
-* Input:	time (number) number of seconds until next SIGALRM
+* Input:        time (number) current time
+*               clocktype (enum/optional)
+*                       'realtime' (default) walltime
+*                       'monotonic' time since boot
 *
-* Return:	okay (boolean) true if success, false if failure
-*		err (integer) 0 if success, otherwise system error number.
+* Note:         only 'realtime' clock supports this call.
+*
+* =========================================================================
+*
+* Usage:        amount = clock.resolution([clocktype])
+*
+* Desc:         Return the minimum "tick time" of the given clock
+*
+* Input:        clocktype (enum/optional)
+*                       'realtime' (default) walltime clock
+*                       'monotonic' time since boot
+*
+* Return:       amount (number) amount of time (in seconds) of minimal
+*                       | tick.
+*
+* =========================================================================
+*
+* Usage:        okay,err = clock.itmer(time)
+*
+* Desc:         Set up a repeating interval timer every time seconds.
+*
+* Input:        time (number) number of seconds until next SIGALRM
+*
+* Return:       okay (boolean) true if success, false if failure
+*               err (integer) 0 if success, otherwise system error number.
 *
 *****************************************************************************/
 
@@ -128,7 +128,7 @@
 **************************************************************************/
 
 #ifdef CLOCK_IMPL_REALTIME
-#define IMPLEMENTATION	"clock_gettime"
+#define IMPLEMENTATION  "clock_gettime"
 
 const char *m_clocks[] =
 {
@@ -153,7 +153,7 @@ static int clocklua_sleep(lua_State *const L)
   double          param;
   double          seconds;
   double          fract;
-
+  
   param            = luaL_checknumber(L,1);
   fract            = modf(param,&seconds);
   interval.tv_sec  = (time_t)seconds;
@@ -162,7 +162,7 @@ static int clocklua_sleep(lua_State *const L)
   left.tv_sec      = 0;
   left.tv_nsec     = 0;
   
-  clock_nanosleep(theclock,0,&interval,&left);  
+  clock_nanosleep(theclock,0,&interval,&left);
   lua_pushnumber(L,(double)left.tv_sec + ((double)left.tv_nsec / 1000000000.0));
   return 1;
 }
@@ -187,7 +187,7 @@ static int clocklua_set(lua_State *const L)
   double          param;
   double          seconds;
   double          fract;
-
+  
   param       = luaL_checknumber(L,1);
   fract       = modf(param,&seconds);
   now.tv_sec  = (time_t)seconds;
@@ -219,7 +219,7 @@ static int clocklua_resolution(lua_State *const L)
 **************************************************************************/
 
 #else
-#define IMPLEMENTATION	"gettimeofday"
+#define IMPLEMENTATION  "gettimeofday"
 
 static int clocklua_sleep(lua_State *L)
 {
@@ -233,7 +233,7 @@ static int clocklua_sleep(lua_State *L)
   fract            = modf(param,&seconds);
   interval.tv_sec  = (time_t)seconds;
   interval.tv_nsec = (long)(fract * 1000000000.0);
-
+  
   nanosleep(&interval,&left);
   lua_pushnumber(L,(double)left.tv_sec + (((double)left.tv_nsec) / 1000000000.0));
   return 1;
@@ -305,7 +305,7 @@ static int clocklua_itimer(lua_State *L)
   }
   else
     interval = 0.0;
-  
+    
   fract = modf(interval,&seconds);
   
   set.it_value.tv_sec  = set.it_interval.tv_sec  = seconds;
@@ -322,12 +322,12 @@ static int clocklua_itimer(lua_State *L)
 
 static const struct luaL_Reg m_clock_reg[] =
 {
-  { "sleep"		, clocklua_sleep	} ,
-  { "get"		, clocklua_get		} ,
-  { "set"		, clocklua_set		} ,
-  { "resolution"	, clocklua_resolution	} ,
-  { "itimer"		, clocklua_itimer	} ,
-  { NULL		, NULL			}
+  { "sleep"             , clocklua_sleep        } ,
+  { "get"               , clocklua_get          } ,
+  { "set"               , clocklua_set          } ,
+  { "resolution"        , clocklua_resolution   } ,
+  { "itimer"            , clocklua_itimer       } ,
+  { NULL                , NULL                  }
 };
 
 int luaopen_org_conman_clock(lua_State *const L)

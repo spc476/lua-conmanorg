@@ -103,7 +103,7 @@ static int math_randomseed(lua_State *const L)
       return luaL_error(L,"SEEDBANK_SEED not a valid number");
     if (val > UINT_MAX)
       return luaL_error(L,"SEEDBANK_SEED range exceeded");
-    
+      
     seed = val;
   }
   else
@@ -159,7 +159,7 @@ math_randomseed_normal:
       fprintf(fp,"%s: %u\n",buffer,seed);
       fclose(fp);
     }
-  }      
+  }
   
   srand(seed);
   lua_pushnumber(L,seed);
@@ -223,17 +223,17 @@ static int math_div(lua_State *const L)
     lua_pushnumber(L,numer / denom);
     lua_pushnumber(L,fmod(numer,denom));
   }
-  return 2;  
+  return 2;
 }
 
 /************************************************************************/
 
 static const struct luaL_Reg reg_math[] =
 {
-  { "randomseed"	, math_randomseed },
-  { "idiv"		, math_idiv	  },
-  { "div"		, math_div	  },
-  { NULL		, NULL		  }
+  { "randomseed"        , math_randomseed },
+  { "idiv"              , math_idiv       },
+  { "div"               , math_div        },
+  { NULL                , NULL            }
 };
 
 int luaopen_org_conman_math(lua_State *L)

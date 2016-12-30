@@ -33,14 +33,14 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_HASH	"org.conman.hash:hash"
+#define TYPE_HASH       "org.conman.hash:hash"
 
 /************************************************************************/
 
 static int hash_hexa(
-	lua_State  *const restrict L,
-	const char *restrict       data,
-	size_t                     size
+        lua_State  *const restrict L,
+        const char *restrict       data,
+        size_t                     size
 )
 {
   luaL_Buffer buf;
@@ -190,9 +190,9 @@ static int hashlua_sumhexa(lua_State *const L)
   rc = hashlua_sum(L);
   if (!lua_isstring(L,-1))
     return rc;
-  
+    
   data = lua_tolstring(L,-1,&size);
-  return hash_hexa(L,data,size);  
+  return hash_hexa(L,data,size);
 }
 
 /************************************************************************/
@@ -207,22 +207,22 @@ static int hashlua___tostring(lua_State *const L)
 
 static const struct luaL_Reg hashlua[] =
 {
-  { "new"	, hashlua_new		} ,
-  { "update"	, hashlua_update	} ,
-  { "final"	, hashlua_final		} ,
-  { "sum"	, hashlua_sum		} ,
-  { "hexa"	, hashlua_hexa		} ,
-  { "sumhexa"	, hashlua_sumhexa	} ,
-  { NULL	, NULL			}
+  { "new"       , hashlua_new           } ,
+  { "update"    , hashlua_update        } ,
+  { "final"     , hashlua_final         } ,
+  { "sum"       , hashlua_sum           } ,
+  { "hexa"      , hashlua_hexa          } ,
+  { "sumhexa"   , hashlua_sumhexa       } ,
+  { NULL        , NULL                  }
 };
 
 static const struct luaL_Reg hashlua_meta[] =
 {
-  { "update"		, hashlua_update	} ,
-  { "final"		, hashlua_final		} ,
-  { "finalhexa"		, hashlua_finalhexa	} ,
-  { "__tostring"	, hashlua___tostring 	} ,
-  { NULL		, NULL			}
+  { "update"            , hashlua_update        } ,
+  { "final"             , hashlua_final         } ,
+  { "finalhexa"         , hashlua_finalhexa     } ,
+  { "__tostring"        , hashlua___tostring    } ,
+  { NULL                , NULL                  }
 };
 
 int luaopen_org_conman_hash(lua_State *const L)
@@ -238,8 +238,8 @@ int luaopen_org_conman_hash(lua_State *const L)
 
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
-
-#if LUA_VERSION_NUM == 501  
+  
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.hash",hashlua);
 #else
   luaL_newlib(L,hashlua);

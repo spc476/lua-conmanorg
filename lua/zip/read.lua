@@ -1,17 +1,17 @@
 -- ***************************************************************
 --
 -- Copyright 2014 by Sean Conner.  All Rights Reserved.
--- 
+--
 -- This library is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by
 -- the Free Software Foundation; either version 3 of the License, or (at your
 -- option) any later version.
--- 
+--
 -- This library is distributed in the hope that it will be useful, but
 -- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 -- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 -- License for more details.
--- 
+--
 -- You should have received a copy of the GNU Lesser General Public License
 -- along with this library; if not, see <http://www.gnu.org/licenses/>.
 --
@@ -22,9 +22,11 @@
 -- To effectively use this module, you should understand the ZIP file
 -- format.  The definitive guide to this format is at
 --
---		http://www.pkware.com/appnote
+--              http://www.pkware.com/appnote
 --
 -- ********************************************************************
+-- luacheck: globals eocd dir file data archive
+-- luacheck: ignore 611
 
 local _VERSION     = _VERSION
 local type         = type
@@ -39,13 +41,13 @@ local idiv   = zip.idiv
 if _VERSION == "Lua 5.1" then
   module("org.conman.zip.read")
 else
-  _ENV = {}
+  _ENV = {} -- luacheck: ignore
 end
 
 -- ************************************************************************
 
 local function r16(zf)
-  return zf:read(1):byte() 
+  return zf:read(1):byte()
        + zf:read(1):byte() * 2^8
 end
 
@@ -64,18 +66,18 @@ local function mstounix(zf)
   local modtime      = r16(zf)
   local moddate      = r16(zf)
   
-  local hour,modtime = idiv(modtime,2^11)
+  local hour,modtime = idiv(modtime,2^11) -- luacheck: ignore
   local min,sec      = idiv(modtime,2^5)
-  local year,moddate = idiv(moddate,2^9)
+  local year,moddate = idiv(moddate,2^9) -- luacheck: ignore
   local month,day    = idiv(moddate,2^5)
   
   return os.time {
-  	year  = year + 1980,
-  	month = month,
-  	day   = day,
-  	hour  = hour,
-  	min   = min,
-  	sec   = sec * 2
+        year  = year + 1980,
+        month = month,
+        day   = day,
+        hour  = hour,
+        min   = min,
+        sec   = sec * 2
   }
 end
 
@@ -83,8 +85,8 @@ end
 
 local function version(zf)
   local level = zf:read(1):byte()
-  local os    = zf:read(1):byte()
-
+  local os    = zf:read(1):byte() -- luacheck: ignore
+  
   return {
     os    = zip.os[os],
     level = level / 10
@@ -104,7 +106,7 @@ local function flags(zf)
     return r,q
   end
   
-  local flags = {}
+  local flags = {} -- luacheck: ignore
   local f     = r16(zf)
   
   flags.encrypted,f        = bool(f)
@@ -117,7 +119,7 @@ local function flags(zf)
   flags.utf8,f             = bool(f)
   flags.pkware_compress,f  = bool(f)
   flags.hidden,f           = bool(f)
-  flags.pkware,f           = bits(f,2)
+  flags.pkware             = bits(f,2)
   
   return flags
 end
@@ -133,7 +135,7 @@ local function iattribute(zf)
   local iattr    = {}
   local f        = r16(zf)
   iattr.text,f   = bool(f)
-  iattr.record,f = bool(f)
+  iattr.record  = bool(f)
   
   return iattr
 end
@@ -142,8 +144,8 @@ end
 
 function eocd(zf)
   local function locate(pos,eof)
-    local eof   = eof or zf:seek('end',0)
-    local pos   = pos or zf:seek('end',-22)
+    eof         = eof or zf:seek('end',0)
+    pos         = pos or zf:seek('end',-22)
     local magic = zf:read(4)
     
     if eof - pos > 22 + 65535 then
@@ -180,7 +182,7 @@ function eocd(zf)
     -- if the length of the EOCD + the comment doesn't match the end of the
     -- the file, then this might not be an actual ZIP file.  It is best to
     -- exit at this point.
-    -- 
+    --
     -- The 22 is the size of the EOCD minus the comment.
     -- ---------------------------------------------------------------------
     
@@ -228,7 +230,7 @@ local extra = setmetatable(
     [0x0065] = "IBM S/390 (Z390), AS/400 (I400) attributes - uncompressed",
     [0x0066] = "Reserved for IBM S/390 (Z390), AS/400 (I400) attributes - compressed",
     [0x4690] = "POSZIP 4690 (reserved)",
-
+    
     [0x07c8] = "Macintosh",
     [0x2605] = "ZipIt Macintosh",
     [0x2705] = "ZipIt Macintosh 1.3.5+",
@@ -253,33 +255,33 @@ local extra = setmetatable(
     [0x7855] = "Info-ZIP UNIX (new)",
     [0xa220] = "Microsoft Open Packaging Growth Hint",
     [0xfd4a] = "SMS/QDOS",
-
-    [0x454C] = function(zip,len) -- Language extension
+    
+    [0x454C] = function(z,len) -- Language extension
       local fields =
       {
-        "version", 
-        "license" , 
-        "language" , 
-        "lvmin" , 
-        "lvmax" , 
-        "cpu" , 
-        "os" , 
+        "version",
+        "license" ,
+        "language" ,
+        "lvmin" ,
+        "lvmax" ,
+        "cpu" ,
+        "os" ,
         "osver"
       }
       
       local ext  = { }
       
       while len >= 2 do
-        local field = zip:read(1):byte()
-        local size  = zip:read(1):byte()
+        local field = z:read(1):byte()
+        local size  = z:read(1):byte()
         
         len = len - 2
         if size > len then
-          zip:read(len)
+          z:read(len)
           return nil
         end
         
-        local data = zip:read(size)
+        local data = z:read(size)
         
         if field > 0 and field <= #fields then
           ext[fields[field]] = data
@@ -288,10 +290,10 @@ local extra = setmetatable(
       end
       
       return ext
-    end,  
+    end,
   },
   {
-    __index = function(tab,key)
+    __index = function(_,key)
       return string.format("%04X",key)
     end
   }
@@ -302,7 +304,7 @@ local extra = setmetatable(
 function dir(zf,entries)
   local list = {}
   
-  for i = 1 , entries do
+  for _ = 1 , entries do
     local magic = zf:read(4)
     local dir   = {}
     
@@ -337,11 +339,11 @@ function dir(zf,entries)
         else
           dir.extra[id] = string.format("%s:%d",trans,#zf:read(len))
         end
-                
+        
         extralen = extralen - (len + 4)
       end
       
-      dir.comment = zf:read(commentlen)      
+      dir.comment = zf:read(commentlen)
       table.insert(list,dir)
     end
   end
@@ -353,7 +355,7 @@ end
 function file(zf)
   local magic = zf:read(4)
   local file  = {}
-
+  
   if magic == zip.magic.FILE then
     file.byversion   = version(zf)
     file.flags       = flags(zf)
@@ -404,12 +406,12 @@ end
 -- ************************************************************************
 
 function archive(zf)
-  local magic = zf:read(4)
+  local _ = zf:read(4)
 end
 
 -- ************************************************************************
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV
+  return _ENV -- luacheck: ignore
 end
 

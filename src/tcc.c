@@ -22,7 +22,7 @@
 * This module requires a customised TCC 0.9.25.  By default, TCC only
 * provides a static library.  For this use, it needs to be compiled into
 * a shared library.  That's easy enough---just copy the command line used
-* to compile libtcc.a and make a few changes to make it libtcc.so.  
+* to compile libtcc.a and make a few changes to make it libtcc.so.
 *
 * Unfortunately, the resulting shared object doesn't work.  To get it to
 * work, all functions not mentioned in libtcc.h need to converted to
@@ -55,72 +55,72 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_TCC	"org.conman.tcc:TCC"
+#define TYPE_TCC        "org.conman.tcc:TCC"
 
 /**************************************************************************/
 
-static int	tcclua_new		(lua_State *const);
-static int	tcclua_dispose		(lua_State *const);
+static int      tcclua_new              (lua_State *const);
+static int      tcclua_dispose          (lua_State *const);
 
-static int	tcclua___tostring	(lua_State *const);
-static int	tcclua___gc		(lua_State *const);
-static int	tcclua_enable_debug	(lua_State *const);
-static int	tcclua_set_warning	(lua_State *const);
-static int	tcclua_include_path	(lua_State *const);
-static int	tcclua_sysinclude_path	(lua_State *const);
-static int	tcclua_define		(lua_State *const);
-static int	tcclua_undef		(lua_State *const);
-static int	tcclua_compile		(lua_State *const);
-static int	tcclua_add_file		(lua_State *const);
-static int	tcclua_add_string	(lua_State *const);
-static int	tcclua_output_type	(lua_State *const);
-static int	tcclua_library_path	(lua_State *const);
-static int	tcclua_library		(lua_State *const);
-static int	tcclua_set_symbol	(lua_State *const);
-static int	tcclua_output		(lua_State *const);
-static int	tcclua_run		(lua_State *const);
-static int	tcclua_relocate		(lua_State *const);
-static int	tcclua_get_symbol	(lua_State *const);
-static int	tcclua_lib_path		(lua_State *const);
+static int      tcclua___tostring       (lua_State *const);
+static int      tcclua___gc             (lua_State *const);
+static int      tcclua_enable_debug     (lua_State *const);
+static int      tcclua_set_warning      (lua_State *const);
+static int      tcclua_include_path     (lua_State *const);
+static int      tcclua_sysinclude_path  (lua_State *const);
+static int      tcclua_define           (lua_State *const);
+static int      tcclua_undef            (lua_State *const);
+static int      tcclua_compile          (lua_State *const);
+static int      tcclua_add_file         (lua_State *const);
+static int      tcclua_add_string       (lua_State *const);
+static int      tcclua_output_type      (lua_State *const);
+static int      tcclua_library_path     (lua_State *const);
+static int      tcclua_library          (lua_State *const);
+static int      tcclua_set_symbol       (lua_State *const);
+static int      tcclua_output           (lua_State *const);
+static int      tcclua_run              (lua_State *const);
+static int      tcclua_relocate         (lua_State *const);
+static int      tcclua_get_symbol       (lua_State *const);
+static int      tcclua_lib_path         (lua_State *const);
 
-static void	error_lua_handler	(void *,const char *);
-static void	error_c_handler		(void *,const char *);
+static void     error_lua_handler       (void *,const char *);
+static void     error_c_handler         (void *,const char *);
 
 /************************************************************************/
 
 static const struct luaL_Reg mtcc_reg[] =
 {
-  { "new"	, tcclua_new		} ,
-  { "dispose"	, tcclua_dispose	} ,
-  { NULL	, NULL			}
+  { "new"       , tcclua_new            } ,
+  { "dispose"   , tcclua_dispose        } ,
+  { NULL        , NULL                  }
 };
 
 static const struct luaL_Reg mtcc_meta[] =
 {
-  { "__tostring"	, tcclua___tostring 		} ,
-  { "__gc"		, tcclua___gc			} ,
-  { "enable_debug"	, tcclua_enable_debug		} ,
-  { "set_warning"	, tcclua_set_warning		} ,
+  { "__tostring"        , tcclua___tostring             } ,
+  { "__gc"              , tcclua___gc                   } ,
+  { "enable_debug"      , tcclua_enable_debug           } ,
+  { "set_warning"       , tcclua_set_warning            } ,
   
-  { "include_path"	, tcclua_include_path		} ,
-  { "sysinclude_path"	, tcclua_sysinclude_path	} ,
-  { "define"		, tcclua_define			} ,
-  { "undef"		, tcclua_undef			} ,
+  { "include_path"      , tcclua_include_path           } ,
+  { "sysinclude_path"   , tcclua_sysinclude_path        } ,
+  { "define"            , tcclua_define                 } ,
+  { "undef"             , tcclua_undef                  } ,
   
-  { "compile"		, tcclua_compile		} ,
-  { "add_file"		, tcclua_add_file		} ,
-  { "add_string"	, tcclua_add_string		} ,
-
-  { "output_type"	, tcclua_output_type		} ,
-  { "library_path"	, tcclua_library_path		} ,
-  { "library"		, tcclua_library		} ,
-  { "set_symbol"	, tcclua_set_symbol		} ,
-  { "output"		, tcclua_output			} ,
-  { "run"		, tcclua_run			} ,
-  { "relocate"		, tcclua_relocate		} ,
-  { "get_symbol"	, tcclua_get_symbol		} ,
-  { "lib_path"		, tcclua_lib_path		} ,
-  { NULL		, NULL				}
+  { "compile"           , tcclua_compile                } ,
+  { "add_file"          , tcclua_add_file               } ,
+  { "add_string"        , tcclua_add_string             } ,
+  
+  { "output_type"       , tcclua_output_type            } ,
+  { "library_path"      , tcclua_library_path           } ,
+  { "library"           , tcclua_library                } ,
+  { "set_symbol"        , tcclua_set_symbol             } ,
+  { "output"            , tcclua_output                 } ,
+  { "run"               , tcclua_run                    } ,
+  { "relocate"          , tcclua_relocate               } ,
+  { "get_symbol"        , tcclua_get_symbol             } ,
+  { "lib_path"          , tcclua_lib_path               } ,
+  { NULL                , NULL                          }
 };
 
 static const char *const moutput_type[] =
@@ -146,8 +146,8 @@ int luaopen_org_conman_tcc(lua_State *const L)
 
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
-
-#if LUA_VERSION_NUM == 501  
+  
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.tcc",mtcc_reg);
 #else
   luaL_newlib(L,mtcc_reg);
@@ -186,7 +186,7 @@ static int tcclua_dispose(lua_State *const L)
 {
   if (!lua_islightuserdata(L,1))
     return luaL_error(L,"require a light user data");
-  
+    
   free(lua_touserdata(L,1));
   return 0;
 }
@@ -311,7 +311,7 @@ static int tcclua_compile(lua_State *const L)
     lua_pushboolean(L,tcc_add_file(*tcc,text) == 0);
   else
     lua_pushboolean(L,tcc_compile_string(*tcc,text) == 0);
-  
+    
   tcc_set_error_func(*tcc,NULL,error_c_handler);
   lua_pushlightuserdata(L,*tcc);
   lua_pushnil(L);
@@ -381,8 +381,8 @@ static int tcclua_add_string(lua_State *const L)
 /*************************************************************************/
 
 static void error_lua_handler(
-	void       *opaque,
-	const char *msg
+        void       *opaque,
+        const char *msg
 )
 {
   struct error_data *errdata = opaque;
@@ -399,8 +399,8 @@ static void error_lua_handler(
 /***********************************************************************/
 
 static void error_c_handler(
-	void       *opaque __attribute__((unused)),
-	const char *msg
+        void       *opaque __attribute__((unused)),
+        const char *msg
 )
 {
   fprintf(stderr,"tcc: %s\n",msg);
@@ -430,7 +430,7 @@ static int tcclua_library_path(lua_State *const L)
                   *(TCCState **)luaL_checkudata(L,1,TYPE_TCC),
                   luaL_checkstring(L,2)
           )
-  );               
+  );
   return 1;
 }
 
@@ -482,18 +482,18 @@ static int tcclua_relocate(lua_State *const L)
   size = tcc_relocate(*tcc,NULL);
   if (size == -1)
     return 0;
-  
+    
   mem = malloc(size);
   if (mem == NULL)
     return 0;
-  
+    
   rc = tcc_relocate(*tcc,mem);
   if (rc == -1)
   {
     free(mem);
     return 0;
   }
-
+  
   lua_pushlightuserdata(L,mem);
   return 1;
 }
@@ -516,16 +516,16 @@ static int tcclua_get_symbol(lua_State *const L __attribute__((unused)))
   {
     if (!lua_checkstack(L,1))
       return ret;
-
+      
     call = tcc_get_symbol(*tcc,luaL_checkstring(L,i));
-
+    
     if (call == NULL)
       lua_pushnil(L);
     else
       lua_pushcfunction(L,call);
     ret++;
   }
-
+  
   return ret;
 }
 

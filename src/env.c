@@ -22,10 +22,10 @@
 * This module is nothing more than an array of the environmental variables
 * of the current process.  There's not much more to say about this than
 *
-	env = require "org.conman.env"
-	print(env.LUA_PATH)
-	print(env['LUA_CPATH'])
-
+        env = require "org.conman.env"
+        print(env.LUA_PATH)
+        print(env['LUA_CPATH'])
+        
 *
 *********************************************/
 
@@ -53,8 +53,8 @@ extern char **environ;
 int luaopen_org_conman_env(lua_State *L)
 {
   int i;
-
-#if LUA_VERSION_NUM == 501 
+  
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.env",env);
 #else
   lua_createtable(L,0,0);
