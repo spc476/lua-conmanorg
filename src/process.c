@@ -1014,7 +1014,7 @@ static int proclua_setuid(lua_State *const L)
     return 1;
   }
   
-  if (seteuid(uid) < 0)
+  if (seteuid(euid) < 0)
   {
     lua_pushinteger(L,errno);
     return 1;
