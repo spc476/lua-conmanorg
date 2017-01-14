@@ -1132,7 +1132,7 @@ static int siglua_catch(lua_State *const L)
   struct datasig    ods;
   struct sigaction  act;
   
-  ds.name      = name;
+  ds.name      = name; /* "clang --analyze" false positive */
   ds.fref      = LUA_NOREF;
   ds.triggered = 0;
   ds.use_info  = false;
