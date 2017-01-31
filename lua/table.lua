@@ -142,7 +142,7 @@ function dump_value(name,value,path,level,marked)
     if not name:match "^[A-Za-z_][A-Za-z0-9_]*$" then
       name = "[" .. safestring(name) .. "]"
     end
-  end
+  else
     name = "[" .. safestring(name) .. "]"
   end
   
