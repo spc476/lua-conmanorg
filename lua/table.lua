@@ -138,8 +138,12 @@ function dump_value(name,value,path,level,marked)
     return ""
   elseif type(name) == "number" then
     name = string.format("[%d]",name)
-  else
-    name = safestring(name)
+  elseif type(name) == 'string' then
+    if not name:match "^[A-Za-z_][A-Za-z0-9_]*$" then
+      name = "[" .. safestring(name) .. "]"
+    end
+  end
+    name = "[" .. safestring(name) .. "]"
   end
   
   if type(value) == "nil" then
