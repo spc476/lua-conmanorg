@@ -49,15 +49,18 @@
 *
 * =========================================================================
 *
-* Usage:        now = clock.get([clocktype])
+* Usage:        now[,frac] = clock.get([clocktype[,gfrac]])
 *
 * Desc:         Get the current time or elaspsed time since boot
 *
 * Input:        clocktype (enum/optional)
 *                       'realtime'  (default) walltime
 *                       'monotonic' time since boot
+*		gfrac (boolean) false - return time as float
+*			* true - return time as seconds,nanoseconds
 *
 * Return:       now (number) current time or elapsed time since boot
+*		frac (integer/optional) nanosecond part of second
 *
 * =========================================================================
 *
@@ -174,8 +177,18 @@ static int clocklua_get(lua_State *const L)
   struct timespec now;
   
   clock_gettime(m_clockids[luaL_checkoption(L,1,"realtime",m_clocks)],&now);
-  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_nsec / 1000000000.0));
-  return 1;
+  
+  if (lua_toboolean(L,2))
+  {
+    lua_pushnumber(L,now.tv_sec);
+    lua_pushnumber(L,now.tv_nsec);
+    return 2;
+  }
+  else
+  {
+    lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_nsec / 1000000000.0));
+    return 1;
+  }
 }
 
 /**************************************************************************/
@@ -246,8 +259,18 @@ static int clocklua_get(lua_State *L)
   struct timeval now;
   
   gettimeofday(&now,NULL);
-  lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
-  return 1;
+  
+  if (lua_toboolean(L,2))
+  {
+    lua_pushnumber(L,now.tv_sec);
+    lua_pushnumber(L,now.tv_nsec * 1000uL);
+    return 2;
+  }
+  else
+  {
+    lua_pushnumber(L,(double)now.tv_sec + ((double)now.tv_usec / 1000000.0));
+    return 1;
+  }
 }
 
 /**************************************************************************/
