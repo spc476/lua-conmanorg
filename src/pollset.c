@@ -37,6 +37,8 @@
 #if !defined(POLLSET_IMPL_EPOLL) && !defined(POLLSET_IMPL_POLL) && !defined(POLLSET_IMPL_SELECT)
 #  ifdef __linux
 #    define POLLSET_IMPL_EPOLL
+#  elif defined(__APPLE__)
+#    define POLLSET_IMPL_SELECT
 #  else
 #    define POLLSET_IMPL_POLL
 #  endif
