@@ -263,7 +263,7 @@ static int clocklua_get(lua_State *L)
   if (lua_toboolean(L,2))
   {
     lua_pushnumber(L,now.tv_sec);
-    lua_pushnumber(L,now.tv_nsec * 1000uL);
+    lua_pushnumber(L,now.tv_usec * 1000uL);
     return 2;
   }
   else
