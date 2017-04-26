@@ -1518,6 +1518,7 @@ static int socklua_recv(lua_State *const L)
   remsize = sizeof(sockaddr_all__t);
   luaL_getmetatable(L,TYPE_ADDR);
   lua_setmetatable(L,-2);
+  memset(remaddr,0,sizeof(sockaddr_all__t));
   
   bytes = recvfrom(sock->fh,buffer,sizeof(buffer),0,&remaddr->sa,&remsize);
   if (bytes < 0)
