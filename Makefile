@@ -48,8 +48,8 @@ INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA    = $(INSTALL) -m 644 
 prefix          = /usr/local
 
-LUADIR = $(prefix)/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
-LIBDIR = $(prefix)/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+LUADIR := $(prefix)/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+LIBDIR := $(prefix)/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
 
 .PHONY:	all clean install remove
 
