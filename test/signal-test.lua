@@ -1,5 +1,6 @@
+-- luacheck: ignore 611
 
-signal = require "org.conman.signal"
+local signal = require "org.conman.signal"
 
 -- ----------------------------------------------------------------------
 -- The signal API, reguardless of implementation, should support at least
@@ -11,18 +12,18 @@ io.stdout:write("\ttesting for known functions ...")
 io.stdout:flush()
 
 assert(type(signal._implementation) == 'string')
-assert(type(signal.caught)          == 'function')
 assert(type(signal.catch)           == 'function')
-assert(type(signal.ignore)          == 'function')
+assert(type(signal.caught)          == 'function')
 assert(type(signal.default)         == 'function')
-assert(type(signal.raise)           == 'function')
 assert(type(signal.defined)         == 'function')
+assert(type(signal.ignore)          == 'function')
+assert(type(signal.raise)           == 'function')
 
 io.stdout:write(" GO!\n")
 
-for _,sig in ipairs { 
-	'abrt' , 'fpe' , 'ill' , 'int' , 'segv' , 'term' ,
-	'abort' , 'illegal', 'interrupt' , 'segfault' , 'terminate' ,
+for _,sig in ipairs {
+        'abrt' , 'fpe' , 'ill' , 'int' , 'segv' , 'term' ,
+        'abort' , 'illegal', 'interrupt' , 'segfault' , 'terminate' ,
 } do
   io.stdout:write("\ttesting ",sig, " ...")
   io.stdout:flush()
@@ -41,7 +42,7 @@ for _,sig in ipairs {
   -- -------------------------------------------------------------
   -- test a signal handler.
   -- -------------------------------------------------------------
-
+  
   local res = {}
   
   assert(signal.catch(sig,function(s) res[#res + 1] = s end))
@@ -55,13 +56,13 @@ for _,sig in ipairs {
   -- test catching a previously caught signal with a function, this time
   -- catching it without a signal.
   -- --------------------------------------------------------------------
-
+  
   assert(signal.catch(sig))
   assert(signal.raise(sig))
   assert(signal.caught(sig))
   assert(signal.raise(sig))
   assert(signal.caught())
-
+  
   -- ------------------------------------------------------------
   -- test signal ignoring.  We can't test a default action since
   -- the default action tends to be "not ignore".
@@ -73,11 +74,12 @@ for _,sig in ipairs {
   assert(signal.raise(sig))
   assert(not signal.caught())
   signal.default(sig)
+  
   io.stdout:write(" GO!\n")
 end
 
 -- --------------------------------------------------------------
--- The only other API we have is POSIX.  
+-- The only other API we have is POSIX.
 -- --------------------------------------------------------------
 
 if signal._implementation == 'ANSI' then
@@ -85,7 +87,7 @@ if signal._implementation == 'ANSI' then
 end
 
 if signal._implementation ~= 'POSIX' then
-  io.stdout:write("NEED TO WRITE TESTS FOR ",x,"\n")
+  io.stdout:write("NEED TO WRITE TESTS FOR ",signal._implementation,"\n")
   os.exit(1)
 end
 
@@ -102,86 +104,86 @@ assert(type(signal.set)     == 'function')
 io.stdout:write("GO!\n")
 io.stdout:write("\ttesting signal sets ... ")
 
-local a = signal.set('term','int') 
-	assert(a)
-	assert(    a['term'])
-	assert(    a['int'])
-	assert(not a['abrt'])
-	assert(not a['fpe'])
-	assert(not a['ill'])
-	assert(not a['segv'])
-	
-local b = signal.set('abrt','fpe') 
-	assert(b)
-	assert(    b['abrt'])
-	assert(    b['fpe'])
-	assert(not b['term'])
-	assert(not b['int'])
-	assert(not b['ill'])
-	assert(not b['segv'])
-	
+local a = signal.set('term','int')
+        assert(a)
+        assert(    a['term'])
+        assert(    a['int'])
+        assert(not a['abrt'])
+        assert(not a['fpe'])
+        assert(not a['ill'])
+        assert(not a['segv'])
+        
+local b = signal.set('abrt','fpe')
+        assert(b)
+        assert(    b['abrt'])
+        assert(    b['fpe'])
+        assert(not b['term'])
+        assert(not b['int'])
+        assert(not b['ill'])
+        assert(not b['segv'])
+        
 local c = a + b
-	assert(c)
-	assert(    c['term'])
-	assert(    c['int'])
-	assert(    c['abrt'])
-	assert(    c['fpe'])
-	assert(not c['ill'])
-	assert(not c['segv'])
-
-	assert(    a['term'])
-	assert(    a['int'])
-	assert(not a['abrt'])
-	assert(not a['fpe'])
-	assert(not a['ill'])
-	assert(not a['segv'])
-
-	assert(    b['abrt'])
-	assert(    b['fpe'])
-	assert(not b['term'])
-	assert(not b['int'])
-	assert(not b['ill'])
-	assert(not b['segv'])
-
+        assert(c)
+        assert(    c['term'])
+        assert(    c['int'])
+        assert(    c['abrt'])
+        assert(    c['fpe'])
+        assert(not c['ill'])
+        assert(not c['segv'])
+        
+        assert(    a['term'])
+        assert(    a['int'])
+        assert(not a['abrt'])
+        assert(not a['fpe'])
+        assert(not a['ill'])
+        assert(not a['segv'])
+        
+        assert(    b['abrt'])
+        assert(    b['fpe'])
+        assert(not b['term'])
+        assert(not b['int'])
+        assert(not b['ill'])
+        assert(not b['segv'])
+        
 local d = c - a
-	assert(d)
-	assert(not d['term'])
-	assert(not d['int'])
-	assert(    d['abrt'])
-	assert(    d['fpe'])
-	assert(not d['ill'])
-	assert(not d['segv'])
-
-	assert(    c['term'])
-	assert(    c['int'])
-	assert(    c['abrt'])
-	assert(    c['fpe'])
-	assert(not c['ill'])
-	assert(not c['segv'])
-
-	assert(    a['term'])
-	assert(    a['int'])
-	assert(not a['abrt'])
-	assert(not a['fpe'])
-	assert(not a['ill'])
-	assert(not a['segv'])
-	
+        assert(d)
+        assert(not d['term'])
+        assert(not d['int'])
+        assert(    d['abrt'])
+        assert(    d['fpe'])
+        assert(not d['ill'])
+        assert(not d['segv'])
+        
+        assert(    c['term'])
+        assert(    c['int'])
+        assert(    c['abrt'])
+        assert(    c['fpe'])
+        assert(not c['ill'])
+        assert(not c['segv'])
+        
+        assert(    a['term'])
+        assert(    a['int'])
+        assert(not a['abrt'])
+        assert(not a['fpe'])
+        assert(not a['ill'])
+        assert(not a['segv'])
+        
 local e = -c
-	assert(e)
-	assert(not e['term'])
-	assert(not e['int'])
-	assert(not e['abrt'])
-	assert(not e['fpe'])
-	assert(    e['ill'])
-	assert(    e['segv'])
-
-	assert(    c['term'])
-	assert(    c['int'])
-	assert(    c['abrt'])
-	assert(    c['fpe'])
-	assert(not c['ill'])
-	assert(not c['segv'])
-
+        assert(e)
+        assert(not e['term'])
+        assert(not e['int'])
+        assert(not e['abrt'])
+        assert(not e['fpe'])
+        assert(    e['ill'])
+        assert(    e['segv'])
+        
+        assert(    c['term'])
+        assert(    c['int'])
+        assert(    c['abrt'])
+        assert(    c['fpe'])
+        assert(not c['ill'])
+        assert(not c['segv'])
+        
 io.stdout:write("GO!\n")
 
 -- ----------------------------------------------------------------------
@@ -189,8 +191,8 @@ io.stdout:write("GO!\n")
 -- user processes, so they aren't listed.
 -- ----------------------------------------------------------------------
 
-list =
-{  
+local list =
+{
   -- ANSI signals
   
   { sig = 'abrt'          , level = "ANSI" } ,
@@ -236,7 +238,7 @@ list =
   { sig = 'hangup'        , level = "POSIX" } ,
   { sig = 'profile'       , level = "POSIX" } ,
   
-  -- Maybe defined, maybe not ... 
+  -- Maybe defined, maybe not ...
   -- your OS will decide
   
   { sig = 'cld'           , level = "non-standard" } ,
@@ -258,9 +260,9 @@ list =
   { sig = 'windowchange'  , level = "non-standard" } ,
 }
 
-all   = signal.set(true)	-- set of all signals
-empty = signal.set()		-- set of no signals
-none  = signal.set(false)	-- set of no signals
+local all   = signal.set(true)        -- set of all signals
+local empty = signal.set()            -- set of no signals
+local none  = signal.set(false)       -- set of no signals
 
 assert(all)
 assert(empty)
@@ -277,7 +279,7 @@ for _,entry in ipairs(list) do
   local standard = entry.level
   
   io.stdout:write("\ttesting ",sig," (",standard,") ...")
-
+  
   local exists = signal.defined(sig)
   if not exists then
     if standard == 'non-standard' then
@@ -306,7 +308,7 @@ for _,entry in ipairs(list) do
       assert(#r == 1)
       assert(r[1] == sig)
       
-      local r = {}
+      r = {}
       assert(signal.catch(sig,function(s) r[#r + 1] = s end,'resethandler'))
       assert(signal.raise(sig))
       assert(signal.raise(sig))
@@ -330,7 +332,7 @@ for _,entry in ipairs(list) do
     local block = signal.set(sig2)
     
     assert(block)
-    assert(block[sig2])    
+    assert(block[sig2])
     
     local r = {}
     local function handle1(s)
@@ -345,7 +347,7 @@ for _,entry in ipairs(list) do
     
     assert(signal.catch(sig,handle1,block))
     assert(signal.catch(sig2,handle2))
-    assert(signal.raise(sig))    
+    assert(signal.raise(sig))
     assert(#r == 2)
     assert(r[1] == sig)
     r = reset(sig,sig2)
@@ -355,17 +357,17 @@ for _,entry in ipairs(list) do
     assert(signal.catch(sig,handle1))
     assert(signal.catch(sig2,handle2))
     signal.block(sig)
-    assert(signal.raise(sig))    
+    assert(signal.raise(sig))
     assert(#r == 0)
     local pending = signal.pending()
     assert(pending[sig])
     signal.allow(sig)
     assert(#r == 2)
-    assert(r[1] == sig)    
+    assert(r[1] == sig)
     r = reset(sig,sig2)
-
+    
     -- signal.mask(set)
-        
+    
     assert(signal.catch(sig,handle1))
     assert(signal.catch(sig2,handle2))
     assert(signal.mask(block))
@@ -373,7 +375,7 @@ for _,entry in ipairs(list) do
     assert(#r == 1)
     assert(r[1] == sig)
     r = reset(sig,sig2)
-
+    
     assert(signal.catch(sig,handle1))
     assert(signal.catch(sig2,handle2))
     assert(signal.mask('set',block))
@@ -381,35 +383,35 @@ for _,entry in ipairs(list) do
     assert(#r == 1)
     assert(r[1] == sig)
     r = reset(sig,sig2)
-
+    
     -- signal.mask('block') and signal.mask('unblock')
-
+    
     assert(signal.catch(sig,handle1))
     assert(signal.catch(sig2,handle2))
     assert(signal.mask('block',block))
-    assert(signal.raise(sig))    
+    assert(signal.raise(sig))
     assert(#r == 1)
     assert(r[1] == sig)
     r = {}
     assert(signal.mask('unblock',block))
-    assert(signal.raise(sig))    
+    assert(signal.raise(sig))
     assert(#r == 3)
     assert(r[1] == sig2)
     assert(r[2] == sig)
     assert(r[3] == sig2)
-    r = reset(sig,sig2)    
- 
+    r = reset(sig,sig2)
+    
     local function handler_info(s,i)
       r[#r + 1] = s
       r[#r + 1] = i
     end
-
+    
     assert(signal.catch(sig,handler_info,'info'))
     assert(signal.raise(sig))
     assert(#r == 2)
     assert(r[1] == sig)
     assert(r[2].signal == sig)
     
-    io.stdout:write(" GO!\n")    
+    io.stdout:write(" GO!\n")
   end
 end
