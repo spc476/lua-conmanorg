@@ -22,36 +22,52 @@
 UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
-  CC     = gcc -std=c99
-  CFLAGS = -g -Wall -Wextra -pedantic
-  LFLAGS = 
-  SHARED = -fPIC -shared
+  CC      = gcc -std=c99
+  CFLAGS  = -g -Wall -Wextra -pedantic
+  LDFLAGS = -g -shared
 endif
 
 ifeq ($(UNAME),SunOS)
-  CC     = cc -xc99
-  CFLAGS = -g -mt -m64 -I /usr/sfw/include
-  LFLAGS =
-  SHARED = -G -xcode=pic32
+  CC      = cc -xc99
+  CFLAGS  = -g -mt -m64 -I /usr/sfw/include
+  LDFLAGS = -G -xcode=pic32
   lib/net.so : LDLIBS = -lsocket -lnsl
 endif
 
 ifeq ($(UNAME),Darwin)
-  CC     = gcc -std=c99
-  CFLAGS = -g -Wall -Wextra -pedantic
-  LFLAGS =
-  SHARED = -fPIC -undefined dynamic_lookup -all_load
+  CC      = gcc -std=c99
+  CFLAGS  = -g -Wall -Wextra -pedantic
+  LDFLAGS = -g -bundle -undefined dynamic_lookup -all_load
 endif
+
+override CFLAGS += -fPIC
+
+# ===================================================
 
 INSTALL         = /usr/bin/install
 INSTALL_PROGRAM = $(INSTALL)
-INSTALL_DATA    = $(INSTALL) -m 644 
-prefix          = /usr/local
+INSTALL_DATA    = $(INSTALL) -m 644
 
-LUADIR := $(prefix)/share/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
-LIBDIR := $(prefix)/lib/lua/$(shell lua -e "print(_VERSION:match '^Lua (.*)')")
+prefix      = /usr/local
+libdir      = $(prefix)/lib
+datarootdir = $(prefix)/share
+dataroot    = $(datarootdir)
 
-.PHONY:	all clean install remove
+LUA         ?= lua
+LUA_VERSION := $(shell $(LUA) -e "print(_VERSION:match '^Lua (.*)')")
+LUADIR      ?= $(dataroot)/lua/$(LUA_VERSION)
+LIBDIR      ?= $(libdir)/lua/$(LUA_VERSION)
+
+ifneq ($(LUA_INCDIR),)
+  override CFLAGS += -I$(LUA_INCDIR)
+endif
+
+# ===================================================
+
+.PHONY:	all clean install uninstall
+
+lib/%.so : src/%.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 all : lib		\
 	lib/env.so	\
@@ -81,18 +97,12 @@ build/bin2c : build/bin2c.c
 lib :
 	mkdir lib
 
-lib/%.so : src/%.c
-	$(CC) $(CFLAGS) $(LFLAGS) $(SHARED) -o $@ $< $(LDLIBS)
-
 lib/hash.so    : LDLIBS = -lcrypto
 lib/magic.so   : LDLIBS = -lmagic
 lib/tcc.so     : LDLIBS = -ltcc
 lib/clock.so   : LDLIBS = -lrt
 
-clean:
-	/bin/rm -rf *~ lua/*~ src/*~ build/*~
-	/bin/rm -rf lib/*
-	/bin/rm -rf build/bin2c
+# ===================================================
 
 install : all
 	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman	
@@ -123,6 +133,11 @@ install : all
 	$(INSTALL_DATA)    lua/dns/*.lua  $(DESTDIR)$(LUADIR)/org/conman/dns
 	$(INSTALL_DATA)    lua/zip/*.lua  $(DESTDIR)$(LUADIR)/org/conman/zip
 
-remove:
+uninstall:
 	$(RM) -r $(DESTDIR)$(LIBDIR)/org/conman
 	$(RM) -r $(DESTDIR)$(LUADIR)/org/conman
+
+clean:
+	$(RM) $(shell find . -name '*~')
+	$(RM) lib/*
+	$(RM) build/bin2c
