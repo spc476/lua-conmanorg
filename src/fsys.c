@@ -483,6 +483,7 @@ static int dir_meta_next(lua_State *const L)
     entry = readdir(*dir);
     if (entry == NULL)
     {
+      dir_meta___gc(L);
       lua_pushnil(L);
       return 1;
     }
