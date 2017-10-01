@@ -451,6 +451,19 @@ static int dir_meta_rewind(lua_State *const L)
 
 /*************************************************************************/
 
+static int dir_meta_read(lua_State *const L)
+{
+  struct dirent *entry = readdir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
+
+  if (entry)
+    lua_pushstring(L,entry->d_name);
+  else
+    lua_pushnil(L);
+  return 1;
+}
+
+/*************************************************************************/
+
 static int dir_meta_next(lua_State *const L)
 {
   struct dirent  *entry;
@@ -1177,6 +1190,7 @@ static const luaL_Reg m_dir_meta[] =
   { "__tostring"        , dir_meta___tostring   } ,
   { "__gc"              , dir_meta___gc         } ,
   { "rewind"            , dir_meta_rewind       } ,
+  { "read"              , dir_meta_read         } ,
   { "next"              , dir_meta_next         } ,
   { NULL                , NULL                  }
 };
