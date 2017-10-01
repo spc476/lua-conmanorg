@@ -437,7 +437,14 @@ static int dir_meta___tostring(lua_State *const L)
 
 static int dir_meta___gc(lua_State *const L)
 {
-  closedir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
+  DIR **dir = luaL_checkudata(L,1,TYPE_DIR);
+  
+  if (*dir != NULL)
+  {
+    closedir(*dir);
+    *dir = NULL;
+  }
+  
   return 0;
 }
 
