@@ -456,7 +456,19 @@ static int dir_meta_rewind(lua_State *const L)
   return 0;
 }
 
-/*************************************************************************/
+/*************************************************************************
+*
+* Usage:	entry = dir:read()
+*
+* Desc:		Return the next filename in the directory
+*
+* Return:	entry (string) filename, nil when at end of directory
+*
+* Note:		This function will return "." (current directory) and
+*		".." (parent) directory.  Also, this function, upon end-
+*		of-directory, will *NOT* close the directory.
+*
+**************************************************************************/
 
 static int dir_meta_read(lua_State *const L)
 {
@@ -469,7 +481,23 @@ static int dir_meta_read(lua_State *const L)
   return 1;
 }
 
-/*************************************************************************/
+/*************************************************************************
+*
+* Usage:	entry = dir:next()
+*
+* Desc:		Return the next filename in the directory.
+*
+* Return:	entry (string) filename, nil when at end of directory
+*
+* Note:		This function will *NOT* return "." (current directory)
+*		or ".." (parent directory).  Also, this function *WILL*
+*		close the directory when it reaches the end.
+*
+*		The intent of this function is to be used as an iterator,
+*		where getting "." or ".." is most likely *not* something
+*		that is wanted.
+*
+**************************************************************************/
 
 static int dir_meta_next(lua_State *const L)
 {
