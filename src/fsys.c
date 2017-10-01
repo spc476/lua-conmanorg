@@ -455,14 +455,9 @@ static int dir_meta_next(lua_State *const L)
 {
   struct dirent  *entry;
   DIR           **dir;
-  
-  if (lua_isnil(L,1))
-  {
-    lua_pushnil(L);
-    return 1;
-  }
-  
+
   dir = luaL_checkudata(L,1,TYPE_DIR);
+
   while(true)
   {
     entry = readdir(*dir);
