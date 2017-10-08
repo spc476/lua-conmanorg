@@ -360,28 +360,35 @@ static int fsys_chmod(lua_State *L)
 static int fsys_umask(lua_State *L)
 {
   char        perms[9];
-  const char *value;
-  mode_t      mask;
-  mode_t      bit;
+  size_t      vsz;
+  const char *value = luaL_checklstring(L,1,&vsz);
+  mode_t      mask  = 0777;
+  mode_t      bit   = 1;
   
-  value = luaL_checkstring(L,1);
-  bit   = 0400;
-  mask  = 0;
+  /*---------------------------------------------------------------------
+  ; The bits for umask() are inverted from their normal meaning---if set,
+  ; *turn off* that bit from permissions.  It hurts my head too much to
+  ; think that way.  So for this interface, you specify the permissions
+  ; you WANT.  This code corrects for the broken umask() thinking.
+  ;
+  ; We also work our way backwards through the string.  That way, we can
+  ; pass the string from fsys.stat().perms to this and not break anything.
+  ;---------------------------------------------------------------------*/
   
-  for ( ; *value ; bit >>= 1 , value++)
-    if (*value != '-')
-      mask |= bit;
+  for ( ; (vsz > 0) && (bit < 01000) ; bit <<= 1 , vsz--)
+    if (value[vsz-1] != '-')
+      mask ^= bit;
       
   mask     = umask(mask);
-  perms[0] = (mask & S_IRUSR) ? 'r' : '-';
-  perms[1] = (mask & S_IWUSR) ? 'w' : '-';
-  perms[2] = (mask & S_IXUSR) ? 'x' : '-';
-  perms[3] = (mask & S_IRGRP) ? 'r' : '-';
-  perms[4] = (mask & S_IWGRP) ? 'w' : '-';
-  perms[5] = (mask & S_IXGRP) ? 'x' : '-';
-  perms[6] = (mask & S_IROTH) ? 'r' : '-';
-  perms[7] = (mask & S_IWOTH) ? 'w' : '-';
-  perms[8] = (mask & S_IXOTH) ? 'x' : '-';
+  perms[0] = (mask & S_IRUSR) ? '-' : 'r';
+  perms[1] = (mask & S_IWUSR) ? '-' : 'w';
+  perms[2] = (mask & S_IXUSR) ? '-' : 'x';
+  perms[3] = (mask & S_IRGRP) ? '-' : 'r';
+  perms[4] = (mask & S_IWGRP) ? '-' : 'w';
+  perms[5] = (mask & S_IXGRP) ? '-' : 'x';
+  perms[6] = (mask & S_IROTH) ? '-' : 'r';
+  perms[7] = (mask & S_IWOTH) ? '-' : 'x';
+  perms[8] = (mask & S_IXOTH) ? '-' : 'x';
   
   lua_pushlstring(L,perms,9);
   return 1;
