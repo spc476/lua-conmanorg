@@ -1758,13 +1758,13 @@ static int addrlua___tostring(lua_State *const L)
   switch(addr->sa.sa_family)
   {
     case AF_INET:
-         lua_pushfstring(L,"ip:%s:%d",Inet_addr(addr,taddr),Inet_port(addr));
+         lua_pushfstring(L,"%s:%d",Inet_addr(addr,taddr),Inet_port(addr));
          break;
     case AF_INET6:
-         lua_pushfstring(L,"ip6:[%s]:%d",Inet_addr(addr,taddr),Inet_port(addr));
+         lua_pushfstring(L,"[%s]:%d",Inet_addr(addr,taddr),Inet_port(addr));
          break;
     case AF_UNIX:
-         lua_pushfstring(L,"unix:%s",Inet_addr(addr,taddr));
+         lua_pushfstring(L,"%s",Inet_addr(addr,taddr));
          break;
     default:
          lua_pushfstring(L,"unknown:%d",addr->sa.sa_family);
