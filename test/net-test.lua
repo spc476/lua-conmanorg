@@ -1,6 +1,14 @@
 
 net = require "org.conman.net"
 
+local function compare_lists(a,b)
+  if (#a ~= #b) then return false end
+  for i = 1 , #a do
+    if a[i] ~= b[i] then return false end
+  end
+  return true
+end
+
 -- ---------------------------------------------------------------------
 -- Address tests
 -- ---------------------------------------------------------------------
@@ -113,3 +121,56 @@ address_test {
 	display      = "[fc00::c0ff:eeba:d015:dead:beef]:89",
 	display_port = "[fc00::c0ff:eeba:d015:dead:beef]",
 }
+
+io.stdout:write("\ttesting address ordering ... ")
+
+local list1 = 
+{
+  net.address('192.168.1.10','udp',3333),
+  net.address('192.168.1.10','udp',2222),
+  net.address('192.168.1.10','tcp',4444),
+  net.address('192.168.1.10','tcp',1111),
+  net.address('127.0.0.1','udp',17),
+  net.address('127.0.0.1','udp',3),
+  net.address('127.0.0.1','tcp',11),
+  net.address('127.0.0.1','tcp',7),
+  net.address('/dev/log','udp'),
+  net.address('/dev/log','tcp'),
+  net.address('fc00::1','udp',33),
+  net.address('fc00::1','udp',3),
+  net.address('fc00::1','tcp',22),
+  net.address('fc00::1','tcp',5),
+  net.address('::1','udp',33),
+  net.address('::1','udp',3),
+  net.address('::1','tcp',22),
+  net.address('::1','tcp',5),
+}
+
+local list2 =
+{
+  net.address('/dev/log','tcp'),
+  net.address('/dev/log','udp'),
+  net.address('127.0.0.1','udp',3),
+  net.address('127.0.0.1','tcp',7),
+  net.address('127.0.0.1','tcp',11),
+  net.address('127.0.0.1','udp',17),
+  net.address('192.168.1.10','tcp',1111),
+  net.address('192.168.1.10','udp',2222),
+  net.address('192.168.1.10','udp',3333),
+  net.address('192.168.1.10','tcp',4444),
+  net.address('::1','udp',3),
+  net.address('::1','tcp',5),
+  net.address('::1','tcp',22),
+  net.address('::1','udp',33),
+  net.address('fc00::1','udp',3),
+  net.address('fc00::1','tcp',5),
+  net.address('fc00::1','tcp',22),
+  net.address('fc00::1','udp',33),
+}
+  
+table.remove(list1)
+table.remove(list2)
+table.sort(list1)
+
+assert(compare_lists(list1,list2))
+io.stdout:write("GO!\n")

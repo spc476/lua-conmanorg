@@ -230,7 +230,7 @@ static const struct strint m_errors[] =
 
 /************************************************************************/
 
-static inline size_t Inet_addrlen(sockaddr_all__t *const addr)
+static inline size_t Inet_addrlen(sockaddr_all__t const *const addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -244,7 +244,7 @@ static inline size_t Inet_addrlen(sockaddr_all__t *const addr)
 
 /*-----------------------------------------------------------------------*/
 
-static inline socklen_t Inet_len(sockaddr_all__t *const addr)
+static inline socklen_t Inet_len(sockaddr_all__t const *const addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -258,8 +258,8 @@ static inline socklen_t Inet_len(sockaddr_all__t *const addr)
 
 /*----------------------------------------------------------------------*/
 
-static inline socklen_t Inet_lensa(struct sockaddr *) __attribute__((unused));
-static inline socklen_t Inet_lensa(struct sockaddr *const addr)
+static inline socklen_t Inet_lensa(struct sockaddr const *const) __attribute__((unused));
+static inline socklen_t Inet_lensa(struct sockaddr const *const addr)
 {
   assert(addr != NULL);
   switch(addr->sa_family)
@@ -273,7 +273,7 @@ static inline socklen_t Inet_lensa(struct sockaddr *const addr)
 
 /*----------------------------------------------------------------------*/
 
-static inline int Inet_port(sockaddr_all__t *const addr)
+static inline int Inet_port(sockaddr_all__t const *const addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -304,7 +304,7 @@ static inline void Inet_setport(sockaddr_all__t *const addr,const int port)
 
 /*----------------------------------------------------------------------*/
 
-static inline void Inet_setportn(sockaddr_all__t *,const int) __attribute__((unused));
+static inline void Inet_setportn(sockaddr_all__t *const,const int) __attribute__((unused));
 static inline void Inet_setportn(sockaddr_all__t *const addr,const int port)
 {
   assert(addr != NULL);
@@ -338,7 +338,7 @@ static inline const char *Inet_addr(
 
 /*------------------------------------------------------------------------*/
 
-static inline void *Inet_address(sockaddr_all__t *const addr)
+static inline void const *Inet_address(sockaddr_all__t const *const addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -348,6 +348,37 @@ static inline void *Inet_address(sockaddr_all__t *const addr)
     case AF_UNIX:  return &addr->ssun.sun_path;
     default:       assert(0); return NULL;
   }
+}
+
+/*------------------------------------------------------------------------*/
+
+static inline int Inet_comp(
+        sockaddr_all__t const *restrict a,
+        sockaddr_all__t const *restrict b
+)
+{
+  int rc;
+  
+  assert(a != NULL);
+  assert(b != NULL);
+  
+  if ((rc = a->sa.sa_family - b->sa.sa_family) != 0) return rc;
+  
+  socklen_t   la  = Inet_addrlen(a);
+  socklen_t   lb  = Inet_addrlen(b);
+  socklen_t   len = la < lb ? la : lb;
+  void const *pa  = Inet_address(a);
+  void const *pb  = Inet_address(b);
+  
+  if ((rc = memcmp(pa,pb,len)) != 0)
+    return rc;
+  
+  if (la < lb)
+    return -1;
+  else if (la > lb)
+    return 1;
+  
+  return Inet_port(a) - Inet_port(b);
 }
 
 /**********************************************************************/
@@ -1788,25 +1819,9 @@ static int addrlua___tostring(lua_State *const L)
 
 static int addrlua___eq(lua_State *const L)
 {
-  sockaddr_all__t *a;
-  sockaddr_all__t *b;
-  
-  a = luaL_checkudata(L,1,TYPE_ADDR);
-  b = luaL_checkudata(L,2,TYPE_ADDR);
-  
-  if (a->sa.sa_family != b->sa.sa_family)
-  {
-    lua_pushboolean(L,false);
-    return 1;
-  }
-  
-  if (memcmp(Inet_address(a),Inet_address(b),Inet_addrlen(a)) != 0)
-  {
-    lua_pushboolean(L,false);
-    return 1;
-  }
-  
-  lua_pushboolean(L,Inet_port(a) == Inet_port(b));
+  lua_pushboolean(L,Inet_comp(
+          luaL_checkudata(L,1,TYPE_ADDR),
+          luaL_checkudata(L,2,TYPE_ADDR)) == 0);
   return 1;
 }
 
@@ -1814,25 +1829,9 @@ static int addrlua___eq(lua_State *const L)
 
 static int addrlua___lt(lua_State *const L)
 {
-  sockaddr_all__t *a;
-  sockaddr_all__t *b;
-  
-  a = luaL_checkudata(L,1,TYPE_ADDR);
-  b = luaL_checkudata(L,2,TYPE_ADDR);
-  
-  if (a->sa.sa_family < b->sa.sa_family)
-  {
-    lua_pushboolean(L,true);
-    return 1;
-  }
-  
-  if (memcmp(Inet_address(a),Inet_address(b),Inet_addrlen(a)) < 0)
-  {
-    lua_pushboolean(L,true);
-    return 1;
-  }
-  
-  lua_pushboolean(L,Inet_port(a) < Inet_port(b));
+  lua_pushboolean(L,Inet_comp(
+          luaL_checkudata(L,1,TYPE_ADDR),
+          luaL_checkudata(L,2,TYPE_ADDR)) < 0);
   return 1;
 }
 
@@ -1840,25 +1839,9 @@ static int addrlua___lt(lua_State *const L)
 
 static int addrlua___le(lua_State *const L)
 {
-  sockaddr_all__t *a;
-  sockaddr_all__t *b;
-  
-  a = luaL_checkudata(L,1,TYPE_ADDR);
-  b = luaL_checkudata(L,2,TYPE_ADDR);
-  
-  if (a->sa.sa_family <= b->sa.sa_family)
-  {
-    lua_pushboolean(L,true);
-    return 1;
-  }
-  
-  if (memcmp(Inet_address(a),Inet_address(b),Inet_addrlen(a)) <= 0)
-  {
-    lua_pushboolean(L,true);
-    return 1;
-  }
-  
-  lua_pushboolean(L,Inet_port(a) <= Inet_port(b));
+  lua_pushboolean(L,Inet_comp(
+          luaL_checkudata(L,1,TYPE_ADDR),
+          luaL_checkudata(L,2,TYPE_ADDR)) <= 0);
   return 1;
 }
 
