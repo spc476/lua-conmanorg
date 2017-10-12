@@ -1675,7 +1675,18 @@ static int addrmeta_display(lua_State *const L)
   return 1;
 }
 
-/***********************************************************************/
+/**************************************************************************
+*
+* Why do we use a function, and not just use the table?  Because I want to
+* be able to do:
+*
+*	family = address.family
+*
+* If we set __index to the metatable, then we return the function that this
+* represents, not the actual family.  Thus, we check for fields and return
+* the appropriate information.
+*
+***************************************************************************/
 
 static int addrlua___index(lua_State *const L)
 {
