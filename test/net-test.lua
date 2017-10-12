@@ -41,7 +41,7 @@ address_test {
 	port         = 'domain',
 	iport        = 53,
 	len          = 4,
-	tostring     = "ip:127.0.0.1:53",
+	tostring     = "127.0.0.1:53",
 	display      = "127.0.0.1:53",
 	display_port = "127.0.0.1"
 }
@@ -55,7 +55,7 @@ address_test {
 	port         = 33333,
 	iport        = 33333,
 	len          = 4,
-	tostring     = "ip:127.0.0.1:33333",
+	tostring     = "127.0.0.1:33333",
 	display      = "127.0.0.1:33333",
 	display_port = "127.0.0.1",
 }
@@ -68,7 +68,7 @@ address_test {
 	proto        = 'ospf',
 	iport        = 89,
 	len          = 4,
-	tostring     = "ip:127.0.0.1:89",
+	tostring     = "127.0.0.1:89",
 	display      = "127.0.0.1:89",
 	display_port = "127.0.0.1",
 }
@@ -82,7 +82,7 @@ address_test {
 	port         = 'domain',
 	iport        = 53,
 	len          = 16,
-	tostring     = "ip6:[fc00::c0ff:eeba:d015:dead:beef]:53",
+	tostring     = "[fc00::c0ff:eeba:d015:dead:beef]:53",
 	display      = "[fc00::c0ff:eeba:d015:dead:beef]:53",
 	display_port = "[fc00::c0ff:eeba:d015:dead:beef]",
 }
@@ -96,7 +96,7 @@ address_test {
 	port         = 33333,
 	iport        = 33333,
 	len          = 16,
-	tostring     = "ip6:[fc00::c0ff:eeba:d015:dead:beef]:33333",
+	tostring     = "[fc00::c0ff:eeba:d015:dead:beef]:33333",
 	display      = "[fc00::c0ff:eeba:d015:dead:beef]:33333",
 	display_port = "[fc00::c0ff:eeba:d015:dead:beef]",
 }
@@ -109,7 +109,7 @@ address_test {
 	proto        = 'ospf',
 	iport        = 89,
 	len          = 16,
-	tostring     = "ip6:[fc00::c0ff:eeba:d015:dead:beef]:89",
+	tostring     = "[fc00::c0ff:eeba:d015:dead:beef]:89",
 	display      = "[fc00::c0ff:eeba:d015:dead:beef]:89",
 	display_port = "[fc00::c0ff:eeba:d015:dead:beef]",
 }
