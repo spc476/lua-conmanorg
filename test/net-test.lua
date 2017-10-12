@@ -168,8 +168,8 @@ local list2 =
   net.address('fc00::1','udp',33),
 }
   
-table.remove(list1)
-table.remove(list2)
+table.remove(list1) -- because the last call to net.address() fills in the
+table.remove(list2) -- last slot with 0.  So remove that 0.
 table.sort(list1)
 
 assert(compare_lists(list1,list2))
