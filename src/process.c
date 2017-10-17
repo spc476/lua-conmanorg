@@ -145,7 +145,7 @@ static int proclua_getpgid(lua_State *const L)
 static int proclua_setpgrp(lua_State *const L)
 {
   errno = 0;
-  setpgrp();
+  setpgid(0,0);
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
@@ -155,7 +155,7 @@ static int proclua_setpgrp(lua_State *const L)
 
 static int proclua_getpgrp(lua_State *const L)
 {
-  pid_t id = getpgrp();
+  pid_t id = getpgid(0);
   
   if (id == -1)
   {
