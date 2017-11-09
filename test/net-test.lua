@@ -1,5 +1,7 @@
 
-net = require "org.conman.net"
+-- luacheck: ignore 611
+
+local net = require "org.conman.net"
 
 local function compare_lists(a,b)
   if (#a ~= #b) then return false end
@@ -124,7 +126,7 @@ address_test {
 
 io.stdout:write("\ttesting address ordering ... ")
 
-local list1 = 
+local list1 =
 {
   net.address('192.168.1.10','udp',3333),
   net.address('192.168.1.10','udp',2222),

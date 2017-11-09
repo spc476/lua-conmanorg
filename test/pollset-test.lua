@@ -1,3 +1,4 @@
+-- luacheck: ignore 611 411
 
 local fsys    = require "org.conman.fsys"
 local pollset = require "org.conman.pollset"
@@ -6,8 +7,8 @@ local pollset = require "org.conman.pollset"
 -- create some data to schlep around, and a pipe to select upon
 -- -------------------------------------------------------------
 
-data = string.rep(" ",256)
-pipe = fsys.pipe()
+local data = string.rep(" ",256)
+local pipe = fsys.pipe()
 pipe.read:setvbuf('no')
 pipe.write:setvbuf('no')
 
@@ -17,7 +18,7 @@ pipe.write:setvbuf('no')
 
 io.stdout:write("Testing minimal (select) level of support\n")
 io.stdout:write("\ttesting type of implementation ... ")
-do
+local set do
 	set     = pollset()
 	assert(set._implementation)
 	io.stdout:write("GO!\n")

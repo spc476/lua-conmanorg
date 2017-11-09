@@ -9,13 +9,15 @@ if not child then
   os.exit(1)
 end
 
+local info
+
 if child == 0 then
   signal.catch('int')
   local left = clock.sleep(2)
   if left >= 0.9 and left <= 1.0 then
     process.exit(0)
   else
-    proess.exit(1)
+    process.exit(1)
   end
 else
   clock.sleep(1)
@@ -24,4 +26,3 @@ else
 end
 
 assert(info.rc == 0)
-  
