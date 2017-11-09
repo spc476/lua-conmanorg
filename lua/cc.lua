@@ -18,7 +18,7 @@
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- ********************************************************************
--- luacheck: globals encap CACHE compile
+-- luacheck: globals encap CACHE compile package.ccpath
 -- luacheck: ignore 611
 
 local _VERSION     = _VERSION
