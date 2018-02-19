@@ -38,6 +38,7 @@ ifeq ($(UNAME),Darwin)
   CC      = gcc -std=c99
   CFLAGS  = -g -Wall -Wextra -pedantic
   LDFLAGS = -g -bundle -undefined dynamic_lookup -all_load
+  lib/iconv.so : LDLIBS = -liconv
 endif
 
 override CFLAGS += -fPIC
