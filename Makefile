@@ -25,13 +25,15 @@ ifeq ($(UNAME),Linux)
   CC      = gcc -std=c99
   CFLAGS  = -g -Wall -Wextra -pedantic
   LDFLAGS = -g -shared
+  lib/clock.so : LDLIBS = -lrt
 endif
 
 ifeq ($(UNAME),SunOS)
   CC      = cc -xc99
   CFLAGS  = -g -mt -m64 -I /usr/sfw/include
   LDFLAGS = -G -xcode=pic32
-  lib/net.so : LDLIBS = -lsocket -lnsl
+  lib/net.so   : LDLIBS = -lsocket -lnsl
+  lib/clock.so : LDLIBS = -lrt
 endif
 
 ifeq ($(UNAME),Darwin)
@@ -101,7 +103,6 @@ lib :
 lib/hash.so    : LDLIBS = -lcrypto
 lib/magic.so   : LDLIBS = -lmagic
 lib/tcc.so     : LDLIBS = -ltcc
-lib/clock.so   : LDLIBS = -lrt
 
 # ===================================================
 
