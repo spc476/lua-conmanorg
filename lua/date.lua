@@ -81,7 +81,6 @@ function fromjulianday(jd)
   local a = jd + 32044
   local b = floor((4 * a + 3) / 146097)
   local c = a - floor((b * 146097) / 4)
-  
   local d = floor((4 * c + 3) / 1461)
   local e = c - floor((1461 * d) / 4)
   local m = floor((5 * e + 2) / 153)
@@ -91,7 +90,6 @@ function fromjulianday(jd)
     month = m + 3 - 12 * floor((m / 10)),
     year  = b * 100 + d - 4800 + floor(m / 10)
   }
-  
 end
 
 -- ************************************************************************
@@ -114,7 +112,6 @@ function dayofweek(date)
   local a = floor((14 - date.month) / 12)
   local y = date.year - a
   local m = date.month + 12 * a - 2
-  
   local d = date.day
           + y
           + floor(y / 4)
@@ -156,4 +153,3 @@ end
 if _VERSION >= "Lua 5.2" then
   return _ENV -- luacheck: ignore
 end
-
