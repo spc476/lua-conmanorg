@@ -173,6 +173,15 @@ static int pollset_lua(lua_State *const L)
 
 /**********************************************************************/
 
+static int polllua___len(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
+  lua_pushinteger(L,set->idx);
+  return 1;
+}
+
+/**********************************************************************/
+
 static int polllua___tostring(lua_State *const L)
 {
   lua_pushfstring(L,"pollset (%p)",lua_touserdata(L,1));
@@ -424,6 +433,15 @@ static int pollset_lua(lua_State *const L)
   
   luaL_getmetatable(L,TYPE_POLL);
   lua_setmetatable(L,-2);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int polllua___len(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
+  lua_pushinteger(L,set->idx);
   return 1;
 }
 
@@ -717,6 +735,15 @@ static int pollset_lua(lua_State *const L)
 
 /**********************************************************************/
 
+static int polllua___len(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
+  lua_pushinteger(L,set->idx);
+  return 1;
+}
+
+/**********************************************************************/
+
 static int polllua___tostring(lua_State *const L)
 {
   lua_pushfstring(L,"pollset (%p)",lua_touserdata(L,1));
@@ -873,6 +900,7 @@ static int polllua_events(lua_State *const L)
 
 static const luaL_Reg m_polllua[] =
 {
+  { "__len"             , polllua___len         } ,
   { "__tostring"        , polllua___tostring    } ,
   { "__gc"              , polllua___gc          } ,
   { "insert"            , polllua_insert        } ,
