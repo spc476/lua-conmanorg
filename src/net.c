@@ -123,6 +123,8 @@ static int      netlua_socketpair       (lua_State *const) __attribute__((nonnul
 static int      netlua_address2         (lua_State *const) __attribute__((nonnull));
 static int      netlua_address          (lua_State *const) __attribute__((nonnull));
 static int      netlua_addressraw       (lua_State *const) __attribute__((nonnull));
+static int      netlua_ntop             (lua_State *const) __attribute__((nonnull));
+static int      netlua_pton             (lua_State *const) __attribute__((nonnull));
 static int      netlua_htons            (lua_State *const) __attribute__((nonnull));
 static int      netlua_htonl            (lua_State *const) __attribute__((nonnull));
 static int      netlua_ntohs            (lua_State *const) __attribute__((nonnull));
@@ -167,6 +169,8 @@ static const luaL_Reg m_net_reg[] =
   { "address2"          , netlua_address2       } ,
   { "address"           , netlua_address        } ,
   { "addressraw"        , netlua_addressraw     } ,
+  { "ntop"              , netlua_ntop           } ,
+  { "pton"              , netlua_pton           } ,
   { "htons"             , netlua_htons          } ,
   { "htonl"             , netlua_htonl          } ,
   { "ntohs"             , netlua_ntohs          } ,
@@ -935,6 +939,48 @@ static int netlua_addressraw(lua_State *const L)
 }
 
 /***********************************************************************/
+
+static int netlua_ntop(lua_State *const L)
+{
+  size_t      rawlen;
+  char const *raw = luaL_checklstring(L,1,&rawlen);
+  char        buff[INET6_ADDRSTRLEN];
+  int         family;
+  
+  if (rawlen == 4)
+    family = AF_INET;
+  else if (rawlen == 16)
+    family = AF_INET6;
+  else
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,EAFNOSUPPORT);
+    return 2;
+  }
+  
+  if (inet_ntop(family,raw,buff,INET6_ADDRSTRLEN) == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushstring(L,buff);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+  
+/***********************************************************************/
+
+static int netlua_pton(lua_State *const L)
+{
+  (void)L;
+  return 0;
+}
+
+/***********************************************************************/  
 
 static int netlua_htons(lua_State *const L)
 {
