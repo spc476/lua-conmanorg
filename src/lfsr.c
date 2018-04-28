@@ -25,11 +25,11 @@
 *	All sequence of bits between 1 and 2^bits are generated
 *	It is very fast.
 *
-        lfsr = require "org.conman.lfsr"
-        rnd8 = lfsr(8[,taps])
-        rnd16 = lfsr(16[,taps])
-        rnd32 = lfsr(32[,taps])
-        rnd32 = lfsr()
+        lfsr  = require "org.conman.lfsr"
+        rnd8  = lfsr( 8[,taps[,seed]])
+        rnd16 = lfsr(16[,taps[,seed]])
+        rnd32 = lfsr(32[,taps[,seed]])
+        rnd32 = lfsr() -- 32, 0xB4000021
 *
 * NOTE: taps for 8b, 16b and 32bs can be found here:
 *	http://users.ece.cmu.edu/~koopman/lfsr/index.html
@@ -66,45 +66,46 @@ static int lfsr(lua_State *L)
 {
   lua_Integer  bits = luaL_optinteger(L,1,32);
   lua_Integer  taps = luaL_optinteger(L,2,0);
-  lua_Integer  seed = 1;
-  FILE        *fp;
+  lua_Integer  seed = luaL_optinteger(L,3,1);
+  lua_Integer  mask;
   
-  fp = fopen("/dev/urandom","rb");
-  if (fp)
+  if (!lua_isnumber(L,3))
   {
-    fread(&seed,sizeof(seed),1,fp);
-    fclose(fp);
+    FILE *fp = fopen("/dev/urandom","rb");
+    
+    if (fp)
+    {
+      fread(&seed,sizeof(seed),1,fp);
+      fclose(fp);
+    }
+    
+    if (seed == 0) seed++;
   }
   
-  if (seed == 0) seed++;
-
   switch(bits)
   {
     case 8:
          if (taps == 0) taps = 0xB4; /* Pitfall! */
-         lua_pushinteger(L,0xFF);
-         lua_pushinteger(L,taps);
-         lua_pushinteger(L,seed);
+         mask = 0xFF;
          break;
          
     case 16:
          if (taps == 0) taps = 0xB400; /* more Pitfall! */
-         lua_pushinteger(L,0xFFFF);
-         lua_pushinteger(L,taps);
-         lua_pushinteger(L,seed);
+         mask = 0xFFFF;
          break;
          
     case 32:
          if (taps == 0) taps = 0xB4000021;
-         lua_pushinteger(L,0xFFFFFFFF);
-         lua_pushinteger(L,taps);
-         lua_pushinteger(L,seed);
+         mask = 0xFFFFFFFF;
          break;
          
     default:
          assert(0);
   }
   
+  lua_pushinteger(L,mask);
+  lua_pushinteger(L,taps);
+  lua_pushinteger(L,seed);
   lua_pushcclosure(L,lfsrnext,3);
   return 1;
 }
