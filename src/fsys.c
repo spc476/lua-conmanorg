@@ -891,8 +891,10 @@ static int fsys_pipe(lua_State *L)
     return 2;
   }
   
-  readp->f  = fpr;
-  writep->f = fpw;
+  readp->f       = fpr;
+  readp->closef  = fsyslib_close;
+  writep->f      = fpw;
+  writep->closef = fsyslib_close;
   
   lua_pushinteger(L,0);
   return 2;
