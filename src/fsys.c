@@ -36,6 +36,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#include <syslog.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -940,7 +941,88 @@ static int getfh(lua_State *const L,int idx)
 
 /***********************************************************************/
 
-static int fsys_dup(lua_State *L)
+static int fsys_duplicate(lua_State *L)
+{
+  /*-----------------------------------------------------------------------
+  ; XXX - think about how I want to handle this.  If I give a socket, this
+  ; doesn't do what I want it to do.  I want a socket back, but how to do
+  ; that without undue tying to the org.conman.net module?
+  ;------------------------------------------------------------------------*/
+  
+  if (lua_isuserdata(L,1))
+  {
+    int new = dup(getfh(L,1));
+    if (new == -1)
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,errno);
+    }
+    else
+    {
+#if LUA_VERSION_NUM == 501
+      FILE **pfp;
+      FILE  *fp;
+      
+      fp = fdopen(new,luaL_checkstring(L,2));
+      if (fp == NULL)
+      {
+        close(new);
+        lua_pushnil(L);
+        lua_pushinteger(L,errno);
+        return 2;
+      }
+      
+      pfp = lua_newuserdata(L,sizeof(FILE *));
+      luaL_getmetatable(L,LUA_FILEHANDLE);
+      lua_setmetatable(L,-2);
+      lua_pushcfunction(L,fsyslib_close);
+      lua_setfield(L,-2,"__close");
+      lua_setfenv(L,-2);
+      *pfp = fp;
+      lua_pushinteger(L,0);
+#else
+      FILE        *fp;
+      luaL_Stream *ps
+      
+      fp = fdopen(new,luaL_cheskstring(L,2));
+      if (fp == NULL)
+      {
+        close(new);
+        lua_pushnil(L);
+        lua_pushinteger(L,errno);
+        return 2;
+      }
+      
+      ps         = lua_newuserdata(L,sizeof(luaL_Stream));
+      ps->f      = fp;
+      ps->closef = fsyslib_close;
+      luaL_getmetatable(L,LUA_FILEHANDLE);
+      lua_setmetatable(L,-2);
+      lua_pushinteger(L,0);
+#endif
+    }
+  }
+  else
+  {
+    int new  = dup(luaL_checkinteger(L,1));
+    if (new == -1)
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,errno);
+    }
+    else
+    {
+      lua_pushinteger(L,new);
+      lua_pushinteger(L,errno);
+    }
+  }
+  
+  return 2;
+}
+
+/***********************************************************************/
+
+static int fsys_redirect(lua_State *L)
 {
   int orig;
   int copy;
@@ -964,6 +1046,14 @@ static int fsys_dup(lua_State *L)
 }
 
 /**************************************************************************/
+
+static int fsys_dup(lua_State *L)
+{
+  syslog(LOG_WARNING,"org.conman.fsys.dup() obsolete; use org.conman.fsys.redirect() instead");
+  return fsys_redirect(L);
+}
+
+/***********************************************************************/
 
 static int fsys_isfile(lua_State *L)
 {
@@ -1198,37 +1288,39 @@ static int fsys_pathconf(lua_State *L)
 
 static const struct luaL_Reg reg_fsys[] =
 {
-  { "symlink"   , fsys_symlink  } ,
-  { "link"      , fsys_link     } ,
-  { "readlink"  , fsys_readlink } ,
-  { "mknod"     , fsys_mknod    } ,
-  { "mkfifo"    , fsys_mkfifo   } ,
-  { "mkdir"     , fsys_mkdir    } ,
-  { "rmdir"     , fsys_rmdir    } ,
-  { "utime"     , fsys_utime    } ,
-  { "stat"      , fsys_stat     } ,
-  { "lstat"     , fsys_lstat    } ,
-  { "umask"     , fsys_umask    } ,
-  { "chmod"     , fsys_chmod    } ,
-  { "access"    , fsys_access   } ,
-  { "opendir"   , fsys_opendir  } ,
-  { "chroot"    , fsys_chroot   } ,
-  { "chdir"     , fsys_chdir    } ,
-  { "getcwd"    , fsys_getcwd   } ,
-  { "dir"       , fsys_dir      } ,
-  { "_safename" , fsys__safename} ,
-  { "basename"  , fsys_basename } ,
-  { "dirname"   , fsys_dirname  } ,
-  { "openfd"    , fsys_openfd   } ,
-  { "pipe"      , fsys_pipe     } ,
-  { "dup"       , fsys_dup      } ,
-  { "isfile"    , fsys_isfile   } ,
-  { "fnmatch"   , fsys_fnmatch  } ,
-  { "expand"    , fsys_expand   } ,
-  { "gexpand"   , fsys_gexpand  } ,
-  { "fileno"    , fsys_fileno   } ,
-  { "pathconf"  , fsys_pathconf } ,
-  { NULL        , NULL          }
+  { "symlink"   , fsys_symlink   } ,
+  { "link"      , fsys_link      } ,
+  { "readlink"  , fsys_readlink  } ,
+  { "mknod"     , fsys_mknod     } ,
+  { "mkfifo"    , fsys_mkfifo    } ,
+  { "mkdir"     , fsys_mkdir     } ,
+  { "rmdir"     , fsys_rmdir     } ,
+  { "utime"     , fsys_utime     } ,
+  { "stat"      , fsys_stat      } ,
+  { "lstat"     , fsys_lstat     } ,
+  { "umask"     , fsys_umask     } ,
+  { "chmod"     , fsys_chmod     } ,
+  { "access"    , fsys_access    } ,
+  { "opendir"   , fsys_opendir   } ,
+  { "chroot"    , fsys_chroot    } ,
+  { "chdir"     , fsys_chdir     } ,
+  { "getcwd"    , fsys_getcwd    } ,
+  { "dir"       , fsys_dir       } ,
+  { "_safename" , fsys__safename } ,
+  { "basename"  , fsys_basename  } ,
+  { "dirname"   , fsys_dirname   } ,
+  { "openfd"    , fsys_openfd    } ,
+  { "pipe"      , fsys_pipe      } ,
+  { "dup"       , fsys_dup       } ,
+  { "duplicate" , fsys_duplicate } ,
+  { "redirect"  , fsys_redirect  } ,
+  { "isfile"    , fsys_isfile    } ,
+  { "fnmatch"   , fsys_fnmatch   } ,
+  { "expand"    , fsys_expand    } ,
+  { "gexpand"   , fsys_gexpand   } ,
+  { "fileno"    , fsys_fileno    } ,
+  { "pathconf"  , fsys_pathconf  } ,
+  { NULL        , NULL           }
 };
 
 static const luaL_Reg m_dir_meta[] =
