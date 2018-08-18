@@ -93,6 +93,7 @@ all : lib		\
 	lib/clock.so	\
 	lib/ptscore.so	\
 	lib/lfsr.so     \
+	lib/exit.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -133,6 +134,7 @@ install : all
 	$(INSTALL_PROGRAM) lib/clock.so   $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/ptscore.so $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/lfsr.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/exit.so    $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_DATA)    lua/*.lua      $(DESTDIR)$(LUADIR)/org/conman	
 	$(INSTALL_DATA)    lua/dns/*.lua  $(DESTDIR)$(LUADIR)/org/conman/dns
 	$(INSTALL_DATA)    lua/zip/*.lua  $(DESTDIR)$(LUADIR)/org/conman/zip
