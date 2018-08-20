@@ -94,6 +94,7 @@ all : lib		\
 	lib/ptscore.so	\
 	lib/lfsr.so     \
 	lib/exit.so	\
+	lib/tls.so	\
 	build/bin2c
 
 build/bin2c : build/bin2c.c
@@ -105,6 +106,15 @@ lib :
 lib/hash.so    : LDLIBS = -lcrypto
 lib/magic.so   : LDLIBS = -lmagic
 lib/tcc.so     : LDLIBS = -ltcc
+
+# If tls.so doesn't compile, adjust the following lines until it does.
+# If your system already comes with libressl/libtls, then just comment
+# out these lines.
+
+SSL := $(HOME)/JAIL
+lib/tls.so : override CFLAGS  += -I$(SSL)/include
+lib/tls.so : override LDFLAGS += -L$(SSL)/lib -Wl,-rpath,$(SSL)/lib
+lib/tls.so : override LDLIBS  += -ltls
 
 # ===================================================
 
@@ -135,6 +145,7 @@ install : all
 	$(INSTALL_PROGRAM) lib/ptscore.so $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/lfsr.so    $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/exit.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/tls.so     $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_DATA)    lua/*.lua      $(DESTDIR)$(LUADIR)/org/conman	
 	$(INSTALL_DATA)    lua/dns/*.lua  $(DESTDIR)$(LUADIR)/org/conman/dns
 	$(INSTALL_DATA)    lua/zip/*.lua  $(DESTDIR)$(LUADIR)/org/conman/zip

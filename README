@@ -470,6 +470,17 @@ org.conman.syslog	Interface to syslog
 	The syslog module can also be called directly:
 		org.conman.syslog('debug',"this is a test")
 
+-------------------------
+
+org.conman.tls		Interface to libtls (from LibreSSL).  This is a full
+			implementation of all the functions in libtls,
+			largely following the C implementation.  Pretty much
+			if you can
+
+				'man tls_some_function'
+
+			You'll find it in this module.
+
 *******************************************************************
 
 Modules written in Lua:
