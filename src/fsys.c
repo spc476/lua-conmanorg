@@ -982,9 +982,9 @@ static int fsys_duplicate(lua_State *L)
       lua_pushinteger(L,0);
 #else
       FILE        *fp;
-      luaL_Stream *ps
+      luaL_Stream *ps;
       
-      fp = fdopen(new,luaL_cheskstring(L,2));
+      fp = fdopen(new,luaL_checkstring(L,2));
       if (fp == NULL)
       {
         close(new);

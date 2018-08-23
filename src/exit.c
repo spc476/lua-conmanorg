@@ -121,7 +121,7 @@ int luaopen_org_conman_exit(lua_State *L)
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.exit",m_reg_exit);
 #else
-  lua_createtable(L,0,(sizeof(m_sysexits / sizeof(struct strint)) - 1);
+  lua_createtable(L,0,(sizeof(m_sysexits) / sizeof(struct strint)) - 1);
 #endif
 
   for (size_t i = 0 ; m_sysexits[i].text != NULL ; i++)

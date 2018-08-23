@@ -424,8 +424,13 @@ static const xlua_Const m_tcflow[] =
 int luaopen_org_conman_ptscore(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_TERMIOS);
-  
+
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.ptscore",m_pts_reg);
+#else
+  luaL_newlib(L,m_pts_reg);
+#endif
+
   xlua_createconst(L,-1,"_iflags", m_iflags);
   xlua_createconst(L,-1,"_oflags", m_oflags);
   xlua_createconst(L,-1,"_cflags", m_cflags);
