@@ -816,17 +816,21 @@ static int polllua_remove(lua_State *const L)
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   int         fh  = luaL_checkinteger(L,2);
   
-  FD_CLR(fh,&set->read);
-  FD_CLR(fh,&set->write);
-  FD_CLR(fh,&set->except);
+  if (FD_ISSET(fh,&set->read) || FD_ISSET(fh,&set->write) || FD_ISSET(fh,&set->except))
+  {
+    FD_CLR(fh,&set->read);
+    FD_CLR(fh,&set->write);
+    FD_CLR(fh,&set->except);
+    
+    lua_pushinteger(L,set->ref);
+    lua_gettable(L,LUA_REGISTRYINDEX);
+    lua_pushinteger(L,fh);
+    lua_pushnil(L);
+    lua_settable(L,-3);
+    
+    set->idx--;
+  }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
-  lua_pushinteger(L,fh);
-  lua_pushnil(L);
-  lua_settable(L,-3);
-  
-  set->idx--;
   lua_pushinteger(L,0);
   return 1;
 }
