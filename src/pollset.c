@@ -829,9 +829,11 @@ static int polllua_remove(lua_State *const L)
     lua_settable(L,-3);
     
     set->idx--;
+    lua_pushinteger(L,0);
   }
-  
-  lua_pushinteger(L,0);
+  else
+    lua_pushinteger(L,EINVAL);
+    
   return 1;
 }
 
