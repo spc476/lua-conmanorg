@@ -21,6 +21,7 @@
 -- luacheck: globals users groups paths
 -- luacheck: ignore 611
 
+local _VERSION     = _VERSION
 local setmetatable = setmetatable
 local tonumber     = tonumber
 
@@ -28,7 +29,11 @@ local fsys = require "org.conman.fsys"
 local io   = require "io"
 local os   = require "os"
 
-module("org.conman.unix")
+if _VERSION == "Lua 5.1" then
+  module("org.conman.unix") -- luacheck: ignore
+else
+  _ENV = {} -- luacheck: ignore
+end
 
 -- ************************************************************************
 
@@ -103,3 +108,7 @@ end
 users  = etcpasswd()
 groups = etcgroup()
 paths  = setmetatable({} , { __index = findexec })
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV -- luacheck: ignore
+end

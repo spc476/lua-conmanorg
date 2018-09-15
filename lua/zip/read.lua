@@ -39,7 +39,7 @@ local zip    = require "org.conman.zip"
 local idiv   = zip.idiv
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.zip.read")
+  module("org.conman.zip.read") -- luacheck: ignore
 else
   _ENV = {} -- luacheck: ignore
 end

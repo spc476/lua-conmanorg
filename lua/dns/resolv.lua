@@ -24,9 +24,15 @@
 local net    = require "org.conman.net"
 local dns    = require "org.conman.dns"
 local math   = require "math"
-local ipairs = ipairs
 
-module("org.conman.dns.resolv")
+local _VERSION = _VERSION
+local ipairs   = ipairs
+
+if _VERSION == "Lua 5.1" then
+  module("org.conman.dns.resolv") -- luacheck: ignore
+else
+  _ENV = {} -- luacheck: ignore
+end
 
 -- ********************************************************************
 
@@ -125,4 +131,10 @@ function address(host)
     end
   end
   return nil
+end
+
+-- ********************************************************************
+
+if _VERSION >= "Lua 5.2" then
+  return _ENV -- luacheck: ignore
 end

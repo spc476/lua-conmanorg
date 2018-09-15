@@ -36,7 +36,7 @@ local table = require "table"
 local math  = require "math"
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.zip")
+  module("org.conman.zip") -- luacheck: ignore
 else
   _ENV = {} -- luacheck: ignore
 end

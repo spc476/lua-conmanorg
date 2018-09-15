@@ -31,7 +31,7 @@ local loadstring
 
 if _VERSION == "Lua 5.1" then
   loadstring = _G.loadstring
-  module("org.conman.debug")
+  module("org.conman.debug") -- luacheck: ignore
 else
   loadstring = load
   _ENV = {} -- luacheck: ignore

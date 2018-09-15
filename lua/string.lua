@@ -31,7 +31,7 @@ local table  = require "table"
 local io     = require "io"
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.string")
+  module("org.conman.string") -- luacheck: ignore
   require "org.conman.strcore"
 else
   _ENV = {} -- luacheck: ignore

@@ -32,7 +32,7 @@ local pairs        = pairs
 local setmetatable = setmetatable
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.cc")
+  module("org.conman.cc") -- luacheck: ignore
 else
   _ENV = {} -- luacheck: ignore
 end
@@ -111,8 +111,11 @@ do
     
     return errmsg
   end
-  
-  table.insert(package.loaders,#package.loaders,loader)
+  if _VERSION == "Lua 5.1" then
+    table.insert(package.loaders,#package.loaders,loader) -- luacheck: ignore
+  else
+    table.insert(packet.serchers,#package.serchers,loader) -- luacheck: ignore
+  end
 end
 
 -- ********************************************************************

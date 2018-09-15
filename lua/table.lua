@@ -33,7 +33,7 @@ local pcall        = pcall
 local getmetatable = getmetatable
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.table")
+  module("org.conman.table") -- luacheck: ignore
 else
   _ENV = {} -- luacheck: ignore
 end

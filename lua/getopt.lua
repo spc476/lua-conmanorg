@@ -32,7 +32,7 @@ local _VERSION = _VERSION
 local type     = type
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.getopt")
+  module("org.conman.getopt") -- luacheck: ignore
 else
   _ENV = {} -- luacheck: ignore
 end
