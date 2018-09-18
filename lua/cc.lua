@@ -32,9 +32,9 @@ local pairs        = pairs
 local setmetatable = setmetatable
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.cc") -- luacheck: ignore
+  module("org.conman.cc")
 else
-  _ENV = {} -- luacheck: ignore
+  _ENV = {}
 end
 
 package.ccpath = "/usr/loca/share/lua/5.1/?.c;/usr/local/lib/lua/5.1/?.c"
@@ -112,9 +112,9 @@ do
     return errmsg
   end
   if _VERSION == "Lua 5.1" then
-    table.insert(package.loaders,#package.loaders,loader) -- luacheck: ignore
+    table.insert(package.loaders,#package.loaders,loader)
   else
-    table.insert(packet.serchers,#package.serchers,loader) -- luacheck: ignore
+    table.insert(package.searchers,#package.searchers,loader)
   end
 end
 
@@ -230,5 +230,5 @@ function compile(fname,code,isfile,defines)
 end
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV -- luacheck: ignore
+  return _ENV
 end

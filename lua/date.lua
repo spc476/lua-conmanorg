@@ -26,9 +26,9 @@ local floor    = math.floor
 local os       = os
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.date") -- luacheck: ignore
+  module("org.conman.date")
 else
-  _ENV = {} -- luacheck: ignore
+  _ENV = {}
 end
 
 -- *********************************************************************
@@ -151,5 +151,5 @@ end
 -- ************************************************************************
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV -- luacheck: ignore
+  return _ENV
 end

@@ -29,9 +29,9 @@ local _VERSION = _VERSION
 local ipairs   = ipairs
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.dns.resolv") -- luacheck: ignore
+  module("org.conman.dns.resolv")
 else
-  _ENV = {} -- luacheck: ignore
+  _ENV = {}
 end
 
 -- ********************************************************************
@@ -136,5 +136,5 @@ end
 -- ********************************************************************
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV -- luacheck: ignore
+  return _ENV
 end

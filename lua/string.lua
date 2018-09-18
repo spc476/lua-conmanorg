@@ -31,10 +31,10 @@ local table  = require "table"
 local io     = require "io"
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.string") -- luacheck: ignore
+  module("org.conman.string")
   require "org.conman.strcore"
 else
-  _ENV = {} -- luacheck: ignore
+  _ENV = {}
   local x   = require "org.conman.strcore"
   wrapt     = x.wrapt
   metaphone = x.metaphone
@@ -94,5 +94,5 @@ function wrap(s,margin,lead)
 end
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV -- luacheck: ignore
+  return _ENV
 end

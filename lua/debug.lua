@@ -31,10 +31,10 @@ local loadstring
 
 if _VERSION == "Lua 5.1" then
   loadstring = _G.loadstring
-  module("org.conman.debug") -- luacheck: ignore
+  module("org.conman.debug")
 else
   loadstring = load
-  _ENV = {} -- luacheck: ignore
+  _ENV = {}
 end
 
 EDITOR = os.getenv("VISUAL") or os.getenv("EDITOR") or "/bin/vi"
@@ -177,5 +177,5 @@ end
 -- ********************************************************************
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV -- luacheck: ignore
+  return _ENV
 end

@@ -30,9 +30,9 @@ local io   = require "io"
 local os   = require "os"
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.unix") -- luacheck: ignore
+  module("org.conman.unix")
 else
-  _ENV = {} -- luacheck: ignore
+  _ENV = {}
 end
 
 -- ************************************************************************
@@ -110,5 +110,5 @@ groups = etcgroup()
 paths  = setmetatable({} , { __index = findexec })
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV -- luacheck: ignore
+  return _ENV
 end

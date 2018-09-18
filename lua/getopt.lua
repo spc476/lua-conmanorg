@@ -32,9 +32,9 @@ local _VERSION = _VERSION
 local type     = type
 
 if _VERSION == "Lua 5.1" then
-  module("org.conman.getopt") -- luacheck: ignore
+  module("org.conman.getopt")
 else
-  _ENV = {} -- luacheck: ignore
+  _ENV = {}
 end
 
 local SHORT_OPT = 1
@@ -146,5 +146,5 @@ end
 -- ***********************************************************************
 
 if _VERSION >= "Lua 5.2" then
-  return _ENV -- luacheck: ignore
+  return _ENV
 end
