@@ -712,6 +712,7 @@ static int netlua_address2(lua_State *const L)
 {
   struct addrinfo  hints;
   struct addrinfo *results;
+  struct addrinfo *addrloop;
   const char      *hostname;
   const char      *family;
   int              protocol;
@@ -802,15 +803,17 @@ static int netlua_address2(lua_State *const L)
   if ((port != NULL) && (protocol == 0))
     protocol = IPPROTO_TCP;
     
-  for (int i = 1 ; results != NULL ; results = results->ai_next)
+  addrloop = results;
+  
+  for (int i = 1 ; addrloop != NULL ; addrloop = addrloop->ai_next)
   {
-    if (results->ai_protocol == protocol)
+    if (addrloop->ai_protocol == protocol)
     {
       lua_pushinteger(L,i);
       sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
       luaL_getmetatable(L,TYPE_ADDR);
       lua_setmetatable(L,-2);
-      memcpy(&addr->sa,results->ai_addr,results->ai_addrlen);
+      memcpy(&addr->sa,addrloop->ai_addr,addrloop->ai_addrlen);
       lua_settable(L,-3);
       i++;
     }
