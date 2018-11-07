@@ -792,31 +792,16 @@ static int netlua_address2(lua_State *const L)
     return 2;
   }
   
-  /*-----------------------------------------------------------------
-  ; getaddrinfo() returns addresses that can use used by bind(), connect(),
-  ; etc.  If a protocol isn't specified, it will return multiple addresses
-  ; (say, one for TCP, one for UDP, one just an address) when really we only
-  ; need one.  To determine which ne need, if port is not NULL but protocol
-  ; == 0, then set protocol = IPROTO_TCP.  This will filter out the results
-  ;-----------------------------------------------------------------------*/
-  
-  if ((port != NULL) && (protocol == 0))
-    protocol = IPPROTO_TCP;
-    
   addrloop = results;
   
-  for (int i = 1 ; addrloop != NULL ; addrloop = addrloop->ai_next)
+  for (int i = 1 ; addrloop != NULL ; addrloop = addrloop->ai_next , i++)
   {
-    if (addrloop->ai_protocol == protocol)
-    {
-      lua_pushinteger(L,i);
-      sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-      luaL_getmetatable(L,TYPE_ADDR);
-      lua_setmetatable(L,-2);
-      memcpy(&addr->sa,addrloop->ai_addr,addrloop->ai_addrlen);
-      lua_settable(L,-3);
-      i++;
-    }
+    lua_pushinteger(L,i);
+    sockaddr_all__t *addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
+    luaL_getmetatable(L,TYPE_ADDR);
+    lua_setmetatable(L,-2);
+    memcpy(&addr->sa,addrloop->ai_addr,addrloop->ai_addrlen);
+    lua_settable(L,-3);
   }
   
   freeaddrinfo(results);
