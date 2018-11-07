@@ -1891,7 +1891,9 @@ static int addrlua___len(lua_State *const L)
 
 static int net_toproto(lua_State *const L,const int idx)
 {
-  if (lua_isnumber(L,idx))
+  if (lua_isnil(L,idx))
+    return 0;
+  else if (lua_isnumber(L,idx))
     return lua_tointeger(L,idx);
   else if (lua_isstring(L,idx))
   {
