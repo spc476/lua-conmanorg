@@ -43,6 +43,7 @@ return {
   ['m'] = 'mail',
   ['s'] = 'sound',
   ['x'] = 'xml',
+  ['p'] = 'png',
   [';'] = 'video',
   
   file       = '0',
