@@ -40,7 +40,9 @@ return {
   ['d'] = 'worddoc',
   ['h'] = 'html',
   ['p'] = 'pagelayout',
+  ['P'] = 'PDF',
   ['m'] = 'mail',
+  ['M'] = 'MIME',
   ['s'] = 'sound',
   ['x'] = 'xml',
   ['p'] = 'png',
@@ -68,5 +70,7 @@ return {
   mail       = 'm',
   sound      = 's',
   xml        = 'x',
+  PDF        = 'P',
+  MIME       = 'M',
   video      = ';',
 }
