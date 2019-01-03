@@ -1821,6 +1821,20 @@ static int Ltlstop_unload_file(lua_State *L)
 }
 #endif
 
+#if LIBRESSL_VERSION_NUMBER >= 0x2090000fL
+/**************************************************************************
+* Usage:        cert = tls.default_ca_cert_file()
+* Desc;         Return the name of the default CA cert file
+* Return:       cert (string) name of the default CA cert file
+***************************************************************************/
+
+static int Ltlstop_default_ca_cert_file(lua_State *L)
+{
+  lua_pushstring(L,tls_default_ca_cert_file());
+  return 1;
+}
+#endif
+
 /**************************************************************************/
 
 static luaL_Reg const m_tlsmemmeta[] =
@@ -1959,6 +1973,9 @@ static luaL_Reg const m_tlsreg[] =
   { "server"                    , Ltlstop_server                   } ,
 #if LIBRESSL_VERSION_NUMBER >= 0x2060000fL
   { "unload_file"               , Ltlstop_unload_file              } ,
+#endif
+#if LIBRESSL_VERSION_NUMBER >= 0x2090000fL
+  { "default_ca_cert_file"      , Ltlstop_default_ca_cert_file     } ,
 #endif
   { NULL                        , NULL                             }
 };
