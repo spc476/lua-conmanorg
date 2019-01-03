@@ -1,14 +1,14 @@
 package = "org.conman.const.gopher-types"
-version = "1.0.1-1"
+version = "1.0.2-1"
 
 source =
 {
-  url = "https://raw.github.com/spc476/lua-conmanorg/gopher-types-1.0.1/lua/const/gopher-types.lua"
+  url = "https://raw.github.com/spc476/lua-conmanorg/gopher-types-1.0.2/lua/const/gopher-types.lua"
 }
 
 description =
 {
-  homepage = "https://github.com/spc476/lua-conmanorg/blob/gopher-types-1.0.1/lua/const/gopher-types.lua",
+  homepage = "https://github.com/spc476/lua-conmanorg/blob/gopher-types-1.0.2/lua/const/gopher-types.lua",
   maintainer = "Sean Conner <sean@conman.org>",
   license = "LGPL",
   summary = "Gopher Protocol selector types",
@@ -24,7 +24,7 @@ dependencies =
   "lua",
 }
 
-bulid =
+build =
 {
   type = 'none',
   copy_directories = {},
