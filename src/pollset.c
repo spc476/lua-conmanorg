@@ -23,6 +23,7 @@
 #  define __attribute__(x)
 #endif
 
+#include <stdlib.h>
 #include <errno.h>
 
 #include <lua.h>
@@ -279,21 +280,29 @@ static int polllua_remove(lua_State *const L)
 
 static int polllua_events(lua_State *const L)
 {
-  pollset__t *set      = luaL_checkudata(L,1,TYPE_POLL);
-  lua_Number  dtimeout = luaL_optnumber(L,2,-1.0);
-  int         timeout;
-  int         count;
-  size_t      idx;
-  int         i;
+  pollset__t         *set      = luaL_checkudata(L,1,TYPE_POLL);
+  lua_Number          dtimeout = luaL_optnumber(L,2,-1.0);
+  struct epoll_event *events   = NULL;
+  int                 timeout;
+  int                 count;
+  size_t              idx;
+  int                 i;
   
   if (dtimeout < 0)
     timeout = -1;
   else
     timeout = (int)(dtimeout * 1000.0);
-    
-  struct epoll_event events[set->idx];
   
-  count = epoll_wait(set->efh,events,set->idx,timeout);
+  if (set->idx > 0)
+  {
+    events = calloc(set->idx,sizeof(struct epoll_event));
+    if (events == NULL)
+      count = -1;
+    else
+      count = epoll_wait(set->efh,events,set->idx,timeout);
+  }
+  else
+    count = 0;
   
   if (count < 0)
   {
@@ -317,6 +326,7 @@ static int polllua_events(lua_State *const L)
   }
   
   lua_pushinteger(L,0);
+  free(events);
   return 2;
 }
 
