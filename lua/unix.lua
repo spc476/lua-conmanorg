@@ -26,6 +26,7 @@ local setmetatable = setmetatable
 local tonumber     = tonumber
 
 local fsys = require "org.conman.fsys"
+local lpeg = require "lpeg"
 local io   = require "io"
 local os   = require "os"
 
@@ -35,79 +36,59 @@ else
   _ENV = {}
 end
 
+local text   = lpeg.C((lpeg.R" ~" - lpeg.P":")^0)
+local number = lpeg.R"09"^1 / tonumber
+
 -- ************************************************************************
 
-local function etcpasswd()
-  local users = {}
+users = {} do
+  local entry = lpeg.Ct(
+                           lpeg.Cg(text,  "userid") * lpeg.P":"
+                         * lpeg.Cg(text,  "passwd") * lpeg.P":"
+                         * lpeg.Cg(number,"uid")    * lpeg.P":"
+                         * lpeg.Cg(number,"gid")    * lpeg.P":"
+                         * lpeg.Cg(text,  "name")   * lpeg.P":"
+                         * lpeg.Cg(text,  "home")   * lpeg.P":"
+                         * lpeg.Cg(text,  "shell")
+                       )
   
-  for line in io.lines('/etc/passwd') do
-    if not line:match "^#" then
-      local next  = line:gmatch "([^:]*):?"
-      local user  = {}
-      
-      user.userid = next()
-      user.passwd = next()
-      user.uid    = tonumber(next())
-      user.gid    = tonumber(next())
-      user.name   = next()
-      user.home   = next()
-      user.shell  = next()
-      
-      users[user.userid] = user
-      users[user.uid]    = user
-    end
+  for line in io.lines("/etc/passwd") do
+    local user         = entry:match(line)
+    users[user.userid] = user
+    users[user.uid]    = user
   end
-  
-  return users
 end
 
 -- *************************************************************************
 
-local function etcgroup()
-  local groups = {}
+groups = {} do
+  local name  = lpeg.C((lpeg.R" ~" - lpeg.S":,")^1)
+  local users = lpeg.Ct(name * (lpeg.P"," * name)^0)
+              + lpeg.P(true) / function() return {} end
+  local entry = lpeg.Ct(
+                           lpeg.Cg(text,  "name")   * lpeg.P":"
+                         * lpeg.Cg(text,  "passwd") * lpeg.P":"
+                         * lpeg.Cg(number,"gid")    * lpeg.P":"
+                         * lpeg.Cg(users, "users")
+                       )
   
-  for line in io.lines('/etc/group') do
-    if not line:match "^#" then
-      local next   = line:gmatch "([^:]*):?"
-      local group  = {}
-      
-      group.name   = next()
-      group.passwd = next()
-      group.gid    = tonumber(next())
-      group.users  = {}
-      
-      local list = next()
-      if list then
-        for user in list:gmatch("([^,]*),?") do
-          group.users[#group.users + 1] = user
-        end
-      end
-      
-      groups[group.name] = group
-      groups[group.gid]  = group
-    end
+  for line in io.lines("/etc/group") do
+    local group = entry:match(line)
+    groups[group.name] = group
+    groups[group.gid]  = group
   end
-  
-  return groups
 end
 
--- *************************************************************************
+-- ************************************************************************
 
-local function findexec(t,k)
-  local paths = os.getenv "PATH"
-  for path in paths:gmatch("([^:]*):?") do
+paths = setmetatable({},{ __index = function(t,k)
+  for path in os.getenv("PATH"):gmatch "[^:]+" do
     if fsys.access(path .. "/" .. k,"X") then
-      t[k] = path .. "/" .. k
+      t[k] = path .. '/' .. k
       return t[k]
     end
   end
-end
-
--- ************************************************************************
-
-users  = etcpasswd()
-groups = etcgroup()
-paths  = setmetatable({} , { __index = findexec })
+end})
 
 if _VERSION >= "Lua 5.2" then
   return _ENV
