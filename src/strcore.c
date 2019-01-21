@@ -40,11 +40,8 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define DEF_MARGIN      78
-
 /************************************************************************/
 
-static int      strcore_wrapt           (lua_State *const);
 static int      strcore_metaphone       (lua_State *const);
 static int      strcore_soundex         (lua_State *const);
 static int      strcore_compare         (lua_State *const);
@@ -54,7 +51,6 @@ static int      strcore_comparen        (lua_State *const);
 
 static const luaL_Reg m_strcore_reg[] =
 {
-  { "wrapt"     , strcore_wrapt         } ,
   { "metaphone" , strcore_metaphone     } ,
   { "soundex"   , strcore_soundex       } ,
   { "compare"   , strcore_compare       } ,
@@ -71,70 +67,6 @@ int luaopen_org_conman_strcore(lua_State *const L)
 #else
   luaL_newlib(L,m_strcore_reg);
 #endif
-  return 1;
-}
-
-/************************************************************************/
-
-static bool find_break_point(
-        size_t     *const restrict pidx,
-        const char *const restrict txt
-)
-{
-  size_t idx;
-  
-  assert(pidx  != NULL);
-  assert(*pidx >  0);
-  assert(txt   != NULL);
-  
-  for (idx = *pidx ; idx ; idx--)
-    if (isspace(txt[idx])) break;
-    
-  if (idx)
-  {
-    *pidx = idx + 1;
-    return true;
-  }
-  
-  return false;
-}
-
-/************************************************************************/
-
-static int strcore_wrapt(lua_State *const L)
-{
-  const char *src;
-  size_t      ssz;
-  size_t      margin;
-  size_t      breakp;
-  int         i;
-  
-  src    = luaL_checklstring(L,1,&ssz);
-  margin = luaL_optinteger(L,2,DEF_MARGIN);
-  breakp = margin;
-  
-  lua_createtable(L,0,0);
-  
-  for (i = 1 ; ssz > breakp ; i++)
-  {
-    if (find_break_point(&breakp,src))
-    {
-      lua_pushinteger(L,i);
-      lua_pushlstring(L,src,breakp - 1);
-      lua_settable(L,-3);
-      
-      src    += breakp;
-      ssz    -= breakp;
-      breakp  = margin;
-    }
-    else
-      break;
-  }
-  
-  lua_pushinteger(L,i);
-  lua_pushlstring(L,src,ssz);
-  lua_settable(L,-3);
-  
   return 1;
 }
 
