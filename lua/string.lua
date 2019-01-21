@@ -22,13 +22,13 @@
 -- luacheck: globals template filetemplate wrap
 -- luacheck: ignore 611
 
+local string   = require "string"
+local table    = require "table"
+local io       = require "io"
+
 local _VERSION = _VERSION
 local require  = require
 local type     = type
-
-local string = require "string"
-local table  = require "table"
-local io     = require "io"
 
 if _VERSION == "Lua 5.1" then
   module("org.conman.string")
@@ -43,6 +43,8 @@ else
   comparen  = x.comparen
 end
 
+-- ********************************************************************
+
 function split(s,delim)
   local results = {}
   delim         = delim or "%:"
@@ -54,6 +56,8 @@ function split(s,delim)
   
   return results
 end
+
+-- ********************************************************************
 
 function template(temp,callbacks,data)
   local function cmd(tag)
@@ -72,12 +76,16 @@ function template(temp,callbacks,data)
   return s
 end
 
+-- ********************************************************************
+
 function filetemplate(temp,callbacks,data)
   local f = io.open(temp,"r")
   local d = f:read("*a")
   f:close()
   return template(d,callbacks,data)
 end
+
+-- ********************************************************************
 
 function wrap(s,margin,lead)
   lead      = lead or ""
@@ -92,6 +100,8 @@ function wrap(s,margin,lead)
   table.insert(res,1,lead)
   return table.concat(res,"\n" .. lead)
 end
+
+-- ********************************************************************
 
 if _VERSION >= "Lua 5.2" then
   return _ENV
