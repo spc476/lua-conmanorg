@@ -21,6 +21,7 @@
 -- luacheck: globals wrapt metaphone compare comparen split
 -- luacheck: globals template filetemplate wrap
 -- luacheck: ignore 611
+-- WARNING: Lua 5.3 or above
 
 local uchar    = require "org.conman.parsers.utf8"
 local lpeg     = require "lpeg"
@@ -28,20 +29,14 @@ local string   = require "string"
 local table    = require "table"
 local io       = require "io"
 
-local _VERSION = _VERSION
 local require  = require
 local type     = type
 
-if _VERSION == "Lua 5.1" then
-  module("org.conman.string")
-  require "org.conman.strcore"
-else
-  _ENV = {}
-  local x   = require "org.conman.strcore"
-  metaphone = x.metaphone
-  compare   = x.compare
-  comparen  = x.comparen
-end
+_ENV = {}
+local x   = require "org.conman.strcore"
+metaphone = x.metaphone
+compare   = x.compare
+comparen  = x.comparen
 
 -- ********************************************************************
 
@@ -184,6 +179,4 @@ end
 
 -- ********************************************************************
 
-if _VERSION >= "Lua 5.2" then
-  return _ENV
-end
+return _ENV
