@@ -43,7 +43,6 @@
 /************************************************************************/
 
 static int      strcore_metaphone       (lua_State *const);
-static int      strcore_soundex         (lua_State *const);
 static int      strcore_compare         (lua_State *const);
 static int      strcore_comparen        (lua_State *const);
 
@@ -52,7 +51,6 @@ static int      strcore_comparen        (lua_State *const);
 static const luaL_Reg m_strcore_reg[] =
 {
   { "metaphone" , strcore_metaphone     } ,
-  { "soundex"   , strcore_soundex       } ,
   { "compare"   , strcore_compare       } ,
   { "comparen"  , strcore_comparen      } ,
   { NULL        , NULL                  }
@@ -67,52 +65,6 @@ int luaopen_org_conman_strcore(lua_State *const L)
 #else
   luaL_newlib(L,m_strcore_reg);
 #endif
-  return 1;
-}
-
-/************************************************************************/
-
-static int strcore_soundex(lua_State *const L)
-{
-  static const char        ignore[] = "AEIOUWYH";
-  static const char *const use[6]   =
-  {
-    "BPFV",
-    "CSKGJQXZ",
-    "DT",
-    "L",
-    "MN",
-    "R"
-  };
-  
-  char        sdx[4];
-  const char *word = luaL_checkstring(L,1);
-  char        c;
-  char        last;
-  size_t      idx;
-  
-  sdx[0] = last   = toupper(*word++);
-  sdx[1] = sdx[2] = sdx[3] = '0';
-  idx    = 1;
-  
-  while((idx < 4) && ((c = toupper(*word++)) != '\0'))
-  {
-    if (strchr(ignore,c) != NULL)
-      continue;
-      
-    for (size_t i = 0 ; i < 6 ; i++)
-    {
-      if (strchr(use[i],c) != NULL)
-      {
-        if (strchr(use[i],last) != NULL)
-          continue;
-        last = c;
-        sdx[idx++] = '1' + i;
-      }
-    }
-  }
-  
-  lua_pushlstring(L,sdx,4);
   return 1;
 }
 

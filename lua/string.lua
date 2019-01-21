@@ -18,7 +18,7 @@
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- ********************************************************************
--- luacheck: globals wrapt metaphone soundex compare comparen split
+-- luacheck: globals wrapt metaphone compare comparen split
 -- luacheck: globals template filetemplate wrap
 -- luacheck: ignore 611
 
@@ -39,7 +39,6 @@ else
   _ENV = {}
   local x   = require "org.conman.strcore"
   metaphone = x.metaphone
-  soundex   = x.soundex
   compare   = x.compare
   comparen  = x.comparen
 end
