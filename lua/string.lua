@@ -89,6 +89,7 @@ local R  = lpeg.R
 local whitespace = P"\t"
                  + P" "
                  + P"\u{1680}" -- Ogham
+                 + P"\u{180E}" -- Mongolian vowel separator
                  + P"\u{2000}" -- en quad
                  + P"\u{2001}" -- em quad
                  + P"\u{2002}" -- en
@@ -99,12 +100,11 @@ local whitespace = P"\t"
                  + P"\u{2008}" -- punctuation
                  + P"\u{2009}" -- thin space
                  + P"\u{200A}" -- hair space
-                 + P"\u{205F}" -- medium mathematical
-                 + P"\u{3000}" -- ideographic
-                 + P"\u{180E}" -- Mongolian vowel separator
                  + P"\u{200B}" -- zero width
                  + P"\u{200C}" -- zero-width nonjoiner
                  + P"\u{200D}" -- zero-width joiner
+                 + P"\u{205F}" -- medium mathematical
+                 + P"\u{3000}" -- ideographic
                  
 local combining  = P"\204"     * R"\128\191"
                  + P"\205"     * R("\128\142","\144\175") -- ignore CGJ
@@ -119,11 +119,11 @@ local shy        = P"\u{00AD}" -- shy hyphen
                  + P"\u{1806}" -- Mongolian TODO soft hyphen
                  
 local hyphen     = P"-"
+                 + P"\u{058A}" -- Armenian
                  + P"\u{2010}" -- hyphen
                  + P"\u{2012}" -- figure dash
                  + P"\u{2013}" -- en-dash
                  + P"\u{2014}" -- em-dash
-                 + P"\u{058A}" -- Armenian
                  + P"\u{2E17}" -- double oblique
                  + P"\u{30FB}" -- Katakana middle dot
                  + P"\u{FE63}" -- small hyphen-minus
