@@ -86,8 +86,8 @@ local Cs = lpeg.Cs
 local P  = lpeg.P
 local R  = lpeg.R
 
-local whitespace = P"\t"
-                 + P" "
+local whitespace = P" "
+                 + P"\t"
                  + P"\u{1680}" -- Ogham
                  + P"\u{180E}" -- Mongolian vowel separator
                  + P"\u{2000}" -- en quad
@@ -155,6 +155,18 @@ function wrapt(s,margin)
       breakhere = i
       resume    = n
       cnt       = cnt + 1
+      
+    -- ---------------------------------------------------------------------
+    -- The difference between soft hyphens and hyphens is that soft hyphens
+    -- are not normally visible unless they're at the end of the line.  So
+    -- soft hyphens don't cound against the glyph count, but do mark a
+    -- potential location for a break.  Regular hyphens do count as a
+    -- character, and also count towards the glyph count.
+    --
+    -- In both cases, we include the character for this line, unlike for
+    -- whitespace.
+    -- ---------------------------------------------------------------------
+    
     elseif ctype == 'shy' then
       if cnt < margin then
         breakhere = n
@@ -166,6 +178,7 @@ function wrapt(s,margin)
         resume    = n
         cnt       = cnt + 1
       end
+      
     elseif ctype == 'char' then
       cnt  = cnt  + 1
     elseif ctype == 'combining' then -- luacheck: ignore
@@ -175,6 +188,16 @@ function wrapt(s,margin)
     elseif ctype == 'bad' then
       assert(false,"bad character")
     end
+    
+    -- ---------------------------------------------------------------------
+    -- If we've past the margin, wrap the line at the previous breakhere
+    -- point.  If there isn't one, just break were we are.  It looks ugly,
+    -- but this line violates our contraints because there are no possible
+    -- breakpoints upon which to break.
+    --
+    -- Soft hypnens are also removed at this point, because they're not
+    -- supposed to be visible unless they're at the end of a line.
+    -- ---------------------------------------------------------------------
     
     if cnt > margin then
       if breakhere then
