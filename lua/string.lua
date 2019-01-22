@@ -28,7 +28,7 @@ local lpeg     = require "lpeg"
 local string   = require "string"
 local table    = require "table"
 local io       = require "io"
-
+local print = print
 local require  = require
 local type     = type
 
@@ -113,8 +113,10 @@ local combining  = P"\204"     * R"\128\191"
                  + P"\239\184" * R"\160\175"
                  
 local ignore     = P"\205\143"
+local shy        = P"\u{00AD}" -- shy hyphen
 
 local chars      = whitespace * lpeg.Cp() * lpeg.Cc'space'
+                 + shy        * lpeg.Cp() * lpeg.Cc'shy'
                  + combining  * lpeg.Cp() * lpeg.Cc'combine'
                  + ignore     * lpeg.Cp() * lpeg.Cc'ignore'
                  + uchar      * lpeg.Cp() * lpeg.Cc'char'
@@ -131,11 +133,14 @@ function wrapt(s,margin)
   
   while i <= #s do
     local n,ctype = chars:match(s,i)
-    
     if ctype == 'space' then
       breakhere = i
       resume    = n
       cnt       = cnt + 1
+    elseif ctype == 'shy' then
+      breakhere = n
+      resume    = n
+      cnt       = cnt + 1 -- shouldn't be visible, but is
     elseif ctype == 'char' then
       cnt  = cnt  + 1
     elseif ctype == 'combining' then -- luacheck: ignore
