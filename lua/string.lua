@@ -28,7 +28,7 @@ local lpeg     = require "lpeg"
 local string   = require "string"
 local table    = require "table"
 local io       = require "io"
-local print = print
+
 local require  = require
 local type     = type
 
@@ -82,8 +82,9 @@ end
 
 -- ********************************************************************
 
-local P = lpeg.P
-local R = lpeg.R
+local Cs = lpeg.Cs
+local P  = lpeg.P
+local R  = lpeg.R
 
 local whitespace = P"\t"
                  + P" "
@@ -113,15 +114,32 @@ local combining  = P"\204"     * R"\128\191"
                  + P"\239\184" * R"\160\175"
                  
 local ignore     = P"\205\143"
+                 
 local shy        = P"\u{00AD}" -- shy hyphen
-
+                 + P"\u{1806}" -- Mongolian TODO soft hyphen
+                 
+local hyphen     = P"-"
+                 + P"\u{2010}" -- hyphen
+                 + P"\u{2012}" -- figure dash
+                 + P"\u{2013}" -- en-dash
+                 + P"\u{2014}" -- em-dash
+                 + P"\u{058A}" -- Armenian
+                 + P"\u{2E17}" -- double oblique
+                 + P"\u{30FB}" -- Katakana middle dot
+                 + P"\u{FE63}" -- small hyphen-minus
+                 + P"\u{FF0D}" -- fullwidth hyphen-minus
+                 + P"\u{FF65}" -- halfwidth Katakana middle dot
+                 
 local chars      = whitespace * lpeg.Cp() * lpeg.Cc'space'
                  + shy        * lpeg.Cp() * lpeg.Cc'shy'
+                 + hyphen     * lpeg.Cp() * lpeg.Cc'hyphen'
                  + combining  * lpeg.Cp() * lpeg.Cc'combine'
                  + ignore     * lpeg.Cp() * lpeg.Cc'ignore'
                  + uchar      * lpeg.Cp() * lpeg.Cc'char'
                  +              lpeg.Cp() * lpeg.Cc'bad'
                  
+local remshy     = Cs((shy * #P(1)/ "" + P(1))^0) -- keep last soft hyphen
+
 function wrapt(s,margin)
   local res       = {}
   local front     = 1
@@ -138,9 +156,16 @@ function wrapt(s,margin)
       resume    = n
       cnt       = cnt + 1
     elseif ctype == 'shy' then
-      breakhere = n
-      resume    = n
-      cnt       = cnt + 1 -- shouldn't be visible, but is
+      if cnt < margin then
+        breakhere = n
+        resume    = n
+      end
+    elseif ctype == 'hyphen' then
+      if cnt < margin then
+        breakhere = n
+        resume    = n
+        cnt       = cnt + 1
+      end
     elseif ctype == 'char' then
       cnt  = cnt  + 1
     elseif ctype == 'combining' then -- luacheck: ignore
@@ -151,12 +176,19 @@ function wrapt(s,margin)
       assert(false,"bad character")
     end
     
-    if cnt >= margin and breakhere then
-      table.insert(res,s:sub(front,breakhere - 1))
-      front     = resume
-      i         = resume
-      cnt       = 0
-      breakhere = nil
+    if cnt > margin then
+      if breakhere then
+        table.insert(res,remshy:match(s:sub(front,breakhere - 1)))
+        front     = resume
+        i         = resume
+        cnt       = 0
+        breakhere = nil
+      else
+        table.insert(res,remshy:match(s:sub(front,i - 1)))
+        front     = i
+        cnt       = 0
+        breakhere = nil
+      end
     else
       i = n
     end
