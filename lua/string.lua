@@ -19,7 +19,7 @@
 --
 -- ********************************************************************
 -- luacheck: globals wrapt metaphone compare comparen split
--- luacheck: globals template filetemplate wrap
+-- luacheck: globals template filetemplate wrap safeascii safeutf8
 -- luacheck: ignore 611
 -- WARNING: Lua 5.3 or above
 
@@ -37,6 +37,42 @@ local x   = require "org.conman.strcore"
 metaphone = x.metaphone
 compare   = x.compare
 comparen  = x.comparen
+
+-- ********************************************************************
+
+local function escape(s)
+  return s:gsub(".",function(c)
+    return string.char(string.format("\\%03d",c:byte()))
+  end)
+end
+
+-- ********************************************************************
+
+local C0    = lpeg.P"\a" / "\\a"  -- acutally, only the ones with a
+            + lpeg.P"\b" / "\\b"  -- predefined escpae is here.
+            + lpeg.P"\t" / "\\t"
+            + lpeg.P"\n" / "\\n"
+            + lpeg.P"\v" / "\\v"
+            + lpeg.P"\f" / "\\f"
+            + lpeg.P"\r" / "\\r"
+local ascii = lpeg.P"\\" / "\\\\" -- escape the escape
+            + lpeg.R" ~"
+local other = lpeg.P(1) / escape
+
+local make_ascii_safe = lpeg.Cs((ascii         + C0 + other)^0)
+local make_utf8_safe  = lpeg.Cs((ascii + uchar + C0 + other)^0)
+
+-- ********************************************************************
+
+function safeascii(s)
+  return make_ascii_safe:match(s)
+end
+
+-- ********************************************************************
+
+function safeutf8(s)
+  return make_utf8_safe:match(s)
+end
 
 -- ********************************************************************
 
