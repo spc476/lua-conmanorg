@@ -45,12 +45,12 @@
 #  define lua_getuservalue(state,idx) lua_getfenv((state),(idx))
 #  define lua_setuservalue(state,idx) lua_setfenv((state),(idx))
 #  define luaL_setfuncs(state,reg,_)  luaL_register((state),NULL,(reg))
-#  define luaL_newlib(state,reg)      luaL_register((state),"org.flummux.tls",(reg))
+#  define luaL_newlib(state,reg)      luaL_register((state),"org.conman.tls",(reg))
 #endif
 
-#define TYPE_TLS_CONF   "org.flummux.tls:CONF"
-#define TYPE_TLS        "org.flummux.tls:TLS"
-#define TYPE_LTLS_MEM   "org.flummux.tls:LTLS_MEM"
+#define TYPE_TLS_CONF   "org.conman.tls:CONF"
+#define TYPE_TLS        "org.conman.tls:TLS"
+#define TYPE_TLS_MEM    "org.conman.tls:TLS_MEM"
 
 /**************************************************************************/
 
@@ -234,7 +234,7 @@ static int Ltlsconf_ca_file(lua_State *L)
 
 static int Ltlsconf_ca_mem(lua_State *L)
 {
-  struct Ltlsmem *ca = luaL_checkudata(L,2,TYPE_LTLS_MEM);
+  struct Ltlsmem *ca = luaL_checkudata(L,2,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -290,7 +290,7 @@ static int Ltlsconf_cert_file(lua_State *L)
 
 static int Ltlsconf_cert_mem(lua_State *L)
 {
-  struct Ltlsmem *cert = luaL_checkudata(L,2,TYPE_LTLS_MEM);
+  struct Ltlsmem *cert = luaL_checkudata(L,2,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -448,7 +448,7 @@ static int Ltlsconf_key_file(lua_State *L)
 
 static int Ltlsconf_key_mem(lua_State *L)
 {
-  struct Ltlsmem *key = luaL_checkudata(L,2,TYPE_LTLS_MEM);
+  struct Ltlsmem *key = luaL_checkudata(L,2,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -588,8 +588,8 @@ static int Ltlsconf_keypair_file(lua_State *L)
 
 static int Ltlsconf_keypair_mem(lua_State *L)
 {
-  struct Ltlsmem *cert = luaL_checkudata(L,2,TYPE_LTLS_MEM);
-  struct Ltlsmem *key  = luaL_checkudata(L,3,TYPE_LTLS_MEM);
+  struct Ltlsmem *cert = luaL_checkudata(L,2,TYPE_TLS_MEM);
+  struct Ltlsmem *key  = luaL_checkudata(L,3,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -632,8 +632,8 @@ static int Ltlsconf_add_keypair_file(lua_State *L)
 
 static int Ltlsconf_add_keypair_mem(lua_State *L)
 {
-  struct Ltlsmem *cert = luaL_checkudata(L,2,TYPE_LTLS_MEM);
-  struct Ltlsmem *key  = luaL_checkudata(L,3,TYPE_LTLS_MEM);
+  struct Ltlsmem *cert = luaL_checkudata(L,2,TYPE_TLS_MEM);
+  struct Ltlsmem *key  = luaL_checkudata(L,3,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -695,9 +695,9 @@ static int Ltlsconf_add_keypair_ocsp_file(lua_State *L)
 
 static int Ltlsconf_add_keypair_ocsp_mem(lua_State *L)
 {
-  struct Ltlsmem *cert   = luaL_checkudata(L,2,TYPE_LTLS_MEM);
-  struct Ltlsmem *key    = luaL_checkudata(L,3,TYPE_LTLS_MEM);
-  struct Ltlsmem *staple = luaL_checkudata(L,4,TYPE_LTLS_MEM);
+  struct Ltlsmem *cert   = luaL_checkudata(L,2,TYPE_TLS_MEM);
+  struct Ltlsmem *key    = luaL_checkudata(L,3,TYPE_TLS_MEM);
+  struct Ltlsmem *staple = luaL_checkudata(L,4,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -758,9 +758,9 @@ static int Ltlsconf_keypair_ocsp_file(lua_State *L)
 
 static int Ltlsconf_keypair_ocsp_mem(lua_State *L)
 {
-  struct Ltlsmem *cert   = luaL_checkudata(L,2,TYPE_LTLS_MEM);
-  struct Ltlsmem *key    = luaL_checkudata(L,3,TYPE_LTLS_MEM);
-  struct Ltlsmem *staple = luaL_checkudata(L,4,TYPE_LTLS_MEM);
+  struct Ltlsmem *cert   = luaL_checkudata(L,2,TYPE_TLS_MEM);
+  struct Ltlsmem *key    = luaL_checkudata(L,3,TYPE_TLS_MEM);
+  struct Ltlsmem *staple = luaL_checkudata(L,4,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -813,7 +813,7 @@ static int Ltlsconf_ocsp_staple_file(lua_State *L)
 
 static int Ltlsconf_ocsp_staple_mem(lua_State *L)
 {
-  struct Ltlsmem *staple = luaL_checkudata(L,2,TYPE_LTLS_MEM);
+  struct Ltlsmem *staple = luaL_checkudata(L,2,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -893,7 +893,7 @@ static int Ltlsconf_crl_file(lua_State *L)
 
 static int Ltlsconf_crl_mem(lua_State *L)
 {
-  struct Ltlsmem *crl = luaL_checkudata(L,2,TYPE_LTLS_MEM);
+  struct Ltlsmem *crl = luaL_checkudata(L,2,TYPE_TLS_MEM);
   
   lua_pushboolean(
           L,
@@ -1750,7 +1750,7 @@ static int Ltlstop_client(lua_State *L)
 *               contents into memory.
 * Input:        filename (string) filename to load
 *               password (string/optional) password to decode private key
-* Return:       mem (userdata/LTLSmem) contents of loaded file
+* Return:       mem (userdata/TLSmem) contents of loaded file
 ***************************************************************************/
 
 static int Ltlstop_load_file(lua_State *L)
@@ -1768,7 +1768,7 @@ static int Ltlstop_load_file(lua_State *L)
   if (mem.buf != NULL)
   {
     struct Ltlsmem *pmem = lua_newuserdata(L,sizeof(struct Ltlsmem));
-    luaL_getmetatable(L,TYPE_LTLS_MEM);
+    luaL_getmetatable(L,TYPE_TLS_MEM);
     lua_setmetatable(L,-2);
     *pmem = mem;
   }
@@ -1808,12 +1808,12 @@ static int Ltlstop_server(lua_State *L)
 * Usage:        tls.unload_file(mem)
 * Desc;         Unload a certicate or key (opened via tls.load_file()) from
 *               memory.
-* Input:        mem (userdata/LTLSmem) contented of loaded file
+* Input:        mem (userdata/TLSmem) contented of loaded file
 ***************************************************************************/
 
 static int Ltlstop_unload_file(lua_State *L)
 {
-  struct Ltlsmem *mem = luaL_checkudata(L,1,TYPE_LTLS_MEM);
+  struct Ltlsmem *mem = luaL_checkudata(L,1,TYPE_TLS_MEM);
   tls_unload_file(mem->buf,mem->len);
   mem->buf = NULL;
   mem->len = 0;
@@ -1990,7 +1990,7 @@ int luaopen_org_conman_tls(lua_State *L)
     return 1;
   }
   
-  luaL_newmetatable(L,TYPE_LTLS_MEM);
+  luaL_newmetatable(L,TYPE_TLS_MEM);
   luaL_setfuncs(L,m_tlsmemmeta,0);
   luaL_newmetatable(L,TYPE_TLS_CONF);
   luaL_setfuncs(L,m_tlsconfmeta,0);
