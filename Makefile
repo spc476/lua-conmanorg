@@ -158,5 +158,6 @@ uninstall:
 
 clean:
 	$(RM) $(shell find . -name '*~')
-	$(RM) lib/*
+	$(RM) -r lib/*
 	$(RM) build/bin2c
+	$(RM) -r $(shell find . -name '*.dSYM')
