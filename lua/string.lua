@@ -191,7 +191,6 @@ function wrapt(s,margin)
       breakhere = i
       resume    = n
       cnt       = cnt + 1
-      
     -- ---------------------------------------------------------------------
     -- The difference between soft hyphens and hyphens is that soft hyphens
     -- are not normally visible unless they're at the end of the line.  So
@@ -213,8 +212,16 @@ function wrapt(s,margin)
         breakhere = n
         resume    = n
         cnt       = cnt + 1
+        
+      -- ---------------------------------------------
+      -- This handles the case of a clump of dashes.
+      -- ---------------------------------------------
+
+      elseif cnt == margin then
+        breakhere = i
+        resume    = n
+        cnt       = margin + 1
       end
-      
     elseif ctype == 'char' then
       cnt  = cnt  + 1
     elseif ctype == 'combining' then -- luacheck: ignore
