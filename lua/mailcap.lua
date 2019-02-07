@@ -1,7 +1,7 @@
 -- ************************************************************************
 --
 -- Handle mailcap files
--- Copyright 2012 by Sean Conner.  All Rights Reserved.
+-- Copyright 2019 by Sean Conner.  All Rights Reserved.
 --
 -- This library is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU Lesser General Public License as published by
