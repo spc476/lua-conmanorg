@@ -18,7 +18,7 @@
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- ********************************************************************
--- luacheck: globals wrapt metaphone compare comparen split
+-- luacheck: globals wrapt metaphone compare comparen mksplit split
 -- luacheck: globals template filetemplate wrap safeascii safeutf8
 -- luacheck: ignore 611
 
@@ -81,16 +81,18 @@ end
 
 -- ********************************************************************
 
+function mksplit(delim)
+  delim      = lpeg.P(delim or ':')
+  local char = lpeg.C((lpeg.P(1) - delim)^0)
+  
+  return lpeg.Ct(char * (delim * char)^0)
+end
+
+-- ********************************************************************
+
 function split(s,delim)
-  local results = {}
-  delim         = delim or "%:"
-  local pattern = "([^" .. delim .. "]*)" .. delim .. "?"
-  
-  for segment in string.gmatch(s,pattern) do
-    table.insert(results,segment)
-  end
-  
-  return results
+  local sp = mksplit(delim)
+  return sp:match(s)
 end
 
 -- ********************************************************************
