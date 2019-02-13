@@ -21,7 +21,6 @@
 -- luacheck: globals wrapt metaphone compare comparen split
 -- luacheck: globals template filetemplate wrap safeascii safeutf8
 -- luacheck: ignore 611
--- WARNING: Lua 5.3 or above
 
 local uchar    = require "org.conman.parsers.utf8"
 local lpeg     = require "lpeg"
@@ -29,10 +28,16 @@ local string   = require "string"
 local table    = require "table"
 local io       = require "io"
 
+local _VERSION = _VERSION
 local require  = require
 local type     = type
 
-_ENV = {}
+if _VERSION == "Lua 5.1" then
+  module("org.conman.string")
+else
+  _ENV = {}
+end
+
 local x   = require "org.conman.strcore"
 metaphone = x.metaphone
 compare   = x.compare
@@ -124,23 +129,23 @@ local R  = lpeg.R
 
 local whitespace = P" "
                  + P"\t"
-                 + P"\u{1680}" -- Ogham
-                 + P"\u{180E}" -- Mongolian vowel separator
-                 + P"\u{2000}" -- en quad
-                 + P"\u{2001}" -- em quad
-                 + P"\u{2002}" -- en
-                 + P"\u{2003}" -- em
-                 + P"\u{2004}" -- three-per-em
-                 + P"\u{2005}" -- four-per-em
-                 + P"\u{2006}" -- six-per-em
-                 + P"\u{2008}" -- punctuation
-                 + P"\u{2009}" -- thin space
-                 + P"\u{200A}" -- hair space
-                 + P"\u{200B}" -- zero width
-                 + P"\u{200C}" -- zero-width nonjoiner
-                 + P"\u{200D}" -- zero-width joiner
-                 + P"\u{205F}" -- medium mathematical
-                 + P"\u{3000}" -- ideographic
+                 + P"\225\154\128" -- Ogham
+                 + P"\225\160\142" -- Mongolian vowel separator
+                 + P"\226\128\128" -- en quad
+                 + P"\226\128\129" -- em quad
+                 + P"\226\128\130" -- en
+                 + P"\226\128\131" -- em
+                 + P"\226\128\132" -- three-per-em
+                 + P"\226\128\133" -- four-per-em
+                 + P"\226\128\134" -- six-per-em
+                 + P"\226\128\136" -- punctuation
+                 + P"\226\128\137" -- thin space
+                 + P"\226\128\138" -- hair space
+                 + P"\226\128\139" -- zero width
+                 + P"\226\128\140" -- zero-width nonjoiner
+                 + P"\226\128\141" -- zero-width joiner
+                 + P"\226\129\159" -- medium mathematical
+                 + P"\227\128\128" -- ideographic
                  
 local combining  = P"\204"     * R"\128\191"
                  + P"\205"     * R("\128\142","\144\175") -- ignore CGJ
@@ -151,20 +156,20 @@ local combining  = P"\204"     * R"\128\191"
                  
 local ignore     = P"\205\143"
                  
-local shy        = P"\u{00AD}" -- shy hyphen
-                 + P"\u{1806}" -- Mongolian TODO soft hyphen
+local shy        = P"\194\173"     -- shy hyphen
+                 + P"\225\160\134" -- Mongolian TODO soft hyphen
                  
 local hyphen     = P"-"
-                 + P"\u{058A}" -- Armenian
-                 + P"\u{2010}" -- hyphen
-                 + P"\u{2012}" -- figure dash
-                 + P"\u{2013}" -- en-dash
-                 + P"\u{2014}" -- em-dash
-                 + P"\u{2E17}" -- double oblique
-                 + P"\u{30FB}" -- Katakana middle dot
-                 + P"\u{FE63}" -- small hyphen-minus
-                 + P"\u{FF0D}" -- fullwidth hyphen-minus
-                 + P"\u{FF65}" -- halfwidth Katakana middle dot
+                 + P"\214\138"     -- Armenian
+                 + P"\226\128\144" -- hyphen
+                 + P"\226\128\146" -- figure dash
+                 + P"\226\128\147" -- en-dash
+                 + P"\226\128\148" -- em-dash
+                 + P"\226\184\151" -- double oblique
+                 + P"\227\131\187" -- Katakana middle dot
+                 + P"\239\185\163" -- small hyphen-minus
+                 + P"\239\188\141" -- fullwidth hyphen-minus
+                 + P"\239\189\165" -- halfwidth Katakana middle dot
                  
 local chars      = whitespace * lpeg.Cp() * lpeg.Cc'space'
                  + shy        * lpeg.Cp() * lpeg.Cc'shy'
@@ -282,4 +287,6 @@ end
 
 -- ********************************************************************
 
-return _ENV
+if _VERSION >= "Lua 5.2" then
+  return _ENV
+end
