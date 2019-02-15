@@ -26,9 +26,9 @@
 *	It is very fast.
 *
         lfsr  = require "org.conman.lfsr"
-        rnd8  = lfsr( 8[,taps[,seed]])
-        rnd16 = lfsr(16[,taps[,seed]])
-        rnd32 = lfsr(32[,taps[,seed]])
+        rnd8  = lfsr( 8[,seed[,taps]])
+        rnd16 = lfsr(16[,seed[,taps]])
+        rnd32 = lfsr(32[,seed[,taps]])
         rnd32 = lfsr() -- 32, 0xB4000021
 *
 * NOTE: taps for 8b, 16b and 32bs can be found here:
@@ -65,11 +65,12 @@ static int lfsrnext(lua_State *L)
 static int lfsr(lua_State *L)
 {
   lua_Integer  bits = luaL_optinteger(L,1,32);
-  lua_Integer  taps = luaL_optinteger(L,2,0);
-  lua_Integer  seed = luaL_optinteger(L,3,1);
+  lua_Integer  seed = luaL_optinteger(L,2,1);
+  lua_Integer  taps = luaL_optinteger(L,3,0);
+  
   lua_Integer  mask;
   
-  if (!lua_isnumber(L,3))
+  if (!lua_isnumber(L,2))
   {
     FILE *fp = fopen("/dev/urandom","rb");
     
