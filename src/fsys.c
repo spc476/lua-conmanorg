@@ -578,25 +578,23 @@ static int fsys_dir(lua_State *L)
 
 static int fsys__safename(lua_State *L)
 {
-  const char *old;
-  size_t      len;
+  const char *old = luaL_checkstring(L,1);
+  luaL_Buffer buf;
   
-  old = luaL_checklstring(L,1,&len);
-  char buffer[len + 1];
+  luaL_buffinit(L,&buf);
   
-  for (size_t i = 0 ; i < len ; i++)
+  while(*old)
   {
-    int c;
-    
-    c = old[i];
-    if (c == '.')   { buffer[i] = c; continue; }
-    if (c == '_')   { buffer[i] = c; continue; }
-    if (isdigit(c)) { buffer[i] = c; continue; }
-    if (isalpha(c)) { buffer[i] = c; continue; }
-    buffer[i] = '_';
+    switch(*old)
+    {
+      case '/': luaL_addstring(&buf,"%2F"); break;
+      case '%': luaL_addstring(&buf,"%25"); break;
+      default:  luaL_addchar  (&buf,*old);  break;
+    }
+    old++;
   }
   
-  lua_pushlstring(L,buffer,len);
+  luaL_pushresult(&buf);
   return 1;
 }
 
