@@ -65,12 +65,12 @@ static int lfsrnext(lua_State *L)
 static int lfsr(lua_State *L)
 {
   lua_Integer  bits = luaL_optinteger(L,1,32);
-  lua_Integer  seed = luaL_optinteger(L,2,1);
+  lua_Integer  seed = luaL_optinteger(L,2,0);
   lua_Integer  taps = luaL_optinteger(L,3,0);
   
   lua_Integer  mask;
   
-  if (!lua_isnumber(L,2))
+  if (seed == 0)
   {
     FILE *fp = fopen("/dev/urandom","rb");
     
