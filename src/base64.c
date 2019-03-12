@@ -68,7 +68,7 @@ typedef struct
 
 /************************************************************************/
 
-static const char *const mbase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+static char const *const mbase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                   "abcdefghijklmnopqrstuvwxyz"
                                   "0123456789+/";
                                   
@@ -76,7 +76,7 @@ static const char *const mbase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static int b64meta_encode(lua_State *L)
 {
-  const base64__s *b64;
+  base64__s const *b64;
   uint8_t         *data;
   size_t           size;
   size_t           len;
@@ -161,13 +161,13 @@ static int b64meta_encode(lua_State *L)
 /**********************************************************************/
 
 static bool Ib64_readout(
-        const base64__s  *b64,
+        base64__s const  *b64,
         uint8_t          *pr,
         size_t           *skip,
         const char      **pdata
 )
 {
-  const char *data = *pdata;
+  char const *data = *pdata;
   char       *p;
   
   while(true)
@@ -203,10 +203,10 @@ static bool Ib64_readout(
 /**********************************************************************/
 
 static bool Ib64_readout4(
-        const base64__s  *b64,
+        base64__s const *b64,
         uint8_t          *pr,
         size_t           *skip,
-        const char      **pdata
+        char const     **pdata
 )
 {
   size_t i;
@@ -221,11 +221,11 @@ static bool Ib64_readout4(
 
 static int b64meta_decode(lua_State *L)
 {
-  const base64__s *b64;
-  const char       *data;
-  uint8_t           buf[4];
-  luaL_Buffer       b;
-  size_t            skip;
+  base64__s const *b64;
+  char const      *data;
+  uint8_t          buf[4];
+  luaL_Buffer      b;
+  size_t           skip;
   
   b64  = luaL_checkudata(L,1,TYPE_BASE64);
   data = luaL_checkstring(L,2);
@@ -276,7 +276,7 @@ static int b64lua(lua_State *L)
     if (!lua_isnil(L,-1))
     {
       size_t      size;
-      const char *last = luaL_checklstring(L,-1,&size);
+      char const *last = luaL_checklstring(L,-1,&size);
       if (size != 2) luaL_error(L,"need two characters only");
       b64->transtable[62] = last[0];
       b64->transtable[63] = last[1];
@@ -302,7 +302,7 @@ static int b64lua(lua_State *L)
 
 /**********************************************************************/
 
-static const struct luaL_Reg mb64_meta[] =
+static struct luaL_Reg const mb64_meta[] =
 {
   { "encode"            , b64meta_encode        } ,
   { "decode"            , b64meta_decode        } ,

@@ -61,9 +61,9 @@
 *
 **************************************************************************/
 
-static int magicmeta___call(lua_State *const L)
+static int magicmeta___call(lua_State *L)
 {
-  const char *filedata;
+  char const *filedata;
   magic_t    *pm;
   size_t      size;
   
@@ -82,7 +82,7 @@ static int magicmeta___call(lua_State *const L)
 
 /**************************************************************************/
 
-static int magicmeta___tostring(lua_State *const L)
+static int magicmeta___tostring(lua_State *L)
 {
   lua_pushfstring(L,"magic (%p)",lua_touserdata(L,1));
   return 1;
@@ -90,7 +90,7 @@ static int magicmeta___tostring(lua_State *const L)
 
 /**************************************************************************/
 
-static int magicmeta___gc(lua_State *const L)
+static int magicmeta___gc(lua_State *L)
 {
   magic_close(*(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC));
   return 0;
@@ -106,7 +106,7 @@ static int magicmeta___gc(lua_State *const L)
 *
 ***************************************************************************/
 
-static int magicmeta_error(lua_State *const L)
+static int magicmeta_error(lua_State *L)
 {
   lua_pushstring(L,magic_error(*(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC)));
   return 1;
@@ -125,7 +125,7 @@ static int magicmeta_error(lua_State *const L)
 *
 *************************************************************************/
 
-static const char *m_magic_options[] =
+static char const *m_magic_options[] =
 {
   "debug",
   "symlink",
@@ -140,7 +140,7 @@ static const char *m_magic_options[] =
   NULL
 };
 
-static const int m_magic_flags[] =
+static int const m_magic_flags[] =
 {
   MAGIC_DEBUG,
   MAGIC_SYMLINK,
@@ -156,7 +156,7 @@ static const int m_magic_flags[] =
 
 /*------------------------------------------------------------------------*/
 
-static int magicmeta_flags(lua_State *const L)
+static int magicmeta_flags(lua_State *L)
 {
   magic_t *pm;
   int      flags;
@@ -189,7 +189,7 @@ static int magicmeta_flags(lua_State *const L)
 *
 ***************************************************************************/
 
-static int magicmeta_load(lua_State *const L)
+static int magicmeta_load(lua_State *L)
 {
   int rc = magic_load(
             *(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC),
@@ -214,7 +214,7 @@ static int magicmeta_load(lua_State *const L)
 *
 **************************************************************************/
 
-static int magicmeta_compile(lua_State *const L)
+static int magicmeta_compile(lua_State *L)
 {
   int rc = magic_compile(
             *(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC),
@@ -240,7 +240,7 @@ static int magicmeta_compile(lua_State *const L)
 *
 ***************************************************************************/
 
-static int magicmeta_check(lua_State *const L)
+static int magicmeta_check(lua_State *L)
 {
   int rc = magic_check(
               *(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC),
@@ -262,7 +262,7 @@ static int magicmeta_check(lua_State *const L)
 *
 ***************************************************************************/
 
-static int magicmeta_errno(lua_State *const L)
+static int magicmeta_errno(lua_State *L)
 {
   lua_pushinteger(L,magic_errno(*(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC)));
   return 1;
@@ -270,7 +270,7 @@ static int magicmeta_errno(lua_State *const L)
 
 /**************************************************************************/
 
-static const struct luaL_Reg mmagic_reg_meta[] =
+static struct luaL_Reg const mmagic_reg_meta[] =
 {
   { "__call"            , magicmeta___call      } ,
   { "__tostring"        , magicmeta___tostring  } ,
@@ -287,7 +287,7 @@ static const struct luaL_Reg mmagic_reg_meta[] =
 
 /*************************************************************************/
 
-int luaopen_org_conman_fsys_magic(lua_State *const L)
+int luaopen_org_conman_fsys_magic(lua_State *L)
 {
   magic_t  m;
   magic_t *pm;

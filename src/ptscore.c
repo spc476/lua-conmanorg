@@ -25,8 +25,8 @@
 
 typedef struct xlua_Const
 {
-  const char *const name;
-  const int         value;
+  char const *const name;
+  int  const        value;
 } xlua_Const;
 
 /*************************************************************************/
@@ -46,8 +46,8 @@ int lua_absindex(lua_State *L,int idx)
 static void xlua_createconst(
         lua_State        *L,
         int               idx,
-        const char       *name,
-        const xlua_Const *list
+        char const       *name,
+        xlua_Const const *list
 )
 {
   idx = lua_absindex(L,idx);
@@ -252,7 +252,7 @@ static int pts_read(lua_State *L)
 
 /*************************************************************************/
 
-static const luaL_Reg m_pts_reg[] =
+static luaL_Reg const m_pts_reg[] =
 {
   { "getpt"     , pts_getpt     } ,
   { "grantpt"   , pts_grantpt   } ,
@@ -271,7 +271,7 @@ static const luaL_Reg m_pts_reg[] =
   { NULL        , NULL          }
 };
 
-static const xlua_Const m_iflags[] =
+static xlua_Const const m_iflags[] =
 {
   INT(IGNBRK),
   INT(BRKINT),
@@ -290,7 +290,7 @@ static const xlua_Const m_iflags[] =
   { NULL , 0 }
 };
 
-static const xlua_Const m_oflags[] =
+static xlua_Const const m_oflags[] =
 {
   INT(OPOST),
   INT(OLCUC),
@@ -308,7 +308,7 @@ static const xlua_Const m_oflags[] =
   { NULL , 0 }
 };
 
-static const xlua_Const m_cflags[] =
+static xlua_Const const m_cflags[] =
 {
   INT(CBAUD),
   INT(CBAUDEX),
@@ -331,7 +331,7 @@ static const xlua_Const m_cflags[] =
   { NULL , 0 }
 };
 
-static const xlua_Const m_lflags[] =
+static xlua_Const const m_lflags[] =
 {
   INT(ISIG),
   INT(ICANON),
@@ -367,7 +367,7 @@ static const xlua_Const m_lflags[] =
   { NULL , 0 }
 };
 
-static const xlua_Const m_cc[] =
+static xlua_Const const m_cc[] =
 {
   INT(VINTR),
   INT(VQUIT),
@@ -397,7 +397,7 @@ static const xlua_Const m_cc[] =
   { NULL , 0 }
 };
 
-static const xlua_Const m_setattr[] =
+static xlua_Const const m_setattr[] =
 {
   INT(TCSANOW),
   INT(TCSADRAIN),
@@ -405,7 +405,7 @@ static const xlua_Const m_setattr[] =
   { NULL , 0 }
 };
 
-static const xlua_Const m_tcflush[] =
+static xlua_Const const m_tcflush[] =
 {
   INT(TCIFLUSH),
   INT(TCOFLUSH),
@@ -413,7 +413,7 @@ static const xlua_Const m_tcflush[] =
   { NULL , 0 }
 };
 
-static const xlua_Const m_tcflow[] =
+static xlua_Const const m_tcflow[] =
 {
   INT(TCOOFF),
   INT(TCIOFF),

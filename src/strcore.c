@@ -42,13 +42,13 @@
 
 /************************************************************************/
 
-static int      strcore_metaphone       (lua_State *const);
-static int      strcore_compare         (lua_State *const);
-static int      strcore_comparen        (lua_State *const);
+static int      strcore_metaphone       (lua_State *);
+static int      strcore_compare         (lua_State *);
+static int      strcore_comparen        (lua_State *);
 
 /************************************************************************/
 
-static const luaL_Reg m_strcore_reg[] =
+static luaL_Reg const m_strcore_reg[] =
 {
   { "metaphone" , strcore_metaphone     } ,
   { "compare"   , strcore_compare       } ,
@@ -58,7 +58,7 @@ static const luaL_Reg m_strcore_reg[] =
 
 /************************************************************************/
 
-int luaopen_org_conman_strcore(lua_State *const L)
+int luaopen_org_conman_strcore(lua_State *L)
 {
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.string",m_strcore_reg);
@@ -70,7 +70,7 @@ int luaopen_org_conman_strcore(lua_State *const L)
 
 /************************************************************************/
 
-static const char vsfn[26] =
+static  char const vsfn[26] =
 {
    1,16,4,16,9,2,4,16,9,2,0,2,2,2,1,4,0,2,4,4,1,0,0,0,8,0
 /* A  B C  D E F G  H I J K L M N O P Q R S T U V W X Y Z */
@@ -84,10 +84,10 @@ static inline bool noghf(int x) { return isalpha(x) && (vsfn[(x) - 'A'] & 16);}
 
 /************************************************************************/
 
-static int strcore_metaphone(lua_State *const L)
+static int strcore_metaphone(lua_State *L)
 {
   luaL_Buffer  metaph;
-  const char  *word;
+  char const  *word;
   size_t       wordsize;
   
   word = luaL_checklstring(L,1,&wordsize);
@@ -288,7 +288,7 @@ static int strcore_metaphone(lua_State *const L)
 
 /************************************************************************/
 
-static int strcore_compare(lua_State *const L)
+static int strcore_compare(lua_State *L)
 {
   lua_pushinteger(
           L,
@@ -302,13 +302,13 @@ static int strcore_compare(lua_State *const L)
 
 /************************************************************************/
 
-static int strcore_comparen(lua_State *const L)
+static int strcore_comparen(lua_State *L)
 {
   size_t      destsz;
   size_t      srcsz;
   size_t      len;
-  const char *dest = luaL_checklstring(L,1,&destsz);
-  const char *src  = luaL_checklstring(L,2,&srcsz);
+  char const *dest = luaL_checklstring(L,1,&destsz);
+  char const *src  = luaL_checklstring(L,2,&srcsz);
   
   len = (destsz < srcsz)
       ? destsz

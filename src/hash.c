@@ -38,9 +38,9 @@
 /************************************************************************/
 
 static int hash_hexa(
-        lua_State  *const restrict L,
-        const char *restrict       data,
-        size_t                     size
+        lua_State  *L,
+        char const *data,
+        size_t      size
 )
 {
   luaL_Buffer buf;
@@ -58,11 +58,11 @@ static int hash_hexa(
 
 /************************************************************************/
 
-static int hashlua_new(lua_State *const L)
+static int hashlua_new(lua_State *L)
 {
-  const EVP_MD *m;
+  EVP_MD const *m;
   EVP_MD_CTX   *ctx;
-  const char   *alg;
+  char const   *alg;
   
   alg = luaL_optstring(L,1,"md5");
   m   = EVP_get_digestbyname(alg);
@@ -81,10 +81,10 @@ static int hashlua_new(lua_State *const L)
 
 /************************************************************************/
 
-static int hashlua_update(lua_State *const L)
+static int hashlua_update(lua_State *L)
 {
   EVP_MD_CTX *ctx;
-  const char *data;
+  char const *data;
   size_t      size;
   
   ctx  = luaL_checkudata(L,1,TYPE_HASH);
@@ -104,7 +104,7 @@ static int hashlua_update(lua_State *const L)
 
 /************************************************************************/
 
-static int hashlua_final(lua_State *const L)
+static int hashlua_final(lua_State *L)
 {
   EVP_MD_CTX    *ctx;
   unsigned char  hash[EVP_MAX_MD_SIZE];
@@ -120,9 +120,9 @@ static int hashlua_final(lua_State *const L)
 
 /************************************************************************/
 
-static int hashlua_finalhexa(lua_State *const L)
+static int hashlua_finalhexa(lua_State *L)
 {
-  const char *data;
+  char const *data;
   size_t      size;
   
   hashlua_final(L);
@@ -132,13 +132,13 @@ static int hashlua_finalhexa(lua_State *const L)
 
 /************************************************************************/
 
-static int hashlua_sum(lua_State *const L)
+static int hashlua_sum(lua_State *L)
 {
-  const EVP_MD  *m;
+  EVP_MD const  *m;
   EVP_MD_CTX     ctx;
-  const char    *data;
+  char const    *data;
   size_t         size;
-  const char    *alg;
+  char const    *alg;
   unsigned char  hash[EVP_MAX_MD_SIZE];
   unsigned int   hashsize;
   
@@ -170,10 +170,10 @@ static int hashlua_sum(lua_State *const L)
 
 /*****************************************************************/
 
-static int hashlua_hexa(lua_State *const L)
+static int hashlua_hexa(lua_State *L)
 {
-  const char  *data;
-  size_t       size;
+  char const *data;
+  size_t      size;
   
   data = luaL_checklstring(L,1,&size);
   return hash_hexa(L,data,size);
@@ -181,9 +181,9 @@ static int hashlua_hexa(lua_State *const L)
 
 /************************************************************************/
 
-static int hashlua_sumhexa(lua_State *const L)
+static int hashlua_sumhexa(lua_State *L)
 {
-  const char *data;
+  char const *data;
   size_t      size;
   int         rc;
   
@@ -197,7 +197,7 @@ static int hashlua_sumhexa(lua_State *const L)
 
 /************************************************************************/
 
-static int hashlua___tostring(lua_State *const L)
+static int hashlua___tostring(lua_State *L)
 {
   lua_pushfstring(L,"hash (%p)",lua_touserdata(L,1));
   return 1;
@@ -205,7 +205,7 @@ static int hashlua___tostring(lua_State *const L)
 
 /***********************************************************************/
 
-static const struct luaL_Reg hashlua[] =
+static struct luaL_Reg const hashlua[] =
 {
   { "new"       , hashlua_new           } ,
   { "update"    , hashlua_update        } ,
@@ -216,7 +216,7 @@ static const struct luaL_Reg hashlua[] =
   { NULL        , NULL                  }
 };
 
-static const struct luaL_Reg hashlua_meta[] =
+static struct luaL_Reg const hashlua_meta[] =
 {
   { "update"            , hashlua_update        } ,
   { "final"             , hashlua_final         } ,
@@ -225,7 +225,7 @@ static const struct luaL_Reg hashlua_meta[] =
   { NULL                , NULL                  }
 };
 
-int luaopen_org_conman_hash(lua_State *const L)
+int luaopen_org_conman_hash(lua_State *L)
 {
   OpenSSL_add_all_digests();
   

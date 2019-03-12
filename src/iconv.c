@@ -67,8 +67,8 @@
 
 static int luaiconv_open(lua_State *L)
 {
-  const char *fromcode;
-  const char *tocode;
+  char const *fromcode;
+  char const *tocode;
   iconv_t    *pic;
   iconv_t     ic;
   
@@ -97,8 +97,8 @@ static int luaiconv_open(lua_State *L)
 
 static int luametaiconv___call(lua_State *L)
 {
-  const char *from;
-  const char *ofrom;
+  char const *from;
+  char const *ofrom;
   size_t      fsize;
   iconv_t    *pic;
   char        to[LUAL_BUFFERSIZE];
@@ -159,7 +159,7 @@ static int luametaiconv___gc(lua_State *L)
 
 /*************************************************************************/
 
-static const struct luaL_Reg reg_iconv_meta[] =
+static struct luaL_Reg const reg_iconv_meta[] =
 {
   { "__call"            , luametaiconv___call           } ,
   { "__tostring"        , luametaiconv___tostring       } ,

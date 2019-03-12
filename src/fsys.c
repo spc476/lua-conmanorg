@@ -87,8 +87,8 @@ static int fsys_chdir(lua_State *L)
 
 static int fsys_symlink(lua_State *L)
 {
-  const char *old = luaL_checkstring(L,1);
-  const char *new = luaL_checkstring(L,2);
+  char const *old = luaL_checkstring(L,1);
+  char const *new = luaL_checkstring(L,2);
   
   errno = 0;
   symlink(old,new);
@@ -101,8 +101,8 @@ static int fsys_symlink(lua_State *L)
 
 static int fsys_link(lua_State *L)
 {
-  const char *old = luaL_checkstring(L,1);
-  const char *new = luaL_checkstring(L,2);
+  char const *old = luaL_checkstring(L,1);
+  char const *new = luaL_checkstring(L,2);
   
   errno = 0;
   link(old,new);
@@ -145,8 +145,8 @@ static int fsys_mknod(lua_State *L)
 
 static int fsys_mkfifo(lua_State *L)
 {
-  const char *fname = luaL_checkstring(L,1);
-  const char *value = luaL_checkstring(L,2);
+  char const *fname = luaL_checkstring(L,1);
+  char const *value = luaL_checkstring(L,2);
   mode_t      bit   = 0400;
   mode_t      mode  = 0000;
   
@@ -176,7 +176,7 @@ static int fsys_mkdir(lua_State *L)
 
 static int fsys_utime(lua_State *L)
 {
-  const char     *path;
+  char const     *path;
   struct utimbuf  when;
   
   path         = luaL_checkstring(L,1);
@@ -203,7 +203,7 @@ static int fsys_rmdir(lua_State *L)
 
 /************************************************************************/
 
-static void impl_setfield(lua_State *L,const char *name,lua_Number value)
+static void impl_setfield(lua_State *L,char const *name,lua_Number value)
 {
   lua_pushstring(L,name);
   lua_pushnumber(L,value);
@@ -212,7 +212,7 @@ static void impl_setfield(lua_State *L,const char *name,lua_Number value)
 
 /*************************************************************************/
 
-static void impl_setbool(lua_State *L,const char *name,int flag)
+static void impl_setbool(lua_State *L,char const *name,int flag)
 {
   lua_pushstring(L,name);
   lua_pushboolean(L,flag != 0);
@@ -317,7 +317,7 @@ static int fsys_stat(lua_State *L)
 
 static int fsys_lstat(lua_State *L)
 {
-  const char  *fname;
+  char const  *fname;
   struct stat  status;
   int          rc;
   
@@ -339,11 +339,11 @@ static int fsys_lstat(lua_State *L)
 
 static int fsys_chmod(lua_State *L)
 {
-  size_t             vsz;
-  const char        *fname = luaL_checkstring(L,1);
-  const char        *value = luaL_checklstring(L,2,&vsz);
-  mode_t             bit   = 1;
-  mode_t             mode  = 0;
+  size_t      vsz;
+  char const *fname = luaL_checkstring(L,1);
+  char const *value = luaL_checklstring(L,2,&vsz);
+  mode_t      bit   = 1;
+  mode_t      mode  = 0;
   
   for ( ; vsz > 0 ; bit <<= 1 , vsz--)
     if (value[vsz-1] != '-')
@@ -362,7 +362,7 @@ static int fsys_umask(lua_State *L)
 {
   char        perms[9];
   size_t      vsz;
-  const char *value = luaL_checklstring(L,1,&vsz);
+  char const *value = luaL_checklstring(L,1,&vsz);
   mode_t      mask  = 0777;
   mode_t      bit   = 1;
   
@@ -399,8 +399,8 @@ static int fsys_umask(lua_State *L)
 
 static int fsys_access(lua_State *L)
 {
-  const char *fname  = luaL_checkstring(L,1);
-  const char *tmode  = luaL_checkstring(L,2);
+  char const *fname  = luaL_checkstring(L,1);
+  char const *tmode  = luaL_checkstring(L,2);
   int         mode   = 0;
   
   for (int i = 0 ; tmode[i] != '\0'; i++)
@@ -436,7 +436,7 @@ static int fsys_getcwd(lua_State *L)
 
 /************************************************************************/
 
-static int dir_meta___tostring(lua_State *const L)
+static int dir_meta___tostring(lua_State *L)
 {
   lua_pushfstring(L,"directory (%p)",lua_touserdata(L,1));
   return 1;
@@ -444,7 +444,7 @@ static int dir_meta___tostring(lua_State *const L)
 
 /*************************************************************************/
 
-static int dir_meta___gc(lua_State *const L)
+static int dir_meta___gc(lua_State *L)
 {
   DIR **dir = luaL_checkudata(L,1,TYPE_DIR);
   
@@ -459,7 +459,7 @@ static int dir_meta___gc(lua_State *const L)
 
 /*************************************************************************/
 
-static int dir_meta_rewind(lua_State *const L)
+static int dir_meta_rewind(lua_State *L)
 {
   rewinddir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
   return 0;
@@ -479,7 +479,7 @@ static int dir_meta_rewind(lua_State *const L)
 *
 **************************************************************************/
 
-static int dir_meta_read(lua_State *const L)
+static int dir_meta_read(lua_State *L)
 {
   struct dirent *entry = readdir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
 
@@ -508,7 +508,7 @@ static int dir_meta_read(lua_State *const L)
 *
 **************************************************************************/
 
-static int dir_meta_next(lua_State *const L)
+static int dir_meta_next(lua_State *L)
 {
   struct dirent  *entry;
   DIR           **dir;
@@ -542,7 +542,7 @@ static int dir_meta_next(lua_State *const L)
 
 static int fsys_opendir(lua_State *L)
 {
-  const char   *dname;
+  char const   *dname;
   DIR          *dir;
   DIR        **pdir;
   
@@ -578,8 +578,8 @@ static int fsys_dir(lua_State *L)
 
 static int fsys__safename(lua_State *L)
 {
-  const char *old = luaL_checkstring(L,1);
-  luaL_Buffer buf;
+  char const  *old = luaL_checkstring(L,1);
+  luaL_Buffer  buf;
   
   luaL_buffinit(L,&buf);
   
@@ -603,7 +603,7 @@ static int fsys__safename(lua_State *L)
 static int fsys_basename(lua_State *L)
 {
   char        name[FILENAME_MAX];
-  const char *path;
+  char const *path;
   size_t      size;
   
   path = luaL_checklstring(L,1,&size);
@@ -629,7 +629,7 @@ static int fsys_basename(lua_State *L)
 static int fsys_dirname(lua_State *L)
 {
   char        name[FILENAME_MAX];
-  const char *path;
+  char const *path;
   size_t      size;
   
   path = luaL_checklstring(L,1,&size);
@@ -902,7 +902,7 @@ static int fsys_pipe(lua_State *L)
 
 /***********************************************************************/
 
-static void *checkutype(lua_State *const L,int idx,const char *tname)
+static void *checkutype(lua_State *L,int idx,char const *tname)
 {
   void *p = lua_touserdata(L,idx);
   
@@ -922,7 +922,7 @@ static void *checkutype(lua_State *const L,int idx,const char *tname)
 
 /***********************************************************************/
 
-static int getfh(lua_State *const L,int idx)
+static int getfh(lua_State *L,int idx)
 {
   void *p;
   
@@ -1063,9 +1063,9 @@ static int fsys_isfile(lua_State *L)
 
 static int fsys_fnmatch(lua_State *L)
 {
-  const char *pattern  = luaL_checkstring(L,1);
-  const char *filename = luaL_checkstring(L,2);
-  const char *tflags   = luaL_optstring(L,3,"");
+  char const *pattern  = luaL_checkstring(L,1);
+  char const *filename = luaL_checkstring(L,2);
+  char const *tflags   = luaL_optstring(L,3,"");
   int         flags    = 0;
   
   for ( ; *tflags ; tflags++)
@@ -1086,7 +1086,7 @@ static int fsys_fnmatch(lua_State *L)
 
 int fsys_expand(lua_State *L)
 {
-  const char *pattern = luaL_checkstring(L,1);
+  char const *pattern = luaL_checkstring(L,1);
   int         undef   = lua_toboolean(L,2)
                       ? WRDE_NOCMD | WRDE_UNDEF
                       : WRDE_NOCMD
@@ -1158,7 +1158,7 @@ static int expand_meta_next(lua_State *L)
 
 static int fsys_gexpand(lua_State *L)
 {
-  const char *pattern = luaL_checkstring(L,1);
+  char const *pattern = luaL_checkstring(L,1);
   int         undef   = lua_toboolean(L,2)
                       ? WRDE_NOCMD | WRDE_UNDEF
                       : WRDE_NOCMD
@@ -1224,7 +1224,7 @@ static int fsys_fileno(lua_State *L)
 *
 ************************************************************************/
 
-static const char *const m_pathconfopts[] =
+static char const *const m_pathconfopts[] =
 {
   "link",
   "canon",
@@ -1238,7 +1238,7 @@ static const char *const m_pathconfopts[] =
   NULL
 };
 
-static const int m_pathconfmap[] =
+static int const m_pathconfmap[] =
 {
   _PC_LINK_MAX,
   _PC_MAX_CANON,
@@ -1265,7 +1265,7 @@ static int fsys_pathconf(lua_State *L)
   }
   else if (lua_type(L,1) == LUA_TSTRING)
   {
-    const char *path = lua_tostring(L,1);
+    char const *path = lua_tostring(L,1);
     int         name = m_pathconfmap[luaL_checkoption(L,2,NULL,m_pathconfopts)];
     
     errno = 0;
@@ -1284,7 +1284,7 @@ static int fsys_pathconf(lua_State *L)
 
 /************************************************************************/
 
-static const struct luaL_Reg reg_fsys[] =
+static struct luaL_Reg const reg_fsys[] =
 {
   { "symlink"   , fsys_symlink   } ,
   { "link"      , fsys_link      } ,
@@ -1321,7 +1321,7 @@ static const struct luaL_Reg reg_fsys[] =
   { NULL        , NULL           }
 };
 
-static const luaL_Reg m_dir_meta[] =
+static luaL_Reg const m_dir_meta[] =
 {
   { "__tostring"        , dir_meta___tostring   } ,
   { "__gc"              , dir_meta___gc         } ,
@@ -1331,7 +1331,7 @@ static const luaL_Reg m_dir_meta[] =
   { NULL                , NULL                  }
 };
 
-static const luaL_Reg m_expand_meta[] =
+static luaL_Reg const m_expand_meta[] =
 {
   { "__gc"              , expand_meta___gc      } ,
   { NULL                , NULL                  }

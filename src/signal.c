@@ -80,9 +80,9 @@
 
 struct datasig
 {
-  const char            *name;
-  int                    fref;
-  volatile sig_atomic_t  triggered;
+  char const             *name;
+  int                     fref;
+  sig_atomic_t  volatile  triggered;
 };
 
 /************************************************************************
@@ -93,7 +93,7 @@ struct datasig
 *
 **************************************************************************/
 
-static const int m_sigvalue[] =
+static int const m_sigvalue[] =
 {
   SIGABRT,
   SIGFPE,
@@ -105,11 +105,11 @@ static const int m_sigvalue[] =
 
 struct mapstrint
 {
-  const char *const text;
-  const int         value;
+  char const *const text;
+  int  const        value;
 };
 
-static const struct mapstrint sigs[] =
+static struct mapstrint const sigs[] =
 {
   { "abort"     , 0 } ,
   { "abrt"      , 0 } ,
@@ -126,19 +126,19 @@ static const struct mapstrint sigs[] =
 
 /*--------------------------------------------------------------------*/
 
-static int mapstrintcmp(const void *needle,const void *haystack)
+static int mapstrintcmp(void const *restrict needle,void const *restrict haystack)
 {
-  const char             *key   = needle;
-  const struct mapstrint *value = haystack;
+  char const             *key   = needle;
+  struct mapstrint const *value = haystack;
   
   return strcmp(key,value->text);
 }
 
 /*--------------------------------------------------------------------*/
 
-static int slua_tosignal(lua_State *L,int idx,const char **ps)
+static int slua_tosignal(lua_State *L,int idx,char const **ps)
 {
-  const struct mapstrint *entry = bsearch(
+  struct mapstrint const *entry = bsearch(
           luaL_checkstring(L,idx),
           sigs,
           sizeof(sigs) / sizeof(struct mapstrint),
@@ -241,7 +241,7 @@ static void signal_handler(int sig)
 *
 ***********************************************************************/
 
-static int siglua_caught(lua_State *const L)
+static int siglua_caught(lua_State *L)
 {
   if (lua_isnoneornil(L,1))
   {
@@ -279,9 +279,9 @@ static int siglua_caught(lua_State *const L)
 *
 ***********************************************************************/
 
-static int siglua_catch(lua_State *const L)
+static int siglua_catch(lua_State *L)
 {
-  const char     *name;
+  char const     *name;
   int             sig = slua_tosignal(L,1,&name);
   struct datasig  ds;
   struct datasig  ods;
@@ -326,7 +326,7 @@ static int siglua_catch(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_ignore(lua_State *const L)
+static int siglua_ignore(lua_State *L)
 {
   int top = lua_gettop(L);
   int i;
@@ -354,7 +354,7 @@ static int siglua_ignore(lua_State *const L)
 *
 ***********************************************************************/
 
-static int siglua_default(lua_State *const L)
+static int siglua_default(lua_State *L)
 {
   int top = lua_gettop(L);
   int i;
@@ -386,7 +386,7 @@ static int siglua_default(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_raise(lua_State *const L)
+static int siglua_raise(lua_State *L)
 {
   lua_pushboolean(L,raise(m_sigvalue[slua_tosignal(L,1,NULL)]) == 0);
   return 1;
@@ -404,7 +404,7 @@ static int siglua_raise(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_defined(lua_State *const L)
+static int siglua_defined(lua_State *L)
 {
   lua_pushboolean(
           L,
@@ -422,7 +422,7 @@ static int siglua_defined(lua_State *const L)
 
 /**********************************************************************/
 
-static const struct luaL_Reg m_sig_reg[] =
+static struct const luaL_Reg m_sig_reg[] =
 {
   { "caught"    , siglua_caught         } ,
   { "catch"     , siglua_catch          } ,
@@ -433,7 +433,7 @@ static const struct luaL_Reg m_sig_reg[] =
   { NULL        , NULL                  }
 };
 
-int luaopen_org_conman_signal(lua_State *const L)
+int luaopen_org_conman_signal(lua_State *L)
 {
   for (size_t i = 0 ; i < MAX_SIG ; i++)
   {
@@ -472,9 +472,9 @@ int luaopen_org_conman_signal(lua_State *const L)
 
 struct datasig
 {
-  const char            *name;
+  char const            *name;
   int                    fref;
-  volatile sig_atomic_t  triggered;
+  sig_atomic_t volatile  triggered;
   sigset_t               blocked;
   siginfo_t              info;
   bool                   use_info;
@@ -493,7 +493,7 @@ static lua_State             *m_L;
 *
 *************************************************************************/
 
-static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
+static char const *codetostr(int sig,int code,char *dst,size_t dstsiz)
 {
   switch(sig)
   {
@@ -634,9 +634,9 @@ static const char *codetostr(int sig,int code,char *dst,size_t dstsiz)
 **************************************************************************/
 
 static void slua_pushinfo(
-        lua_State  *const L,
-        siginfo_t  *const info,
-        const char *const name
+        lua_State  *L,
+        siginfo_t  *info,
+        char const *name
 )
 {
   char code[65];
@@ -818,15 +818,15 @@ static void signal_action(int sig,siginfo_t *info,void *_ __attribute__((unused)
 
 struct mapstrint
 {
-  const char *const text;
-  const int         value;
+  char const *const text;
+  int  const        value;
 };
 
 /*-------------------------------------------------
 ; NOTE: the following list must be kept sorted.
 ;--------------------------------------------------*/
 
-static const struct mapstrint sigs[] =
+static struct mapstrint const sigs[] =
 {
   { "abort"             , SIGABRT       } ,     /* ANSI */
   { "abrt"              , SIGABRT       } ,     /* ANSI */
@@ -950,19 +950,19 @@ static const struct mapstrint sigs[] =
 
 /*--------------------------------------------------------------------*/
 
-static int mapstrintcmp(const void *needle,const void *haystack)
+static int mapstrintcmp(void const *restrict needle,void const *restrict haystack)
 {
-  const char             *key   = needle;
-  const struct mapstrint *value = haystack;
+  char const             *key   = needle;
+  struct mapstrint const *value = haystack;
   
   return strcmp(key,value->text);
 }
 
 /*--------------------------------------------------------------------*/
 
-static int slua_tosignal(lua_State *const L,int idx,const char **ps)
+static int slua_tosignal(lua_State *L,int idx,char const **ps)
 {
-  const struct mapstrint *entry = bsearch(
+  struct mapstrint const *entry = bsearch(
           luaL_checkstring(L,idx),
           sigs,
           sizeof(sigs) / sizeof(struct mapstrint),
@@ -995,7 +995,7 @@ static int slua_tosignal(lua_State *const L,int idx,const char **ps)
 *
 ***********************************************************************/
 
-static int siglua_caught(lua_State *const L)
+static int siglua_caught(lua_State *L)
 {
   if (lua_isnoneornil(L,1))
   {
@@ -1044,9 +1044,9 @@ static int siglua_caught(lua_State *const L)
 *
 *********************************************************************/
 
-static int slua_toflags(lua_State *const L,int idx)
+static int slua_toflags(lua_State *L,int idx)
 {
-  static const struct mapstrint tflags[] =
+  static struct mapstrint const tflags[] =
   {
     { "info"            , SA_SIGINFO    } ,
     { "nochildstop"     , SA_NOCLDSTOP  } ,
@@ -1067,7 +1067,7 @@ static int slua_toflags(lua_State *const L,int idx)
     
   if (lua_isstring(L,idx))
   {
-    const struct mapstrint *entry = bsearch(
+    struct mapstrint const *entry = bsearch(
             lua_tostring(L,idx),
             tflags,
             sizeof(tflags) / sizeof(struct mapstrint),
@@ -1081,7 +1081,7 @@ static int slua_toflags(lua_State *const L,int idx)
   }
   else if (lua_istable(L,idx))
   {
-    const struct mapstrint *entry;
+    struct mapstrint const *entry;
     int                     flags;
     int                     len;
     int                     i;
@@ -1124,9 +1124,9 @@ static int slua_toflags(lua_State *const L,int idx)
 #  define FLAGSIG       (SA_NODEFER | SA_NOMASK)
 #endif
 
-static int siglua_catch(lua_State *const L)
+static int siglua_catch(lua_State *L)
 {
-  const char       *name;
+  char const       *name;
   int               sig = slua_tosignal(L,1,&name);
   struct datasig    ds;
   struct datasig    ods;
@@ -1209,7 +1209,7 @@ static int siglua_catch(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_ignore(lua_State *const L)
+static int siglua_ignore(lua_State *L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
   {
@@ -1236,7 +1236,7 @@ static int siglua_ignore(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_default(lua_State *const L)
+static int siglua_default(lua_State *L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
   {
@@ -1269,7 +1269,7 @@ static int siglua_default(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_raise(lua_State *const L)
+static int siglua_raise(lua_State *L)
 {
   if (lua_gettop(L) == 1)
     lua_pushboolean(L,raise(slua_tosignal(L,1,NULL)) == 0);
@@ -1291,7 +1291,7 @@ static int siglua_raise(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_defined(lua_State *const L)
+static int siglua_defined(lua_State *L)
 {
   lua_pushboolean(
           L,
@@ -1316,7 +1316,7 @@ static int siglua_defined(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_allow(lua_State *const L)
+static int siglua_allow(lua_State *L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
     sigrelse(slua_tosignal(L,i,NULL));
@@ -1333,7 +1333,7 @@ static int siglua_allow(lua_State *const L)
 *
 ***********************************************************************/
 
-static int siglua_block(lua_State *const L)
+static int siglua_block(lua_State *L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
     sighold(slua_tosignal(L,i,NULL));
@@ -1357,7 +1357,7 @@ static int siglua_block(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_mask(lua_State *const L)
+static int siglua_mask(lua_State *L)
 {
   sigset_t *new;
   sigset_t *old;
@@ -1365,7 +1365,7 @@ static int siglua_mask(lua_State *const L)
   
   if (lua_isstring(L,1))
   {
-    const char *thow = lua_tostring(L,1);
+    char const *thow = lua_tostring(L,1);
     if (strcmp(thow,"block") == 0)
       how = SIG_BLOCK;
     else if (strcmp(thow,"unblock") == 0)
@@ -1403,7 +1403,7 @@ static int siglua_mask(lua_State *const L)
 *
 *********************************************************************/
 
-static int siglua_pending(lua_State *const L)
+static int siglua_pending(lua_State *L)
 {
   sigset_t *set = lua_newuserdata(L,sizeof(sigset_t));
   luaL_getmetatable(L,TYPE_SIGSET);
@@ -1431,7 +1431,7 @@ static int siglua_pending(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_suspend(lua_State *const L)
+static int siglua_suspend(lua_State *L)
 {
   sigset_t *set = luaL_checkudata(L,1,TYPE_SIGSET);
   errno         = 0;
@@ -1459,7 +1459,7 @@ static int siglua_suspend(lua_State *const L)
 *
 **********************************************************************/
 
-static int siglua_set(lua_State *const L)
+static int siglua_set(lua_State *L)
 {
   int        top = lua_gettop(L);
   sigset_t  *set = lua_newuserdata(L,sizeof(sigset_t));
@@ -1520,7 +1520,7 @@ static int siglua_set(lua_State *const L)
 *
 ***********************************************************************/
 
-static int sigsetmeta___tostring(lua_State *const L)
+static int sigsetmeta___tostring(lua_State *L)
 {
   lua_pushfstring(L,"sigset (%p)",lua_touserdata(L,1));
   return 1;
@@ -1528,7 +1528,7 @@ static int sigsetmeta___tostring(lua_State *const L)
 
 /**********************************************************************/
 
-static int sigsetmeta___index(lua_State *const L)
+static int sigsetmeta___index(lua_State *L)
 {
   sigset_t *set = luaL_checkudata(L,1,TYPE_SIGSET);
   
@@ -1541,7 +1541,7 @@ static int sigsetmeta___index(lua_State *const L)
 
 /**********************************************************************/
 
-static int sigsetmeta___newindex(lua_State *const L)
+static int sigsetmeta___newindex(lua_State *L)
 {
   sigset_t   *sig    = luaL_checkudata(L,1,TYPE_SIGSET);
   bool        set    = lua_toboolean(L,3);
@@ -1555,7 +1555,7 @@ static int sigsetmeta___newindex(lua_State *const L)
 
 /**********************************************************************/
 
-static int sigsetmeta___add(lua_State *const L)
+static int sigsetmeta___add(lua_State *L)
 {
   sigset_t *s1 = luaL_checkudata(L,1,TYPE_SIGSET);
   sigset_t *s2 = luaL_checkudata(L,2,TYPE_SIGSET);
@@ -1575,7 +1575,7 @@ static int sigsetmeta___add(lua_State *const L)
 
 /**********************************************************************/
 
-static int sigsetmeta___sub(lua_State *const L)
+static int sigsetmeta___sub(lua_State *L)
 {
   sigset_t *s1 = luaL_checkudata(L,1,TYPE_SIGSET);
   sigset_t *s2 = luaL_checkudata(L,2,TYPE_SIGSET);
@@ -1595,7 +1595,7 @@ static int sigsetmeta___sub(lua_State *const L)
 
 /**********************************************************************/
 
-static int sigsetmeta___unm(lua_State *const L)
+static int sigsetmeta___unm(lua_State *L)
 {
   sigset_t *s = luaL_checkudata(L,1,TYPE_SIGSET);
   sigset_t *d = lua_newuserdata(L,sizeof(sigset_t));
@@ -1616,7 +1616,7 @@ static int sigsetmeta___unm(lua_State *const L)
 
 /**********************************************************************/
 
-static const struct luaL_Reg m_sig_reg[] =
+static struct luaL_Reg const m_sig_reg[] =
 {
   { "caught"    , siglua_caught         } ,
   { "catch"     , siglua_catch          } ,
@@ -1633,7 +1633,7 @@ static const struct luaL_Reg m_sig_reg[] =
   { NULL        , NULL                  }
 };
 
-static const struct luaL_Reg m_sigset_meta[] =
+static struct luaL_Reg const m_sigset_meta[] =
 {
   { "__tostring", sigsetmeta___tostring } ,
   { "__index"   , sigsetmeta___index    } ,
@@ -1644,7 +1644,7 @@ static const struct luaL_Reg m_sigset_meta[] =
   { NULL        , NULL                  }
 };
 
-int luaopen_org_conman_signal(lua_State *const L)
+int luaopen_org_conman_signal(lua_State *L)
 {
   for (int i = 0 ; i < NSIG ; i++)
   {

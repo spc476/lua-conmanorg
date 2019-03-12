@@ -107,17 +107,17 @@
 /*************************************************************************/
 
 #if LUA_VERSION_NUM == 501
-  static const struct luaL_Reg msys_reg[] =
+  static struct luaL_Reg const msys_reg[] =
   {
     { NULL , NULL }
   };
 #endif
 
-static const struct paths
+static struct paths
 {
-  const char *const name;
-  const char *const value;
-} mpaths[] =
+  char const *const name;
+  char const *const value;
+} const mpaths[] =
 {
   { "DEFPATH"   , _PATH_DEFPATH         } ,
   { "STDPATH"   , _PATH_STDPATH         } ,
@@ -154,11 +154,11 @@ static const struct paths
 
 #define MAXPATH ( sizeof(mpaths) / sizeof(struct paths))
 
-static const struct strint
+static struct strint
 {
-  const char *const name;
-  const int         value;
-} mvars[] =
+  char const *const name;
+  int  const        value;
+} const mvars[] =
 {
   { "VERSION"           , _SC_VERSION           } ,
   { "ARG_MAX"           , _SC_ARG_MAX           } ,
@@ -244,7 +244,7 @@ static const struct strint
 
 /*************************************************************************/
 
-int luaopen_org_conman_sys(lua_State *const L)
+int luaopen_org_conman_sys(lua_State *L)
 {
   struct utsname buffer;
   size_t         i;

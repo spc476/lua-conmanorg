@@ -93,8 +93,8 @@ typedef struct sock
 
 struct strint
 {
-  const char *const text;
-  const int         value;
+  char const *const text;
+  int  const        value;
 };
 
 typedef union
@@ -111,53 +111,53 @@ typedef union
 
 /************************************************************************/
 
-static int      err_meta___index        (lua_State *const) __attribute__((nonnull));
+static int      err_meta___index        (lua_State *) __attribute__((nonnull));
 
 #ifdef __linux__
-static int      netlua_interfaces       (lua_State *const) __attribute__((nonnull));
+static int      netlua_interfaces       (lua_State *) __attribute__((nonnull));
 #endif
-static int      netlua_socket           (lua_State *const) __attribute__((nonnull));
-static int      netlua_socketfile       (lua_State *const) __attribute__((nonnull));
-static int      netlua_socketfd         (lua_State *const) __attribute__((nonnull));
-static int      netlua_socketpair       (lua_State *const) __attribute__((nonnull));
-static int      netlua_address2         (lua_State *const) __attribute__((nonnull));
-static int      netlua_address          (lua_State *const) __attribute__((nonnull));
-static int      netlua_addressraw       (lua_State *const) __attribute__((nonnull));
-static int      netlua_ntop             (lua_State *const) __attribute__((nonnull));
-static int      netlua_pton             (lua_State *const) __attribute__((nonnull));
-static int      netlua_htons            (lua_State *const) __attribute__((nonnull));
-static int      netlua_htonl            (lua_State *const) __attribute__((nonnull));
-static int      netlua_ntohs            (lua_State *const) __attribute__((nonnull));
-static int      netlua_ntohl            (lua_State *const) __attribute__((nonnull));
+static int      netlua_socket           (lua_State *) __attribute__((nonnull));
+static int      netlua_socketfile       (lua_State *) __attribute__((nonnull));
+static int      netlua_socketfd         (lua_State *) __attribute__((nonnull));
+static int      netlua_socketpair       (lua_State *) __attribute__((nonnull));
+static int      netlua_address2         (lua_State *) __attribute__((nonnull));
+static int      netlua_address          (lua_State *) __attribute__((nonnull));
+static int      netlua_addressraw       (lua_State *) __attribute__((nonnull));
+static int      netlua_ntop             (lua_State *) __attribute__((nonnull));
+static int      netlua_pton             (lua_State *) __attribute__((nonnull));
+static int      netlua_htons            (lua_State *) __attribute__((nonnull));
+static int      netlua_htonl            (lua_State *) __attribute__((nonnull));
+static int      netlua_ntohs            (lua_State *) __attribute__((nonnull));
+static int      netlua_ntohl            (lua_State *) __attribute__((nonnull));
 
-static int      socklua___tostring      (lua_State *const) __attribute__((nonnull));
-static int      socklua___index         (lua_State *const) __attribute__((nonnull));
-static int      socklua___newindex      (lua_State *const) __attribute__((nonnull));
-static int      socklua_peer            (lua_State *const) __attribute__((nonnull));
-static int      socklua_addr            (lua_State *const) __attribute__((nonnull));
-static int      socklua_bind            (lua_State *const) __attribute__((nonnull));
-static int      socklua_connect         (lua_State *const) __attribute__((nonnull));
-static int      socklua_listen          (lua_State *const) __attribute__((nonnull));
-static int      socklua_accept          (lua_State *const) __attribute__((nonnull));
-static int      socklua_recv            (lua_State *const) __attribute__((nonnull));
-static int      socklua_send            (lua_State *const) __attribute__((nonnull));
-static int      socklua_shutdown        (lua_State *const) __attribute__((nonnull));
-static int      socklua_close           (lua_State *const) __attribute__((nonnull));
-static int      socklua_fd              (lua_State *const) __attribute__((nonnull));
+static int      socklua___tostring      (lua_State *) __attribute__((nonnull));
+static int      socklua___index         (lua_State *) __attribute__((nonnull));
+static int      socklua___newindex      (lua_State *) __attribute__((nonnull));
+static int      socklua_peer            (lua_State *) __attribute__((nonnull));
+static int      socklua_addr            (lua_State *) __attribute__((nonnull));
+static int      socklua_bind            (lua_State *) __attribute__((nonnull));
+static int      socklua_connect         (lua_State *) __attribute__((nonnull));
+static int      socklua_listen          (lua_State *) __attribute__((nonnull));
+static int      socklua_accept          (lua_State *) __attribute__((nonnull));
+static int      socklua_recv            (lua_State *) __attribute__((nonnull));
+static int      socklua_send            (lua_State *) __attribute__((nonnull));
+static int      socklua_shutdown        (lua_State *) __attribute__((nonnull));
+static int      socklua_close           (lua_State *) __attribute__((nonnull));
+static int      socklua_fd              (lua_State *) __attribute__((nonnull));
 
-static int      addrlua___index         (lua_State *const) __attribute__((nonnull));
-static int      addrlua___tostring      (lua_State *const) __attribute__((nonnull));
-static int      addrlua___eq            (lua_State *const) __attribute__((nonnull));
-static int      addrlua___lt            (lua_State *const) __attribute__((nonnull));
-static int      addrlua___le            (lua_State *const) __attribute__((nonnull));
-static int      addrlua___len           (lua_State *const) __attribute__((nonnull));
+static int      addrlua___index         (lua_State *) __attribute__((nonnull));
+static int      addrlua___tostring      (lua_State *) __attribute__((nonnull));
+static int      addrlua___eq            (lua_State *) __attribute__((nonnull));
+static int      addrlua___lt            (lua_State *) __attribute__((nonnull));
+static int      addrlua___le            (lua_State *) __attribute__((nonnull));
+static int      addrlua___len           (lua_State *) __attribute__((nonnull));
 
-static int      net_toproto             (lua_State *const,const int)           __attribute__((nonnull));
-static int      net_toport              (lua_State *const,const int,const int) __attribute__((nonnull));
+static int      net_toproto             (lua_State *, int)      __attribute__((nonnull));
+static int      net_toport              (lua_State *, int, int) __attribute__((nonnull));
 
 /*************************************************************************/
 
-static const luaL_Reg m_net_reg[] =
+static luaL_Reg const m_net_reg[] =
 {
 #ifdef __linux__
   { "interfaces"        , netlua_interfaces     } ,
@@ -178,7 +178,7 @@ static const luaL_Reg m_net_reg[] =
   { NULL                , NULL                  }
 };
 
-static const luaL_Reg m_sock_meta[] =
+static luaL_Reg const m_sock_meta[] =
 {
   { "__tostring"        , socklua___tostring    } ,
   { "__gc"              , socklua_close         } ,
@@ -198,7 +198,7 @@ static const luaL_Reg m_sock_meta[] =
   { NULL                , NULL                  }
 };
 
-static const luaL_Reg m_addr_meta[] =
+static luaL_Reg const m_addr_meta[] =
 {
   { "__index"           , addrlua___index       } ,
   { "__tostring"        , addrlua___tostring    } ,
@@ -209,9 +209,9 @@ static const luaL_Reg m_addr_meta[] =
   { NULL                , NULL                  }
 };
 
-static const char *const   m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
-static const int           m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
-static const struct strint m_errors[] =
+static char const *const   m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
+static int const           m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
+static struct strint const m_errors[] =
 {
   { "EAI_BADFLAGS"      , EAI_BADFLAGS          } ,
   { "EAI_NONAME"        , EAI_NONAME            } ,
@@ -234,7 +234,7 @@ static const struct strint m_errors[] =
 
 /************************************************************************/
 
-static inline size_t Inet_addrlen(sockaddr_all__t const *const addr)
+static inline size_t Inet_addrlen(sockaddr_all__t const *addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -248,7 +248,7 @@ static inline size_t Inet_addrlen(sockaddr_all__t const *const addr)
 
 /*-----------------------------------------------------------------------*/
 
-static inline socklen_t Inet_len(sockaddr_all__t const *const addr)
+static inline socklen_t Inet_len(sockaddr_all__t const *addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -262,8 +262,8 @@ static inline socklen_t Inet_len(sockaddr_all__t const *const addr)
 
 /*----------------------------------------------------------------------*/
 
-static inline socklen_t Inet_lensa(struct sockaddr const *const) __attribute__((unused));
-static inline socklen_t Inet_lensa(struct sockaddr const *const addr)
+static inline socklen_t Inet_lensa(struct sockaddr const *) __attribute__((unused));
+static inline socklen_t Inet_lensa(struct sockaddr const *addr)
 {
   assert(addr != NULL);
   switch(addr->sa_family)
@@ -277,7 +277,7 @@ static inline socklen_t Inet_lensa(struct sockaddr const *const addr)
 
 /*----------------------------------------------------------------------*/
 
-static inline int Inet_port(sockaddr_all__t const *const addr)
+static inline int Inet_port(sockaddr_all__t const *addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -291,7 +291,7 @@ static inline int Inet_port(sockaddr_all__t const *const addr)
 
 /*-----------------------------------------------------------------------*/
 
-static inline void Inet_setport(sockaddr_all__t *const addr,const int port)
+static inline void Inet_setport(sockaddr_all__t *addr,int port)
 {
   assert(addr != NULL);
   assert((addr->sa.sa_family == AF_INET) || (addr->sa.sa_family == AF_INET6));
@@ -308,8 +308,8 @@ static inline void Inet_setport(sockaddr_all__t *const addr,const int port)
 
 /*----------------------------------------------------------------------*/
 
-static inline void Inet_setportn(sockaddr_all__t *const,const int) __attribute__((unused));
-static inline void Inet_setportn(sockaddr_all__t *const addr,const int port)
+static inline void Inet_setportn(sockaddr_all__t *,int) __attribute__((unused));
+static inline void Inet_setportn(sockaddr_all__t *addr,int port)
 {
   assert(addr != NULL);
   assert((addr->sa.sa_family == AF_INET) || (addr->sa.sa_family == AF_INET6));
@@ -324,9 +324,9 @@ static inline void Inet_setportn(sockaddr_all__t *const addr,const int port)
 
 /*------------------------------------------------------------------------*/
 
-static inline const char *Inet_addr(
-        sockaddr_all__t *const restrict addr,
-        char            *const restrict dest
+static inline char const *Inet_addr(
+        sockaddr_all__t *addr,
+        char            *dest
 )
 {
   assert(addr != NULL);
@@ -342,7 +342,7 @@ static inline const char *Inet_addr(
 
 /*------------------------------------------------------------------------*/
 
-static inline void const *Inet_address(sockaddr_all__t const *const addr)
+static inline void const *Inet_address(sockaddr_all__t const *addr)
 {
   assert(addr != NULL);
   switch(addr->sa.sa_family)
@@ -387,7 +387,7 @@ static inline int Inet_comp(
 
 /**********************************************************************/
 
-static int err_meta___index(lua_State *const L)
+static int err_meta___index(lua_State *L)
 {
   int err = luaL_checkinteger(L,2);
   if (err < 0)
@@ -445,7 +445,7 @@ static int err_meta___index(lua_State *const L)
 **********************************************************************/
 
 #ifdef __linux__
-  static int netlua_interfaces(lua_State *const L)
+  static int netlua_interfaces(lua_State *L)
   {
     struct ifaddrs  *interfaces;
     struct ifaddrs  *i;
@@ -545,7 +545,7 @@ static int err_meta___index(lua_State *const L)
 *
 **********************************************************************/
 
-static int netlua_socket(lua_State *const L)
+static int netlua_socket(lua_State *L)
 {
   int      family;
   int      proto;
@@ -590,7 +590,7 @@ static int netlua_socket(lua_State *const L)
 *
 ********************************************************************/
 
-static int netlua_socketfile(lua_State *const L)
+static int netlua_socketfile(lua_State *L)
 {
   FILE    **pfp  = luaL_checkudata(L,1,LUA_FILEHANDLE);
   sock__t  *sock = lua_newuserdata(L,sizeof(sock__t));
@@ -611,7 +611,7 @@ static int netlua_socketfile(lua_State *const L)
 *
 ********************************************************************/
 
-static int netlua_socketfd(lua_State *const L)
+static int netlua_socketfd(lua_State *L)
 {
   int      fh   = luaL_checkinteger(L,1);
   sock__t *sock = lua_newuserdata(L,sizeof(sock__t));
@@ -638,7 +638,7 @@ static int netlua_socketfd(lua_State *const L)
 *
 ************************************************************************/
 
-static int netlua_socketpair(lua_State *const L)
+static int netlua_socketpair(lua_State *L)
 {
   int      type;
   int      sv[2];
@@ -708,15 +708,15 @@ static int netlua_socketpair(lua_State *const L)
 *
 **********************************************************************/
 
-static int netlua_address2(lua_State *const L)
+static int netlua_address2(lua_State *L)
 {
   struct addrinfo  hints;
   struct addrinfo *results;
   struct addrinfo *addrloop;
-  const char      *hostname;
-  const char      *family;
+  char const     *hostname;
+  char const     *family;
   int              protocol;
-  const char      *port;
+  char const     *port;
   int              rc;
   
   lua_settop(L,4);
@@ -830,10 +830,10 @@ static int netlua_address2(lua_State *const L)
 *
 *********************************************************************/
 
-static int netlua_address(lua_State *const L)
+static int netlua_address(lua_State *L)
 {
   sockaddr_all__t *addr;
-  const char      *host;
+  char const      *host;
   size_t           hsize;
   int              proto;
   
@@ -885,10 +885,10 @@ static int netlua_address(lua_State *const L)
 *
 ************************************************************************/
 
-static int netlua_addressraw(lua_State *const L)
+static int netlua_addressraw(lua_State *L)
 {
   sockaddr_all__t *addr;
-  const char      *bin;
+  char const      *bin;
   size_t           blen;
   int              proto;
   
@@ -928,7 +928,7 @@ static int netlua_addressraw(lua_State *const L)
 
 /***********************************************************************/
 
-static int netlua_ntop(lua_State *const L)
+static int netlua_ntop(lua_State *L)
 {
   size_t      rawlen;
   char const *raw = luaL_checklstring(L,1,&rawlen);
@@ -962,7 +962,7 @@ static int netlua_ntop(lua_State *const L)
   
 /***********************************************************************/
 
-static int netlua_pton(lua_State *const L)
+static int netlua_pton(lua_State *L)
 {
   (void)L;
   return 0;
@@ -970,7 +970,7 @@ static int netlua_pton(lua_State *const L)
 
 /***********************************************************************/  
 
-static int netlua_htons(lua_State *const L)
+static int netlua_htons(lua_State *L)
 {
   hns__u v;
   
@@ -981,7 +981,7 @@ static int netlua_htons(lua_State *const L)
 
 /***********************************************************************/
 
-static int netlua_htonl(lua_State *const L)
+static int netlua_htonl(lua_State *L)
 {
   hnl__u v;
   
@@ -992,10 +992,10 @@ static int netlua_htonl(lua_State *const L)
 
 /***********************************************************************/
 
-static int netlua_ntohs(lua_State *const L)
+static int netlua_ntohs(lua_State *L)
 {
   size_t      l;
-  const char *s = luaL_checklstring(L,1,&l);
+  char const *s = luaL_checklstring(L,1,&l);
   hns__u      v;
   
   if (l == sizeof(uint16_t))
@@ -1010,10 +1010,10 @@ static int netlua_ntohs(lua_State *const L)
 
 /***********************************************************************/
 
-static int netlua_ntohl(lua_State *const L)
+static int netlua_ntohl(lua_State *L)
 {
   size_t      l;
-  const char *s = luaL_checklstring(L,1,&l);
+  char const *s = luaL_checklstring(L,1,&l);
   hnl__u      v;
   
   if (l == sizeof(uint32_t))
@@ -1030,7 +1030,7 @@ static int netlua_ntohl(lua_State *const L)
 
 /***********************************************************************/
 
-static int socklua___tostring(lua_State *const L)
+static int socklua___tostring(lua_State *L)
 {
   sock__t *sock;
   
@@ -1053,16 +1053,16 @@ typedef enum sopt
 
 struct sockoptions
 {
-  const char *const name;
-  const int         level;
-  const int         setlevel;
-  const int         option;
-  const sopt__t     type;
-  const bool        get;
-  const bool        set;
+  char    const *const name;
+  int     const        level;
+  int     const        setlevel;
+  int     const        option;
+  sopt__t const        type;
+  bool    const        get;
+  bool    const        set;
 };
 
-static const struct sockoptions m_sockoptions[] =
+static struct sockoptions const m_sockoptions[] =
 {
   { "broadcast"         , SOL_SOCKET    , 0             , SO_BROADCAST          , SOPT_FLAG     , true , true  } ,
 #ifdef FD_CLOEXEC
@@ -1106,21 +1106,21 @@ static const struct sockoptions m_sockoptions[] =
 
 /*********************************************************************/
 
-static int sopt_compare(const void *needle,const void *haystack)
+static int sopt_compare(void const *restrict needle,void const *restrict haystack)
 {
-  const char               *const key   = needle;
-  const struct sockoptions *const value = haystack;
+  char const               *const key   = needle;
+  struct sockoptions const *const value = haystack;
   
   return strcmp(key,value->name);
 }
 
 /*********************************************************************/
 
-static int socklua___index(lua_State *const L)
+static int socklua___index(lua_State *L)
 {
   sock__t                  *sock;
-  const char               *tkey;
-  const struct sockoptions *value;
+  char const               *tkey;
+  struct sockoptions const *value;
   int                       ivalue;
   struct timeval            tvalue;
   struct linger             lvalue;
@@ -1214,11 +1214,11 @@ static int socklua___index(lua_State *const L)
 
 /***********************************************************************/
 
-static int socklua___newindex(lua_State *const L)
+static int socklua___newindex(lua_State *L)
 {
   sock__t                  *sock;
-  const char               *tkey;
-  const struct sockoptions *value;
+  char const               *tkey;
+  struct sockoptions const *value;
   int                       ivalue;
   struct timeval            tvalue;
   struct linger             lvalue;
@@ -1307,7 +1307,7 @@ static int socklua___newindex(lua_State *const L)
 *
 *********************************************************************/
 
-static int socklua_peer(lua_State *const L)
+static int socklua_peer(lua_State *L)
 {
   sockaddr_all__t *addr;
   socklen_t        len;
@@ -1350,7 +1350,7 @@ static int socklua_peer(lua_State *const L)
 *
 **********************************************************************/
 
-static int socklua_addr(lua_State *const L)
+static int socklua_addr(lua_State *L)
 {
   sockaddr_all__t *addr;
   socklen_t        len;
@@ -1392,7 +1392,7 @@ static int socklua_addr(lua_State *const L)
 *
 ***********************************************************************/
 
-static int socklua_bind(lua_State *const L)
+static int socklua_bind(lua_State *L)
 {
   sockaddr_all__t *addr;
   sock__t         *sock;
@@ -1471,7 +1471,7 @@ static int socklua_bind(lua_State *const L)
 *
 **********************************************************************/
 
-static int socklua_connect(lua_State *const L)
+static int socklua_connect(lua_State *L)
 {
   sock__t         *sock = luaL_checkudata(L,1,TYPE_SOCK);
   sockaddr_all__t *addr = luaL_checkudata(L,2,TYPE_ADDR);
@@ -1490,7 +1490,7 @@ static int socklua_connect(lua_State *const L)
 *
 **********************************************************************/
 
-static int socklua_listen(lua_State *const L)
+static int socklua_listen(lua_State *L)
 {
   sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   
@@ -1508,7 +1508,7 @@ static int socklua_listen(lua_State *const L)
 *
 ***********************************************************************/
 
-static int socklua_accept(lua_State *const L)
+static int socklua_accept(lua_State *L)
 {
   sockaddr_all__t *remote;
   socklen_t        remsize;
@@ -1549,7 +1549,7 @@ static int socklua_accept(lua_State *const L)
 *
 **********************************************************************/
 
-static int socklua_recv(lua_State *const L)
+static int socklua_recv(lua_State *L)
 {
   sockaddr_all__t *remaddr;
   socklen_t        remsize;
@@ -1609,13 +1609,13 @@ static int socklua_recv(lua_State *const L)
 *
 ***********************************************************************/
 
-static int socklua_send(lua_State *const L)
+static int socklua_send(lua_State *L)
 {
   sockaddr_all__t *remote;
   struct sockaddr *remaddr;
   socklen_t        remsize;
   sock__t         *sock;
-  const char      *buffer;
+  char const      *buffer;
   size_t           bufsiz;
   ssize_t          bytes;
   
@@ -1662,9 +1662,9 @@ static int socklua_send(lua_State *const L)
 *
 **********************************************************************/
 
-static int socklua_shutdown(lua_State *const L)
+static int socklua_shutdown(lua_State *L)
 {
-  static const char *const opts[] = { "r" , "w" , "rw" };
+  static char const *const opts[] = { "r" , "w" , "rw" };
   sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   
   errno = 0;
@@ -1681,7 +1681,7 @@ static int socklua_shutdown(lua_State *const L)
 *
 *******************************************************************/
 
-static int socklua_close(lua_State *const L)
+static int socklua_close(lua_State *L)
 {
   sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   
@@ -1700,7 +1700,7 @@ static int socklua_close(lua_State *const L)
 
 /*******************************************************************/
 
-static int socklua_fd(lua_State *const L)
+static int socklua_fd(lua_State *L)
 {
   sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   lua_pushinteger(L,sock->fh);
@@ -1709,7 +1709,7 @@ static int socklua_fd(lua_State *const L)
 
 /***********************************************************************/
 
-static int addrmeta_display(lua_State *const L)
+static int addrmeta_display(lua_State *L)
 {
   sockaddr_all__t *addr    = luaL_checkudata(L,1,TYPE_ADDR);
   int              defport = luaL_optinteger(L,2,0);
@@ -1753,10 +1753,10 @@ static int addrmeta_display(lua_State *const L)
 *
 ***************************************************************************/
 
-static int addrlua___index(lua_State *const L)
+static int addrlua___index(lua_State *L)
 {
   sockaddr_all__t *addr;
-  const char      *sidx;
+  char const      *sidx;
   
   addr = luaL_checkudata(L,1,TYPE_ADDR);
   if (!lua_isstring(L,2))
@@ -1768,7 +1768,7 @@ static int addrlua___index(lua_State *const L)
   sidx = lua_tostring(L,2);
   if (strcmp(sidx,"addr") == 0)
   {
-    const char *p;
+    char const *p;
     char        taddr[INET6_ADDRSTRLEN];
     
     p = Inet_addr(addr,taddr);
@@ -1779,7 +1779,7 @@ static int addrlua___index(lua_State *const L)
   }
   else if (strcmp(sidx,"daddr") == 0)
   {
-    const char *p;
+    char const *p;
     char        taddr[INET6_ADDRSTRLEN];
     
     p = Inet_addr(addr,taddr);
@@ -1825,7 +1825,7 @@ static int addrlua___index(lua_State *const L)
 
 /***********************************************************************/
 
-static int addrlua___tostring(lua_State *const L)
+static int addrlua___tostring(lua_State *L)
 {
   sockaddr_all__t *addr;
   char             taddr[INET6_ADDRSTRLEN];
@@ -1851,7 +1851,7 @@ static int addrlua___tostring(lua_State *const L)
 
 /**********************************************************************/
 
-static int addrlua___eq(lua_State *const L)
+static int addrlua___eq(lua_State *L)
 {
   lua_pushboolean(L,Inet_comp(
           luaL_checkudata(L,1,TYPE_ADDR),
@@ -1861,7 +1861,7 @@ static int addrlua___eq(lua_State *const L)
 
 /**********************************************************************/
 
-static int addrlua___lt(lua_State *const L)
+static int addrlua___lt(lua_State *L)
 {
   lua_pushboolean(L,Inet_comp(
           luaL_checkudata(L,1,TYPE_ADDR),
@@ -1871,7 +1871,7 @@ static int addrlua___lt(lua_State *const L)
 
 /**********************************************************************/
 
-static int addrlua___le(lua_State *const L)
+static int addrlua___le(lua_State *L)
 {
   lua_pushboolean(L,Inet_comp(
           luaL_checkudata(L,1,TYPE_ADDR),
@@ -1881,7 +1881,7 @@ static int addrlua___le(lua_State *const L)
 
 /**********************************************************************/
 
-static int addrlua___len(lua_State *const L)
+static int addrlua___len(lua_State *L)
 {
   lua_pushinteger(L,Inet_addrlen(luaL_checkudata(L,1,TYPE_ADDR)));
   return 1;
@@ -1889,7 +1889,7 @@ static int addrlua___len(lua_State *const L)
 
 /*********************************************************************/
 
-static int net_toproto(lua_State *const L,const int idx)
+static int net_toproto(lua_State *L,int idx)
 {
   if (lua_isnil(L,idx))
     return 0;
@@ -1897,7 +1897,7 @@ static int net_toproto(lua_State *const L,const int idx)
     return lua_tointeger(L,idx);
   else if (lua_isstring(L,idx))
   {
-    const char      *proto = lua_tostring(L,idx);
+    char const      *proto = lua_tostring(L,idx);
     struct protoent *presult;
     struct protoent  result;
     char             tmp[BUFSIZ] __attribute__((unused));
@@ -1923,13 +1923,13 @@ static int net_toproto(lua_State *const L,const int idx)
 
 /*********************************************************************/
 
-static int net_toport(lua_State *const L,int idx,const int proto)
+static int net_toport(lua_State *L,int idx,int proto)
 {
   if (lua_isnumber(L,idx))
     return lua_tointeger(L,idx);
   else if (lua_isstring(L,idx))
   {
-    const char     *serv = lua_tostring(L,idx);
+    char const     *serv = lua_tostring(L,idx);
     struct servent *presult;
     struct servent  result;
     char            tmp[BUFSIZ] __attribute__((unused));
@@ -1955,7 +1955,7 @@ static int net_toport(lua_State *const L,int idx,const int proto)
 
 /*********************************************************************/
 
-int luaopen_org_conman_net(lua_State *const L)
+int luaopen_org_conman_net(lua_State *L)
 {
 #if LUA_VERSION_NUM == 501
   luaL_newmetatable(L,TYPE_SOCK);

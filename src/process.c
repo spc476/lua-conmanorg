@@ -83,15 +83,15 @@
 
 struct strint
 {
-  const char *const text;
-  const int         value;
+  char const *const text;
+  int  const        value;
 };
 
 /**********************************************************************
 * PROCESS CREATION AND DESTRUCTION
 **********************************************************************/
 
-static int proclua_setsid(lua_State *const L)
+static int proclua_setsid(lua_State *L)
 {
   pid_t id = setsid();
   
@@ -111,7 +111,7 @@ static int proclua_setsid(lua_State *const L)
 
 /********************************************************************/
 
-static int proclua_setpgid(lua_State *const L)
+static int proclua_setpgid(lua_State *L)
 {
   errno = 0;
   setpgid(luaL_optinteger(L,1,0),luaL_optinteger(L,2,0));
@@ -122,7 +122,7 @@ static int proclua_setpgid(lua_State *const L)
 
 /********************************************************************/
 
-static int proclua_getpgid(lua_State *const L)
+static int proclua_getpgid(lua_State *L)
 {
   pid_t id = getpgid(luaL_optinteger(L,1,0));
   if (id == -1)
@@ -141,7 +141,7 @@ static int proclua_getpgid(lua_State *const L)
 
 /********************************************************************/
 
-static int proclua_setpgrp(lua_State *const L)
+static int proclua_setpgrp(lua_State *L)
 {
   errno = 0;
   setpgid(0,0);
@@ -152,7 +152,7 @@ static int proclua_setpgrp(lua_State *const L)
 
 /********************************************************************/
 
-static int proclua_getpgrp(lua_State *const L)
+static int proclua_getpgrp(lua_State *L)
 {
   pid_t id = getpgid(0);
   
@@ -172,7 +172,7 @@ static int proclua_getpgrp(lua_State *const L)
 
 /********************************************************************/
 
-static int proclua_fork(lua_State *const L)
+static int proclua_fork(lua_State *L)
 {
   pid_t child;
   
@@ -226,10 +226,10 @@ static bool proc_growenvp(char ***penvp,size_t *psize)
 
 /******************************************************************/
 
-static int proclua_exec(lua_State *const L)
+static int proclua_exec(lua_State *L)
 {
   extern char **environ;
-  const char   *binary;
+  char const   *binary;
   char        **argv;
   size_t        argc;
   char        **envp;
@@ -282,9 +282,9 @@ static int proclua_exec(lua_State *const L)
     lua_pushnil(L);
     while(lua_next(L,3) != 0)
     {
-      const char *name;
+      char const *name;
       size_t      nsize;
-      const char *value;
+      char const *value;
       size_t      vsize;
       
       name  = lua_tolstring(L,-2,&nsize);
@@ -329,9 +329,9 @@ static int proclua_exec(lua_State *const L)
 /******************************************************************/
 
 static void proc_pushstatus(
-        lua_State *const L,
-        const pid_t      pid,
-        int              status
+        lua_State   *L,
+        const pid_t  pid,
+        int          status
 )
 {
   lua_createtable(L,0,0);
@@ -381,7 +381,7 @@ static void proc_pushstatus(
 
 /***********************************************************************/
 
-static int proclua_exit(lua_State *const L)
+static int proclua_exit(lua_State *L)
 {
   assert(L != NULL);
   
@@ -390,7 +390,7 @@ static int proclua_exit(lua_State *const L)
 
 /***********************************************************************/
 
-static int proclua_wait(lua_State *const L)
+static int proclua_wait(lua_State *L)
 {
   pid_t child;
   int   status;
@@ -424,8 +424,8 @@ static int proclua_wait(lua_State *const L)
 /*********************************************************************/
 
 static void proc_pushrusage(
-        lua_State     *const restrict L,
-        struct rusage *const restrict usage
+        lua_State     *L,
+        struct rusage *usage
 )
 {
   lua_createtable(L,0,0);
@@ -481,7 +481,7 @@ static void proc_pushrusage(
 
 /******************************************************************/
 
-static int proclua_waitusage(lua_State *const L)
+static int proclua_waitusage(lua_State *L)
 {
   struct rusage usage;
   pid_t         child;
@@ -517,7 +517,7 @@ static int proclua_waitusage(lua_State *const L)
 
 /**********************************************************************/
 
-static int proclua_waitid(lua_State *const L)
+static int proclua_waitid(lua_State *L)
 {
   siginfo_t info;
   pid_t     child;
@@ -579,7 +579,7 @@ static int proclua_waitid(lua_State *const L)
 * RESOURCE UTILITZATION
 **********************************************************************/
 
-static int proclua_times(lua_State *const L)
+static int proclua_times(lua_State *L)
 {
   struct tms tms;
   
@@ -607,10 +607,10 @@ static int proclua_times(lua_State *const L)
 
 /*********************************************************************/
 
-static int proclua_getrusage(lua_State *const L)
+static int proclua_getrusage(lua_State *L)
 {
   struct rusage  usage;
-  const char    *twho;
+  char const    *twho;
   int            who;
   
   twho = luaL_optstring(L,1,"self");
@@ -639,9 +639,9 @@ static int proclua_getrusage(lua_State *const L)
 
 /*********************************************************************/
 
-static int proclua_meta___index(lua_State *const L)
+static int proclua_meta___index(lua_State *L)
 {
-  const char *idx;
+  char const *idx;
   
   assert(L != NULL);
   
@@ -657,9 +657,9 @@ static int proclua_meta___index(lua_State *const L)
 
 /*********************************************************************/
 
-static int proclua_meta___newindex(lua_State *const L)
+static int proclua_meta___newindex(lua_State *L)
 {
-  const char *idx;
+  char const *idx;
   
   assert(L != NULL);
   
@@ -684,8 +684,8 @@ static int proclua_meta___newindex(lua_State *const L)
 /*********************************************************************/
 
 static bool limit_trans(
-        int        *const restrict pret,
-        const char *const restrict tag
+        int        *pret,
+        char const *tag
 )
 {
   assert(pret != NULL);
@@ -714,9 +714,9 @@ static bool limit_trans(
 /**********************************************************************/
 
 static bool limit_valid_suffix(
-        lua_Number *const restrict pval,
-        const int                  key,
-        const char *const restrict unit
+        lua_Number *pval,
+        int         key,
+        char const *unit
 )
 {
   assert(pval != NULL);
@@ -772,10 +772,10 @@ static bool limit_valid_suffix(
 
 /******************************************************************/
 
-static int hlimitlua_meta___index(lua_State *const L)
+static int hlimitlua_meta___index(lua_State *L)
 {
   struct rlimit  limit;
-  const char    *tkey;
+  char const    *tkey;
   int            key;
   int            rc;
   
@@ -805,10 +805,10 @@ static int hlimitlua_meta___index(lua_State *const L)
 
 /************************************************************************/
 
-static int hlimitlua_meta___newindex(lua_State *const L)
+static int hlimitlua_meta___newindex(lua_State *L)
 {
   struct rlimit  limit;
-  const char    *tkey;
+  char const    *tkey;
   int            key;
   lua_Number     ival;
   
@@ -824,8 +824,8 @@ static int hlimitlua_meta___newindex(lua_State *const L)
     ival = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
-    const char *tval;
-    const char *unit;
+    char const *tval;
+    char const *unit;
     
     tval = lua_tostring(L,3);
     ival = strtod(tval,(char **)&unit);
@@ -853,10 +853,10 @@ static int hlimitlua_meta___newindex(lua_State *const L)
 
 /************************************************************************/
 
-static int slimitlua_meta___index(lua_State *const L)
+static int slimitlua_meta___index(lua_State *L)
 {
   struct rlimit  limit;
-  const char    *tkey;
+  char const    *tkey;
   int            key;
   int            rc;
   
@@ -886,11 +886,11 @@ static int slimitlua_meta___index(lua_State *const L)
 
 /************************************************************************/
 
-static int slimitlua_meta___newindex(lua_State *const L)
+static int slimitlua_meta___newindex(lua_State *L)
 {
   struct rlimit  climit;
   struct rlimit  limit;
-  const char    *tkey;
+  char const    *tkey;
   int            key;
   lua_Number     ival;
   int            rc;
@@ -907,8 +907,8 @@ static int slimitlua_meta___newindex(lua_State *const L)
     ival = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
-    const char *tval;
-    const char *unit;
+    char const *tval;
+    char const *unit;
     
     tval = lua_tostring(L,3);
     ival = strtod(tval,(char **)&unit);
@@ -936,7 +936,7 @@ static int slimitlua_meta___newindex(lua_State *const L)
 * PROCESS USER AND GROUP INFORMATION
 ************************************************************************/
 
-static int proclua_getuid(lua_State *const L)
+static int proclua_getuid(lua_State *L)
 {
 #if defined(__linux)
   uid_t uid;
@@ -960,7 +960,7 @@ static int proclua_getuid(lua_State *const L)
 
 /************************************************************************/
 
-static int proclua_getgid(lua_State *const L)
+static int proclua_getgid(lua_State *L)
 {
 #if defined(__linux)
   gid_t gid;
@@ -984,7 +984,7 @@ static int proclua_getgid(lua_State *const L)
 
 /********************************************************************/
 
-static int proclua_setuid(lua_State *const L)
+static int proclua_setuid(lua_State *L)
 {
 #if defined(__linux)
   uid_t uid;
@@ -1026,7 +1026,7 @@ static int proclua_setuid(lua_State *const L)
 
 /*************************************************************************/
 
-static int proclua_setgid(lua_State *const L)
+static int proclua_setgid(lua_State *L)
 {
 #if defined(__linux)
   gid_t gid;
@@ -1070,7 +1070,7 @@ static int proclua_setgid(lua_State *const L)
 * MISC PROCESS ROUTINES
 *************************************************************************/
 
-static int proclua_pause(lua_State *const L)
+static int proclua_pause(lua_State *L)
 {
   pause();
   lua_pushinteger(L,errno);
@@ -1081,7 +1081,7 @@ static int proclua_pause(lua_State *const L)
 * CPU AFINITY ROUTINES
 *********************************************************************/
 
-static int proclua_getaffinity(lua_State *const L)
+static int proclua_getaffinity(lua_State *L)
 {
 #if defined(__linux)
 
@@ -1134,7 +1134,7 @@ static int proclua_getaffinity(lua_State *const L)
 
 /************************************************************************/
 
-static int proclua_setaffinity(lua_State *const L)
+static int proclua_setaffinity(lua_State *L)
 {
 #if defined(__linux)
 
@@ -1196,7 +1196,7 @@ static int proclua_setaffinity(lua_State *const L)
 
 /***********************************************************************/
 
-static const struct luaL_Reg m_process_reg[] =
+static struct luaL_Reg const m_process_reg[] =
 {
   { "setsid"            , proclua_setsid                } ,
   { "setpgid"           , proclua_setpgid               } ,
@@ -1221,28 +1221,28 @@ static const struct luaL_Reg m_process_reg[] =
   { NULL                , NULL                          }
 };
 
-static const struct luaL_Reg m_process_meta[] =
+static struct luaL_Reg const m_process_meta[] =
 {
   { "__index"           , proclua_meta___index          } ,
   { "__newindex"        , proclua_meta___newindex       } ,
   { NULL                , NULL                          }
 };
 
-static const struct luaL_Reg m_hlimit_meta[] =
+static struct luaL_Reg const m_hlimit_meta[] =
 {
   { "__index"           , hlimitlua_meta___index        } ,
   { "__newindex"        , hlimitlua_meta___newindex     } ,
   { NULL                , NULL                          }
 };
 
-static const struct luaL_Reg m_slimit_meta[] =
+static struct luaL_Reg const m_slimit_meta[] =
 {
   { "__index"           , slimitlua_meta___index        } ,
   { "__newindex"        , slimitlua_meta___newindex     } ,
   { NULL                , NULL                          }
 };
 
-int luaopen_org_conman_process(lua_State *const L)
+int luaopen_org_conman_process(lua_State *L)
 {
   assert(L != NULL);
   

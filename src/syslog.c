@@ -54,13 +54,13 @@
 
 struct strintmap
 {
-  const char *const name;
-  const int         value;
+  char const *const name;
+  int  const        value;
 };
 
 /*************************************************************************/
 
-static const struct strintmap m_facilities[] =
+static struct strintmap const m_facilities[] =
 {
   { "auth"      , ( 4 << 3) } ,
   { "auth2"     , (10 << 3) } ,
@@ -92,7 +92,7 @@ static const struct strintmap m_facilities[] =
 
 #define MAX_FACILITY    (sizeof(m_facilities) / sizeof(struct strintmap))
 
-static const struct strintmap m_levels[] =
+static struct strintmap const m_levels[] =
 {
   { "alert"     , 1     } ,
   { "crit"      , 2     } ,
@@ -110,7 +110,7 @@ static const struct strintmap m_levels[] =
 
 #define MAX_LEVEL       (sizeof(m_levels) / sizeof(struct strintmap))
 
-static const struct strintmap m_opts[] =
+static struct strintmap const m_opts[] =
 {
   { "cons"      , LOG_CONS      } ,
   { "console"   , LOG_CONS      } ,
@@ -133,10 +133,10 @@ static const struct strintmap m_opts[] =
 
 /************************************************************************/
 
-static int sim_cmp(const void *needle,const void *haystack)
+static int sim_cmp(void const *restrict needle,void const *restrict haystack)
 {
-  const char             *key = needle;
-  const struct strintmap *map = haystack;
+  char const             *key = needle;
+  struct strintmap const *map = haystack;
   
   return strcmp(key,map->name);
 }
@@ -165,8 +165,8 @@ static int sim_cmp(const void *needle,const void *haystack)
 static int syslog_open(lua_State *L)
 {
   struct strintmap *map;
-  const char       *name;
-  const char       *ident;
+  char const       *name;
+  char const       *ident;
   int               options;
   int               facility;
   size_t            i;
@@ -264,7 +264,7 @@ static int syslog_close(lua_State *L)
 static int syslog_log(lua_State *L)
 {
   struct strintmap *map;
-  const char       *name;
+  char const       *name;
   int               level;
   
   name = luaL_checkstring(L,1);
@@ -304,7 +304,7 @@ static int syslog___call(lua_State *L)
 
 /**********************************************************************/
 
-static const struct luaL_Reg reg_syslog[] =
+static struct luaL_Reg const reg_syslog[] =
 {
   { "open"      , syslog_open   } ,
   { "close"     , syslog_close  } ,

@@ -44,7 +44,7 @@
 extern char **environ;
 
 #if LUA_VERSION_NUM == 501
-  static const struct luaL_Reg env[] =
+  static struct luaL_Reg const env[] =
   {
     { NULL , NULL }
   };

@@ -31,7 +31,7 @@
 
 /**********************************************************/
 
-static const uint32_t m_crc32_table[] =
+static uint32_t const m_crc32_table[] =
 {
   0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
   0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
@@ -103,11 +103,11 @@ static const uint32_t m_crc32_table[] =
 
 static int crc32(lua_State *L)
 {
-  const uint8_t *p;
+  uint8_t const *p;
   size_t         size;
   uint32_t       crc;
   
-  p   = (const uint8_t *)luaL_checklstring(L,1,&size);
+  p   = (uint8_t const *)luaL_checklstring(L,1,&size);
   crc = luaL_optinteger(L,2,0xFFFFFFFFuL);
   
   while(size--)
@@ -119,7 +119,7 @@ static int crc32(lua_State *L)
 
 /****************************************************************/
 
-static const struct luaL_Reg reg_crc[] =
+static struct luaL_Reg const reg_crc[] =
 {
   { "crc32"     , crc32 },
   { NULL        , NULL  }

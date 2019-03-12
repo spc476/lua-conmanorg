@@ -62,13 +62,13 @@ struct Ltlsmem
 
 struct strint
 {
-  const char *const text;
-  const int         value;
+  char const *const text;
+  int  const        value;
 };
 
 /**************************************************************************/
 
-static const struct strint m_tls_consts[] =
+static struct strint const m_tls_consts[] =
 {
   { "ERROR"                             , -1                                    } ,
   { "BUFFERSIZE"                        , LUAL_BUFFERSIZE                       } ,

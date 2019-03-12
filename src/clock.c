@@ -133,14 +133,14 @@
 #ifdef CLOCK_IMPL_REALTIME
 #define IMPLEMENTATION  "clock_gettime"
 
-const char *m_clocks[] =
+char const *const m_clocks[] =
 {
   "realtime",
   "monotonic",
   NULL
 };
 
-const clockid_t m_clockids[] =
+clockid_t const m_clockids[] =
 {
   CLOCK_REALTIME,
   CLOCK_MONOTONIC,
@@ -343,7 +343,7 @@ static int clocklua_itimer(lua_State *L)
 
 /**************************************************************************/
 
-static const struct luaL_Reg m_clock_reg[] =
+static struct luaL_Reg const m_clock_reg[] =
 {
   { "sleep"             , clocklua_sleep        } ,
   { "get"               , clocklua_get          } ,

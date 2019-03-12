@@ -45,13 +45,13 @@
 
 struct strint
 {
-  const char *const text;
-  const int         value;
+  char const *const text;
+  int  const        value;
 };
 
 /***************************************************************************/
 
-static const struct strint m_errors[] =
+static struct strint const m_errors[] =
 {
   { "EDOM"   , EDOM   } ,
   { "ERANGE" , ERANGE } ,
@@ -557,7 +557,7 @@ static int errno___index(lua_State *L)
 /***********************************************************************/
 
 #if LUA_VERSION_NUM == 501
-  static const struct luaL_Reg m_reg_errno[] =
+  static struct luaL_Reg const m_reg_errno[] =
   {
     { NULL      , NULL           }
   };

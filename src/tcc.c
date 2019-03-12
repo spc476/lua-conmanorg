@@ -59,43 +59,43 @@
 
 /**************************************************************************/
 
-static int      tcclua_new              (lua_State *const);
-static int      tcclua_dispose          (lua_State *const);
+static int      tcclua_new              (lua_State *);
+static int      tcclua_dispose          (lua_State *);
 
-static int      tcclua___tostring       (lua_State *const);
-static int      tcclua___gc             (lua_State *const);
-static int      tcclua_enable_debug     (lua_State *const);
-static int      tcclua_set_warning      (lua_State *const);
-static int      tcclua_include_path     (lua_State *const);
-static int      tcclua_sysinclude_path  (lua_State *const);
-static int      tcclua_define           (lua_State *const);
-static int      tcclua_undef            (lua_State *const);
-static int      tcclua_compile          (lua_State *const);
-static int      tcclua_add_file         (lua_State *const);
-static int      tcclua_add_string       (lua_State *const);
-static int      tcclua_output_type      (lua_State *const);
-static int      tcclua_library_path     (lua_State *const);
-static int      tcclua_library          (lua_State *const);
-static int      tcclua_set_symbol       (lua_State *const);
-static int      tcclua_output           (lua_State *const);
-static int      tcclua_run              (lua_State *const);
-static int      tcclua_relocate         (lua_State *const);
-static int      tcclua_get_symbol       (lua_State *const);
-static int      tcclua_lib_path         (lua_State *const);
+static int      tcclua___tostring       (lua_State *);
+static int      tcclua___gc             (lua_State *);
+static int      tcclua_enable_debug     (lua_State *);
+static int      tcclua_set_warning      (lua_State *);
+static int      tcclua_include_path     (lua_State *);
+static int      tcclua_sysinclude_path  (lua_State *);
+static int      tcclua_define           (lua_State *);
+static int      tcclua_undef            (lua_State *);
+static int      tcclua_compile          (lua_State *);
+static int      tcclua_add_file         (lua_State *);
+static int      tcclua_add_string       (lua_State *);
+static int      tcclua_output_type      (lua_State *);
+static int      tcclua_library_path     (lua_State *);
+static int      tcclua_library          (lua_State *);
+static int      tcclua_set_symbol       (lua_State *);
+static int      tcclua_output           (lua_State *);
+static int      tcclua_run              (lua_State *);
+static int      tcclua_relocate         (lua_State *);
+static int      tcclua_get_symbol       (lua_State *);
+static int      tcclua_lib_path         (lua_State *);
 
-static void     error_lua_handler       (void *,const char *);
-static void     error_c_handler         (void *,const char *);
+static void     error_lua_handler       (void *,char const *);
+static void     error_c_handler         (void *,char const *);
 
 /************************************************************************/
 
-static const struct luaL_Reg mtcc_reg[] =
+static struct luaL_Reg const mtcc_reg[] =
 {
   { "new"       , tcclua_new            } ,
   { "dispose"   , tcclua_dispose        } ,
   { NULL        , NULL                  }
 };
 
-static const struct luaL_Reg mtcc_meta[] =
+static struct luaL_Reg const mtcc_meta[] =
 {
   { "__tostring"        , tcclua___tostring             } ,
   { "__gc"              , tcclua___gc                   } ,
@@ -123,7 +123,7 @@ static const struct luaL_Reg mtcc_meta[] =
   { NULL                , NULL                          }
 };
 
-static const char *const moutput_type[] =
+static char const *const moutput_type[] =
 {
   "memory",
   "exec",
@@ -135,7 +135,7 @@ static const char *const moutput_type[] =
 
 /**************************************************************************/
 
-int luaopen_org_conman_tcc(lua_State *const L)
+int luaopen_org_conman_tcc(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_TCC);
 #if LUA_VERSION_NUM == 501
@@ -157,7 +157,7 @@ int luaopen_org_conman_tcc(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_new(lua_State *const L)
+static int tcclua_new(lua_State *L)
 {
   TCCState  *tcc;
   TCCState **ptcc;
@@ -182,7 +182,7 @@ static int tcclua_new(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_dispose(lua_State *const L)
+static int tcclua_dispose(lua_State *L)
 {
   if (!lua_islightuserdata(L,1))
     return luaL_error(L,"require a light user data");
@@ -193,7 +193,7 @@ static int tcclua_dispose(lua_State *const L)
 
 /***********************************************************************/
 
-static int tcclua___tostring(lua_State *const L)
+static int tcclua___tostring(lua_State *L)
 {
   lua_pushfstring(L,"tcc (%p)",lua_touserdata(L,1));
   return 1;
@@ -201,7 +201,7 @@ static int tcclua___tostring(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua___gc(lua_State *const L)
+static int tcclua___gc(lua_State *L)
 {
   syslog(LOG_DEBUG,"garbage collect TCC");
   tcc_delete(*(TCCState **)luaL_checkudata(L,1,TYPE_TCC));
@@ -210,7 +210,7 @@ static int tcclua___gc(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_enable_debug(lua_State *const L)
+static int tcclua_enable_debug(lua_State *L)
 {
   tcc_enable_debug(*(TCCState **)luaL_checkudata(L,1,TYPE_TCC));
   return 0;
@@ -218,7 +218,7 @@ static int tcclua_enable_debug(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_set_warning(lua_State *const L)
+static int tcclua_set_warning(lua_State *L)
 {
   lua_pushinteger(
         L,
@@ -233,7 +233,7 @@ static int tcclua_set_warning(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_include_path(lua_State *const L)
+static int tcclua_include_path(lua_State *L)
 {
   lua_pushinteger(
        L,
@@ -247,7 +247,7 @@ static int tcclua_include_path(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_sysinclude_path(lua_State *const L)
+static int tcclua_sysinclude_path(lua_State *L)
 {
   lua_pushinteger(
         L,
@@ -261,7 +261,7 @@ static int tcclua_sysinclude_path(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_define(lua_State *const L)
+static int tcclua_define(lua_State *L)
 {
   tcc_define_symbol(
           *(TCCState **)luaL_checkudata(L,1,TYPE_TCC),
@@ -273,7 +273,7 @@ static int tcclua_define(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_undef(lua_State *const L)
+static int tcclua_undef(lua_State *L)
 {
   tcc_undefine_symbol(
           *(TCCState **)luaL_checkudata(L,1,TYPE_TCC),
@@ -290,10 +290,10 @@ struct error_data
   lua_State *L;
 };
 
-static int tcclua_compile(lua_State *const L)
+static int tcclua_compile(lua_State *L)
 {
   TCCState          **tcc  = luaL_checkudata(L,1,TYPE_TCC);
-  const char         *text = luaL_checkstring(L,2);
+  char const         *text = luaL_checkstring(L,2);
   struct error_data   errdata;
   
   if (lua_isfunction(L,4))
@@ -322,10 +322,10 @@ static int tcclua_compile(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_add_file(lua_State *const L)
+static int tcclua_add_file(lua_State *L)
 {
   TCCState          **tcc = luaL_checkudata(L,1,TYPE_TCC);
-  const char         *file = luaL_checkstring(L,2);
+  char const         *file = luaL_checkstring(L,2);
   struct error_data   errdata;
   
   if (lua_isfunction(L,3))
@@ -351,10 +351,10 @@ static int tcclua_add_file(lua_State *const L)
 
 /************************************************************************/
 
-static int tcclua_add_string(lua_State *const L)
+static int tcclua_add_string(lua_State *L)
 {
   TCCState          **tcc = luaL_checkudata(L,1,TYPE_TCC);
-  const char         *file = luaL_checkstring(L,2);
+  char const         *file = luaL_checkstring(L,2);
   struct error_data   errdata;
   
   if (lua_isfunction(L,3))
@@ -382,7 +382,7 @@ static int tcclua_add_string(lua_State *const L)
 
 static void error_lua_handler(
         void       *opaque,
-        const char *msg
+        char const *msg
 )
 {
   struct error_data *errdata = opaque;
@@ -400,7 +400,7 @@ static void error_lua_handler(
 
 static void error_c_handler(
         void       *opaque __attribute__((unused)),
-        const char *msg
+        char const *msg
 )
 {
   fprintf(stderr,"tcc: %s\n",msg);
@@ -408,7 +408,7 @@ static void error_c_handler(
 
 /************************************************************************/
 
-static int tcclua_output_type(lua_State *const L)
+static int tcclua_output_type(lua_State *L)
 {
   lua_pushinteger(
         L,
@@ -422,7 +422,7 @@ static int tcclua_output_type(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_library_path(lua_State *const L)
+static int tcclua_library_path(lua_State *L)
 {
   lua_pushinteger(
           L,
@@ -436,7 +436,7 @@ static int tcclua_library_path(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_library(lua_State *const L)
+static int tcclua_library(lua_State *L)
 {
   lua_pushinteger(
           L,
@@ -450,28 +450,28 @@ static int tcclua_library(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_set_symbol(lua_State *const L __attribute__((unused)))
+static int tcclua_set_symbol(lua_State *L __attribute__((unused)))
 {
   return 0;
 }
 
 /**************************************************************************/
 
-static int tcclua_output(lua_State *const L __attribute__((unused)))
+static int tcclua_output(lua_State *L __attribute__((unused)))
 {
   return 0;
 }
 
 /**************************************************************************/
 
-static int tcclua_run(lua_State *const L __attribute__((unused)))
+static int tcclua_run(lua_State *L __attribute__((unused)))
 {
   return 0;
 }
 
 /**************************************************************************/
 
-static int tcclua_relocate(lua_State *const L)
+static int tcclua_relocate(lua_State *L)
 {
   TCCState **tcc;
   void      *mem;
@@ -500,7 +500,7 @@ static int tcclua_relocate(lua_State *const L)
 
 /**************************************************************************/
 
-static int tcclua_get_symbol(lua_State *const L __attribute__((unused)))
+static int tcclua_get_symbol(lua_State *L)
 {
   TCCState   **tcc;
   int          max;
@@ -531,7 +531,7 @@ static int tcclua_get_symbol(lua_State *const L __attribute__((unused)))
 
 /**************************************************************************/
 
-static int tcclua_lib_path(lua_State *const L)
+static int tcclua_lib_path(lua_State *L)
 {
   tcc_set_lib_path(
           *(TCCState **)luaL_checkudata(L,1,TYPE_TCC),
