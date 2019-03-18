@@ -780,7 +780,13 @@ static int netlua_address2(lua_State *L)
   {
     lua_pushnil(L);
     lua_pushinteger(L,(rc == EAI_SYSTEM) ? errno : rc);
-    freeaddrinfo(results);
+    
+    /* --------------------------------------------------
+    ; Sigh---some systems seem to fail when this is NULL.
+    ;----------------------------------------------------*/
+    
+    if (results)
+      freeaddrinfo(results);
     return 2;
   }
   
