@@ -24,6 +24,8 @@
 --
 --              http://www.pkware.com/appnote
 --
+-- NOTE: https://bugzilla.mozilla.org/show_bug.cgi?id=1534483
+--
 -- ********************************************************************
 -- luacheck: globals magic idiv
 -- luacheck: ignore 611
