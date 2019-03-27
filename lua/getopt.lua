@@ -28,6 +28,7 @@
 -- luacheck: globals getopt
 -- luacheck: ignore 611
 
+local io       = require "io"
 local _VERSION = _VERSION
 local type     = type
 
