@@ -1131,12 +1131,17 @@ struct myexpand
 {
   wordexp_t exp;
   size_t    idx;
+  bool      gc;
 };
 
 static int expand_meta___gc(lua_State *L)
 {
   struct myexpand *data = lua_touserdata(L,1);
-  wordfree(&data->exp);
+  if (!data->gc)
+  {
+    wordfree(&data->exp);
+    data->gc = true;
+  }
   return 0;
 }
 
@@ -1149,8 +1154,12 @@ static int expand_meta_next(lua_State *L)
   if (data->idx < data->exp.we_wordc)
     lua_pushstring(L,data->exp.we_wordv[data->idx++]);
   else
+  {
+    wordfree(&data->exp);
+    data->gc = true;
     lua_pushnil(L);
-    
+  }
+  
   return 1;
 }
 
@@ -1177,12 +1186,16 @@ static int fsys_gexpand(lua_State *L)
     ; we can do this since data has a __gc method attached to it.
     ;-------------------------------------------------------------*/
     
+    data->gc = true;
     lua_pop(L,1);
     lua_pushnil(L);
   }
   else
+  {
     data->idx = 0;
-    
+    data->gc  = false;
+  }
+  
   return 2;
 }
 
