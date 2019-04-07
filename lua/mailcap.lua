@@ -23,8 +23,6 @@
 --
 -- https://www.commandlinux.com/man-page/man5/mailcap.5.html
 -- RFC-1524
---
--- Lua 5.3 or higher
 
 local lpeg = require "lpeg" -- semver: ~1.0.0
 
@@ -112,7 +110,7 @@ local CAPS = {} do
     local caps = { _file = fname , _line = 0 }
     local f    = io.open(fname,"r")
     if f then
-      mailcapfile:match(f:read("a"),1,caps)
+      mailcapfile:match(f:read("*a"),1,caps)
       f:close()
     end
     return caps
