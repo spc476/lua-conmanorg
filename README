@@ -10,556 +10,109 @@ existing Lua modules, I decided to place them under a name that I know won't
 conflict with existing modules.  I took a play out of the Java playbook and
 placed all these modules under the "org.conman" table.  
 
-Anyway, on with a quick overview of the modules:
+                                  * * * * *
 
-Written in C:
+                             MODULES AS LUAROCKS
 
--------------------------
+org.conman.const.gopher-types
+	A table mapping Gopher resource types (RFC-1436) to human
+	readable types and back again.
 
-org.conman.crc		Implements a standard 32b CRC function
-	crc = crc32(data[,currentcrc])
-		Generate CRC of given data
+org.conman.env
+	A table containing all environtment variables.
 
--------------------------
+org.conman.errno
+	A table containing defined error codes from C and POSIX.
 
-org.conman.env		Table containing all environment variables.
+org.conman.iconv
+	A wrapper for the GNU iconv library.
 
--------------------------
+org.conman.syslog
+	A wrapper for the syslog logging system.
 
-org.conman.errno	Contains standard error codes.
-	EDOM		domain error number
-	ERANGE		range error number
-	(others, depending on system)
+org.conman.tls
+	A wrapp for the libressl library libtls.
 
-	string = strerror(error)	
-		Convert error number to a string
+                                  * * * * *
 
--------------------------
+                                MODULES IN C
 
-org.conman.fsys		Posix file system routines.  Error code is an
-			integer suitable for translation via
-			errno.strerror()
+org.conman.base64
+	Conversion routines to and from various formulations of Base-64
 
-	bool,error = symlink(old,new)
-		Creates symlink from old name to new name
+org.conman.clock
+	A POSIX timers interface.
 
-	bool,error = link(old,new)
-		Creates a hard link from old name to new name
+org.conman.crc
+	A function to calculate the standard CRC-32.
 
-	bool,error = mkdir(directory)
-		Create a directory
+org.conman.fsys
+	A module of POSIX functions releated to filesystems.
 
-	bool,error = rmdir(directory)
-		Remove a given directory
+org.conman.hash
+	A module of standard hash functions as provided by libcrypto.
 
-	bool,error = utime(path,modtime[,accesstime])
-		Update the timestamp on path to the given modification
-		time (and optional access time)
+org.conman.lfsr
+	A function to generate 8, 16 or 32 bit linear feedback shift
+	registers.
 
-	info,error = stat(string | FILE)
-		Return meta information about file.  The input parameter
-		can be an open file (via io.open()), a filename, or a file
-		descriptor (via fsys.open().fd()).
+org.conman.magic
+	A wrapper around the GNU magic (file types) database.
 
-	info,error = lstat(filename)
-		If the filename is a symbolic link, return it's information
-		instead of the file pointed to by the symbolic link.
+org.conman.net
+	A module to wrap BSD/POSIX sockets programming.  This supports
+	IPv4, IPv6 and Unix sockets.
 
-	oldperms = umask(newperms)
-		Set the umask (which is a subtractive permission set, not
-		an additive permission set).  The perms is a string:
-			'----r--r-'	022
-			'---rwxrwx'	077
+org.conman.pollset
+	A wrapper around the POSIX select() call, POSIX poll() call, and
+	Linux specific epoll() with the same API.
 
-	bool,error = chmod(path,mode)
-		Set the mode of a file.  The mode is a string:
-			'rw-r--r--'	644
-			'rw-rw-rw-'	666
-			'rwxr-xr-x'	755
+org.conman.process
+	A module of POSIX functions related to processes.
 
-	bool,error = access(filename,mode)
-		Checks the access of a filename.  Mode is a string with
-		the following characters:
+org.conman.signal
+	A wrapper around the ANSI signal() function, or the POSIX signal
+	functions.
 
-			r	- check for read access
-			w	- check for write access
-			x	- check for execute access
-			f	- check if file exists
+org.conman.strcore
+	Some functions working with strings written in C.
 
-	dirobj,error = opendir([directory])
-		Returns a directory handle.  By default, open the current
-		working directory.
+org.conman.sys
+	A table of various POSIX system dependent values.
 
-	rewinddir(dirobj)
-		Rewind to the first entry in the directory handle
-
-	entry = readdir(dirobj)
-		Return the name of the next entry in the directory.
-
-	closedir(dirobj)
-		Closes the directory handle.
-
-	bool,error = chdir(directory)
-		Change current working directory to given directory
-
-	cwd,error = getcwd()
-		Return current working directory
-
-	fnc,dirobj = dir([directory])
-		Use as:  for entry in fsys.dir("/tmp") do ... end
-
-		Note, this will not return "." or ".."
-
-	newmame = _safename(name)
-		Convert "problematic" characters to "_".
-
-	name,error = basename(path)
-		Returns the basename of a path.
-
-	name,error = dirname(filename)
-		Returns the path portion of a filename
-
-	fh = openfd(number)
-		Create a file object (as from io.open()) from a raw file
-		descriptor.
-	
-	p,error = pipe()
-		Return a pipe object.  This is a table with two fields:
-			.read	= read file handle
-			.write	= write file handle
-
-	bool,error = dup(orig , copy)
-		Duplicates the underlying Posix file handle of the original
-		file to the copy file.  If successful, the copy file will
-		have full buffering (if a file) or line buffering (if a
-		tty).
-
--------------------------
-
-org.conman.hash		Various hash functions from OpenSSL
-
-	hashes = {}	Table of various supported hashes and their sizes.
-			Includes: md2 md4 md5 mdc2 sha1 dss1 ripemd
-
-	ctx = new([typeofhash])
-		Returns a new hash context.  This defaults to MD5.
-
-	bool,error = update(ctx,data)
-		Updates the hash with data
-		
-	hash = final(ctx)
-		Returns the raw hash of the data.
-
-	hash = sum(data[,typeofhash])
-		Calcuates hash of data in one call (defaults to MD5).
-
-	string = hexa(data)
-		Converts data to a hex string.
-
-	string = sumhexa(data[,typeofhash])
-		returns hex string of hash of data.
-
-The ctx has the following methods:
-
-	bool,error = ctx:update(data)
-	hash       = ctx:final()
-	string     = ctx:finalhexa()
-		returns the hexstring of the hash.
-	string = ctx:__tostring()
-
--------------------------
-
-org.conman.iconv	Interface to the GNU iconv library.
-
-	ic = iconv.open(fromcharset,tocharset)
-		Returns an ic object to convert charsets.
-
-The ic object contains the following methods:
-
-	converedstring = ic:iconv(string)
-		Converts string
-
-	bool,error = ic:close()
-	string = ic:__tostring()
-	ic:__gc()
-
--------------------------
-
-org.conman.fsys.magic	Interface to the GNU file identification library
-
-	magic = open([flag, ...])
-		Open the magic library.  Flags include:
-			debug
-			symlink
-			compress
-			devices
-			mime
-			continue
-			check	
-			prevserve_atime
-			raw
-			error
-
-		Check 'man magic_open' for more information.
-
-	close(magic)
-		Close the magic database.
-
-	string = error(magic)
-		Transate a magic error code.
-
-	bool,error = setflags([flag, ... ])
-		Set flags.  See magic.open() for flags.
-
-	bool,error = load(magic[,filename])
-		Load the magic database from the given filename (defaults
-		to default magic database)
-	
-	bool,error = compile(magic[,filename])
-		Compile the magic database into memory.
-
-	bool,error = check(magic[,filename])
-		Checks the magic database.
-
-	error = errno(magic)
-		Returns the last error from the magic library.
-
-The magic object has the following methods:
-
-	type = magic:__call(filedata[,fileflag])
-		Returns the type of a file.  If the flag is not defined
-		(or is false), then filedata refers to a filename;
-		otherwise, the filedata is treated as data and checked.
-
-	string = magic:__tostring()
-	__gc:magic()
-
--------------------------
-
-org.conman.math		Assorted math routines
-
-	randomseed([flag])
-		Seed random number generator from /dev/urandom (if flag
-		is false) or /dev/random (if flag is true).
-
--------------------------
-
-org.conman.net		Network routines.
-
-	sock,err = socket(family,type[,proto])
-		Creates a socket.  
-			family = 'ip'   | 'ipv4' | 'unix'
-			type   = 'tcp'  | 'udp'  | 'raw'
-			proto  = number | string
-
-	fd = socketfd(sock)
-		Returns the raw file descriptor of the socket
-
-	addr,err = address(address,port[,type = 'tcp'])
-		Returns an address object.
-			address = ipaddr, ipv6addr, filename
-			port    = number | string (not used for filenames)
-			type    = 'tcp'  | 'udp' | 'raw'
-
-The returned socket object contains the following methods:
-
-	string = sock:__tostring()
-	sock:__gc()
-	addr,error = sock:addr()
-		Returns the peer address (which is wrong; it should return
-		the local address)
-
-	err = sock:bind(addr)
-		Bind the socket to the given address object
-
-	err = sock:connect(addr)
-		Connect the socket to the address.  Mostly used for TCP
-		connections, it *can* be used for UDP as well.
-
-	err = sock:listen([backlog = 5])
-		Set a TCP socket to accept incoming connections.
-
-	newsock,addr,err = sock:accept()
-		Accept a connection.  Returns a new socket and the remote
-		address.
-
-	addr,data,err = sock:read([timeout = inf])
-		Read data from a socket with a timeout (in seconds).
-
-	bytes,err = sock:write(addr,data)
-		Write data to given address.
-
-	err = sock:shutdown([how = 'rw'])
-		Shutdown the read and/or write portion of a socket (only
-		meaningful for a TCP connection, and even then it's iffy)
-
-	err = sock:close()
-		Close a socket.
-
-	fd = sock:fd()
-		Return the raw file descriptor of a socket.
-
-The address object has the following methods:
-
-	value = addr:__index(key)
-		key can be 'addr' (address), 'port' or 'family'.
-
-	string = addr:__tostring()
-	bool addr:__eq()
-	bool addr:__lt()
-	bool addr:__le()
-	integer = addr:__len()
-		returns the length of the address (not of the overall
-		object)
-
--------------------------
-
-org.conman.process	Interface to the Posix process API
-
-	PID		
-		Current process ID
-
-	limits.soft[]
-	limits.hard[]
-		An array of process limits.  Read to get the limit, write
-		to set the limit.  The fields are:
-			core	in bytes
-			cpu	in seconds
-			data	in bytes
-			fsize	in bytes
-			nofile	number
-			stack	in bytes
-			as	in bytes
-			
-	uid,euid = getuid()
-		Returns UID and effective UID
-
-	gid,egid = getgid()
-		Returns GID and effective GID
-
-	error = setuid(uid,euid)
-		Sets UID and effective UID
-
-	error = getgid(gid,egid)
-		Sets GID and effective GID
-
-	exit(rc)
-		calls _exit(rc), which causes the current process to end
-		(with no cleanup).
-
-	child,error = fork()
-		Create a new process.  child > 0 in parent process, == 0 in
-		child process.
-
-	status = wait([pid][,nowait])
-		Wait for child process to end (defaults--any).  Returns
-		a table with the status of the child process
-			.pid = pid of child process
-			.status = 'normal' | 'stopped' | 'terminated'
-			.rc  = status as returned
-			.signal = signal that terminated process
-			.description = description of signal
-			.core = true | false if core file generated
-
-	status,usage = waitusage([pid][,nowait])
-		Wait for a child process to end.  Returns status information
-		about child process (see wait()) and data about resource
-		usage:
-			.utime
-			.stime
-			.maxrss
-			.text
-			.data
-			.stack
-			.softfaults
-			.hardfaults
-			.swapped
-			.inblock
-			.outblock
-			.ipcsend
-			.ipcreceive
-			.signals
-			.coopcs
-			.preemptcs
-
-	status,error = waitid(pid[,flag])
-		Wait for a child process to end or stop.
-
-	remain,error = sleep(seconds)
-		Sleep for the given amount.  Fractional seconds can be
-		specified.
-
-	minsleep = sleepres()
-		Returns the mininum amount of sleep time system can handle
-
-	bool,error = kill(pid,signal)
-		Sends given process given signal
-
-	error = exec(binary,arg[,env])
-		Execute given binary with the given arguments (should be
-		an array of strings) and environment variables (defaults
-		to parent environment).
-
-	result,error = times()
-		Return a table describing the various amount of time
-		the process has used:
-			.utime
-			.stime
-			.cutime
-			.cstime
-
-	result,error = getrusage(['self' | 'children' | 'child'])
-		Get resource usage of current process, or children
-		processes.
-
-
-	bool sig.caught([signal])
-		Returns if a signal (default: any) has been caught
-
-	bool sig.catch(signal)
-		Catch a signal, which sets a flag that can be checked
-		via sig.caught()
-
-	sig.ignore(signal)
-		Ignore the given signal.
-
-	sig.default(signal)
-		Set the default disposition of a signal
-
-	string = sig.strsignal(signal)
-		Return the textual representation of a signal
-
-	sig.ABRT
-	sig.FPE
-	sig.ILL
-	sig.INT
-	sig.SEGV
-	sig.TERM
-		Various signals that can be caught, ignored, etc.  Others
-		may be defined.
-
--------------------------
-
-org.conman.syslog	Interface to syslog
-
-	open(ident,facility[,options]) 
-		Establish some options for syslog. The facility can be a
-		number or a string.
-
-		Options is a table with the following flags:
-			'pid'
-			'cons'
-			'nodelay'
-			'odelay'
-			'nowait'
-
-	close()
-		Close the link to syslog
-
-	log(level,message[,...])
-		Log the message at the given level.  The level can be
-			'debug'
-			'info'
-			'notice'
-			'warn'
-			'err'
-			'crit'
-			'alert'
-			'emerg'
-
-	The syslog module can also be called directly:
-		org.conman.syslog('debug',"this is a test")
-
--------------------------
-
-org.conman.tls		Interface to libtls (from LibreSSL).  This is a full
-			implementation of all the functions in libtls,
-			largely following the C implementation.  Pretty much
-			if you can
-
-				'man tls_some_function'
-
-			You'll find it in this module.
-
-*******************************************************************
+                                  * * * * *
+                               MODULES IN LUA
 
 Modules written in Lua:
 
--------------------------
+org.conman.const.entity
+	A table of HTML entities with their UTF-8 equivilents.
 
-org.conman.debug	Some debug routines
+org.conman.const.exit
+	A table of standardize exit values.
 
-	edit(function)
-		Allows one to edit the source of a function.  The editor
-		defaults to '/bin/vi' unless the $EDITOR environment 
-		variable is defined.
+org.conman.const.http-response
+	A table of HTTP response codes.
 
-	hexdump(data[,file])
-		Generate a hex dump of data to the given file (defaults
-		to io.stdout)
+org.conman.date
+	A module of some date related functions.
 
--------------------------
+org.conman.debug
+	A module of some debug related functions.
 
-org.conman.getopt	Supports a getopt() like function.
+org.conman.getopt
+	A module to handle parsing the command line.
 
--------------------------
+org.conman.mailcap
+	A wrapper around the mailcap facility found on Unix systems.
 
-org.conman.string	Some useful string operations
+org.conman.string
+	Some useful string functions (includes org.conman.strcore).
 
-	new = trim(string)
-		Trim leading and trailing space from a string
+org.conman.table
+	Some useful table functions.
 
-	new = wrap(string[,margin])
-		Wrap a string at a margin.  Default margin is 78.
+                                  * * * * *
 
-	new = remchar(string,char)
-		Remove char from string.
-
-	array = split(string[,delim])
-		Break a string into an array on the character delim
-		(defaults to ':').
-
-	new = metaphone(string)
-		Run the metaphone algorithm over the string.
-
-	new = soundex(string)
-		Run the soundex algorithm over the string.
-
-	new = base64.encode(string)
-		Encode string in base64 encoding.
-
-	new = base64.decode(string)
-		Decode string in base64 encoding.
-
--------------------------
-
-org.conman.table	Some useful table operations
-
-	show(table[,file = io.stdout])
-		Pretty print a table to the given file
-
-	string = dump_value(name,table)
-		Dump a table to a string representation.  Doesn't handle
-		everything, but is still somewhat useful.
-
--------------------------
-
-org.conman.unix		Unix users, Unix groups, and program paths.
-
-	users		Table of unix users, indexed by both UID and
-			user name.
-
-	groups		Table of unix groups, indexed by both GID and
-			group name.
-
-	paths		Indexed by program name, returns program path (as
-			found via $PATH)
-
--------------------------
-
-org.conman.dns.resolv	DNS routines (requires Lua module from SPCDNS)
-
-	string = address(host)
-		Return address of given host
-
--------------------------
+Any modules found in this repository not listed above are either obsolete or
+experimental and sould probably not be used.
