@@ -48,7 +48,7 @@ comparen  = x.comparen
 
 local function escape(s)
   return s:gsub(".",function(c)
-    return string.char(string.format("\\%03d",c:byte()))
+    return string.format("\\%03d",c:byte())
   end)
 end
 
