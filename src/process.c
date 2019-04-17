@@ -62,21 +62,29 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#define TYPE_LIMIT_HARD "org.conman.process:rlimit_hard"
-#define TYPE_LIMIT_SOFT "org.conman.process:rlimit_soft"
-
-#ifndef __GNUC__
-#  define __attribute__(x)
+#if LUA_VERSION_NUM == 501
+  static inline void lua_getuservalue(lua_State *L,int idx)
+  {
+    lua_getfenv(L,idx);
+  }
+  
+  static inline void lua_setuservalue(lua_State *L,int idx)
+  {
+    lua_setfenv(L,idx);
+  }
+  
+  static inline void luaL_newlib(lua_State *L,luaL_Reg const *list)
+  {
+    lua_createtable(L,0,0);
+    luaL_register(L,NULL,list);
+ }
 #endif
 
-#if ULONG_MAX > 4294967295uL
-#  if ULONG_MAX > 9007199254740992uL
-#    define MAX_RESOURCE_LIMIT  9007199254740992uL
-#  else
-#    define MAX_RESOURCE_LIMIT  RLIM_INFINITY
-#  endif
-#else
-#  define MAX_RESOURCE_LIMIT    RLIM_INFINITY
+#if LUA_VERSION_NUM < 503
+  static inline int lua_isinteger(lua_State *L,int idx)
+  {
+    return lua_isnumber(L,idx);
+  }
 #endif
 
 /**********************************************************************/
@@ -681,54 +689,26 @@ static int proclua_meta___newindex(lua_State *L)
   return 1;
 }
 
-/*********************************************************************/
+/*********************************************************************
+* PROCESS LIMITS
+**********************************************************************/
 
-static bool limit_trans(
-        int        *pret,
-        char const *tag
-)
-{
-  assert(pret != NULL);
-  assert(tag  != NULL);
-  
-  if (strcmp(tag,"core") == 0)
-    *pret = RLIMIT_CORE;
-  else if (strcmp(tag,"cpu") == 0)
-    *pret = RLIMIT_CPU;
-  else if (strcmp(tag,"data") == 0)
-    *pret = RLIMIT_DATA;
-  else if (strcmp(tag,"fsize") == 0)
-    *pret = RLIMIT_FSIZE;
-  else if (strcmp(tag,"nofile") == 0)
-    *pret = RLIMIT_NOFILE;
-  else if (strcmp(tag,"stack") == 0)
-    *pret = RLIMIT_STACK;
-  else if (strcmp(tag,"vm") == 0)
-    *pret = RLIMIT_AS;
-  else
-    return false;
-    
-  return true;
-}
-
-/**********************************************************************/
-
-static bool limit_valid_suffix(
-        lua_Number *pval,
-        int         key,
-        char const *unit
-)
+static bool limit_valid_suffix(rlim_t *pval,int key,char const *unit)
 {
   assert(pval != NULL);
   assert(unit != NULL);
   assert(
-             (key == RLIMIT_CORE)
-          || (key == RLIMIT_CPU)
+             (key == RLIMIT_CPU)
+          || (key == RLIMIT_LOCKS)
+          || (key == RLIMIT_NOFILE)
+          || (key == RLIMIT_NPROC)
+          || (key == RLIMIT_RSS)
+          || (key == RLIMIT_AS)
+          || (key == RLIMIT_CORE)
           || (key == RLIMIT_DATA)
           || (key == RLIMIT_FSIZE)
-          || (key == RLIMIT_NOFILE)
+          || (key == RLIMIT_MEMLOCK)
           || (key == RLIMIT_STACK)
-          || (key == RLIMIT_AS)
         );
         
   switch(key)
@@ -737,29 +717,33 @@ static bool limit_valid_suffix(
          switch(toupper(*unit))
          {
            case 'S':                     break;
-           case 'M':  *pval *=     60.0; break;
-           case 'H':  *pval *=   3600.0; break;
-           case 'D':  *pval *=  86400.0; break;
-           case 'W':  *pval *= 604800.0; break;
+           case 'M':  *pval *=     60uL; break;
+           case 'H':  *pval *=   3600uL; break;
+           case 'D':  *pval *=  86400uL; break;
+           case 'W':  *pval *= 604800uL; break;
            case '\0':                    break;
            default: return false;
          }
          return true;
          
+    case RLIMIT_LOCKS:
     case RLIMIT_NOFILE:
+    case RLIMIT_NPROC:
+    case RLIMIT_RSS:
          return (*unit == '\0');
          
+    case RLIMIT_AS:
     case RLIMIT_CORE:
     case RLIMIT_DATA:
     case RLIMIT_FSIZE:
+    case RLIMIT_MEMLOCK:
     case RLIMIT_STACK:
-    case RLIMIT_AS:
          switch(toupper(*unit))
          {
            case 'B':                                       break;
-           case 'K':  *pval *= (1024.0);                   break;
-           case 'M':  *pval *= (1024.0 * 1024.0);          break;
-           case 'G':  *pval *= (1024.0 * 1024.0 * 1024.0); break;
+           case 'K':  *pval *= (1024uL);                   break;
+           case 'M':  *pval *= (1024uL * 1024uL);          break;
+           case 'G':  *pval *= (1024uL * 1024uL * 1024uL); break;
            case '\0':                                      break;
            default: return false;
          }
@@ -775,31 +759,21 @@ static bool limit_valid_suffix(
 static int hlimitlua_meta___index(lua_State *L)
 {
   struct rlimit  limit;
-  char const    *tkey;
-  int            key;
-  int            rc;
-  
+
   assert(L != NULL);
   
-  luaL_checkudata(L,1,TYPE_LIMIT_HARD);
-  tkey = luaL_checkstring(L,2);
+  lua_getuservalue(L,1);
+  lua_replace(L,1);
+  lua_rawget(L,1);
   
-  if (!limit_trans(&key,tkey))
-    return luaL_error(L,"Illegal limit resource: %s",tkey);
-    
-  rc = getrlimit(key,&limit);
-  if (rc == -1)
+  if (lua_isinteger(L,-1))
   {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
+    getrlimit(lua_tointeger(L,-1),&limit);
+    lua_pushinteger(L,limit.rlim_max);
   }
-  
-  if (limit.rlim_max == RLIM_INFINITY)
-    lua_pushnumber(L,HUGE_VAL);
   else
-    lua_pushnumber(L,limit.rlim_max);
-    
+    lua_pushnil(L);
+  
   return 1;
 }
 
@@ -807,80 +781,92 @@ static int hlimitlua_meta___index(lua_State *L)
 
 static int hlimitlua_meta___newindex(lua_State *L)
 {
-  struct rlimit  limit;
-  char const    *tkey;
-  int            key;
-  lua_Number     ival;
-  
-  assert(L != NULL);
-  
-  luaL_checkudata(L,1,TYPE_LIMIT_HARD);
-  tkey = luaL_checkstring(L,2);
-  
-  if (!limit_trans(&key,tkey))
-    return luaL_error(L,"Illegal limit resource: %s",tkey);
-    
+  struct rlimit limit;
+  int           key;
+
+  lua_getuservalue(L,1);
+  lua_pushvalue(L,2);
+  lua_rawget(L,-2);
+
+  if (!lua_isinteger(L,-1))
+    return 0;
+
+  key = lua_tointeger(L,-1);
+
   if (lua_isnumber(L,3))
-    ival = lua_tonumber(L,3);
+    limit.rlim_max = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
     char const *tval;
-    char const *unit;
-    
-    tval = lua_tostring(L,3);
-    ival = strtod(tval,(char **)&unit);
-    
-    if (!limit_valid_suffix(&ival,key,unit))
+    char       *unit;
+
+    tval           = lua_tostring(L,3);
+    limit.rlim_max = strtoul(tval,&unit,10);
+    if (!limit_valid_suffix(&limit.rlim_max,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
   }
   else
-    return luaL_error(L,"Non-supported type");
-    
-  if (ival >= MAX_RESOURCE_LIMIT)
-  {
-    limit.rlim_cur = RLIM_INFINITY;
-    limit.rlim_max = RLIM_INFINITY;
-  }
-  else
-  {
-    limit.rlim_cur = ival;
-    limit.rlim_max = ival;
-  }
-  
+    return luaL_error(L,"Non-supported value for resource");
+
+  limit.rlim_cur = limit.rlim_max;
   setrlimit(key,&limit);
   return 0;
 }
 
 /************************************************************************/
 
-static int slimitlua_meta___index(lua_State *L)
-{
-  struct rlimit  limit;
-  char const    *tkey;
-  int            key;
-  int            rc;
-  
-  assert(L != NULL);
-  
-  luaL_checkudata(L,1,TYPE_LIMIT_SOFT);
-  tkey = luaL_checkstring(L,2);
-  
-  if (!limit_trans(&key,tkey))
-    return luaL_error(L,"Illegal limit resource: %s",tkey);
-    
-  rc = getrlimit(key,&limit);
-  if (rc == -1)
+#if LUA_VERSION_NUM >= 503
+
+  static int hlimit____next(lua_State *L)
   {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
+    struct rlimit limit;
+
+    lua_getuservalue(L,1);
+    lua_pushvalue(L,2);
+    if (lua_next(L,-2))
+    {
+      if (lua_isinteger(L,-1))
+      {
+        getrlimit(lua_tointeger(L,-1),&limit);
+        lua_pop(L,1);
+        lua_pushinteger(L,limit.rlim_max);
+        return 2;
+      }
+    }
+
+    return 0;
   }
   
-  if (limit.rlim_cur == RLIM_INFINITY)
-    lua_pushnumber(L,HUGE_VAL);
+  /*==============================================================*/
+  
+  static int hlimitlua_meta___pairs(lua_State *L)
+  {
+    lua_pushcfunction(L,hlimit____next);
+    lua_insert(L,1);
+    lua_pushnil(L);
+    return 3;
+  }
+  
+#endif
+
+/************************************************************************/
+
+static int slimitlua_meta___index(lua_State *L)
+{
+  struct rlimit limit;
+
+  lua_getuservalue(L,1);
+  lua_replace(L,1);
+  lua_rawget(L,1);
+
+  if (lua_isinteger(L,-1))
+  {
+    getrlimit(lua_tointeger(L,-1),&limit);
+    lua_pushinteger(L,limit.rlim_cur);
+  }
   else
-    lua_pushnumber(L,limit.rlim_cur);
-    
+    lua_pushnil(L);
+
   return 1;
 }
 
@@ -888,49 +874,73 @@ static int slimitlua_meta___index(lua_State *L)
 
 static int slimitlua_meta___newindex(lua_State *L)
 {
-  struct rlimit  climit;
-  struct rlimit  limit;
-  char const    *tkey;
-  int            key;
-  lua_Number     ival;
-  int            rc;
-  
-  assert(L != NULL);
-  
-  luaL_checkudata(L,1,TYPE_LIMIT_SOFT);
-  tkey = luaL_checkstring(L,2);
-  
-  if (!limit_trans(&key,tkey))
-    return luaL_error(L,"Illegal limit resource: %s",tkey);
-    
+  struct rlimit limit;
+  int           key;
+
+  lua_getuservalue(L,1);
+  lua_pushvalue(L,2);
+  lua_rawget(L,-2);
+
+  if (!lua_isinteger(L,-1))
+    return 0;
+
+  key = lua_tointeger(L,-1);
+  getrlimit(key,&limit);
+
   if (lua_isnumber(L,3))
-    ival = lua_tonumber(L,3);
+    limit.rlim_cur = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
     char const *tval;
-    char const *unit;
-    
-    tval = lua_tostring(L,3);
-    ival = strtod(tval,(char **)&unit);
-    if (!limit_valid_suffix(&ival,key,unit))
+    char       *unit;
+
+    tval           = lua_tostring(L,3);
+    limit.rlim_cur = strtoul(tval,&unit,10);
+    if (!limit_valid_suffix(&limit.rlim_cur,key,unit))
       return luaL_error(L,"Illegal suffix: %c",*unit);
   }
   else
-    return luaL_error(L,"Non-supported type");
-    
-  if (ival >= MAX_RESOURCE_LIMIT)
-    limit.rlim_cur = RLIM_INFINITY;
-  else
-    limit.rlim_cur = ival;
-    
-  rc = getrlimit(key,&climit);
-  if (rc == -1)
-    return 0;
-    
-  limit.rlim_max = climit.rlim_max;
+    return luaL_error(L,"Non-supported value for resource");
+
   setrlimit(key,&limit);
   return 0;
 }
+
+/************************************************************************/
+
+#if LUA_VERSION_NUM >= 503
+
+  static int slimit____next(lua_State *L)
+  {
+    struct rlimit limit;
+
+    lua_getuservalue(L,1);
+    lua_pushvalue(L,2);
+    if (lua_next(L,-2))
+    {
+      if (lua_isinteger(L,-1))
+      {
+        getrlimit(lua_tointeger(L,-1),&limit);
+        lua_pop(L,1);
+        lua_pushinteger(L,limit.rlim_cur);
+        return 2;
+      }
+    }
+
+    return 0;
+  }
+  
+  /*==============================================================*/
+  
+  static int slimitlua_meta___pairs(lua_State *L)
+  {
+    lua_pushcfunction(L,slimit____next);
+    lua_insert(L,1);
+    lua_pushnil(L);
+    return 3;
+  }
+  
+#endif
 
 /************************************************************************
 * PROCESS USER AND GROUP INFORMATION
@@ -1232,6 +1242,9 @@ static struct luaL_Reg const m_hlimit_meta[] =
 {
   { "__index"           , hlimitlua_meta___index        } ,
   { "__newindex"        , hlimitlua_meta___newindex     } ,
+#if LUA_VERSION_NUM >= 503
+  { "__pairs"           , hlimitlua_meta___pairs        } ,
+#endif
   { NULL                , NULL                          }
 };
 
@@ -1239,6 +1252,9 @@ static struct luaL_Reg const m_slimit_meta[] =
 {
   { "__index"           , slimitlua_meta___index        } ,
   { "__newindex"        , slimitlua_meta___newindex     } ,
+#if LUA_VERSION_NUM >= 503
+  { "__pairs"           , slimitlua_meta___pairs        } ,
+#endif
   { NULL                , NULL                          }
 };
 
@@ -1246,43 +1262,45 @@ int luaopen_org_conman_process(lua_State *L)
 {
   assert(L != NULL);
   
-#if LUA_VERSION_NUM == 501
-  luaL_newmetatable(L,TYPE_LIMIT_HARD);
-  luaL_register(L,NULL,m_hlimit_meta);
+  lua_createtable(L,0,11);
+  lua_pushinteger(L,RLIMIT_AS);      lua_setfield(L,-2,"vm");
+  lua_pushinteger(L,RLIMIT_CORE);    lua_setfield(L,-2,"core");
+  lua_pushinteger(L,RLIMIT_CPU);     lua_setfield(L,-2,"cpu");
+  lua_pushinteger(L,RLIMIT_DATA);    lua_setfield(L,-2,"data");
+  lua_pushinteger(L,RLIMIT_FSIZE);   lua_setfield(L,-2,"fsize");
+  lua_pushinteger(L,RLIMIT_LOCKS);   lua_setfield(L,-2,"locks");
+  lua_pushinteger(L,RLIMIT_MEMLOCK); lua_setfield(L,-2,"memlock");
+  lua_pushinteger(L,RLIMIT_NOFILE);  lua_setfield(L,-2,"nofile");
+  lua_pushinteger(L,RLIMIT_NPROC);   lua_setfield(L,-2,"nproc");
+  lua_pushinteger(L,RLIMIT_RSS);     lua_setfield(L,-2,"pages");
+  lua_pushinteger(L,RLIMIT_STACK);   lua_setfield(L,-2,"stack");
   
-  luaL_newmetatable(L,TYPE_LIMIT_SOFT);
-  luaL_register(L,NULL,m_slimit_meta);
-  
-  luaL_register(L,"org.conman.process",m_process_reg);
-#else
-  luaL_newmetatable(L,TYPE_LIMIT_HARD);
-  luaL_setfuncs(L,m_hlimit_meta,0);
-  
-  luaL_newmetatable(L,TYPE_LIMIT_SOFT);
-  luaL_setfuncs(L,m_slimit_meta,0);
-  
-  luaL_newlib(L,m_process_reg);
-#endif
-
   lua_createtable(L,0,2);
-  lua_newuserdata(L,sizeof(int));
-  luaL_getmetatable(L,TYPE_LIMIT_HARD);
+  
+  lua_newuserdata(L,0);
+  lua_pushvalue(L,-3);
+  lua_setuservalue(L,-2);
+  luaL_newlib(L,m_hlimit_meta);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"hard");
   
-  lua_newuserdata(L,sizeof(int));
-  luaL_getmetatable(L,TYPE_LIMIT_SOFT);
+  lua_newuserdata(L,0);
+  lua_pushvalue(L,-3);
+  lua_setuservalue(L,-2);
+  luaL_newlib(L,m_slimit_meta);
   lua_setmetatable(L,-2);
   lua_setfield(L,-2,"soft");
   
+#if LUA_VERSION_NUM == 501
+  luaL_register(L,"org.conman.process",m_process_reg);
+#else
+  luaL_newlib(L,m_process_reg);
+#endif
+  
+  lua_pushvalue(L,-2);
   lua_setfield(L,-2,"limits");
   
-  lua_createtable(L,0,0);
-#if LUA_VERSION_NUM == 501
-  luaL_register(L,NULL,m_process_meta);
-#else
-  luaL_setfuncs(L,m_process_meta,0);
-#endif
+  luaL_newlib(L,m_process_meta);
   lua_setmetatable(L,-2);
   
   return 1;
