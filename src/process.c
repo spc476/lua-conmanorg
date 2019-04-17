@@ -815,7 +815,7 @@ static int hlimitlua_meta___newindex(lua_State *L)
 
 /************************************************************************/
 
-#if LUA_VERSION_NUM >= 503
+#if LUA_VERSION_NUM >= 502
 
   static int hlimit____next(lua_State *L)
   {
@@ -908,7 +908,7 @@ static int slimitlua_meta___newindex(lua_State *L)
 
 /************************************************************************/
 
-#if LUA_VERSION_NUM >= 503
+#if LUA_VERSION_NUM >= 502
 
   static int slimit____next(lua_State *L)
   {
@@ -1242,7 +1242,7 @@ static struct luaL_Reg const m_hlimit_meta[] =
 {
   { "__index"           , hlimitlua_meta___index        } ,
   { "__newindex"        , hlimitlua_meta___newindex     } ,
-#if LUA_VERSION_NUM >= 503
+#if LUA_VERSION_NUM >= 502
   { "__pairs"           , hlimitlua_meta___pairs        } ,
 #endif
   { NULL                , NULL                          }
@@ -1252,7 +1252,7 @@ static struct luaL_Reg const m_slimit_meta[] =
 {
   { "__index"           , slimitlua_meta___index        } ,
   { "__newindex"        , slimitlua_meta___newindex     } ,
-#if LUA_VERSION_NUM >= 503
+#if LUA_VERSION_NUM >= 502
   { "__pairs"           , slimitlua_meta___pairs        } ,
 #endif
   { NULL                , NULL                          }
