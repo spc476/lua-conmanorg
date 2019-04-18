@@ -698,20 +698,7 @@ static bool limit_valid_suffix(rlim_t *pval,int key,char const *unit)
 {
   assert(pval != NULL);
   assert(unit != NULL);
-  assert(
-             (key == RLIMIT_CPU)
-          || (key == RLIMIT_LOCKS)
-          || (key == RLIMIT_NOFILE)
-          || (key == RLIMIT_NPROC)
-          || (key == RLIMIT_RSS)
-          || (key == RLIMIT_AS)
-          || (key == RLIMIT_CORE)
-          || (key == RLIMIT_DATA)
-          || (key == RLIMIT_FSIZE)
-          || (key == RLIMIT_MEMLOCK)
-          || (key == RLIMIT_STACK)
-        );
-        
+  
   switch(key)
   {
     case RLIMIT_CPU:
@@ -727,10 +714,12 @@ static bool limit_valid_suffix(rlim_t *pval,int key,char const *unit)
          }
          return true;
          
-    case RLIMIT_LOCKS:
     case RLIMIT_NOFILE:
     case RLIMIT_NPROC:
+#ifndef __APPLE__
+    case RLIMIT_LOCKS:
     case RLIMIT_RSS:
+#endif
          return (*unit == '\0');
          
     case RLIMIT_AS:
@@ -751,6 +740,7 @@ static bool limit_valid_suffix(rlim_t *pval,int key,char const *unit)
          return true;
          
     default:
+         assert(0);
          return false;
   }
 }
@@ -1269,12 +1259,14 @@ int luaopen_org_conman_process(lua_State *L)
   lua_pushinteger(L,RLIMIT_CPU);     lua_setfield(L,-2,"cpu");
   lua_pushinteger(L,RLIMIT_DATA);    lua_setfield(L,-2,"data");
   lua_pushinteger(L,RLIMIT_FSIZE);   lua_setfield(L,-2,"fsize");
-  lua_pushinteger(L,RLIMIT_LOCKS);   lua_setfield(L,-2,"locks");
   lua_pushinteger(L,RLIMIT_MEMLOCK); lua_setfield(L,-2,"memlock");
   lua_pushinteger(L,RLIMIT_NOFILE);  lua_setfield(L,-2,"nofile");
   lua_pushinteger(L,RLIMIT_NPROC);   lua_setfield(L,-2,"nproc");
-  lua_pushinteger(L,RLIMIT_RSS);     lua_setfield(L,-2,"pages");
   lua_pushinteger(L,RLIMIT_STACK);   lua_setfield(L,-2,"stack");
+#ifndef __APPLE__
+  lua_pushinteger(L,RLIMIT_LOCKS);   lua_setfield(L,-2,"locks");
+  lua_pushinteger(L,RLIMIT_RSS);     lua_setfield(L,-2,"pages");
+#endif
   
   lua_createtable(L,0,2);
   
