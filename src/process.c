@@ -77,7 +77,12 @@
   {
     lua_createtable(L,0,0);
     luaL_register(L,NULL,list);
- }
+  }
+  
+  static inline size_t lua_rawlen(lua_State *L,int idx)
+  {
+    return lua_objlen(L,idx);
+  }
 #endif
 
 #if LUA_VERSION_NUM < 503
@@ -248,11 +253,7 @@ static int proclua_exec(lua_State *L)
   binary = luaL_checkstring(L,1);
   luaL_checktype(L,2,LUA_TTABLE);
   
-#if LUA_VERSION_NUM == 501
-  argc = lua_objlen(L,2) + 2;
-#else
   argc = lua_rawlen(L,2) + 2;
-#endif
   argv = malloc(argc * sizeof(char *));
   if (argv == NULL)
   {
