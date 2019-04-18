@@ -598,56 +598,56 @@ static int fsys__safename(lua_State *L)
   return 1;
 }
 
-/**********************************************************************/
+/**********************************************************************
+* Usage:	base = fsys.basename(path)
+* Desc:		Return the last segment from a pathname.
+* Input:	path (string)
+* Return:	base (string)
+*
+* Note:		The original pathname can be reconstructed by the following
+*		code:
+*
+*			path = "/home/spc/spc"
+*			base = fsys.basename(path)
+*			dir  = fsys.dirname(path)
+*			full = dir .. "/" .. base
+*			assert(full == path)
+*
+**********************************************************************/
 
 static int fsys_basename(lua_State *L)
 {
-  char        name[FILENAME_MAX];
-  char const *path;
-  size_t      size;
+  char const *name  = luaL_checkstring(L,1);
+  char const *slash = strrchr(name,*LUA_DIRSEP);
   
-  path = luaL_checklstring(L,1,&size);
-  if (size >= FILENAME_MAX - 1)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,ENAMETOOLONG);
-    return 2;
-  }
+  if (slash)
+    lua_pushstring(L,slash + 1);
+  else
+    lua_pushvalue(L,1);
   
-  /*---------------------------------------------------------------------
-  ; POSIX states that basename() modifies its arguemnts, so pass in a copy
-  ;-----------------------------------------------------------------------*/
-  
-  memcpy(name,path,size + 1);
-  lua_pushstring(L,basename(name));
-  lua_pushinteger(L,0);
-  return 2;
+  return 1;
 }
 
-/**********************************************************************/
+/**********************************************************************
+* Usage:	dir = fsys.dirname(path)
+* Desc:		Return the path of a filename (path minus the last segment)
+* Input:	path (string)
+* Return:	dir (string)
+*
+* Note:		See note for fsys.basename().
+**********************************************************************/
 
 static int fsys_dirname(lua_State *L)
 {
-  char        name[FILENAME_MAX];
-  char const *path;
-  size_t      size;
+  char const *name  = luaL_checkstring(L,1);
+  char const *slash = strrchr(name,*LUA_DIRSEP);
   
-  path = luaL_checklstring(L,1,&size);
-  if (size >= FILENAME_MAX - 1)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,ENAMETOOLONG);
-    return 2;
-  }
+  if (slash)
+    lua_pushlstring(L,name,(size_t)(slash - name));
+  else
+    lua_pushstring(L,".");
   
-  /*----------------------------------------------------------------------
-  ; POSIX states that dirname() modifies its arguemnt, so pass in a copy
-  ;-----------------------------------------------------------------------*/
-  
-  memcpy(name,path,size + 1);
-  lua_pushstring(L,dirname(name));
-  lua_pushinteger(L,0);
-  return 2;
+  return 1;
 }
 
 /***********************************************************************/
