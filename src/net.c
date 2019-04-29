@@ -97,117 +97,7 @@ struct strint
   int  const        value;
 };
 
-typedef union
-{
-  char     c[sizeof(uint16_t)];
-  uint16_t i;
-} hns__u;
-
-typedef union
-{
-  char     c[sizeof(uint32_t)];
-  uint32_t i;
-} hnl__u;
-
-/************************************************************************/
-
-static int      err_meta___index        (lua_State *) __attribute__((nonnull));
-
-#ifdef __linux__
-static int      netlua_interfaces       (lua_State *) __attribute__((nonnull));
-#endif
-static int      netlua_socket           (lua_State *) __attribute__((nonnull));
-static int      netlua_socketfile       (lua_State *) __attribute__((nonnull));
-static int      netlua_socketfd         (lua_State *) __attribute__((nonnull));
-static int      netlua_socketpair       (lua_State *) __attribute__((nonnull));
-static int      netlua_address2         (lua_State *) __attribute__((nonnull));
-static int      netlua_address          (lua_State *) __attribute__((nonnull));
-static int      netlua_addressraw       (lua_State *) __attribute__((nonnull));
-static int      netlua_ntop             (lua_State *) __attribute__((nonnull));
-static int      netlua_pton             (lua_State *) __attribute__((nonnull));
-static int      netlua_htons            (lua_State *) __attribute__((nonnull));
-static int      netlua_htonl            (lua_State *) __attribute__((nonnull));
-static int      netlua_ntohs            (lua_State *) __attribute__((nonnull));
-static int      netlua_ntohl            (lua_State *) __attribute__((nonnull));
-
-static int      socklua___tostring      (lua_State *) __attribute__((nonnull));
-static int      socklua___index         (lua_State *) __attribute__((nonnull));
-static int      socklua___newindex      (lua_State *) __attribute__((nonnull));
-static int      socklua_peer            (lua_State *) __attribute__((nonnull));
-static int      socklua_addr            (lua_State *) __attribute__((nonnull));
-static int      socklua_bind            (lua_State *) __attribute__((nonnull));
-static int      socklua_connect         (lua_State *) __attribute__((nonnull));
-static int      socklua_listen          (lua_State *) __attribute__((nonnull));
-static int      socklua_accept          (lua_State *) __attribute__((nonnull));
-static int      socklua_recv            (lua_State *) __attribute__((nonnull));
-static int      socklua_send            (lua_State *) __attribute__((nonnull));
-static int      socklua_shutdown        (lua_State *) __attribute__((nonnull));
-static int      socklua_close           (lua_State *) __attribute__((nonnull));
-static int      socklua_fd              (lua_State *) __attribute__((nonnull));
-
-static int      addrlua___index         (lua_State *) __attribute__((nonnull));
-static int      addrlua___tostring      (lua_State *) __attribute__((nonnull));
-static int      addrlua___eq            (lua_State *) __attribute__((nonnull));
-static int      addrlua___lt            (lua_State *) __attribute__((nonnull));
-static int      addrlua___le            (lua_State *) __attribute__((nonnull));
-static int      addrlua___len           (lua_State *) __attribute__((nonnull));
-
-static int      net_toproto             (lua_State *, int)      __attribute__((nonnull));
-static int      net_toport              (lua_State *, int, int) __attribute__((nonnull));
-
 /*************************************************************************/
-
-static luaL_Reg const m_net_reg[] =
-{
-#ifdef __linux__
-  { "interfaces"        , netlua_interfaces     } ,
-#endif
-  { "socket"            , netlua_socket         } ,
-  { "socketfile"        , netlua_socketfile     } ,
-  { "socketfd"          , netlua_socketfd       } ,
-  { "socketpair"        , netlua_socketpair     } ,
-  { "address2"          , netlua_address2       } ,
-  { "address"           , netlua_address        } ,
-  { "addressraw"        , netlua_addressraw     } ,
-  { "ntop"              , netlua_ntop           } ,
-  { "pton"              , netlua_pton           } ,
-  { "htons"             , netlua_htons          } ,
-  { "htonl"             , netlua_htonl          } ,
-  { "ntohs"             , netlua_ntohs          } ,
-  { "ntohl"             , netlua_ntohl          } ,
-  { NULL                , NULL                  }
-};
-
-static luaL_Reg const m_sock_meta[] =
-{
-  { "__tostring"        , socklua___tostring    } ,
-  { "__gc"              , socklua_close         } ,
-  { "__index"           , socklua___index       } ,
-  { "__newindex"        , socklua___newindex    } ,
-  { "peer"              , socklua_peer          } ,
-  { "addr"              , socklua_addr          } ,
-  { "bind"              , socklua_bind          } ,
-  { "connect"           , socklua_connect       } ,
-  { "listen"            , socklua_listen        } ,
-  { "accept"            , socklua_accept        } ,
-  { "recv"              , socklua_recv          } ,
-  { "send"              , socklua_send          } ,
-  { "shutdown"          , socklua_shutdown      } ,
-  { "close"             , socklua_close         } ,
-  { "fd"                , socklua_fd            } ,
-  { NULL                , NULL                  }
-};
-
-static luaL_Reg const m_addr_meta[] =
-{
-  { "__index"           , addrlua___index       } ,
-  { "__tostring"        , addrlua___tostring    } ,
-  { "__eq"              , addrlua___eq          } ,
-  { "__lt"              , addrlua___lt          } ,
-  { "__le"              , addrlua___le          } ,
-  { "__len"             , addrlua___len         } ,
-  { NULL                , NULL                  }
-};
 
 static char const *const   m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
 static int const           m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
@@ -386,6 +276,72 @@ static inline int Inet_comp(
 }
 
 /**********************************************************************/
+
+static int net_toproto(lua_State *L,int idx)
+{
+  if (lua_isnil(L,idx))
+    return 0;
+  else if (lua_isnumber(L,idx))
+    return lua_tointeger(L,idx);
+  else if (lua_isstring(L,idx))
+  {
+    char const      *proto = lua_tostring(L,idx);
+    struct protoent *presult;
+    struct protoent  result;
+    char             tmp[BUFSIZ] __attribute__((unused));
+    
+#if defined(__SunOS)
+    presult = getprotobyname_r(proto,&result,tmp,sizeof(tmp));
+    if (presult == NULL)
+      return luaL_error(L,"invalid protocol");
+#elif defined(__linux__)
+    if (getprotobyname_r(proto,&result,tmp,sizeof(tmp),&presult) != 0)
+      return luaL_error(L,"invalid protocol");
+#else
+    presult = getprotobyname(proto);
+    if (presult == NULL)
+      return luaL_error(L,"invalid protocol");
+    result = *presult;
+#endif
+    return result.p_proto;
+  }
+  else
+    return 0;
+}
+
+/*********************************************************************/
+
+static int net_toport(lua_State *L,int idx,int proto)
+{
+  if (lua_isnumber(L,idx))
+    return lua_tointeger(L,idx);
+  else if (lua_isstring(L,idx))
+  {
+    char const     *serv = lua_tostring(L,idx);
+    struct servent *presult;
+    struct servent  result;
+    char            tmp[BUFSIZ] __attribute__((unused));
+    
+#if defined(__SunOS)
+    presult = getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp));
+    if (presult == NULL)
+      return luaL_error(L,"invalid service");
+#elif defined(__linux__)
+    if (getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp),&presult) != 0)
+      return luaL_error(L,"invalid service");
+#else
+    presult = getservbyname(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp");
+    if (presult == NULL)
+      return luaL_error(L,"invalid service");
+    result = *presult;
+#endif
+    return ntohs((short)result.s_port);
+  }
+  else
+    return 0;
+}
+
+/*********************************************************************/
 
 static int err_meta___index(lua_State *L)
 {
@@ -611,7 +567,7 @@ static int netlua_socketfile(lua_State *L)
 *
 ********************************************************************/
 
-static int netlua_socketfd(lua_State *L)
+static int netlua__fromfd(lua_State *L)
 {
   int      fh   = luaL_checkinteger(L,1);
   sock__t *sock = lua_newuserdata(L,sizeof(sock__t));
@@ -975,66 +931,6 @@ static int netlua_pton(lua_State *L)
 }
 
 /***********************************************************************/  
-
-static int netlua_htons(lua_State *L)
-{
-  hns__u v;
-  
-  v.i = htons(luaL_checkinteger(L,1));
-  lua_pushlstring(L,v.c,sizeof(v.c));
-  return 1;
-}
-
-/***********************************************************************/
-
-static int netlua_htonl(lua_State *L)
-{
-  hnl__u v;
-  
-  v.i = htonl(luaL_checkinteger(L,1));
-  lua_pushlstring(L,v.c,sizeof(v.c));
-  return 1;
-}
-
-/***********************************************************************/
-
-static int netlua_ntohs(lua_State *L)
-{
-  size_t      l;
-  char const *s = luaL_checklstring(L,1,&l);
-  hns__u      v;
-  
-  if (l == sizeof(uint16_t))
-  {
-    v.c[0] = s[0];
-    v.c[1] = s[1];
-    lua_pushinteger(L,ntohs(v.i));
-    return 1;
-  }
-  return luaL_error(L,"invalid 16-bit quantity");
-}
-
-/***********************************************************************/
-
-static int netlua_ntohl(lua_State *L)
-{
-  size_t      l;
-  char const *s = luaL_checklstring(L,1,&l);
-  hnl__u      v;
-  
-  if (l == sizeof(uint32_t))
-  {
-    v.c[0] = s[0];
-    v.c[1] = s[1];
-    v.c[2] = s[2];
-    v.c[3] = s[3];
-    lua_pushnumber(L,ntohl(v.i));
-    return 1;
-  }
-  return luaL_error(L,"invalid 32-bit quantity");
-}
-
-/***********************************************************************/
 
 static int socklua___tostring(lua_State *L)
 {
@@ -1706,11 +1602,30 @@ static int socklua_close(lua_State *L)
 
 /*******************************************************************/
 
-static int socklua_fd(lua_State *L)
+static int socklua__tofd(lua_State *L)
 {
   sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
   lua_pushinteger(L,sock->fh);
   return 1;
+}
+
+/***********************************************************************/
+
+static int socklua__dup(lua_State *L)
+{
+  sock__t *sock = luaL_checkudata(L,1,TYPE_SOCK);
+  int      fh   = dup(sock->fh);
+  
+  if (fh == -1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_pushinteger(L,fh);
+  netlua__fromfd(L);
+  return 2;
 }
 
 /***********************************************************************/
@@ -1895,71 +1810,54 @@ static int addrlua___len(lua_State *L)
 
 /*********************************************************************/
 
-static int net_toproto(lua_State *L,int idx)
+static luaL_Reg const m_net_reg[] =
 {
-  if (lua_isnil(L,idx))
-    return 0;
-  else if (lua_isnumber(L,idx))
-    return lua_tointeger(L,idx);
-  else if (lua_isstring(L,idx))
-  {
-    char const      *proto = lua_tostring(L,idx);
-    struct protoent *presult;
-    struct protoent  result;
-    char             tmp[BUFSIZ] __attribute__((unused));
-    
-#if defined(__SunOS)
-    presult = getprotobyname_r(proto,&result,tmp,sizeof(tmp));
-    if (presult == NULL)
-      return luaL_error(L,"invalid protocol");
-#elif defined(__linux__)
-    if (getprotobyname_r(proto,&result,tmp,sizeof(tmp),&presult) != 0)
-      return luaL_error(L,"invalid protocol");
-#else
-    presult = getprotobyname(proto);
-    if (presult == NULL)
-      return luaL_error(L,"invalid protocol");
-    result = *presult;
+#ifdef __linux__
+  { "interfaces"        , netlua_interfaces     } ,
 #endif
-    return result.p_proto;
-  }
-  else
-    return 0;
-}
+  { "socket"            , netlua_socket         } ,
+  { "socketfile"        , netlua_socketfile     } ,
+  { "socketpair"        , netlua_socketpair     } ,
+  { "address2"          , netlua_address2       } ,
+  { "address"           , netlua_address        } ,
+  { "addressraw"        , netlua_addressraw     } ,
+  { "ntop"              , netlua_ntop           } ,
+  { "pton"              , netlua_pton           } ,
+  { "_fromfd"           , netlua__fromfd        } ,
+  { NULL                , NULL                  }
+};
 
-/*********************************************************************/
-
-static int net_toport(lua_State *L,int idx,int proto)
+static luaL_Reg const m_sock_meta[] =
 {
-  if (lua_isnumber(L,idx))
-    return lua_tointeger(L,idx);
-  else if (lua_isstring(L,idx))
-  {
-    char const     *serv = lua_tostring(L,idx);
-    struct servent *presult;
-    struct servent  result;
-    char            tmp[BUFSIZ] __attribute__((unused));
-    
-#if defined(__SunOS)
-    presult = getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp));
-    if (presult == NULL)
-      return luaL_error(L,"invalid service");
-#elif defined(__linux__)
-    if (getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp),&presult) != 0)
-      return luaL_error(L,"invalid service");
-#else
-    presult = getservbyname(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp");
-    if (presult == NULL)
-      return luaL_error(L,"invalid service");
-    result = *presult;
-#endif
-    return ntohs((short)result.s_port);
-  }
-  else
-    return 0;
-}
+  { "__tostring"        , socklua___tostring    } ,
+  { "__gc"              , socklua_close         } ,
+  { "__index"           , socklua___index       } ,
+  { "__newindex"        , socklua___newindex    } ,
+  { "peer"              , socklua_peer          } ,
+  { "addr"              , socklua_addr          } ,
+  { "bind"              , socklua_bind          } ,
+  { "connect"           , socklua_connect       } ,
+  { "listen"            , socklua_listen        } ,
+  { "accept"            , socklua_accept        } ,
+  { "recv"              , socklua_recv          } ,
+  { "send"              , socklua_send          } ,
+  { "shutdown"          , socklua_shutdown      } ,
+  { "close"             , socklua_close         } ,
+  { "_tofd"             , socklua__tofd         } ,
+  { "_dup"              , socklua__dup          } ,
+  { NULL                , NULL                  }
+};
 
-/*********************************************************************/
+static luaL_Reg const m_addr_meta[] =
+{
+  { "__index"           , addrlua___index       } ,
+  { "__tostring"        , addrlua___tostring    } ,
+  { "__eq"              , addrlua___eq          } ,
+  { "__lt"              , addrlua___lt          } ,
+  { "__le"              , addrlua___le          } ,
+  { "__len"             , addrlua___len         } ,
+  { NULL                , NULL                  }
+};
 
 int luaopen_org_conman_net(lua_State *L)
 {
