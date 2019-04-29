@@ -56,6 +56,265 @@
 
 /*************************************************************************/
 
+static void fsysL_pushperm(lua_State *L,mode_t mode)
+{
+  char perms[12];
+  
+  perms[ 0] = (mode & S_ISUID) ? 'u' : '-';
+  perms[ 1] = (mode & S_ISGID) ? 'g' : '-';
+  perms[ 2] = (mode & S_ISVTX) ? 's' : '-';
+  perms[ 3] = (mode & S_IRUSR) ? 'r' : '-';
+  perms[ 4] = (mode & S_IWUSR) ? 'w' : '-';
+  perms[ 5] = (mode & S_IXUSR) ? 'x' : '-';
+  perms[ 6] = (mode & S_IRGRP) ? 'r' : '-';
+  perms[ 7] = (mode & S_IWGRP) ? 'w' : '-';
+  perms[ 8] = (mode & S_IXGRP) ? 'x' : '-';
+  perms[ 9] = (mode & S_IROTH) ? 'r' : '-';
+  perms[10] = (mode & S_IWOTH) ? 'w' : '-';
+  perms[11] = (mode & S_IXOTH) ? 'x' : '-';
+  lua_pushlstring(L,perms,sizeof(perms));
+}
+
+/*************************************************************************/
+
+static void fsysL_pushmode(lua_State *L,mode_t mode)
+{
+  lua_createtable(L,0,5);
+  
+  fsysL_pushperm(L,mode);            lua_setfield(L,-2,"perms");
+  lua_pushboolean(L,mode & S_ISUID); lua_setfield(L,-2,"setuid");
+  lua_pushboolean(L,mode & S_ISGID); lua_setfield(L,-2,"getgid");
+  lua_pushboolean(L,mode & S_ISVTX); lua_setfield(L,-2,"sticky");
+  
+  if (S_ISREG(mode))
+    lua_pushliteral(L,"file");
+  else if (S_ISDIR(mode))
+    lua_pushliteral(L,"dir");
+  else if (S_ISCHR(mode))
+    lua_pushliteral(L,"chardev");
+  else if (S_ISBLK(mode))
+    lua_pushliteral(L,"blockdev");
+  else if (S_ISFIFO(mode))
+    lua_pushliteral(L,"pipe");
+  else if (S_ISLNK(mode))
+    lua_pushliteral(L,"link");
+  else if (S_ISSOCK(mode))
+    lua_pushliteral(L,"socket");
+  else
+    lua_pushliteral(L,"?");
+    
+  lua_setfield(L,-2,"type");
+}
+
+/*************************************************************************/
+
+static void fsysL_pushstat(lua_State *L,struct stat const *status)
+{
+  assert(L    != NULL);
+  assert(stat != NULL);
+  
+  lua_createtable(L,0,13);
+  lua_pushinteger(L,status->st_dev);     lua_setfield(L,-2,"dev");
+  lua_pushinteger(L,status->st_ino);     lua_setfield(L,-2,"inode");
+  fsysL_pushmode (L,status->st_mode);    lua_setfield(L,-2,"mode");
+  lua_pushinteger(L,status->st_nlink);   lua_setfield(L,-2,"nlink");
+  lua_pushinteger(L,status->st_uid);     lua_setfield(L,-2,"uid");
+  lua_pushinteger(L,status->st_gid);     lua_setfield(L,-2,"gid");
+  lua_pushinteger(L,status->st_rdev);    lua_setfield(L,-2,"rdev");
+  lua_pushinteger(L,status->st_size);    lua_setfield(L,-2,"size");
+  lua_pushinteger(L,status->st_blksize); lua_setfield(L,-2,"blocksize");
+  lua_pushinteger(L,status->st_blocks);  lua_setfield(L,-2,"blocks");
+  lua_pushinteger(L,status->st_atime);   lua_setfield(L,-2,"atime");
+  lua_pushinteger(L,status->st_mtime);   lua_setfield(L,-2,"mtime");
+  lua_pushinteger(L,status->st_ctime);   lua_setfield(L,-2,"ctime");
+}
+
+/*************************************************************************/
+
+static mode_t fsysL_checkmode(lua_State *L,int idx)
+{
+  size_t      len;
+  char const *txt = luaL_checklstring(L,idx,&len);
+  mode_t      mode = 0;
+  
+  if (len == 3)
+  {
+    if (*txt++ == 'r')
+      mode |= S_IRUSR | S_IRGRP | S_IROTH;
+    if (*txt++ == 'w')
+      mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+    if (*txt++ == 'x')
+      mode |= S_IXUSR | S_IXGRP | S_IXOTH;
+      
+    return mode;
+  }
+  
+  if (len == 12)
+  {
+    if (*txt++ == 'u')
+      mode |= S_ISUID;
+    if (*txt++ == 'g')
+      mode |= S_ISGID;
+    if (*txt++ == 's')
+      mode |= S_ISVTX;
+    len -= 3;
+  }
+  
+  if (len >= 9)
+  {
+    mode |= (*txt++ == 'r') ? S_IRUSR : 0;
+    mode |= (*txt++ == 'w') ? S_IWUSR : 0;
+    mode |= (*txt++ == 'x') ? S_IXUSR : 0;
+    mode |= (*txt++ == 'r') ? S_IRGRP : 0;
+    mode |= (*txt++ == 'w') ? S_IWGRP : 0;
+    mode |= (*txt++ == 'x') ? S_IXGRP : 0;
+    mode |= (*txt++ == 'r') ? S_IROTH : 0;
+    mode |= (*txt++ == 'w') ? S_IWOTH : 0;
+    mode |= (*txt++ == 'x') ? S_IXOTH : 0;
+  }
+  
+  return mode;
+}
+
+/*************************************************************************/
+
+static int fsys_stat(lua_State *L)
+{
+  struct stat status;
+  
+  if (lua_isstring(L,1))
+  {
+    if (stat(lua_tostring(L,1),&status) < 0)
+      goto fsys_stat_err;
+  }
+  else if (lua_isuserdata(L,1))
+  {
+    if (!luaL_callmeta(L,1,"_tofd"))
+      goto fsys_stat_err;
+    if (fstat(luaL_checkinteger(L,-1),&status) < 0)
+      goto fsys_stat_err;
+  }
+  
+  fsysL_pushstat(L,&status);
+  lua_pushinteger(L,0);
+  return 2;
+  
+fsys_stat_err:
+  lua_pushnil(L);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/*************************************************************************/
+
+static int fsys_lstat(lua_State *L)
+{
+  struct stat status;
+  
+  if (lstat(luaL_checkstring(L,1),&status) < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    fsysL_pushstat(L,&status);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/*************************************************************************/
+
+static int fsys_chmod(lua_State *L)
+{
+  if (lua_isstring(L,1))
+  {
+    errno = 0;
+    chmod(luaL_checkstring(L,1),fsysL_checkmode(L,2));
+    lua_pushboolean(L,errno == 0);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  else if (luaL_callmeta(L,1,"_tofd"))
+  {
+    errno = 0;
+    fchmod(luaL_checkinteger(L,-1),fsysL_checkmode(L,2));
+    lua_pushboolean(L,errno == 0);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_pushboolean(L,false);
+  lua_pushinteger(L,EINVAL);
+  return 2;
+}
+
+/*************************************************************************/
+
+static int fsys_umask(lua_State *L)
+{
+  fsysL_pushperm(L,~umask(~fsysL_checkmode(L,1)) & 0777);
+  return 1;
+}
+
+/*************************************************************************/
+
+static int fsys_mkfifo(lua_State *L)
+{
+  errno = 0;
+  mkfifo(luaL_checkstring(L,1),fsysL_checkmode(L,2));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/*************************************************************************/
+
+static int fsys_mkdir(lua_State *L)
+{
+  errno = 0;
+  mkdir(luaL_checkstring(L,1),fsysL_checkmode(L,2));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/*************************************************************************/
+
+static int fsys_rmdir(lua_State *L)
+{
+  errno = 0;
+  rmdir(luaL_checkstring(L,1));
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/*************************************************************************/
+
+static int fsys_redirect(lua_State *L)
+{
+  if (luaL_callmeta(L,1,"_tofd") && luaL_callmeta(L,2,"_tofd"))
+  {
+    int orig = luaL_checkinteger(L,-2);
+    int copy = luaL_checkinteger(L,-1);
+    
+    errno = 0;
+    dup2(orig,copy);
+    lua_pushboolean(L,errno == 0);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_pushboolean(L,false);
+  lua_pushinteger(L,EINVAL);
+  return 2;
+}
+
+/*************************************************************************/
+
 static int fsys_chroot(lua_State *L)
 {
   if (chroot(luaL_checkstring(L,1)) < 0)
@@ -134,46 +393,6 @@ static int fsys_readlink(lua_State *L)
 
 /*********************************************************************/
 
-static int fsys_mknod(lua_State *L)
-{
-  lua_pushboolean(L,false);
-  lua_pushinteger(L,ENOSYS);
-  return 2;
-}
-
-/*********************************************************************/
-
-static int fsys_mkfifo(lua_State *L)
-{
-  char const *fname = luaL_checkstring(L,1);
-  char const *value = luaL_checkstring(L,2);
-  mode_t      bit   = 0400;
-  mode_t      mode  = 0000;
-  
-  for ( ; *value ; bit >>= 1 , value++)
-    if (*value != '-')
-      mode |= bit;
-      
-  errno = 0;
-  mkfifo(fname,mode);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/********************************************************************/
-
-static int fsys_mkdir(lua_State *L)
-{
-  errno = 0;
-  mkdir(luaL_checkstring(L,1),0777);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/***********************************************************************/
-
 static int fsys_utime(lua_State *L)
 {
   char const     *path;
@@ -188,211 +407,6 @@ static int fsys_utime(lua_State *L)
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
-}
-
-/***********************************************************************/
-
-static int fsys_rmdir(lua_State *L)
-{
-  errno = 0;
-  rmdir(luaL_checkstring(L,1));
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/************************************************************************/
-
-static void impl_setfield(lua_State *L,char const *name,lua_Number value)
-{
-  lua_pushstring(L,name);
-  lua_pushnumber(L,value);
-  lua_settable(L,-3);
-}
-
-/*************************************************************************/
-
-static void impl_setbool(lua_State *L,char const *name,int flag)
-{
-  lua_pushstring(L,name);
-  lua_pushboolean(L,flag != 0);
-  lua_settable(L,-3);
-}
-
-/*************************************************************************/
-
-static void impl_dumpstat(lua_State *L,struct stat *status)
-{
-  char perms[13];
-  
-  lua_createtable(L,0,13);
-  
-  impl_setfield(L,"st_dev"      , status->st_dev);
-  impl_setfield(L,"st_ino"      , status->st_ino);
-  impl_setfield(L,"st_mode"     , status->st_mode);
-  impl_setfield(L,"st_nlink"    , status->st_nlink);
-  impl_setfield(L,"st_uid"      , status->st_uid);
-  impl_setfield(L,"st_gid"      , status->st_gid);
-  impl_setfield(L,"st_rdev"     , status->st_rdev);
-  impl_setfield(L,"st_size"     , status->st_size);
-  impl_setfield(L,"st_blksize"  , status->st_blksize);
-  impl_setfield(L,"st_blocks"   , status->st_blocks);
-  impl_setfield(L,"st_atime"    , status->st_atime);
-  impl_setfield(L,"st_mtime"    , status->st_mtime);
-  impl_setfield(L,"st_ctime"    , status->st_ctime);
-  
-  if (S_ISREG(status->st_mode))
-    lua_pushliteral(L,"file");
-  else if (S_ISDIR(status->st_mode))
-    lua_pushliteral(L,"dir");
-  else if (S_ISCHR(status->st_mode))
-    lua_pushliteral(L,"chardev");
-  else if (S_ISBLK(status->st_mode))
-    lua_pushliteral(L,"blockdev");
-  else if (S_ISFIFO(status->st_mode))
-    lua_pushliteral(L,"pipe");
-  else if (S_ISLNK(status->st_mode))
-    lua_pushliteral(L,"symlink");
-  else if (S_ISSOCK(status->st_mode))
-    lua_pushliteral(L,"socket");
-  else
-    lua_pushliteral(L,"?");
-  lua_setfield(L,-2,"type");
-  
-  impl_setbool(L,"setuid",status->st_mode & S_ISUID);
-  impl_setbool(L,"setgid",status->st_mode & S_ISGID);
-  impl_setbool(L,"sticky",status->st_mode & S_ISVTX);
-  
-  perms[ 0] = (status->st_mode & S_ISUID) ? 'u' : '-';
-  perms[ 1] = (status->st_mode & S_ISGID) ? 'g' : '-';
-  perms[ 2] = (status->st_mode & S_ISVTX) ? 's' : '-';
-  perms[ 3] = (status->st_mode & S_IRUSR) ? 'r' : '-';
-  perms[ 4] = (status->st_mode & S_IWUSR) ? 'w' : '-';
-  perms[ 5] = (status->st_mode & S_IXUSR) ? 'x' : '-';
-  perms[ 6] = (status->st_mode & S_IRGRP) ? 'r' : '-';
-  perms[ 7] = (status->st_mode & S_IWGRP) ? 'w' : '-';
-  perms[ 8] = (status->st_mode & S_IXGRP) ? 'x' : '-';
-  perms[ 9] = (status->st_mode & S_IROTH) ? 'r' : '-';
-  perms[10] = (status->st_mode & S_IWOTH) ? 'w' : '-';
-  perms[11] = (status->st_mode & S_IXOTH) ? 'x' : '-';
-  perms[12] = '\0';
-  lua_pushstring(L,perms);
-  lua_setfield(L,-2,"perms");
-}
-
-/***********************************************************************/
-
-static int fsys_stat(lua_State *L)
-{
-  struct stat status;
-  
-  if (lua_isstring(L,1))
-  {
-    if (stat(lua_tostring(L,1),&status) < 0)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,errno);
-      return 2;
-    }
-  }
-  else if (lua_isuserdata(L,1))
-  {
-    FILE **pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
-    if (fstat(fileno(*pfp),&status) < 0)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,errno);
-      return 2;
-    }
-  }
-  else
-    return luaL_error(L,"invalid file handle");
-    
-  impl_dumpstat(L,&status);
-  lua_pushinteger(L,0);
-  return 2;
-}
-
-/**********************************************************************/
-
-static int fsys_lstat(lua_State *L)
-{
-  char const  *fname;
-  struct stat  status;
-  int          rc;
-  
-  fname = luaL_checkstring(L,1);
-  rc    = lstat(fname,&status);
-  if (rc == -1)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  impl_dumpstat(L,&status);
-  lua_pushinteger(L,0);
-  return 2;
-}
-
-/*************************************************************************/
-
-static int fsys_chmod(lua_State *L)
-{
-  size_t      vsz;
-  char const *fname = luaL_checkstring(L,1);
-  char const *value = luaL_checklstring(L,2,&vsz);
-  mode_t      bit   = 1;
-  mode_t      mode  = 0;
-  
-  for ( ; vsz > 0 ; bit <<= 1 , vsz--)
-    if (value[vsz-1] != '-')
-      mode |= bit;
-      
-  errno = 0;
-  chmod(fname,mode);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  return 2;
-}
-
-/***********************************************************************/
-
-static int fsys_umask(lua_State *L)
-{
-  char        perms[9];
-  size_t      vsz;
-  char const *value = luaL_checklstring(L,1,&vsz);
-  mode_t      mask  = 0777;
-  mode_t      bit   = 1;
-  
-  /*---------------------------------------------------------------------
-  ; The bits for umask() are inverted from their normal meaning---if set,
-  ; *turn off* that bit from permissions.  It hurts my head too much to
-  ; think that way.  So for this interface, you specify the permissions
-  ; you WANT.  This code corrects for the broken umask() thinking.
-  ;
-  ; We also work our way backwards through the string.  That way, we can
-  ; pass the string from fsys.stat().perms to this and not break anything.
-  ;---------------------------------------------------------------------*/
-  
-  for ( ; (vsz > 0) && (bit < 01000) ; bit <<= 1 , vsz--)
-    if (value[vsz-1] != '-')
-      mask ^= bit;
-      
-  mask     = umask(mask);
-  perms[0] = (mask & S_IRUSR) ? '-' : 'r';
-  perms[1] = (mask & S_IWUSR) ? '-' : 'w';
-  perms[2] = (mask & S_IXUSR) ? '-' : 'x';
-  perms[3] = (mask & S_IRGRP) ? '-' : 'r';
-  perms[4] = (mask & S_IWGRP) ? '-' : 'w';
-  perms[5] = (mask & S_IXGRP) ? '-' : 'x';
-  perms[6] = (mask & S_IROTH) ? '-' : 'r';
-  perms[7] = (mask & S_IWOTH) ? '-' : 'x';
-  perms[8] = (mask & S_IXOTH) ? '-' : 'x';
-  
-  lua_pushlstring(L,perms,9);
-  return 1;
 }
 
 /**********************************************************************/
@@ -467,22 +481,22 @@ static int dir_meta_rewind(lua_State *L)
 
 /*************************************************************************
 *
-* Usage:	entry = dir:read()
+* Usage:        entry = dir:read()
 *
-* Desc:		Return the next filename in the directory
+* Desc:         Return the next filename in the directory
 *
-* Return:	entry (string) filename, nil when at end of directory
+* Return:       entry (string) filename, nil when at end of directory
 *
-* Note:		This function will return "." (current directory) and
-*		".." (parent) directory.  Also, this function, upon end-
-*		of-directory, will *NOT* close the directory.
+* Note:         This function will return "." (current directory) and
+*               ".." (parent) directory.  Also, this function, upon end-
+*               of-directory, will *NOT* close the directory.
 *
 **************************************************************************/
 
 static int dir_meta_read(lua_State *L)
 {
   struct dirent *entry = readdir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
-
+  
   if (entry)
     lua_pushstring(L,entry->d_name);
   else
@@ -492,29 +506,27 @@ static int dir_meta_read(lua_State *L)
 
 /*************************************************************************
 *
-* Usage:	entry = dir:next()
+* Usage:        entry = dir:next()
 *
-* Desc:		Return the next filename in the directory.
+* Desc:         Return the next filename in the directory.
 *
-* Return:	entry (string) filename, nil when at end of directory
+* Return:       entry (string) filename, nil when at end of directory
 *
-* Note:		This function will *NOT* return "." (current directory)
-*		or ".." (parent directory).  Also, this function *WILL*
-*		close the directory when it reaches the end.
+* Note:         This function will *NOT* return "." (current directory)
+*               or ".." (parent directory).  Also, this function *WILL*
+*               close the directory when it reaches the end.
 *
-*		The intent of this function is to be used as an iterator,
-*		where getting "." or ".." is most likely *not* something
-*		that is wanted.
+*               The intent of this function is to be used as an iterator,
+*               where getting "." or ".." is most likely *not* something
+*               that is wanted.
 *
 **************************************************************************/
 
 static int dir_meta_next(lua_State *L)
 {
   struct dirent  *entry;
-  DIR           **dir;
-
-  dir = luaL_checkudata(L,1,TYPE_DIR);
-
+  DIR           **dir = luaL_checkudata(L,1,TYPE_DIR);
+  
   while(true)
   {
     entry = readdir(*dir);
@@ -599,19 +611,19 @@ static int fsys__safename(lua_State *L)
 }
 
 /**********************************************************************
-* Usage:	base = fsys.basename(path)
-* Desc:		Return the last segment from a pathname.
-* Input:	path (string)
-* Return:	base (string)
+* Usage:        base = fsys.basename(path)
+* Desc:         Return the last segment from a pathname.
+* Input:        path (string)
+* Return:       base (string)
 *
-* Note:		The original pathname can be reconstructed by the following
-*		code:
+* Note:         The original pathname can be reconstructed by the following
+*               code:
 *
-*			path = "/home/spc/spc"
-*			base = fsys.basename(path)
-*			dir  = fsys.dirname(path)
-*			full = dir .. "/" .. base
-*			assert(full == path)
+*                       path = "/home/spc/spc"
+*                       base = fsys.basename(path)
+*                       dir  = fsys.dirname(path)
+*                       full = dir .. "/" .. base
+*                       assert(full == path)
 *
 **********************************************************************/
 
@@ -624,17 +636,17 @@ static int fsys_basename(lua_State *L)
     lua_pushstring(L,slash + 1);
   else
     lua_pushvalue(L,1);
-  
+    
   return 1;
 }
 
 /**********************************************************************
-* Usage:	dir = fsys.dirname(path)
-* Desc:		Return the path of a filename (path minus the last segment)
-* Input:	path (string)
-* Return:	dir (string)
+* Usage:        dir = fsys.dirname(path)
+* Desc:         Return the path of a filename (path minus the last segment)
+* Input:        path (string)
+* Return:       dir (string)
 *
-* Note:		See note for fsys.basename().
+* Note:         See note for fsys.basename().
 **********************************************************************/
 
 static int fsys_dirname(lua_State *L)
@@ -646,7 +658,7 @@ static int fsys_dirname(lua_State *L)
     lua_pushlstring(L,name,(size_t)(slash - name));
   else
     lua_pushstring(L,".");
-  
+    
   return 1;
 }
 
@@ -669,63 +681,14 @@ static int fsyslib_close(lua_State *L)
 #endif
 }
 
-static int fsys_openfd(lua_State *L)
-{
-#if LUA_VERSION_NUM == 501
-  FILE **pfp;
-  
-  lua_settop(L,2);
-  
-  pfp  = lua_newuserdata(L,sizeof(FILE *));
-  *pfp = NULL;  /* see comments in fsys_pipe() */
-  luaL_getmetatable(L,LUA_FILEHANDLE);
-  lua_setmetatable(L,-2);
-  lua_createtable(L,0,0);
-  lua_pushcfunction(L,fsyslib_close);
-  lua_setfield(L,-2,"__close");
-  lua_setfenv(L,-2);
-  
-  *pfp = fdopen(
-                luaL_checkinteger(L,1),
-                luaL_checkstring(L,2)
-        );
-        
-  if (*pfp == NULL)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  lua_pushinteger(L,0);
-  return 2;
-#else
-  luaL_Stream *pfp;
-  
-  lua_settop(L,2);
-  
-  pfp         = lua_newuserdata(L,sizeof(luaL_Stream));
-  pfp->f      = NULL;
-  pfp->closef = NULL;
-  
-  luaL_getmetatable(L,LUA_FILEHANDLE);
-  lua_setmetatable(L,-2);
-  
-  pfp->f = fdopen(luaL_checkinteger(L,1),luaL_checkstring(L,2));
-  if (pfp->f == NULL)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
-  
-  pfp->closef = fsyslib_close;
-  lua_pushinteger(L,0);
-  return 2;
-#endif
-}
-
-/***********************************************************************/
+/***********************************************************************
+* Usage:        pipe = fsys.pipe([binary])
+* Desc:         Create a Unix pipe
+* Input:        binary (boolean) true if creating a binary stream
+* Return:       pipe (table)
+*                       * read = read stream
+*                       * wrote = write stream
+************************************************************************/
 
 static int fsys_pipe(lua_State *L)
 {
@@ -902,160 +865,12 @@ static int fsys_pipe(lua_State *L)
 
 /***********************************************************************/
 
-static void *checkutype(lua_State *L,int idx,char const *tname)
-{
-  void *p = lua_touserdata(L,idx);
-  
-  assert(p != NULL);
-  
-  if (lua_getmetatable(L,idx))
-  {
-    lua_getfield(L,LUA_REGISTRYINDEX,tname);
-    if (lua_rawequal(L,-1,-2))
-    {
-      lua_pop(L,2);
-      return p;
-    }
-  }
-  return NULL;
-}
-
-/***********************************************************************/
-
-static int getfh(lua_State *L,int idx)
-{
-  void *p;
-  
-  p = checkutype(L,idx,LUA_FILEHANDLE);
-  if (p != NULL)
-    return fileno(*(FILE **)p);
-    
-  p = checkutype(L,idx,"org.conman.net:sock");
-  if (p != NULL)
-    return *(int *)p;
-    
-  return luaL_error(L,"not a file nor a socket");
-}
-
-/***********************************************************************/
-
-static int fsys_duplicate(lua_State *L)
-{
-  /*-----------------------------------------------------------------------
-  ; XXX - think about how I want to handle this.  If I give a socket, this
-  ; doesn't do what I want it to do.  I want a socket back, but how to do
-  ; that without undue tying to the org.conman.net module?
-  ;------------------------------------------------------------------------*/
-  
-  if (lua_isuserdata(L,1))
-  {
-    int new = dup(getfh(L,1));
-    if (new == -1)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,errno);
-    }
-    else
-    {
-#if LUA_VERSION_NUM == 501
-      FILE **pfp;
-      FILE  *fp;
-      
-      fp = fdopen(new,luaL_checkstring(L,2));
-      if (fp == NULL)
-      {
-        close(new);
-        lua_pushnil(L);
-        lua_pushinteger(L,errno);
-        return 2;
-      }
-      
-      pfp = lua_newuserdata(L,sizeof(FILE *));
-      luaL_getmetatable(L,LUA_FILEHANDLE);
-      lua_setmetatable(L,-2);
-      lua_pushcfunction(L,fsyslib_close);
-      lua_setfield(L,-2,"__close");
-      lua_setfenv(L,-2);
-      *pfp = fp;
-      lua_pushinteger(L,0);
-#else
-      FILE        *fp;
-      luaL_Stream *ps;
-      
-      fp = fdopen(new,luaL_checkstring(L,2));
-      if (fp == NULL)
-      {
-        close(new);
-        lua_pushnil(L);
-        lua_pushinteger(L,errno);
-        return 2;
-      }
-      
-      ps         = lua_newuserdata(L,sizeof(luaL_Stream));
-      ps->f      = fp;
-      ps->closef = fsyslib_close;
-      luaL_getmetatable(L,LUA_FILEHANDLE);
-      lua_setmetatable(L,-2);
-      lua_pushinteger(L,0);
-#endif
-    }
-  }
-  else
-  {
-    int new  = dup(luaL_checkinteger(L,1));
-    if (new == -1)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,errno);
-    }
-    else
-    {
-      lua_pushinteger(L,new);
-      lua_pushinteger(L,errno);
-    }
-  }
-  
-  return 2;
-}
-
-/***********************************************************************/
-
-static int fsys_redirect(lua_State *L)
-{
-  int orig;
-  int copy;
-  
-  if (lua_isuserdata(L,1))
-    orig = getfh(L,1);
-  else
-    orig = luaL_checkinteger(L,1);
-    
-  if (lua_isuserdata(L,2))
-    copy = getfh(L,2);
-  else
-    copy = luaL_checkinteger(L,2);
-    
-  errno = 0;
-  dup2(orig,copy);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
-  
-  return 2;
-}
-
-/**************************************************************************/
-
-static int fsys_dup(lua_State *L)
-{
-  syslog(LOG_WARNING,"org.conman.fsys.dup() obsolete; use org.conman.fsys.redirect() instead");
-  return fsys_redirect(L);
-}
-
-/***********************************************************************/
-
 static int fsys_isfile(lua_State *L)
 {
-  lua_pushboolean(L,!isatty(fileno(*(FILE **)luaL_checkudata(L,1,LUA_FILEHANDLE))));
+  if (!luaL_callmeta(L,1,"_tofd"))
+    lua_pushboolean(L,false);
+  else
+    lua_pushboolean(L,!isatty(luaL_checkinteger(L,-1)));
   return 1;
 }
 
@@ -1199,17 +1014,6 @@ static int fsys_gexpand(lua_State *L)
   return 2;
 }
 
-/************************************************************************/
-
-static int fsys_fileno(lua_State *L)
-{
-  lua_pushinteger(
-    L,
-    fileno(*(FILE **)luaL_checkudata(L,1,LUA_FILEHANDLE))
-  );
-  return 1;
-}
-
 /************************************************************************
 *
 * Usage:        value,err = fsys.pathconf(filespec,var)
@@ -1295,6 +1099,96 @@ static int fsys_pathconf(lua_State *L)
   return 2;
 }
 
+/************************************************************************
+*                 MONKEY PATCH! MONKEY PATCH! MONKEY PATCH!
+*
+* We add some functions to the io module
+*
+* Usage:        f = io._fromfd(fh,mode)
+* Desc:         Create a file from a file handle
+* Input:        fh (integer) a Unix file handle
+*               mode (string) same as from io.open()
+* Return:       f (userdata/FILE*) a file
+*************************************************************************/
+
+static int monkeypatch_mod__fromfd(lua_State *L)
+{
+  FILE *fp = fdopen(luaL_checkinteger(L,1),luaL_checkstring(L,2));
+  
+  if (fp == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushstring(L,strerror(errno));
+    lua_pushinteger(L,errno);
+    return 3;
+  }
+  
+#if LUA_VERSION_NUM == 501
+
+  FILE **pfp = lua_newuserdata(L,sizeof(FILE *));
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_setmetatable(L,-2);
+  lua_pushcfunction(L,fsyslib_close);
+  lua_setfield(L,-2,"__close");
+  lua_setfenv(L,-2);
+  *pfp = fp;
+  
+#else
+
+  luaL_Stream *ps = lua_newuserdata(L,sizeof(luaL_Stream));
+  ps->f           = fp;
+  ps->closef      = fsyslib_close;
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_setmetatable(L,-2);
+  
+#endif
+
+  return 1;
+}
+
+/************************************************************************
+* Usage:        fh = file:_tofd()
+* Desc:         Return the file handle from a file
+* Input:        file (userdata/FILE*) file
+* Return:       fh (integer) file handle
+*************************************************************************/
+
+static int monkeypatch_meta__tofd(lua_State *L)
+{
+  lua_pushinteger(L,fileno(*(FILE **)lua_touserdata(L,1)));
+  return 1;
+}
+
+/************************************************************************
+* Usage:        f = file:_dup(mode)
+* Desc:         Duplicate a file to a new file object
+* Input:        file (userdata/FILE*) file
+*               mode (string) same as used in io.open()
+* Return:       f (userdata/FILE*) new file
+*************************************************************************/
+
+static int monkeypatch_meta__dup(lua_State *L)
+{
+  FILE **pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  int    fh  = dup(fileno(*pfp));
+  int    rc;
+  
+  if (fh == -1)
+  {
+    lua_pushnil(L);
+    lua_pushstring(L,strerror(errno));
+    lua_pushinteger(L,errno);
+    return 3;
+  }
+  
+  lua_pushinteger(L,fh);
+  lua_pushvalue(L,2);
+  rc = monkeypatch_mod__fromfd(L);
+  if (rc == 3)
+    close(fh);
+  return rc;
+}
+
 /************************************************************************/
 
 static struct luaL_Reg const reg_fsys[] =
@@ -1302,7 +1196,6 @@ static struct luaL_Reg const reg_fsys[] =
   { "symlink"   , fsys_symlink   } ,
   { "link"      , fsys_link      } ,
   { "readlink"  , fsys_readlink  } ,
-  { "mknod"     , fsys_mknod     } ,
   { "mkfifo"    , fsys_mkfifo    } ,
   { "mkdir"     , fsys_mkdir     } ,
   { "rmdir"     , fsys_rmdir     } ,
@@ -1320,16 +1213,12 @@ static struct luaL_Reg const reg_fsys[] =
   { "_safename" , fsys__safename } ,
   { "basename"  , fsys_basename  } ,
   { "dirname"   , fsys_dirname   } ,
-  { "openfd"    , fsys_openfd    } ,
   { "pipe"      , fsys_pipe      } ,
-  { "dup"       , fsys_dup       } ,
-  { "duplicate" , fsys_duplicate } ,
   { "redirect"  , fsys_redirect  } ,
   { "isfile"    , fsys_isfile    } ,
   { "fnmatch"   , fsys_fnmatch   } ,
   { "expand"    , fsys_expand    } ,
   { "gexpand"   , fsys_gexpand   } ,
-  { "fileno"    , fsys_fileno    } ,
   { "pathconf"  , fsys_pathconf  } ,
   { NULL        , NULL           }
 };
@@ -1356,6 +1245,17 @@ static luaL_Reg const m_expand_meta[] =
 
 int luaopen_org_conman_fsys(lua_State *L)
 {
+  luaL_getmetatable(L,LUA_FILEHANDLE);
+  lua_pushcfunction(L,monkeypatch_meta__tofd);
+  lua_setfield(L,-2,"_tofd");
+  lua_pushcfunction(L,monkeypatch_meta__dup);
+  lua_setfield(L,-2,"_dup");
+  
+  lua_getfield(L,LUA_REGISTRYINDEX,"_LOADED");
+  lua_getfield(L,-1,"io");
+  lua_pushcfunction(L,monkeypatch_mod__fromfd);
+  lua_setfield(L,-2,"_fromfd");
+  
   luaL_newmetatable(L,TYPE_DIR);
 #if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,m_dir_meta);
@@ -1389,14 +1289,7 @@ int luaopen_org_conman_fsys(lua_State *L)
   luaL_newlib(L,reg_fsys);
 #endif
 
-  lua_pushinteger(L,STDIN_FILENO);
-  lua_setfield(L,-2,"STDIN");
-  lua_pushinteger(L,STDOUT_FILENO);
-  lua_setfield(L,-2,"STDOUT");
-  lua_pushinteger(L,STDERR_FILENO);
-  lua_setfield(L,-2,"STDERR");
   return 1;
 }
 
 /*******************************************************************/
-
