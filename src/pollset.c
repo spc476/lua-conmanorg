@@ -202,15 +202,22 @@ static int polllua___gc(lua_State *L)
 static int polllua_insert(lua_State *L)
 {
   pollset__t         *set = luaL_checkudata(L,1,TYPE_POLL);
-  int                 fh  = luaL_checkinteger(L,2);
+  int                 fh;
   struct epoll_event  event;
   
   lua_settop(L,4);
   
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh            = luaL_checkinteger(L,-1);
   event.events  = pollset_toevents(L,3);
   event.data.fd = fh;
   
-  if (epoll_ctl(set->efh,EPOLL_CTL_ADD,fh,&event) < 0)
+  if (epoll_ctl(set->efh,EPOLL_CTL_ADD,event.data.fd,&event) < 0)
   {
     lua_pushinteger(L,errno);
     return 1;
@@ -221,7 +228,7 @@ static int polllua_insert(lua_State *L)
   lua_pushinteger(L,fh);
   
   if (lua_isnil(L,4))
-    lua_pushvalue(L,2);
+    lua_pushinteger(L,fh);
   else
     lua_pushvalue(L,4);
     
@@ -237,11 +244,17 @@ static int polllua_insert(lua_State *L)
 static int polllua_update(lua_State *L)
 {
   pollset__t         *set = luaL_checkudata(L,1,TYPE_POLL);
-  int                 fh  = luaL_checkinteger(L,2);
+  int                 fh;
   struct epoll_event  event;
   
   lua_settop(L,3);
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
   
+  fh            = luaL_checkinteger(L,-1);
   event.events  = pollset_toevents(L,3);
   event.data.fd = fh;
   errno         = 0;
@@ -256,8 +269,16 @@ static int polllua_update(lua_State *L)
 static int polllua_remove(lua_State *L)
 {
   pollset__t         *set = luaL_checkudata(L,1,TYPE_POLL);
-  int                 fh  = luaL_checkinteger(L,2);
+  int                 fh;
   struct epoll_event  event;
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh = luaL_checkinteger(L,-1);
   
   if (epoll_ctl(set->efh,EPOLL_CTL_DEL,fh,&event) < 0)
   {
@@ -480,9 +501,17 @@ static int polllua___gc(lua_State *L)
 static int polllua_insert(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  int         fh  = luaL_checkinteger(L,2);
+  int         fh;
   
   lua_settop(L,4);
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh = luaL_checkinteger(L,-1);
   
   if (set->idx == set->max)
   {
@@ -535,7 +564,7 @@ static int polllua_insert(lua_State *L)
   lua_pushinteger(L,fh);
   
   if (lua_isnil(L,4))
-    lua_pushvalue(L,2);
+    lua_pushinteger(L,fh);
   else
     lua_pushvalue(L,4);
     
@@ -551,9 +580,17 @@ static int polllua_insert(lua_State *L)
 static int polllua_update(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  int         fh  = luaL_checkinteger(L,2);
+  int         fh;
   
   lua_settop(L,3);
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh = luaL_checkinteger(L,-1);
   
   for (size_t i = 0 ; i < set->idx ; i++)
   {
@@ -574,7 +611,15 @@ static int polllua_update(lua_State *L)
 static int polllua_remove(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  int         fh  = luaL_checkinteger(L,2);
+  int         fh;
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh = luaL_checkinteger(L,-1);
   
   for (size_t i = 0 ; i < set->idx ; i++)
   {
@@ -772,9 +817,17 @@ static int polllua___gc(lua_State *L)
 static int polllua_insert(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  int         fh  = luaL_checkinteger(L,2);
+  int         fh;
   
   lua_settop(L,4);
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh = luaL_checkinteger(L,-1);
   
   if (fh > FD_SETSIZE)
   {
@@ -792,7 +845,7 @@ static int polllua_insert(lua_State *L)
   lua_pushinteger(L,fh);
   
   if (lua_isnil(L,4))
-    lua_pushvalue(L,2);
+    lua_pushinteger(L,fh);
   else
     lua_pushvalue(L,4);
     
@@ -808,7 +861,15 @@ static int polllua_insert(lua_State *L)
 static int polllua_update(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  int         fh  = luaL_checkinteger(L,2);
+  int         fh;
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh = luaL_checkinteger(L,-1);
   
   FD_CLR(fh,&set->read);
   FD_CLR(fh,&set->write);
@@ -824,7 +885,15 @@ static int polllua_update(lua_State *L)
 static int polllua_remove(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  int         fh  = luaL_checkinteger(L,2);
+  int         fh;
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  fh = luaL_checkinteger(L,-1);
   
   if (FD_ISSET(fh,&set->read) || FD_ISSET(fh,&set->write) || FD_ISSET(fh,&set->except))
   {
