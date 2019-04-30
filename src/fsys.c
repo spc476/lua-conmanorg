@@ -110,8 +110,8 @@ static void fsysL_pushmode(lua_State *L,mode_t mode)
 
 static void fsysL_pushstat(lua_State *L,struct stat const *status)
 {
-  assert(L    != NULL);
-  assert(stat != NULL);
+  assert(L      != NULL);
+  assert(status != NULL);
   
   lua_createtable(L,0,13);
   lua_pushinteger(L,status->st_dev);     lua_setfield(L,-2,"dev");
