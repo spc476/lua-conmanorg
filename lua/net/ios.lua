@@ -239,11 +239,7 @@ local function read(ios,...)
       end
     end
     
-  --  if not data then
-  --    return unpack(res)
-  --  else
-      table.insert(res,data)
-  --  end
+    table.insert(res,data)
   end
   
   return unpack(res)
