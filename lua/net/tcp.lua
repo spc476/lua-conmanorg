@@ -41,7 +41,10 @@ local function make_ios(conn,remote)
   
   state.close    = function(self) self.__sock:close() return true end
   state.seek     = function() return nil,errno[errno.ESPIPE],errno.ESPIPE end
-  state._refill  = function(self) return self.__sock:recv() end
+  state._refill  = function(self)
+    local _,data = self.__sock:recv()
+    return data
+  end
   state._drain   = function(self,buffer) self.__sock:send(nil,buffer) end
   state.__remote = remote
   state.__sock   = conn
