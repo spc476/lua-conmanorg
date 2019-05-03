@@ -26,10 +26,10 @@ local string = require "string"
 local table  = require "table"
 local lpeg   = require "lpeg"
 
-local select   = select
-local type     = type
-local error    = error
-local unpack   = table.unpack or unpack
+local select = select
+local type   = type
+local error  = error
+local unpack = table.unpack or unpack
 
 -- *******************************************************************
 
@@ -106,21 +106,15 @@ local READER =
   ['*n'] = function()
     error "Not implemented"
   end,
-
--- *******************************************************************
-
+  
   ['*l'] = function(ios)
     return read_data(ios,LINE)
   end,
-
--- *******************************************************************
-
+  
   ['*L'] = function(ios)
     return read_data(ios,LINEcrlf)
   end,
-
--- *******************************************************************
-
+  
   ['*a'] = function(ios)
     if ios._eof then
       return ""
@@ -134,9 +128,7 @@ local READER =
     ios._eof = true
     return ios._readbuf
   end,
-
--- *******************************************************************
- 
+  
   ['*h'] = function(ios)
     return read_data(ios,HEADERS)
   end,
@@ -202,15 +194,28 @@ end
 
 local function read(ios,...)
   local function read_bytes(amount)
+    if ios._eof    then return     end
+    if amount == 0 then return ""  end
+    
     if #ios._readbuf >= amount then
       local data   = ios._readbuf:sub(1,amount)
       ios._readbuf = ios._readbuf:sub(amount + 1,-1)
       return data
     end
     
-    ios._readbuf = ios._readbuf + ios:_refill()
+    local data = ios:_refill()
+
+    if data == "" then
+      ios._eof = true
+      assert(#ios._readbuf <= amount)
+      return ios._readbuf
+    end
+    
+    ios._readbuf = ios._readbuf .. data
     return read_bytes(amount)
   end
+  
+  -- -----------------------------------------------------
   
   local maxparam = select('#',...)
   
@@ -222,15 +227,23 @@ local function read(ios,...)
   
   for i = 1 , maxparam do
     local format = select(i,...)
+    local data
+    
     if type(format) == 'number' then
-      table.insert(res,read_bytes(format))
+      data = read_bytes(format)
     else
       if READER[format] then
-        table.insert(res,READER[format](ios))
+        data = READER[format](ios)
       else
         error(string.format("bad argument #%d to 'read' (invalid format)",i))
       end
     end
+    
+  --  if not data then
+  --    return unpack(res)
+  --  else
+      table.insert(res,data)
+  --  end
   end
   
   return unpack(res)
