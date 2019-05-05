@@ -112,6 +112,26 @@ org.conman.string
 org.conman.table
 	Some useful table functions.
 
+org.conman.net.ios
+	Implements an API similar to the Lua's file object API, but with
+	callbacks to obtain the data.
+
+org.conman.net.tcp
+	A module to turn a TCP connection into something that mimics the
+	Lua's file:read()/file:write()/etc. API.
+
+org.conman.nfl
+	An event driven framework to manage network based connections via
+	coroutines.  
+
+org.conman.nfl.tcp
+	A module, with a similar API to org.conman.net.tcp, to manage
+	TCP connections via coroutines in an event driven environment.
+
+org.conman.nfl.tls
+	A module, with a similar API to org.conman.net.tcp, to manage
+	TLS-based connections via coroutines in an event driven environment.
+
                                   * * * * *
 
 Any modules found in this repository not listed above are either obsolete or
