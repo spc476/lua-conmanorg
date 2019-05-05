@@ -123,6 +123,7 @@ install : all
 	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman/zip
 	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman/const
 	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman/net
+	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman/nfl
 	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/org/conman/fsys
 	$(INSTALL_PROGRAM) lib/env.so      $(DESTDIR)$(LIBDIR)/org/conman
@@ -151,6 +152,7 @@ install : all
 	$(INSTALL_DATA)    lua/zip/*.lua   $(DESTDIR)$(LUADIR)/org/conman/zip
 	$(INSTALL_DATA)    lua/const/*.lua $(DESTDIR)$(LUADIR)/org/conman/const
 	$(INSTALL_DATA)    lua/net/*.lua   $(DESTDIR)$(LUADIR)/org/conman/net
+	$(INSTALL_DATA)    lua/nfl/*.lua   $(DESTDIR)$(LUADIR)/org/conman/nfl
 
 uninstall:
 	$(RM) -r $(DESTDIR)$(LIBDIR)/org/conman
