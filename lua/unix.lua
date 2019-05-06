@@ -53,9 +53,11 @@ users = {} do
                        )
   
   for line in io.lines("/etc/passwd") do
-    local user         = entry:match(line)
-    users[user.userid] = user
-    users[user.uid]    = user
+    local user = entry:match(line)
+    if user then
+      users[user.userid] = user
+      users[user.uid]    = user
+    end
   end
 end
 
@@ -74,8 +76,10 @@ groups = {} do
   
   for line in io.lines("/etc/group") do
     local group = entry:match(line)
-    groups[group.name] = group
-    groups[group.gid]  = group
+    if group then
+      groups[group.name] = group
+      groups[group.gid]  = group
+    end
   end
 end
 
