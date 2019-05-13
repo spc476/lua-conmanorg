@@ -19,6 +19,7 @@
 --
 -- ************************************************************************
 -- luacheck: ignore 611
+-- https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
 
 return {
   PROCESS =
@@ -26,7 +27,7 @@ return {
     CONTINUE          = 100,
     SWITCHPROTO       = 101,
     PROCESSING        = 102,
-    CHECKPOINT        = 103,
+    EARLYHINTS        = 103,
   },
   
   SUCCESS =
@@ -51,7 +52,6 @@ return {
     SEEOTHER          = 303,
     NOTMODIFIED       = 304,
     USEPROXY          = 305,
-    SWITCHPROXY       = 306,
     MOVETEMP_M        = 307,
     MOVETERM_M        = 308,
   },
@@ -76,26 +76,17 @@ return {
     MEDIATYPE         = 415,
     RANGEERROR        = 416,
     EXPECTATION       = 417,
-    IM_A_TEA_POT      = 418,
-    METHODFAILURE     = 420,
+    IM_A_TEA_POT      = 418, -- RFC-2324 section 2.3.2
     MISDIRECT         = 421,
     UNPROCESSENTITY   = 422,
     LOCKED            = 423,
     FAILEDDEP         = 424,
+    TOOEARLY          = 425,
     UPGRADE           = 426,
     PRECONDITION2     = 428,
     TOOMANYREQUESTS   = 429,
     REQHDR2BIG        = 431,
-    LOGINTIMEOUT      = 440,
-    NORESPONSE        = 444,
-    RETRYWITH         = 449,
-    MSBLOCK           = 450,
     LEGALCENSOR       = 451,
-    SSLCERTERR        = 495,
-    SSLCERTREQ        = 496,
-    HTTP2HTTPS        = 497,
-    INVALIDTOKEN      = 498,
-    TOKENREQ          = 499,
   },
   
   SERVER =
@@ -112,14 +103,5 @@ return {
     EXCEEDBW          = 509,
     NOTEXTENDED       = 510,
     NETAUTHREQ        = 511,
-    UNKNOWN           = 520,
-    BLACKHAWKDOWN     = 521,
-    CONNECTIONTIMEOUT = 522,
-    ORIGINUNREACHABLE = 523,
-    TIMEOUT           = 524,
-    SSLHANDSHAKE      = 525,
-    SSLINVALID        = 526,
-    RAILGUN           = 527,
-    FROZEN            = 530,
   }
 }
