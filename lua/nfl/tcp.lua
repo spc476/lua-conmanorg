@@ -75,7 +75,7 @@ local function create_handler(conn,remote)
     if event.hangup then
       nfl.SOCKETS:remove(conn)
       ios._eof = true
-      nfl.schedule(ios.__co,false)
+      nfl.schedule(ios.__co,false,errno.ECONNREFUSED)
     end
     
     if event.read then
