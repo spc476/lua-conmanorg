@@ -106,8 +106,9 @@ function TOQUEUE:remove()
     end
   end
   
-  local res = self[1]
-  local x   = table.remove(self)
+  local res    = self[1]
+  local x      = table.remove(self)
+  self[res.co] = nil
   
   if #self > 0 then
     self[1] = x
