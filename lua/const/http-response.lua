@@ -53,7 +53,7 @@ return {
     NOTMODIFIED       = 304,
     USEPROXY          = 305,
     MOVETEMP_M        = 307,
-    MOVETERM_M        = 308,
+    MOVEPERM_M        = 308,
   },
   
   CLIENT =
