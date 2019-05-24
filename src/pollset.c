@@ -80,47 +80,21 @@ static int pollset_toevents(lua_State *L,int idx)
 {
   int events = 0;
   
-  if (lua_istable(L,idx))
+  for (char const *flags = luaL_checkstring(L,idx) ; *flags ; flags++)
   {
-    lua_getfield(L,idx,"read");
-    events |= lua_isboolean(L,-1) ? EPOLLIN : 0;
-    lua_getfield(L,idx,"write");
-    events |= lua_isboolean(L,-1) ? EPOLLOUT : 0;
-    lua_getfield(L,idx,"priority");
-    events |= lua_isboolean(L,-1) ? EPOLLPRI : 0;
-    lua_getfield(L,idx,"error");
-    events |= lua_isboolean(L,-1) ? EPOLLERR : 0;
-    lua_getfield(L,idx,"hangup");
-    events |= lua_isboolean(L,-1) ? EPOLLHUP : 0;
-    lua_getfield(L,idx,"trigger");
-    events |= lua_isboolean(L,-1) ? EPOLLET : 0;
-    lua_getfield(L,idx,"oneshot");
-    events |= lua_isboolean(L,-1) ? EPOLLONESHOT : 0;
-    lua_pop(L,7);
-  }
-  else if (lua_isstring(L,idx))
-  {
-    char const *flags = lua_tostring(L,idx);
-    for ( ; *flags ; flags++)
+    switch(*flags)
     {
-      switch(*flags)
-      {
-        case 'r': events |= EPOLLIN;      break;
-        case 'w': events |= EPOLLOUT;     break;
-        case 'p': events |= EPOLLPRI;     break;
-        case 'e': events |= EPOLLERR;     break;
-        case 'h': events |= EPOLLHUP;     break;
-        case 't': events |= EPOLLET;      break;
-        case '1': events |= EPOLLONESHOT; break;
-        default:  break;
-      }
+      case 'r': events |= EPOLLIN;      break;
+      case 'w': events |= EPOLLOUT;     break;
+      case 'p': events |= EPOLLPRI;     break;
+      case 'e': events |= EPOLLERR;     break;
+      case 'h': events |= EPOLLHUP;     break;
+      case 't': events |= EPOLLET;      break;
+      case '1': events |= EPOLLONESHOT; break;
+      default:  break;
     }
   }
-  else if (lua_isnil(L,idx))
-    events |= EPOLLIN;
-  else
-    return luaL_error(L,"expected table or string");
-    
+  
   return events;
 }
 
@@ -386,44 +360,20 @@ static int pollset_toevents(lua_State *L,int idx)
 {
   int events = 0;
   
-  if (lua_istable(L,idx))
+  for (char const *flags = luaL_checkstring(L,idx) ; *flags ; flags++)
   {
-    lua_getfield(L,idx,"read");
-    events |= lua_isboolean(L,-1) ? POLLIN : 0;
-    lua_getfield(L,idx,"write");
-    events |= lua_isboolean(L,-1) ? POLLOUT : 0;
-    lua_getfield(L,idx,"priority");
-    events |= lua_isboolean(L,-1) ? POLLPRI : 0;
-    lua_getfield(L,idx,"error");
-    events |= lua_isboolean(L,-1) ? POLLERR : 0;
-    lua_getfield(L,idx,"hangup");
-    events |= lua_isboolean(L,-1) ? POLLHUP : 0;
-    lua_getfield(L,idx,"invalid");
-    events |= lua_isboolean(L,-1) ? POLLNVAL : 0;
-    lua_pop(L,6);
-  }
-  else if (lua_isstring(L,idx))
-  {
-    char const *flags = lua_tostring(L,idx);
-    for ( ; *flags ; flags++)
+    switch(*flags)
     {
-      switch(*flags)
-      {
-        case 'r': events |= POLLIN;   break;
-        case 'w': events |= POLLOUT;  break;
-        case 'p': events |= POLLPRI;  break;
-        case 'e': events |= POLLERR;  break;
-        case 'h': events |= POLLHUP;  break;
-        case 'i': events |= POLLNVAL; break;
-        default:  break;
-      }
+      case 'r': events |= POLLIN;   break;
+      case 'w': events |= POLLOUT;  break;
+      case 'p': events |= POLLPRI;  break;
+      case 'e': events |= POLLERR;  break;
+      case 'h': events |= POLLHUP;  break;
+      case 'i': events |= POLLNVAL; break;
+      default:  break;
     }
   }
-  else if (lua_isnil(L,idx))
-    events |= POLLIN;
-  else
-    return luaL_error(L,"expected table or string");
-    
+  
   return events;
 }
 
@@ -718,37 +668,16 @@ typedef struct
 
 static void pollset_toevents(lua_State *L,int idx,pollset__t *set,int fd)
 {
-  if (lua_istable(L,idx))
+  for (char const *flags = luaL_checkstring(L,idx) ; *flags ; flags++)
   {
-    lua_getfield(L,idx,"read");
-    if (lua_isboolean(L,-1)) FD_SET(fd,&set->read);
-    lua_getfield(L,idx,"write");
-    if (lua_isboolean(L,-1)) FD_SET(fd,&set->write);
-    lua_getfield(L,idx,"except");
-    if (lua_isboolean(L,-1)) FD_SET(fd,&set->except);
-    lua_getfield(L,idx,"hangup");
-    if (lua_isboolean(L,-1)) FD_SET(fd,&set->except);
-    lua_pop(L,3);
-  }
-  else if (lua_isstring(L,idx))
-  {
-    char const *flags = lua_tostring(L,idx);
-    for ( ; *flags ; flags++)
+    switch(*flags)
     {
-      switch(*flags)
-      {
-        case 'r': FD_SET(fd,&set->read);   break;
-        case 'w': FD_SET(fd,&set->write);  break;
-        case 'h':
-        case 'e': FD_SET(fd,&set->except); break;
-        default:  break;
-      }
+      case 'r': FD_SET(fd,&set->read);   break;
+      case 'w': FD_SET(fd,&set->write);  break;
+      case 'p': FD_SET(fd,&set->except); break;
+      default:  break;
     }
   }
-  else if (lua_isnil(L,idx))
-    FD_SET(fd,&set->read);
-  else
-    luaL_error(L,"expected table or string");
 }
 
 /**********************************************************************/
@@ -761,7 +690,7 @@ static void pollset_pushevents(lua_State *L,pollset__t *set,int fd)
   lua_pushboolean(L,FD_ISSET(fd,&set->write));
   lua_setfield(L,-2,"write");
   lua_pushboolean(L,FD_ISSET(fd,&set->except));
-  lua_setfield(L,-2,"except");
+  lua_setfield(L,-2,"priority");
 }
 
 /**********************************************************************/
