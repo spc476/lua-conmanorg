@@ -89,12 +89,6 @@ local function create_handler(conn,remote)
   end
   
   return ios,function(event)
-    if event.hangup then
-      nfl.SOCKETS:remove(conn)
-      ios._eof = true
-      nfl.schedule(ios.__co,false,errno.ECONNREFUSED)
-    end
-    
     if event.read then
       local _,packet,err = conn:recv()
       if packet then
@@ -116,7 +110,7 @@ local function create_handler(conn,remote)
     end
     
     if event.write then
-      nfl.SOCKETS:update(conn,"rh")
+      nfl.SOCKETS:update(conn,"r")
       nfl.schedule(ios.__co,true)
     end
   end

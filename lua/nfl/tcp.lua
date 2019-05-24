@@ -57,7 +57,7 @@ local function create_handler(conn,remote)
   
   ios._drain = function(_,data)
     writebuf = data
-    nfl.SOCKETS:update(conn,'wh')
+    nfl.SOCKETS:update(conn,'w')
     return coroutine.yield()
   end
   
@@ -72,12 +72,6 @@ local function create_handler(conn,remote)
   end
   
   return ios,function(event)
-    if event.hangup then
-      nfl.SOCKETS:remove(conn)
-      ios._eof = true
-      nfl.schedule(ios.__co,false,errno.ECONNREFUSED)
-    end
-    
     if event.read then
       local _,packet,err = conn:recv()
       if packet then
@@ -104,7 +98,7 @@ local function create_handler(conn,remote)
       end
       
       if #writebuf == 0 then
-        nfl.SOCKETS:update(conn,'rh')
+        nfl.SOCKETS:update(conn,'r')
         nfl.schedule(ios.__co,true)
       end
     end
