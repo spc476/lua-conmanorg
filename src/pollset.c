@@ -60,22 +60,12 @@
 *	event	meaning
 *	r	read ready
 *	w	write ready
-*	p	urgent data ready
-*	e	error
-*	h	hangup
-*	i	invalid fd
-*	t	edge triggered
-*	1	oneshot
+*	p	urgent data ready and/or error happened
 *
 * 	event	epoll	poll	select
 *	r	x	x	x
 *	w	x	x	x
 *	p	x	x	x
-*	e	x	x
-*	h	x	x
-*	i		x
-*	t	x
-*	1	x
 *
 * Usage:	set,err = org.conman.pollset()
 * Desc:		Return a file descriptor based event object
@@ -120,12 +110,12 @@
 *			| * read (boolean) read event
 *			| * write (boolean) write event
 *			| * priority (boolean) priority data event
-*			| * error (boolean) error event
-*			| * hangup (boolean) connection hangup event
-*			| * trigger (boolean) edge trigger
-*			| * oneshot (boolean) one shot event
 *			| * obj (?) value registered with set:insert()
 *		err (integer) system error value
+*
+* Note:		Other events may be reported, such as 'error' or 'hangup'.
+*		There is no exhaustive list, and the types of reports
+*		are implementation dependent.
 *
 * LINUX implementation of pollset, using epoll()
 *
@@ -157,10 +147,6 @@ static int pollset_toevents(lua_State *L,int idx)
       case 'r': events |= EPOLLIN;      break;
       case 'w': events |= EPOLLOUT;     break;
       case 'p': events |= EPOLLPRI;     break;
-      case 'e': events |= EPOLLERR;     break;
-      case 'h': events |= EPOLLHUP;     break;
-      case 't': events |= EPOLLET;      break;
-      case '1': events |= EPOLLONESHOT; break;
       default:  break;
     }
   }
@@ -437,9 +423,6 @@ static int pollset_toevents(lua_State *L,int idx)
       case 'r': events |= POLLIN;   break;
       case 'w': events |= POLLOUT;  break;
       case 'p': events |= POLLPRI;  break;
-      case 'e': events |= POLLERR;  break;
-      case 'h': events |= POLLHUP;  break;
-      case 'i': events |= POLLNVAL; break;
       default:  break;
     }
   }
