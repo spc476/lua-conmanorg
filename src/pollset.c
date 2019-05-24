@@ -51,11 +51,81 @@
 *
 * So they're here in this module.
 *
-* Also, each of the three implementations present the same API, but some
-* like epoll() might have more functionality than others, like select() that
-* can be used.  The org.conman.net module indicates which implementation is
-* in use, but as long as you stick to select() type operations, you should
-* be fine.
+* Also, each of the implementations present the same API, but some like
+* epoll() might have more functionality than others, like select() that can
+* be used.  The org.conman.net module indicates which implementation is in
+* use, but as long as you stick to select() type operations, you should be
+* fine.
+*
+*	event	meaning
+*	r	read ready
+*	w	write ready
+*	p	urgent data ready
+*	e	error
+*	h	hangup
+*	i	invalid fd
+*	t	edge triggered
+*	1	oneshot
+*
+* 	event	epoll	poll	select
+*	r	x	x	x
+*	w	x	x	x
+*	p	x	x	x
+*	e	x	x
+*	h	x	x
+*	i		x
+*	t	x
+*	1	x
+*
+* Usage:	set,err = org.conman.pollset()
+* Desc:		Return a file descriptor based event object
+* Return:	set (userdata/set) event object, nil on error
+*		err (integer) system error (0 - no error)
+*
+* Usage:	set._implemenation (string) one of:
+*			* 'epoll'
+*			* 'poll'
+*			* 'select'
+*
+* Usage:	err = set:insert(file,events[,obj])
+* Desc:		Insert a file into the event object
+* Input:	file (?) any object that has metatable field _tofd()
+*		events (string) string of single character flag of events
+*			| (see above)
+*		obj (?/optional) value to associate with event
+*			| (defaults to file object passed in)
+* Return:	err (integer) system error (0 if no error)
+*
+* Usage:	err = set:update(file,events)
+* Desc:		Update the flags for a file in event object
+* Input:	file (?) any object that reponds to _tofd()
+*		events (string) string of events (see above)
+* Return:	err (integer) system error value
+* Note:		file must have been added with set:insert(); othersise
+*		results are undefined
+*
+* Usage:	err = set:remove(file)
+* Desc:		Remove a file from the event object
+* Input:	file (?) any object that reponds to _tofd()
+* Return:	err (integer) system error value
+* Note:		file must have been added with set:insert(); otherwise
+*		results are undefined
+*
+* Usage:	events,err = set:events([timeout])
+* Desc:		Return list of events
+* Input:	timeout (number/optional) timeout in seconds, if not given,
+*			| function will block until an event is received
+* Return:	events (table) array of events (nil on error),
+*			| each entry is a table:
+*			| * read (boolean) read event
+*			| * write (boolean) write event
+*			| * priority (boolean) priority data event
+*			| * error (boolean) error event
+*			| * hangup (boolean) connection hangup event
+*			| * trigger (boolean) edge trigger
+*			| * oneshot (boolean) one shot event
+*			| * obj (?) value registered with set:insert()
+*		err (integer) system error value
 *
 * LINUX implementation of pollset, using epoll()
 *
