@@ -158,7 +158,7 @@ static int pollset_toevents(lua_State *L,int idx)
 
 static void pollset_pushevents(lua_State *L,int events)
 {
-  lua_createtable(L,0,8);
+  lua_createtable(L,0,5);
   lua_pushboolean(L,(events & EPOLLIN)      != 0);
   lua_setfield(L,-2,"read");
   lua_pushboolean(L,(events & EPOLLOUT)     != 0);
@@ -169,10 +169,6 @@ static void pollset_pushevents(lua_State *L,int events)
   lua_setfield(L,-2,"error");
   lua_pushboolean(L,(events & EPOLLHUP)     != 0);
   lua_setfield(L,-2,"hangup");
-  lua_pushboolean(L,(events & EPOLLET)      != 0);
-  lua_setfield(L,-2,"trigger");
-  lua_pushboolean(L,(events & EPOLLONESHOT) != 0);
-  lua_setfield(L,-2,"oneshot");
 }
 
 /**********************************************************************/
