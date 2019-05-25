@@ -82,7 +82,7 @@ local function read_data(ios,pattern)
   if not eol then
     local data = ios:_refill()
     
-    if #data == 0 then
+    if not data or #data == 0 then
       ios._eof = true
       return ios._readbuf
     end
