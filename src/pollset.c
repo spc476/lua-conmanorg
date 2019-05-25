@@ -35,9 +35,11 @@
 
 #define TYPE_POLL       "org.conman.pollset"
 
-#if !defined(POLLSET_IMPL_EPOLL) && !defined(POLLSET_IMPL_POLL) && !defined(POLLSET_IMPL_SELECT)
-#  ifdef __linux
+#if !defined(POLLSET_IMPL_EPOLL) && !defined(POLLSET_IMPL_KQUEUE) && !defined(POLLSET_IMPL_POLL) && !defined(POLLSET_IMPL_SELECT)
+#  if defined(__linux)
 #    define POLLSET_IMPL_EPOLL
+#  elif defined(__APPLE__)
+#    define POLLSET_IMPL_KQUEUE
 #  else
 #    define POLLSET_IMPL_POLL
 #  endif
@@ -51,21 +53,19 @@
 *
 * So they're here in this module.
 *
-* Also, each of the implementations present the same API, but some like
-* epoll() might have more functionality than others, like select() that can
-* be used.  The org.conman.net module indicates which implementation is in
-* use, but as long as you stick to select() type operations, you should be
-* fine.
+* Also, each of the implementations present the same API.  The
+* org.conman.net module indicates which implementation is in use, but as
+* long as you stick to select() type operations, you should be fine.
 *
 *	event	meaning
 *	r	read ready
 *	w	write ready
 *	p	urgent data ready and/or error happened
 *
-* 	event	epoll	poll	select
-*	r	x	x	x
-*	w	x	x	x
-*	p	x	x	x
+* 	event	epoll	poll	select	kqueue
+*	r	x	x	x	x
+*	w	x	x	x	x
+*	p	x	x	x	x
 *
 * Usage:	set,err = org.conman.pollset()
 * Desc:		Return a file descriptor based event object
@@ -76,6 +76,7 @@
 *			* 'epoll'
 *			* 'poll'
 *			* 'select'
+*			* 'kqueue'
 *
 * Usage:	err = set:insert(file,events[,obj])
 * Desc:		Insert a file into the event object
@@ -381,7 +382,336 @@ static int polllua_events(lua_State *L)
 
 /*********************************************************************
 *
-* poll() based version, used for Unix systems other than Linux
+* kqueue() based version, used for *BSD and Mac OS-X
+*
+*********************************************************************/
+
+#ifdef POLLSET_IMPL_KQUEUE
+#define POLLSET_IMPL	"kqueue"
+
+#include <math.h>
+#include <stdbool.h>
+
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+typedef struct
+{
+  int    qfh;
+  int    ref;
+  size_t idx;
+} pollset__t;
+
+/**********************************************************************/
+
+static void pollset_toevents(lua_State *L,int idx,struct kevent filters[2])
+{
+  bool do_read  = false;
+  bool do_write = false;
+  bool do_pri   = false;
+  
+  for (char const *flags = luaL_checkstring(L,idx) ; *flags ; flags++)
+  {
+    switch(*flags)
+    {
+      case 'r': do_read  = true; break;
+      case 'w': do_write = true; break;
+      case 'p': do_pri   = true; break;
+      default: break;
+    }
+  }
+  
+  filters[0].flags |= (do_read || do_pri) ? EV_ENABLE : EV_DISABLE;
+  filters[1].flags |= (do_write)          ? EV_ENABLE : EV_DISABLE;
+}
+
+/**********************************************************************/
+
+static void pollset_pushevents(lua_State *L,struct kevent const *event)
+{
+  bool read = event->filter == EVFILT_READ;
+  bool pri  = event->flags & EV_OOBAND;
+  bool eof  = event->flags & EV_EOF;
+  
+  lua_createtable(L,0,4);
+  lua_pushboolean(L,read & pri);
+  lua_setfield(L,-2,"priority");
+  lua_pushboolean(L,read & !pri);
+  lua_setfield(L,-2,"read");
+  lua_pushboolean(L,!read);
+  lua_setfield(L,-2,"write");
+  lua_pushboolean(L,eof);
+  lua_setfield(L,-2,"hangup");
+}
+
+/**********************************************************************/
+
+static int pollset_lua(lua_State *L)
+{
+  pollset__t *set;
+  
+  set = lua_newuserdata(L,sizeof(pollset__t));
+  set->idx = 0;
+  set->qfh = kqueue();
+  
+  if (set->qfh == -1)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_createtable(L,0,0);
+  set->ref = luaL_ref(L,LUA_REGISTRYINDEX);
+  
+  luaL_getmetatable(L,TYPE_POLL);
+  lua_setmetatable(L,-2);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int polllua___len(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
+  lua_pushinteger(L,set->idx);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int polllua___tostring(lua_State *L)
+{
+  lua_pushfstring(L,"pollset (%p)",luaL_checkudata(L,1,TYPE_POLL));
+  return 1;
+}
+
+/**********************************************************************/
+
+static int polllua___gc(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
+  luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
+  close(set->qfh);
+  return 0;
+}
+
+/**********************************************************************/
+
+static int polllua_insert(lua_State *L)
+{
+  pollset__t    *set;
+  int            backlog;
+  struct kevent  filters[2];
+  int            fh;
+  
+  lua_settop(L,4);
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+
+  set     = luaL_checkudata(L,1,TYPE_POLL);
+  fh      = luaL_checkinteger(L,-1);
+  backlog = luaL_optinteger(L,5,0);
+  
+  filters[0].ident  = fh;
+  filters[0].filter = EVFILT_READ;
+  filters[0].flags  = EV_ADD;
+  filters[0].fflags = 0;
+  filters[0].data   = backlog;
+  filters[0].udata  = NULL;
+  
+  filters[1].ident  = fh;
+  filters[1].filter = EVFILT_WRITE;
+  filters[1].flags  = EV_ADD;
+  filters[1].fflags = 0;
+  filters[1].data   = 0;
+  filters[1].udata  = NULL;
+  
+  pollset_toevents(L,3,filters);
+  
+  if (kevent(set->qfh,filters,2,NULL,0,NULL) == -1)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+  
+  lua_pushinteger(L,set->ref);
+  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_pushinteger(L,fh);
+  
+  if (lua_isnil(L,4))
+    lua_pushinteger(L,4);
+  else
+    lua_pushvalue(L,4);
+  
+  lua_settable(L,-3);
+  
+  set->idx++;
+  lua_pushinteger(L,0);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int polllua_update(lua_State *L)
+{
+  pollset__t    *set;
+  struct kevent  filters[2];
+  int            fh;
+  
+  lua_settop(L,3);
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+  
+  set    = luaL_checkudata(L,1,TYPE_POLL);
+  fh     = luaL_checkinteger(L,-1);
+  
+  filters[0].ident  = fh;
+  filters[0].filter = EVFILT_READ;
+  filters[0].flags  = EV_ADD;
+  filters[0].fflags = 0;
+  filters[0].data   = 0;
+  filters[0].udata  = NULL;
+  
+  filters[1].ident  = fh;
+  filters[1].filter = EVFILT_WRITE;
+  filters[1].flags  = EV_ADD;
+  filters[1].fflags = 0;
+  filters[1].data   = 0;
+  filters[1].udata  = NULL;
+  
+  pollset_toevents(L,3,filters);
+  errno = 0;
+  kevent(set->qfh,filters,2,NULL,0,NULL);
+  lua_pushinteger(L,errno);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int polllua_remove(lua_State *L)
+{
+  pollset__t    *set;
+  struct kevent  filters[2];
+  int            fh;
+  
+  if (!luaL_callmeta(L,2,"_tofd"))
+  {
+    lua_pushinteger(L,EINVAL);
+    return 1;
+  }
+
+  set = luaL_checkudata(L,1,TYPE_POLL);
+  fh  = luaL_checkinteger(L,-1);
+  
+  filters[0].ident  = fh;
+  filters[0].filter = EVFILT_READ;
+  filters[0].flags  = EV_DELETE;
+  filters[0].fflags = 0;
+  filters[0].data   = 0;
+  filters[0].udata  = NULL;
+  
+  filters[1].ident  = fh;
+  filters[1].filter = EVFILT_WRITE;
+  filters[1].flags  = EV_DELETE;
+  filters[1].fflags = 0;
+  filters[1].data   = 0;
+  filters[1].udata  = NULL;
+  
+  if (kevent(set->qfh,filters,2,NULL,0,NULL) == -1)
+  {
+    lua_pushinteger(L,errno);
+    return 1;
+  }
+  
+  lua_pushinteger(L,set->ref);
+  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_pushinteger(L,fh);
+  lua_pushnil(L);
+  lua_settable(L,-3);
+  
+  set->idx--;
+  lua_pushinteger(L,0);
+  return 1;
+}
+
+/**********************************************************************/
+
+static int polllua_events(lua_State *L)
+{
+  pollset__t      *set      = luaL_checkudata(L,1,TYPE_POLL);
+  lua_Number       dtimeout = luaL_optnumber(L,2,-1.0);
+  struct kevent   *events   = NULL;
+  struct timespec *ptimeout;
+  struct timespec  timeout;
+  size_t           idx;
+  int              count;
+  int              i;
+  
+  if (dtimeout >= 0)
+  {
+    double seconds;
+    double fract    = modf(dtimeout,&seconds);
+    timeout.tv_sec  = (time_t)seconds;
+    timeout.tv_nsec = (long)(fract * 1000000000.0);
+    ptimeout        = &timeout;
+  }
+  else
+    ptimeout = NULL;
+  
+  if (set->idx > 0)
+  {
+    events = calloc(set->idx,sizeof(struct kevent));
+    if (events == NULL)
+      count = -1;
+    else
+      count = kevent(set->qfh,NULL,0,events,set->idx,ptimeout);
+  }
+  else
+    count = 0;
+  
+  if (count < 0)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+    return 2;
+  }
+  
+  lua_pushinteger(L,set->ref);
+  lua_gettable(L,LUA_REGISTRYINDEX);
+  
+  lua_createtable(L,set->idx,0);
+  
+  for (idx = 1 , i = 0 ; i < count ; i++)
+  {
+    lua_pushnumber(L,idx++);
+    pollset_pushevents(L,&events[i]);
+    lua_pushinteger(L,events[i].ident);
+    lua_gettable(L,-5);
+    lua_setfield(L,-2,"obj");
+    lua_settable(L,-3);
+  }
+  
+  lua_pushinteger(L,0);
+  free(events);
+  return 2;
+}
+
+#endif
+
+/*********************************************************************
+*
+* poll() based version, used for Unix systems that don't have a better
+* event mechanism.
 *
 * This implementation uses the memory allocation functions for the
 * given Lua state.  I felt this was a Good Idea(TM), since if a Lua
