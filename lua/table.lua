@@ -25,6 +25,7 @@ local _VERSION     = _VERSION
 local math         = require "math"
 local string       = require "string"
 local io           = require "io"
+local ipairs       = ipairs
 local pairs        = pairs
 local tostring     = tostring
 local type         = type
@@ -193,7 +194,27 @@ function dump_value(name,value,path,level,marked)
   elseif type(value) == "thread" then
     return string.format("%s%s = THREAD\n",lead,name)
   elseif type(value) == "userdata" then
-    return string.format("%s%s = %s\n",lead,name,tostring(value))
+    local mt = getmetatable(value)
+    
+    if mt and (mt.__pairs or mt.__ipairs) then
+      local s = string.format("%s%s =\n%s{\n",lead,name,lead)
+      
+      if mt.__ipairs then
+        for i,v in ipairs(value) do
+          s = s .. dump_value(i,v,marked[tostring(value)],level + 2,marked)
+        end
+      end
+      
+      if mt.__pairs then
+        for k,v in pairs(value) do
+          s = s .. dump_value(k,v,marked[tostring(value)],level + 2,marked)
+        end
+      end
+      
+      return s .. string.format("%s} --USERDATA\n",lead)
+    else
+      return string.format("%s%s = %s\n",lead,name,tostring(value))
+    end
   else
     error("unsupported data type!")
   end
