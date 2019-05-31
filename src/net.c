@@ -76,6 +76,11 @@
 #  define SUN_LEN(x)    sizeof(struct sockaddr_un)
 #endif
 
+#if LUA_VERSION_NUM == 501
+#  define lua_rawlen(L,idx)       lua_objlen((L),(idx))
+#  define luaL_setfuncs(L,reg,up) luaI_openlib((L),NULL,(reg),(up))
+#endif
+
 /************************************************************************/
 
 typedef union sockaddr_all
@@ -432,11 +437,7 @@ static int err_meta___index(lua_State *L)
         lua_setfield(L,-3,i->ifa_name);
       }
       
-#if LUA_VERSION_NUM == 501
-      lua_pushinteger(L,lua_objlen(L,-1) + 1);
-#else
       lua_pushinteger(L,lua_rawlen(L,-1) + 1);
-#endif
       lua_createtable(L,0,0);
       
       addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
@@ -1817,21 +1818,15 @@ static luaL_Reg const m_addr_meta[] =
 
 int luaopen_org_conman_net(lua_State *L)
 {
-#if LUA_VERSION_NUM == 501
-  luaL_newmetatable(L,TYPE_SOCK);
-  luaL_register(L,NULL,m_sock_meta);
-  
-  luaL_newmetatable(L,TYPE_ADDR);
-  luaL_register(L,NULL,m_addr_meta);
-  
-  luaL_register(L,"org.conman.net",m_net_reg);
-#else
   luaL_newmetatable(L,TYPE_SOCK);
   luaL_setfuncs(L,m_sock_meta,0);
   
   luaL_newmetatable(L,TYPE_ADDR);
   luaL_setfuncs(L,m_addr_meta,0);
   
+#if LUA_VERSION_NUM == 501
+  luaL_register(L,"org.conman.net",m_net_reg);
+#else
   luaL_newlib(L,m_net_reg);
 #endif
 
