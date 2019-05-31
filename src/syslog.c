@@ -52,6 +52,10 @@
 #  define __attribute__(x)
 #endif
 
+#if LUA_VERSION_NUM == 501
+#  define lua_rawlen(L,idx) lua_objlen((L),(idx))
+#endif
+
 struct strintmap
 {
   char const *const name;
@@ -178,20 +182,12 @@ static int syslog_open(lua_State *L)
     return luaL_error(L,"invalid facility '%s'",name);
     
   facility = map->value;
+  options  = 0;
   
-  options = 0;
   if (lua_type(L,3) == LUA_TTABLE)
   {
-    size_t max;
+    size_t max = lua_rawlen(L,3);
     
-#if LUA_VERSION_NUM == 501
-    max = lua_objlen(L,3);
-#else
-    lua_len(L,3);
-    max = lua_tointeger(L,-1);
-    lua_pop(L,1);
-#endif
-
     for (i = 1 ; i <= max ; i++)
     {
       lua_pushinteger(L,i);

@@ -86,9 +86,10 @@
 #endif
 
 #if LUA_VERSION_NUM < 503
-  static inline int lua_isinteger(lua_State *L,int idx)
+  static int lua_isinteger(lua_State *L,int idx)
   {
-    return lua_isnumber(L,idx);
+    lua_Integer i = lua_tointeger(L,idx);
+    return i != 0;
   }
 #endif
 

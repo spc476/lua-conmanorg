@@ -54,6 +54,10 @@
 #define TYPE_DIR        "org.conman.fsys:dir"
 #define TYPE_EXPAND     "org.conman.fsys:expand"
 
+#if LUA_VERSION_NUM == 501
+#  define luaL_setfuncs(L,reg,up) luaI_openlib((L),NULL,(reg),(up))
+#endif
+
 /*************************************************************************/
 
 static void fsysL_pushperm(lua_State *L,mode_t mode)
@@ -1239,10 +1243,6 @@ static luaL_Reg const m_expand_meta[] =
   { NULL                , NULL                  }
 };
 
-#if LUA_VERSION_NUM == 501
-#  define luaL_newlib(lua,reg) luaL_register(lua,NULL,reg)
-#endif
-
 int luaopen_org_conman_fsys(lua_State *L)
 {
   luaL_getmetatable(L,LUA_FILEHANDLE);
@@ -1257,21 +1257,13 @@ int luaopen_org_conman_fsys(lua_State *L)
   lua_setfield(L,-2,"_fromfd");
   
   luaL_newmetatable(L,TYPE_DIR);
-#if LUA_VERSION_NUM == 501
-  luaL_register(L,NULL,m_dir_meta);
-#else
   luaL_setfuncs(L,m_dir_meta,0);
-#endif
 
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
   
   luaL_newmetatable(L,TYPE_EXPAND);
-#if LUA_VERSION_NUM == 501
-  luaL_register(L,NULL,m_expand_meta);
-#else
   luaL_setfuncs(L,m_expand_meta,0);
-#endif
 
 #if LUA_VERSION_NUM == 501
   /*------------------------------------------------------------------------
