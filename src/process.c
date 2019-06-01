@@ -85,14 +85,6 @@
   }
 #endif
 
-#if LUA_VERSION_NUM < 503
-  static int lua_isinteger(lua_State *L,int idx)
-  {
-    lua_Integer i = lua_tointeger(L,idx);
-    return i != 0;
-  }
-#endif
-
 /**********************************************************************/
 
 struct strint
@@ -764,7 +756,7 @@ static int hlimitlua_meta___index(lua_State *L)
   lua_replace(L,1);
   lua_rawget(L,1);
   
-  if (lua_isinteger(L,-1))
+  if (lua_isnumber(L,-1))
   {
     getrlimit(lua_tointeger(L,-1),&limit);
     lua_pushinteger(L,limit.rlim_max);
@@ -786,7 +778,7 @@ static int hlimitlua_meta___newindex(lua_State *L)
   lua_pushvalue(L,2);
   lua_rawget(L,-2);
 
-  if (!lua_isinteger(L,-1))
+  if (!lua_isnumber(L,-1))
     return 0;
 
   key = lua_tointeger(L,-1);
@@ -823,7 +815,7 @@ static int hlimitlua_meta___newindex(lua_State *L)
     lua_pushvalue(L,2);
     if (lua_next(L,-2))
     {
-      if (lua_isinteger(L,-1))
+      if (lua_isnumber(L,-1))
       {
         getrlimit(lua_tointeger(L,-1),&limit);
         lua_pop(L,1);
@@ -857,7 +849,7 @@ static int slimitlua_meta___index(lua_State *L)
   lua_replace(L,1);
   lua_rawget(L,1);
 
-  if (lua_isinteger(L,-1))
+  if (lua_isnumber(L,-1))
   {
     getrlimit(lua_tointeger(L,-1),&limit);
     lua_pushinteger(L,limit.rlim_cur);
@@ -879,7 +871,7 @@ static int slimitlua_meta___newindex(lua_State *L)
   lua_pushvalue(L,2);
   lua_rawget(L,-2);
 
-  if (!lua_isinteger(L,-1))
+  if (!lua_isnumber(L,-1))
     return 0;
 
   key = lua_tointeger(L,-1);
@@ -916,7 +908,7 @@ static int slimitlua_meta___newindex(lua_State *L)
     lua_pushvalue(L,2);
     if (lua_next(L,-2))
     {
-      if (lua_isinteger(L,-1))
+      if (lua_isnumber(L,-1))
       {
         getrlimit(lua_tointeger(L,-1),&limit);
         lua_pop(L,1);
