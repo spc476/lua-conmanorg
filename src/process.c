@@ -759,7 +759,11 @@ static int hlimitlua_meta___index(lua_State *L)
   if (lua_isnumber(L,-1))
   {
     getrlimit(lua_tointeger(L,-1),&limit);
-    lua_pushinteger(L,limit.rlim_max);
+#   if LUA_VERSION_NUM <= 502
+      lua_pushnumber(L,limit.rlim_max);
+#   else
+      lua_pushinteger(L,limit.rlim_max);
+#   endif
   }
   else
     lua_pushnil(L);
@@ -852,7 +856,11 @@ static int slimitlua_meta___index(lua_State *L)
   if (lua_isnumber(L,-1))
   {
     getrlimit(lua_tointeger(L,-1),&limit);
-    lua_pushinteger(L,limit.rlim_cur);
+#   if LUA_VERSION_NUM <= 502
+      lua_pushnumber(L,limit.rlim_cur);
+#   else
+      lua_pushinteger(L,limit.rlim_cur);
+#   endif
   }
   else
     lua_pushnil(L);
