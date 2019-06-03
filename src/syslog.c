@@ -48,10 +48,6 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-#ifndef __GNUC__
-#  define __attribute__(x)
-#endif
-
 #if LUA_VERSION_NUM == 501
 #  define lua_rawlen(L,idx) lua_objlen((L),(idx))
 #endif

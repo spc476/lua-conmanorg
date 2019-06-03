@@ -1,5 +1,5 @@
 package = "org.conman.syslog"
-version = "2.1.3-3"
+version = "2.1.4-1"
 
 source = 
 {
@@ -11,7 +11,7 @@ supported_platforms = { "unix" }
 
 description =
 {
-  homepage   = "https://github.com/spc476/lua-conmanorg/blob/syslog-2.1.3/src/syslog.c",
+  homepage   = "https://github.com/spc476/lua-conmanorg/blob/syslog-2.1.4/src/syslog.c",
   maintainer = "Sean Conner <sean@conman.org>",
   license    = "LGPL",
   summary    = "Lua interface to syslog()",
