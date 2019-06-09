@@ -203,21 +203,28 @@ function listen(host,port,mainf,config)
 end
 
 -- **********************************************************************
--- Usage:       ios = tcp.connecta(addr,hostname,[,to])
+-- Usage:       ios = tcp.connecta(addr,hostname[,to[,config]])
 -- Desc:        Connect to a remote address
 -- Input:       addr (userdata/address) IP address
 --              hostname (string) hostname (required for TLS)
 --              to (number/optinal) timout the operation after to seconds
+--              config (function) configuration options
 -- Return:      ios (table) Input/Output object (nil on error)
 -- **********************************************************************
 
-function connecta(addr,hostname,to)
+function connecta(addr,hostname,to,conf)
   if not addr then return nil end
   
   local config = tls.config()
   local ctx    = tls.client()
   
-  config:protocols("all")
+  if conf then
+    if not conf(config) then return false,config:error() end
+  else
+    config:protocols("all")
+    config:ca_file("/home/spc/JAIL/etc/ssl/cert.pem")
+  end
+  
   ctx:configure(config)
   
   local sock,err = net.socket(addr.family,'tcp')
@@ -233,6 +240,7 @@ function connecta(addr,hostname,to)
   ios.__co                 = coroutine.running()
   
   if not ctx:connect_cbs(hostname,ios,tlscb_read,tlscb_write) then
+    syslog('error',"connect_cbs() = %s",ctx:error())
     return nil
   end
   
@@ -261,18 +269,19 @@ function connecta(addr,hostname,to)
 end
 
 -- **********************************************************************
--- Usage:       ios = tcp.connect(host,port[,to])
+-- Usage:       ios = tcp.connect(host,port[,to[,conf]])
 -- Desc:        Connect to a remote host
 -- Input:       host (string) IP address
 --              port (string number) port to connect to
 --              to (number/optioal) timeout the operation after to seconds
+--              conf (function) configuration options
 -- Return:      ios (table) Input/Output object (nil on error)
 -- **********************************************************************
 
-function connect(host,port,to)
+function connect(host,port,to,conf)
   local addr = net.address2(host,'ip','tcp',port)
   if addr then
-    return connecta(addr[1],host,to)
+    return connecta(addr[1],host,to,conf)
   end
 end
 
