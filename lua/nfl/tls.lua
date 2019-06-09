@@ -148,11 +148,11 @@ local function tlscb_write(_,str,ios)
 end
 
 -- **********************************************************************
--- Usage:       okay,errmsg = listena(addr,hostname,mainf)
+-- Usage:       okay,errmsg = listena(addr,mainf,conf)
 -- Desc:        Initialize a listening TCP socket
 -- Input:       addr (userdata/address) IP address
---              hostname (string) hostname
 --              mainf (function) main handler for service
+--              conf (function) function for TLS configuration)
 -- Return:      okay (boolean) true if okay, false if error
 --              errmsg (strong) error message from TLS
 -- **********************************************************************
@@ -195,7 +195,7 @@ end
 -- Input:       host (string) address to bind to
 --              port (string integer) port
 --              mainf (function) main handler for service
---              config (table) configuration options
+--              config (function) configuration options
 -- **********************************************************************
 
 function listen(host,port,mainf,config)
