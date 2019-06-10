@@ -222,7 +222,6 @@ function connecta(addr,hostname,to,conf)
     if not conf(config) then return false,config:error() end
   else
     config:protocols("all")
-    config:ca_file("/home/spc/JAIL/etc/ssl/cert.pem")
   end
   
   ctx:configure(config)
