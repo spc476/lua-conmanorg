@@ -1,10 +1,9 @@
 package = "org.conman.syslog"
-version = "2.1.4-1"
+version = "2.1.4-2"
 
 source = 
 {
-  url = "git://github.com/spc476/lua-conmanorg.git",
-  tag = "syslog-" .. version:match "[^-]+",
+  url = "https://raw.github.com/spc476/lua-conmanorg/syslog-2.1.4/syslog.c"
 }
 
 supported_platforms = { "unix" }
@@ -29,5 +28,5 @@ build =
 {
   type = "builtin",
   copy_directories = {},
-  modules = { ['org.conman.syslog'] = 'src/syslog.c' }
+  modules = { ['org.conman.syslog'] = 'syslog.c' }
 }
