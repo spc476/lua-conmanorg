@@ -3,7 +3,7 @@ version = "2.1.4-2"
 
 source = 
 {
-  url = "https://raw.github.com/spc476/lua-conmanorg/syslog-2.1.4/syslog.c"
+  url = "https://raw.github.com/spc476/lua-conmanorg/syslog-2.1.4/src/syslog.c"
 }
 
 supported_platforms = { "unix" }
