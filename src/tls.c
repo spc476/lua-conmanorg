@@ -534,10 +534,20 @@ static int Ltlsconf_verify(lua_State *L)
 
 static int Ltlsconf_verify_client(lua_State *L)
 {
-  if (lua_toboolean(L,2))
-    tls_config_verify_client_optional(*(struct tls_config **)lua_touserdata(L,1));
-  else
-    tls_config_verify_client(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_verify_client(*(struct tls_config **)lua_touserdata(L,1));
+  return 0;
+}
+
+/**************************************************************************
+* Usage:
+* Desc:
+* Input:
+* Return:
+***************************************************************************/
+
+static int Ltlsconf_verify_client_optional(lua_State *L)
+{
+  tls_config_verify_client_optional(*(struct tls_config **)lua_touserdata(L,1));
   return 0;
 }
 
@@ -1217,15 +1227,21 @@ static int Ltls_error(lua_State *L)
 }
 
 /**************************************************************************
-* Usage:        bool = ctx:handshake()
-* Desc:         Perform a TLS handshake, and return when one.
+* Usage:        advise = ctx:handshake()
+* Desc:         Check if a TLS handshake has been done
+* Return:	advise (integer)
+*			* 0 - okay
+*			* tls.ERROR
+*			* tls.WANT_INPUT
+*			* tls.WANT_OUTPUT
+*
 * Note:         There is no need to call this function unless you
 *               absolutely require to know the handshake has happened.
 ***************************************************************************/
 
 static int Ltls_handshake(lua_State *L)
 {
-  lua_pushboolean(L,tls_handshake(*(struct tls **)lua_touserdata(L,1)) == 0);
+  lua_pushinteger(L,tls_handshake(*(struct tls **)lua_touserdata(L,1)));
   return 1;
 }
 
@@ -1871,6 +1887,7 @@ static luaL_Reg const m_tlsconfmeta[] =
   { "protocols"                 , Ltlsconf_protocols               } ,
   { "verify"                    , Ltlsconf_verify                  } ,
   { "verify_client"             , Ltlsconf_verify_client           } ,
+  { "verify_client_optional"    , Ltlsconf_verify_client_optional  } ,
   { "verify_depth"              , Ltlsconf_verify_depth            } ,
 #if LIBRESSL_VERSION_NUMBER >= 0x2040000fL
   { "keypair_file"              , Ltlsconf_keypair_file            } ,

@@ -51,9 +51,21 @@ local function create_handler(conn,remote)
   ios.__sock     = conn
   ios.__remote   = remote
   
+  ios._handshake = function(self)
+    local rc = ios.__ctx:handshake()
+    if rc == tls.WANT_INPUT or rc == tls.WANT_OUTPUT then
+      ios.__resume = true
+      coroutine.yield()
+      return self:_handshake()
+    else
+      return rc == 0
+    end
+  end
+  
   ios._refill = function(self)
     local str,len = self.__ctx:read(tls.BUFFERSIZE)
     if len == tls.ERROR then
+      syslog('error',"ios.__refill() = %s",self.__ctx:error())
       return nil
     elseif len == tls.WANT_INPUT or len == tls.WANT_OUTPUT then
       ios.__resume = true
