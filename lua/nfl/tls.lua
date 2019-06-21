@@ -65,8 +65,7 @@ local function create_handler(conn,remote)
   ios._refill = function(self)
     local str,len = self.__ctx:read(tls.BUFFERSIZE)
     if len == tls.ERROR then
-      syslog('error',"ios.__refill() = %s",self.__ctx:error())
-      return nil
+      return nil,self.__ctx:error()
     elseif len == tls.WANT_INPUT or len == tls.WANT_OUTPUT then
       ios.__resume = true
       coroutine.yield()
@@ -80,7 +79,7 @@ local function create_handler(conn,remote)
     local bytes = self.__ctx:write(data)
     
     if bytes == tls.ERROR then
-      return false
+      return false,self.__ctx:error()
       
     elseif bytes == tls.WANT_INPUT or bytes == tls.WANT_OUTPUT then
       self.__resume = true

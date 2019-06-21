@@ -122,8 +122,10 @@ local READER =
     
     repeat
       local data = ios:_refill()
-      ios._readbuf = ios._readbuf .. data
-    until #data == 0
+      if data then
+        ios._readbuf = ios._readbuf .. data
+      end
+    until not data or #data == 0
     
     ios._eof = true
     return ios._readbuf
@@ -203,8 +205,12 @@ local function read(ios,...)
       return data
     end
     
-    local data = ios:_refill()
-
+    local data,err = ios:_refill()
+    
+    if not data then
+      return nil,err
+    end
+    
     if data == "" then
       ios._eof = true
       assert(#ios._readbuf <= amount)
