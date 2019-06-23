@@ -1070,15 +1070,21 @@ static int Ltls_accept_socket(lua_State *L)
 }
 
 /**************************************************************************
-* Usage:        bool = ctx:close()
+* Usage:        advise = ctx:close()
 * Desc:         Close a connection.  If TLS is controlling the socket,
 *               the socket will be closed as well; othersise, you are
 *               still reponsible for closing the socket.
+* Return:	advise (integer)
+*			* 0 - okay
+*			* tls.ERROR
+*			* tls.WANT_INPUT
+*			* tls.WANT_OUTPUT
+*
 ***************************************************************************/
 
 static int Ltls_close(lua_State *L)
 {
-  lua_pushboolean(L,tls_close(*(struct tls **)lua_touserdata(L,1)) == 0);
+  lua_pushinteger(L,tls_close(*(struct tls **)lua_touserdata(L,1)));
   return 1;
 }
 

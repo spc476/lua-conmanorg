@@ -89,7 +89,14 @@ local function create_handler(conn,remote)
     return true
   end
   
-  ios.close = function()
+  ios.close = function(self)
+    local rc = ios.__ctx:close()
+    if rc == tls.WANT_INPUT or rc == tls.WANT_OUTPUT then
+      ios.__resume = true
+      coroutine.yield()
+      return self:close()
+    end
+    
     nfl.SOCKETS:remove(conn)
     local err = conn:close()
     return err == 0,errno[err],err
