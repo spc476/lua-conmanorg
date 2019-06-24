@@ -312,8 +312,7 @@ local function write(ios,...)
     output = output .. data
   end
   
-  ios:_drain(output)
-  return true
+  return ios:_drain(output)
 end
 
 -- *******************************************************************
