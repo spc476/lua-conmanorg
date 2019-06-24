@@ -85,7 +85,14 @@ local function create_handler(conn,remote)
       self.__resume = true
       coroutine.yield()
       return self:_drain(data)
+    
+    elseif bytes < #data then
+      return self:_drain(data:sub(bytes+1,-1))
     end
+    
+    nfl.SOCKETS:update(conn,"rw")
+    self.__resume = true
+    coroutine.yield()
     return true
   end
   
