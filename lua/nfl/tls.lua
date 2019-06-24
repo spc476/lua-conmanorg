@@ -45,11 +45,12 @@ end
 -- **********************************************************************
 
 local function create_handler(conn,remote)
-  local ios      = mkios()
-  ios.__writebuf = ""
-  ios.__rawbuf   = ""
-  ios.__sock     = conn
-  ios.__remote   = remote
+  local ios        = mkios()
+  ios.__writebuf   = ""
+  ios.__rawbuf     = ""
+  ios.__sock       = conn
+  ios.__remote     = remote
+  ios.__shortwrite = false
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
@@ -79,20 +80,23 @@ local function create_handler(conn,remote)
     local bytes = self.__ctx:write(data)
     
     if bytes == tls.ERROR then
-      return false,self.__ctx:error()
+      if self.__shortwrite then
+        nfl.SOCKETS:update(conn,"w")
+        self.__resume = true
+        coroutine.yield()
+        self.__shortwrite = false
+        return self:_drain(data)
+      else
+        syslog('error',"ios._drain() = %s",self.__ctx:error())
+        return false
+      end
       
     elseif bytes == tls.WANT_INPUT or bytes == tls.WANT_OUTPUT then
       self.__resume = true
       coroutine.yield()
       return self:_drain(data)
-    
-    elseif bytes < #data then
-      return self:_drain(data:sub(bytes+1,-1))
     end
     
-    nfl.SOCKETS:update(conn,"rw")
-    self.__resume = true
-    coroutine.yield()
     return true
   end
   
@@ -168,7 +172,11 @@ end
 
 local function tlscb_write(_,str,ios)
   local bytes = ios.__sock:send(nil,str)
-  if not bytes then bytes = tls.ERROR end
+  if not bytes then
+    bytes = tls.ERROR
+  else
+    ios.__shortwrite = bytes < #str
+  end
   return bytes
 end
 
