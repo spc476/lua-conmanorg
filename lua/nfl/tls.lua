@@ -181,13 +181,13 @@ local function tlscb_write(_,str,ios)
 end
 
 -- **********************************************************************
--- Usage:       okay,errmsg = listena(addr,mainf,conf)
+-- Usage:       sock,errmsg = listena(addr,mainf,conf)
 -- Desc:        Initialize a listening TCP socket
 -- Input:       addr (userdata/address) IP address
 --              mainf (function) main handler for service
 --              conf (function) function for TLS configuration)
--- Return:      okay (boolean) true if okay, false if error
---              errmsg (strong) error message from TLS
+-- Return:      sock (userdata) socket used for listening, false on error
+--              errmsg (string) error message
 -- **********************************************************************
 
 function listena(addr,mainf,conf)
@@ -199,14 +199,19 @@ function listena(addr,mainf,conf)
     return false,server:error()
   end
   
-  local sock = net.socket(addr.family,'tcp')
+  local sock,err = net.socket(addr.family,'tcp')
+  
+  if not sock then
+    return false,errno[err]
+  end
+  
   sock.reuseaddr = true
   sock.nonblock  = true
   sock:bind(addr)
   sock:listen()
   
   nfl.SOCKETS:insert(sock,'r',function()
-    local conn,remote,err = sock:accept()
+    local conn,remote = sock:accept()
     
     if not conn then
       syslog('error',"sock:accept() = %s",errno[err])
@@ -219,16 +224,19 @@ function listena(addr,mainf,conf)
     ios.__co                 = nfl.spawn(mainf,ios)
     nfl.SOCKETS:insert(conn,'r',packet_handler)
   end)
-  return true
+  
+  return sock
 end
 
 -- **********************************************************************
--- Usage:       listen(host,port,mainf,config)
+-- Usage:       sock,errmsg = listen(host,port,mainf,config)
 -- Desc:        Initalize a listening TCP socket
 -- Input:       host (string) address to bind to
 --              port (string integer) port
 --              mainf (function) main handler for service
 --              config (function) configuration options
+-- Return:	sock (userdata) socket used for listening, false on error
+--		errmsg (string) error message
 -- **********************************************************************
 
 function listen(host,port,mainf,config)

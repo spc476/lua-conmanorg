@@ -67,16 +67,17 @@ function accept(sock)
 end
 
 -- *******************************************************************
--- Usage:	sock = tcp.listena(addr)
+-- Usage:	sock,errmsg = tcp.listena(addr)
 -- Desc:	Create a listening socket
 -- Input:	addr (userdata/address) IP address and port
 -- Return:	sock (userdata/socket) listening socket
+--		errmsg (string) error message
 -- *******************************************************************
 
 function listena(addr)
-  local sock = net.socket(addr.family,'tcp')
+  local sock,err = net.socket(addr.family,'tcp')
   if not sock then
-    return
+    return false,errno[err]
   end
   
   sock.reuseaddr = true

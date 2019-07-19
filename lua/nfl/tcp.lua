@@ -112,14 +112,20 @@ local function create_handler(conn,remote)
 end
 
 -- **********************************************************************
--- Usage:       listena(addr,mainf)
+-- Usage:       sock,errmsg = listena(addr,mainf)
 -- Desc:        Initalize a listening TCP socket
 -- Input:       addr (userdata/address) IP address
 --              mainf (function) main handler for service
+-- Return:	sock (userdata) socket used for listening, false on error
+--		errmsg (string) error message
 -- **********************************************************************
 
 function listena(addr,mainf)
-  local sock = net.socket(addr.family,'tcp')
+  local sock,err = net.socket(addr.family,'tcp')
+  
+  if not sock then
+    return false,errno[err]
+  end
   
   sock.reuseaddr = true
   sock.nonblock  = true
@@ -127,7 +133,7 @@ function listena(addr,mainf)
   sock:listen()
   
   nfl.SOCKETS:insert(sock,'r',function()
-    local conn,remote,err = sock:accept()
+    local conn,remote = sock:accept()
     
     if not conn then
       syslog('error',"sock:accept() = %s",errno[err])
@@ -139,6 +145,8 @@ function listena(addr,mainf)
     ios.__co = nfl.spawn(mainf,ios)
     nfl.SOCKETS:insert(conn,'r',packet_handler)
   end)
+  
+  return sock
 end
 
 -- **********************************************************************
