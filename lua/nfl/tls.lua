@@ -79,8 +79,20 @@ local function create_handler(conn,remote)
     local bytes = self.__ctx:write(data)
     
     if bytes == tls.ERROR then
-      syslog('error',"ios._drain() = %s",self.__ctx:error())
-      return false
+      -- --------------------------------------------------------------------
+      -- I'm receiving an error of "Resource temporarily unavailable", which
+      -- means one should try writing again.  If there are other errors,
+      -- then retrying could be a bad thing.  But I don't want to rely upon
+      -- a text-only string.  So for now, we'll just resume and hope for the
+      -- best.  I'm also relunctant to log anything here, as I expect that
+      -- "Resource temporarily unavailable" will be the major reason for
+      -- falling into this path.
+      -- --------------------------------------------------------------------
+      
+      nfl.SOCKETS:update(conn,"w")
+      self.__resume = true
+      coroutine.yield()
+      return self:_drain(data)
       
     elseif bytes == tls.WANT_INPUT or bytes == tls.WANT_OUTPUT then
       self.__resume = true
