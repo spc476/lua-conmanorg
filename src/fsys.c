@@ -477,6 +477,14 @@ static int dir_meta___gc(lua_State *L)
 
 /*************************************************************************/
 
+static int dir_meta__tofd(lua_State *L)
+{
+  lua_pushinteger(L,dirfd(*(DIR **)luaL_checkudata(L,1,TYPE_DIR)));
+  return 1;
+}
+
+/*************************************************************************/
+
 static int dir_meta_rewind(lua_State *L)
 {
   rewinddir(*(DIR **)luaL_checkudata(L,1,TYPE_DIR));
@@ -1231,6 +1239,7 @@ static luaL_Reg const m_dir_meta[] =
 {
   { "__tostring"        , dir_meta___tostring   } ,
   { "__gc"              , dir_meta___gc         } ,
+  { "_tofd"             , dir_meta__tofd        } ,
   { "rewind"            , dir_meta_rewind       } ,
   { "read"              , dir_meta_read         } ,
   { "next"              , dir_meta_next         } ,
