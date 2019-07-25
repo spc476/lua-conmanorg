@@ -1112,6 +1112,21 @@ static int fsys_pathconf(lua_State *L)
 }
 
 /************************************************************************
+* Usage:	okay,err = fsys._close(fh)
+* Desc:		Low level OS close() system call (when you need it, you need it)
+* Input:	fh (integer) file descriptor to close
+* Return:	okay (boolean) true if okay, false if error
+*		err (integer) system error
+*************************************************************************/
+
+static int fsys__close(lua_State *L)
+{
+  lua_pushboolean(L,close(luaL_checkinteger(L,1)) == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/************************************************************************
 *                 MONKEY PATCH! MONKEY PATCH! MONKEY PATCH!
 *
 * We add some functions to the io module
@@ -1232,6 +1247,7 @@ static struct luaL_Reg const reg_fsys[] =
   { "expand"    , fsys_expand    } ,
   { "gexpand"   , fsys_gexpand   } ,
   { "pathconf"  , fsys_pathconf  } ,
+  { "_close"    , fsys__close    } ,
   { NULL        , NULL           }
 };
 
