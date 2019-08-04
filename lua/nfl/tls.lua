@@ -98,7 +98,7 @@ local function create_handler(conn,remote)
       self.__resume = true
       coroutine.yield()
       return self:_drain(data)
-    
+      
     elseif bytes < #data then
       nfl.SOCKETS:update(conn,"w")
       self.__resume = true
@@ -189,16 +189,16 @@ local function tlscb_write(_,str,ios)
 end
 
 -- **********************************************************************
--- Usage:       sock,errmsg = listena(addr,mainf,conf)
+-- Usage:       sock,errmsg = listens(sock,mainf,conf)
 -- Desc:        Initialize a listening TCP socket
--- Input:       addr (userdata/address) IP address
+-- Input:       sock (userdata/socket) bound socket
 --              mainf (function) main handler for service
---              conf (function) function for TLS configuration)
+--              conf (function) function for TLS configuration
 -- Return:      sock (userdata) socket used for listening, false on error
 --              errmsg (string) error message
 -- **********************************************************************
 
-function listena(addr,mainf,conf)
+function listens(sock,mainf,conf)
   local config = tls.config()
   local server = tls.server()
   
@@ -206,17 +206,6 @@ function listena(addr,mainf,conf)
   if not server:configure(config) then
     return false,server:error()
   end
-  
-  local sock,err = net.socket(addr.family,'tcp')
-  
-  if not sock then
-    return false,errno[err]
-  end
-  
-  sock.reuseaddr = true
-  sock.nonblock  = true
-  sock:bind(addr)
-  sock:listen()
   
   nfl.SOCKETS:insert(sock,'r',function()
     local conn,remote = sock:accept()
@@ -237,14 +226,38 @@ function listena(addr,mainf,conf)
 end
 
 -- **********************************************************************
+-- Usage:       sock,errmsg = listena(addr,mainf,conf)
+-- Desc:        Initialize a listening TCP socket
+-- Input:       addr (userdata/address) IP address
+--              mainf (function) main handler for service
+--              conf (function) function for TLS configuration
+-- Return:      sock (userdata) socket used for listening, false on error
+--              errmsg (string) error message
+-- **********************************************************************
+
+function listena(addr,mainf,conf)
+  local sock,err = net.socket(addr.family,'tcp')
+  
+  if not sock then
+    return false,errno[err]
+  end
+  
+  sock.reuseaddr = true
+  sock.nonblock  = true
+  sock:bind(addr)
+  sock:listen()
+  return listens(sock,mainf,conf)
+end
+
+-- **********************************************************************
 -- Usage:       sock,errmsg = listen(host,port,mainf,config)
 -- Desc:        Initalize a listening TCP socket
 -- Input:       host (string) address to bind to
 --              port (string integer) port
 --              mainf (function) main handler for service
 --              config (function) configuration options
--- Return:	sock (userdata) socket used for listening, false on error
---		errmsg (string) error message
+-- Return:      sock (userdata) socket used for listening, false on error
+--              errmsg (string) error message
 -- **********************************************************************
 
 function listen(host,port,mainf,config)

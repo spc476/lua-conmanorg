@@ -18,7 +18,7 @@
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- ********************************************************************
--- luacheck: globals listena listen connecta connect
+-- luacheck: globals listens listena listen connecta connect
 -- luacheck: ignore 611
 
 local syslog    = require "org.conman.syslog"
@@ -41,7 +41,7 @@ end
 -- usage:       ios,handler = create_handler(conn,remote)
 -- desc:        Create the event handler for handing network packets
 -- input:       conn (userdata/socket) connected socket
---		remote (userdata/address) remote connection
+--              remote (userdata/address) remote connection
 -- return:      ios (table) I/O object (similar to what io.open() returns)
 --              handler (function) event handler
 -- **********************************************************************
@@ -112,28 +112,17 @@ local function create_handler(conn,remote)
 end
 
 -- **********************************************************************
--- Usage:       sock,errmsg = listena(addr,mainf)
--- Desc:        Initalize a listening TCP socket
--- Input:       addr (userdata/address) IP address
+-- Usage:       sock,errmsg = listens(sock,mainf)
+-- Desc:        Initialize a listening TCP socket
+-- Input:       sock (userdata/socket) bound socket
 --              mainf (function) main handler for service
--- Return:	sock (userdata) socket used for listening, false on error
---		errmsg (string) error message
+-- Return:      sock (userdata) socket used for listening, false on error
+--              errmsg (string) error message
 -- **********************************************************************
 
-function listena(addr,mainf)
-  local sock,err = net.socket(addr.family,'tcp')
-  
-  if not sock then
-    return false,errno[err]
-  end
-  
-  sock.reuseaddr = true
-  sock.nonblock  = true
-  sock:bind(addr)
-  sock:listen()
-  
+function listens(sock,mainf)
   nfl.SOCKETS:insert(sock,'r',function()
-    local conn,remote = sock:accept()
+    local conn,remote,err = sock:accept()
     
     if not conn then
       syslog('error',"sock:accept() = %s",errno[err])
@@ -147,6 +136,29 @@ function listena(addr,mainf)
   end)
   
   return sock
+end
+
+-- **********************************************************************
+-- Usage:       sock,errmsg = listena(addr,mainf)
+-- Desc:        Initalize a listening TCP socket
+-- Input:       addr (userdata/address) IP address
+--              mainf (function) main handler for service
+-- Return:      sock (userdata) socket used for listening, false on error
+--              errmsg (string) error message
+-- **********************************************************************
+
+function listena(addr,mainf)
+  local sock,err = net.socket(addr.family,'tcp')
+  
+  if not sock then
+    return false,errno[err]
+  end
+  
+  sock.reuseaddr = true
+  sock.nonblock  = true
+  sock:bind(addr)
+  sock:listen()
+  return listens(sock,mainf)
 end
 
 -- **********************************************************************
