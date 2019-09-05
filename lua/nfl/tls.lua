@@ -79,20 +79,14 @@ local function create_handler(conn,remote)
     local bytes = self.__ctx:write(data)
     
     if bytes == tls.ERROR then
+    
       -- --------------------------------------------------------------------
-      -- I'm receiving an error of "Resource temporarily unavailable", which
-      -- means one should try writing again.  If there are other errors,
-      -- then retrying could be a bad thing.  But I don't want to rely upon
-      -- a text-only string.  So for now, we'll just resume and hope for the
-      -- best.  I'm also relunctant to log anything here, as I expect that
-      -- "Resource temporarily unavailable" will be the major reason for
-      -- falling into this path.
+      -- I was receiving "Resource temporarily unavailable" and trying again,
+      -- but that strategy fails upon failure to read a certificate.  So now
+      -- I'm back to returning an error.  Let's hope this works this time.
       -- --------------------------------------------------------------------
       
-      nfl.SOCKETS:update(conn,"w")
-      self.__resume = true
-      coroutine.yield()
-      return self:_drain(data)
+      return false,self.__ctx:error()
       
     elseif bytes == tls.WANT_INPUT or bytes == tls.WANT_OUTPUT then
       self.__resume = true
