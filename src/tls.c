@@ -1678,7 +1678,10 @@ static int Ltls_peer_cert_chain_pem(lua_State *L)
   size_t      len;
   
   chain = (char const *)tls_peer_cert_chain_pem(*(struct tls **)lua_touserdata(L,1),&len);
-  lua_pushlstring(L,chain,len);
+  if (chain != NULL)
+    lua_pushlstring(L,chain,len);
+  else
+    lua_pushnil(L);
   return 1;
 }
 #endif
