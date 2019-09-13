@@ -170,7 +170,7 @@ end
 -- **********************************************************************
 
 function listen(host,port,mainf)
-  return listena(net.address2(host,'ip','tcp',port)[1],mainf)
+  return listena(net.address2(host,'any','tcp',port)[1],mainf)
 end
 
 -- **********************************************************************
@@ -229,7 +229,7 @@ end
 -- **********************************************************************
 
 function connect(host,port,to)
-  local addr = net.address2(host,'ip','tcp',port)
+  local addr = net.address2(host,'any','tcp',port)
   if addr then
     return connecta(addr[1],to)
   end
