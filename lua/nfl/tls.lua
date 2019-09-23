@@ -116,10 +116,6 @@ local function create_handler(conn,remote)
     return err == 0,errno[err],err
   end
   
-  ios.seek = function()
-    return nil,errno[errno.ESPIPE],errno.ESPIPE
-  end
-  
   return ios,function(event)
     if event.hangup then
       nfl.SOCKETS:remove(conn)
