@@ -286,7 +286,7 @@ function connecta(addr,hostname,to,conf)
   
   if not sock then
     syslog('error',"tls(TCP) = %s",errno[err])
-    return
+    return false,errno[err]
   end
   
   sock.nonblock            = true
@@ -296,7 +296,7 @@ function connecta(addr,hostname,to,conf)
   
   if not ctx:connect_cbs(hostname,ios,tlscb_read,tlscb_write) then
     syslog('error',"connect_cbs() = %s",ctx:error())
-    return nil
+    return false,ctx:error()
   end
   
   -- ------------------------------------------------------------
@@ -318,7 +318,7 @@ function connecta(addr,hostname,to,conf)
   if not okay then
     syslog('error',"tls:connect(%s) = %s",hostname,errno[err1])
     nfl.SOCKETS:remove(sock)
-    return nil
+    return false,errno[err1]
   end
   return ios
 end
