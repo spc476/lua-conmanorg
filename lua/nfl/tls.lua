@@ -18,7 +18,7 @@
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- ********************************************************************
--- luacheck: globals listena listen connecta connect
+-- luacheck: globals listens listena listen connecta connect
 -- luacheck: ignore 611
 --
 -- We require org.conman.tls.LIBRESSL_VERSION >= 0x2050000f
@@ -53,10 +53,17 @@ local function create_handler(conn,remote)
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
-    if rc == tls.WANT_INPUT or rc == tls.WANT_OUTPUT then
+    if rc == tls.WANT_INPUT then
       ios.__resume = true
       coroutine.yield()
       return self:_handshake()
+    
+    elseif rc == tls.WANT_OUTPUT then
+      nfl.SOCKETS:update(conn,"rw")
+      ios.__resume = true
+      coroutine.yield()
+      return self:_handshake()
+    
     else
       return rc == 0
     end
@@ -64,9 +71,15 @@ local function create_handler(conn,remote)
   
   ios._refill = function(self)
     local str,len = self.__ctx:read(tls.BUFFERSIZE)
+
     if len == tls.ERROR then
       return nil,self.__ctx:error()
-    elseif len == tls.WANT_INPUT or len == tls.WANT_OUTPUT then
+    elseif len == tls.WANT_INPUT then
+      ios.__resume = true
+      coroutine.yield()
+      return self:_refill()
+    elseif len == tls.WANT_OUTPUT then
+      nfl.SOCKETS:update(conn,"rw")
       ios.__resume = true
       coroutine.yield()
       return self:_refill()
@@ -88,13 +101,19 @@ local function create_handler(conn,remote)
       
       return false,self.__ctx:error()
       
-    elseif bytes == tls.WANT_INPUT or bytes == tls.WANT_OUTPUT then
+    elseif bytes == tls.WANT_INPUT then
+      self.__resume = true
+      coroutine.yield()
+      return self:_drain(data)
+      
+    elseif bytes == tls.WANT_OUTPUT then
+      nfl.SOCKETS:update(conn,"rw")
       self.__resume = true
       coroutine.yield()
       return self:_drain(data)
       
     elseif bytes < #data then
-      nfl.SOCKETS:update(conn,"w")
+      nfl.SOCKETS:update(conn,"rw")
       self.__resume = true
       coroutine.yield()
       return self:_drain(data:sub(bytes+1,-1))
@@ -105,9 +124,13 @@ local function create_handler(conn,remote)
   
   ios.close = function(self)
     local rc = ios.__ctx:close()
-    if rc == tls.WANT_INPUT or rc == tls.WANT_OUTPUT then
+    if rc == tls.WANT_INPUT then
       ios.__resume = true
       coroutine.yield()
+      return self:close()
+    elseif rc == tls.WANT_OUTPUT then
+      nfl.SOCKETS:update(conn,"rw")
+      ios.__resume = true
       return self:close()
     end
     
@@ -198,7 +221,7 @@ function listens(sock,mainf,conf)
   end
   
   nfl.SOCKETS:insert(sock,'r',function()
-    local conn,remote = sock:accept()
+    local conn,remote,err = sock:accept()
     
     if not conn then
       syslog('error',"sock:accept() = %s",errno[err])
