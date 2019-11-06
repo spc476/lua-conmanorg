@@ -155,10 +155,6 @@ local function create_handler(conn,remote)
         end
         
         ios.__rawbuf = ios.__rawbuf .. packet
-        if ios.__resume then
-          ios.__resume = false
-          nfl.schedule(ios.__co,true)
-        end
       else
         if err ~= errno.EAGAIN then
           syslog('error',"TLS.socket:recv() = %s",errno[err])
@@ -168,6 +164,10 @@ local function create_handler(conn,remote)
     
     if event.write then
       nfl.SOCKETS:update(conn,"r")
+    end
+    
+    if ios.__resume then
+      ios.__resuem = false
       nfl.schedule(ios.__co,true)
     end
   end
@@ -193,9 +193,13 @@ end
 -- **********************************************************************
 
 local function tlscb_write(_,str,ios)
-  local bytes = ios.__sock:send(nil,str)
-  if not bytes then
-    bytes = tls.ERROR
+  local bytes,err = ios.__sock:send(nil,str)
+  if bytes == -1 then
+    if err == errno.EAGAIN then
+      bytes = tls.WANT_OUTPUT
+    else
+      bytes = tls.ERROR
+    end
   end
   
   return bytes
