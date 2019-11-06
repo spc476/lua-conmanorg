@@ -64,11 +64,10 @@ static int lfsrnext(lua_State *L)
 
 static int lfsr(lua_State *L)
 {
-  lua_Integer  bits = luaL_optinteger(L,1,32);
-  lua_Integer  seed = luaL_optinteger(L,2,0);
-  lua_Integer  taps = luaL_optinteger(L,3,0);
-  
-  lua_Integer  mask;
+  lua_Integer bits = luaL_optinteger(L,1,32);
+  lua_Integer seed = luaL_optinteger(L,2,0);
+  lua_Integer taps = luaL_optinteger(L,3,0);
+  lua_Integer mask;
   
   if (seed == 0)
   {
