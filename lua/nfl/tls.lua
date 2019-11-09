@@ -45,11 +45,11 @@ end
 -- **********************************************************************
 
 local function create_handler(conn,remote)
-  local ios        = mkios()
-  ios.__writebuf   = ""
-  ios.__rawbuf     = ""
-  ios.__sock       = conn
-  ios.__remote     = remote
+  local ios      = mkios()
+  ios.__writebuf = ""
+  ios.__rawbuf   = ""
+  ios.__sock     = conn
+  ios.__remote   = remote
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
