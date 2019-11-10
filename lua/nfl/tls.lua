@@ -168,7 +168,7 @@ local function create_handler(conn,remote)
     end
     
     if ios.__resume then
-      ios.__resuem = false
+      ios.__resume = false
       nfl.schedule(ios.__co,true)
     end
   end
