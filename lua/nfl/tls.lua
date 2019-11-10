@@ -131,6 +131,7 @@ local function create_handler(conn,remote)
     elseif rc == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
       ios.__resume = true
+      coroutine.yield()
       return self:close()
     end
     
