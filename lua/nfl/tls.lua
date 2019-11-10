@@ -331,6 +331,7 @@ function connecta(addr,hostname,to,conf)
   -- ------------------------------------------------------------
   
   nfl.SOCKETS:insert(sock,'w',packet_handler)
+  ios.__resume = true
   if to then nfl.timeout(to,false,errno.ETIMEDOUT) end
   
   sock:connect(addr)
