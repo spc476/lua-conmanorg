@@ -39,19 +39,19 @@ end
 local function make_ios(ctx)
   local state = ios()
 
-  function state.close()
+  function state:close()
     return ctx:close()
   end
   
-  function state._handshake()
+  function state:_handshake()
     return ctx:handshake() == 0
   end
   
-  function state._refill()
+  function state:_refill()
     return ctx:read(tls.BUFFERSIZE)
   end
   
-  function state._drain(data)
+  function state:_drain(data)
     return ctx:write(data)
   end
   
