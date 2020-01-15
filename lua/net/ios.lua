@@ -179,12 +179,15 @@ end
 -- *******************************************************************
 -- Usage:       intf = ios:lines()
 -- Desc:        Interate through lines
--- Note:        This function is not implemented due to technical reasons
+-- Return:      intf (function) interator
+-- Note:        This function doesn't work in Lua 5.1
 -- *******************************************************************
 
-local function lines()
+local function lines(ios)
   -- XXX Lua 5.1 "dead: attempt to yield across metamethod/C-call boundary
-  error "lines() not implemented"
+  return function()
+    return ios:read("*l")
+  end
 end
 
 -- *******************************************************************
