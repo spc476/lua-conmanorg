@@ -45,7 +45,7 @@
 #include <libgen.h>
 #include <utime.h>
 #include <fnmatch.h>
-#include <wordexp.h>
+#include <glob.h>
 
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
 #  error You need to compile against Lua 5.1 or higher
@@ -914,40 +914,36 @@ static int fsys_fnmatch(lua_State *L)
 int fsys_expand(lua_State *L)
 {
   char const *pattern = luaL_checkstring(L,1);
-  int         undef   = lua_toboolean(L,2)
-                      ? WRDE_NOCMD | WRDE_UNDEF
-                      : WRDE_NOCMD
-                      ;
-  wordexp_t exp;
-  int       rc;
+  glob_t      gbuf;
+  int         rc;
   
-  rc = wordexp(pattern,&exp,undef);
+  memset(&gbuf,0,sizeof(gbuf));
+  rc = glob(pattern,0,NULL,&gbuf);
   
   if (rc != 0)
   {
     lua_pushnil(L);
     switch(rc)
     {
-      case WRDE_BADCHAR: rc = EILSEQ; break;
-      case WRDE_BADVAL:  rc = ENOENT; break;
-      case WRDE_NOSPACE: rc = ENOMEM; break;
-      case WRDE_SYNTAX:  rc = EINVAL; break;
-      default:           rc = EDOM;   break;
+      case GLOB_NOSPACE: rc = ENOMEM; break;
+      case GLOB_ABORTED: rc = EIO;    break;
+      case GLOB_NOMATCH: rc = ENOENT; break;
+      default:           rc = EINVAL; break;
     }
     
     lua_pushinteger(L,rc);
     return 2;
   }
   
-  lua_createtable(L,exp.we_wordc,0);
-  for (size_t i = 0 ; i < exp.we_wordc ; i++)
+  lua_createtable(L,gbuf.gl_pathc,0);
+  for (size_t i = 0 ; i < gbuf.gl_pathc ; i++)
   {
     lua_pushinteger(L,i+1);
-    lua_pushstring(L,exp.we_wordv[i]);
+    lua_pushstring(L,gbuf.gl_pathv[i]);
     lua_settable(L,-3);
   }
   
-  wordfree(&exp);
+  globfree(&gbuf);
   lua_pushinteger(L,0);
   return 2;
 }
@@ -956,9 +952,9 @@ int fsys_expand(lua_State *L)
 
 struct myexpand
 {
-  wordexp_t exp;
-  size_t    idx;
-  bool      gc;
+  glob_t gbuf;
+  size_t idx;
+  bool   gc;
 };
 
 static int expand_meta___gc(lua_State *L)
@@ -966,7 +962,7 @@ static int expand_meta___gc(lua_State *L)
   struct myexpand *data = lua_touserdata(L,1);
   if (!data->gc)
   {
-    wordfree(&data->exp);
+    globfree(&data->gbuf);
     data->gc = true;
   }
   return 0;
@@ -978,11 +974,11 @@ static int expand_meta_next(lua_State *L)
 {
   struct myexpand *data = lua_touserdata(L,1);
   
-  if (data->idx < data->exp.we_wordc)
-    lua_pushstring(L,data->exp.we_wordv[data->idx++]);
+  if (data->idx < data->gbuf.gl_pathc)
+    lua_pushstring(L,data->gbuf.gl_pathv[data->idx++]);
   else
   {
-    wordfree(&data->exp);
+    globfree(&data->gbuf);
     data->gc = true;
     lua_pushnil(L);
   }
@@ -994,11 +990,7 @@ static int expand_meta_next(lua_State *L)
 
 static int fsys_gexpand(lua_State *L)
 {
-  char const *pattern = luaL_checkstring(L,1);
-  int         undef   = lua_toboolean(L,2)
-                      ? WRDE_NOCMD | WRDE_UNDEF
-                      : WRDE_NOCMD
-                      ;
+  char const      *pattern = luaL_checkstring(L,1);
   struct myexpand *data;
   
   lua_pushcfunction(L,expand_meta_next);
@@ -1007,21 +999,10 @@ static int fsys_gexpand(lua_State *L)
   luaL_getmetatable(L,TYPE_EXPAND);
   lua_setmetatable(L,-2);
   
-  if (wordexp(pattern,&data->exp,undef) < 0)
-  {
-    /*-------------------------------------------------------------
-    ; we can do this since data has a __gc method attached to it.
-    ;-------------------------------------------------------------*/
-    
+  memset(data,0,sizeof(struct myexpand));
+  
+  if (glob(pattern,0,NULL,&data->gbuf) != 0)
     data->gc = true;
-    lua_pop(L,1);
-    lua_pushnil(L);
-  }
-  else
-  {
-    data->idx = 0;
-    data->gc  = false;
-  }
   
   return 2;
 }
