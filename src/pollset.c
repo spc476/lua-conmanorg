@@ -33,6 +33,12 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
+#if LUA_VERSION_NUM == 501
+#  define lua_getuservalue(L,idx) lua_getfenv((L),(idx))
+#  define lua_setuservalue(L,idx) lua_setfenv((L),(idx))
+#  define luaL_setfuncs(L,reg,up) luaL_register((L),NULL,(reg))
+#endif
+
 #define TYPE_POLL       "org.conman.pollset"
 
 #if !defined(POLLSET_IMPL_EPOLL) && !defined(POLLSET_IMPL_KQUEUE) && !defined(POLLSET_IMPL_POLL) && !defined(POLLSET_IMPL_SELECT)
@@ -131,7 +137,6 @@
 typedef struct
 {
   int    efh;
-  int    ref;
   size_t idx;
 } pollset__t;
 
@@ -190,8 +195,7 @@ static int pollset_lua(lua_State *L)
   }
   
   lua_createtable(L,0,0);
-  set->ref = luaL_ref(L,LUA_REGISTRYINDEX);
-  
+  lua_setuservalue(L,-2);
   luaL_getmetatable(L,TYPE_POLL);
   lua_setmetatable(L,-2);
   return 1;
@@ -219,7 +223,6 @@ static int polllua___tostring(lua_State *L)
 static int polllua___gc(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
   close(set->efh);
   return 0;
 }
@@ -250,8 +253,7 @@ static int polllua_insert(lua_State *L)
     return 1;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_getuservalue(L,1);
   lua_pushinteger(L,fh);
   
   if (lua_isnil(L,4))
@@ -313,8 +315,7 @@ static int polllua_remove(lua_State *L)
     return 1;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_getuservalue(L,1);
   lua_pushinteger(L,fh);
   lua_pushnil(L);
   lua_settable(L,-3);
@@ -360,10 +361,9 @@ static int polllua_events(lua_State *L)
     return 2;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
-  
+  lua_getuservalue(L,1);
   lua_createtable(L,set->idx,0);
+  
   for (idx = 1 , i = 0 ; i < count ; i++)
   {
     lua_pushnumber(L,idx++);
@@ -401,7 +401,6 @@ static int polllua_events(lua_State *L)
 typedef struct
 {
   int    qfh;
-  int    ref;
   size_t idx;
 } pollset__t;
 
@@ -465,8 +464,7 @@ static int pollset_lua(lua_State *L)
   }
   
   lua_createtable(L,0,0);
-  set->ref = luaL_ref(L,LUA_REGISTRYINDEX);
-  
+  lua_setuservalue(L,1);
   luaL_getmetatable(L,TYPE_POLL);
   lua_setmetatable(L,-2);
   return 1;
@@ -494,7 +492,6 @@ static int polllua___tostring(lua_State *L)
 static int polllua___gc(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
   close(set->qfh);
   return 0;
 }
@@ -542,8 +539,7 @@ static int polllua_insert(lua_State *L)
     return 1;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_getuservalue(L,1);
   lua_pushinteger(L,fh);
   
   if (lua_isnil(L,4))
@@ -634,8 +630,7 @@ static int polllua_remove(lua_State *L)
     return 1;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_getuservalue(L,1);
   lua_pushinteger(L,fh);
   lua_pushnil(L);
   lua_settable(L,-3);
@@ -688,9 +683,7 @@ static int polllua_events(lua_State *L)
     return 2;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
-  
+  lua_getuservalue(L,1);
   lua_createtable(L,set->idx,0);
   
   for (idx = 1 , i = 0 ; i < count ; i++)
@@ -735,7 +728,6 @@ typedef struct
   struct pollfd *set;
   size_t         idx;
   size_t         max;
-  int            ref;
 } pollset__t;
 
 /**********************************************************************/
@@ -789,8 +781,7 @@ static int pollset_lua(lua_State *L)
   set->max = 0;
   
   lua_createtable(L,0,0);
-  set->ref = luaL_ref(L,LUA_REGISTRYINDEX);
-  
+  lua_setuservalue(L,1);
   luaL_getmetatable(L,TYPE_POLL);
   lua_setmetatable(L,-2);
   return 1;
@@ -817,12 +808,9 @@ static int polllua___tostring(lua_State *L)
 
 static int polllua___gc(lua_State *L)
 {
-  lua_Alloc  allocf;
-  void      *ud;
-  
-  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
-  allocf = lua_getallocf(L,&ud);
+  void       *ud;
+  pollset__t *set    = luaL_checkudata(L,1,TYPE_POLL);
+  lua_Alloc   allocf = lua_getallocf(L,&ud);
   (*allocf)(ud,set->set,set->max * sizeof(struct pollfd),0);
   return 0;
 }
@@ -890,8 +878,7 @@ static int polllua_insert(lua_State *L)
   set->set[set->idx].events = pollset_toevents(L,3);
   set->set[set->idx].fd     = fh;
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_getuservalue(L,1);
   lua_pushinteger(L,fh);
   
   if (lua_isnil(L,4))
@@ -956,8 +943,7 @@ static int polllua_remove(lua_State *L)
   {
     if (set->set[i].fd == fh)
     {
-      lua_pushinteger(L,set->ref);
-      lua_gettable(L,LUA_REGISTRYINDEX);
+      lua_getuservalue(L,1);
       lua_pushinteger(L,fh);
       lua_pushnil(L);
       lua_settable(L,-3);
@@ -998,10 +984,9 @@ static int polllua_events(lua_State *L)
     return 2;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
-  
+  lua_getuservalue(L,1);
   lua_createtable(L,set->idx,0);
+  
   for (size_t idx = 1 , i = 0 ; i < set->idx ; i++)
   {
     if (set->set[i].revents != 0)
@@ -1042,7 +1027,6 @@ typedef struct
   int    min;
   int    max;
   size_t idx;
-  int    ref;
 } pollset__t;
 
 /**********************************************************************/
@@ -1089,8 +1073,7 @@ static int pollset_lua(lua_State *L)
   set->max = 0;
   
   lua_createtable(L,0,0);
-  set->ref = luaL_ref(L,LUA_REGISTRYINDEX);
-  
+  lua_setuservalue(L,1);
   luaL_getmetatable(L,TYPE_POLL);
   lua_setmetatable(L,-2);
   return 1;
@@ -1117,8 +1100,7 @@ static int polllua___tostring(lua_State *L)
 
 static int polllua___gc(lua_State *L)
 {
-  pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
-  luaL_unref(L,LUA_REGISTRYINDEX,set->ref);
+  (void)L;
   return 0;
 }
 
@@ -1150,8 +1132,7 @@ static int polllua_insert(lua_State *L)
   
   pollset_toevents(L,3,set,fh);
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
+  lua_getuservalue(L,1);
   lua_pushinteger(L,fh);
   
   if (lua_isnil(L,4))
@@ -1211,8 +1192,7 @@ static int polllua_remove(lua_State *L)
     FD_CLR(fh,&set->write);
     FD_CLR(fh,&set->except);
     
-    lua_pushinteger(L,set->ref);
-    lua_gettable(L,LUA_REGISTRYINDEX);
+    lua_getuservalue(L,1);
     lua_pushinteger(L,fh);
     lua_pushnil(L);
     lua_settable(L,-3);
@@ -1266,10 +1246,9 @@ static int polllua_events(lua_State *L)
     return 2;
   }
   
-  lua_pushinteger(L,set->ref);
-  lua_gettable(L,LUA_REGISTRYINDEX);
-  
+  lua_getuservalue(L,1);
   lua_createtable(L,set->idx,0);
+  
   for (idx = 1 , i = set->min ; i <= set->max ; i++)
   {
     if (FD_ISSET(i,&read) || FD_ISSET(i,&write) || FD_ISSET(i,&except))
@@ -1306,11 +1285,7 @@ static luaL_Reg const m_polllua[] =
 int luaopen_org_conman_pollset(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_POLL);
-#if LUA_VERSION_NUM == 501
-  luaL_register(L,NULL,m_polllua);
-#else
   luaL_setfuncs(L,m_polllua,0);
-#endif
   lua_pushliteral(L,POLLSET_IMPL);
   lua_setfield(L,-2,"_implementation");
   lua_pushvalue(L,-1);
