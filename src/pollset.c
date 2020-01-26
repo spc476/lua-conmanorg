@@ -356,6 +356,7 @@ static int polllua_events(lua_State *L)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
+    free(events);
     return 2;
   }
   
@@ -683,6 +684,7 @@ static int polllua_events(lua_State *L)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
+    free(events);
     return 2;
   }
   
