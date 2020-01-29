@@ -135,11 +135,17 @@ static void fsysL_pushstat(lua_State *L,struct stat const *status)
 
 /*************************************************************************/
 
-static mode_t fsysL_checkmode(lua_State *L,int idx)
+static mode_t fsysL_checkmode(lua_State *L,int idx,mode_t def)
 {
   size_t      len;
-  char const *txt = luaL_checklstring(L,idx,&len);
-  mode_t      mode = 0;
+  char const *txt;
+  mode_t      mode;
+  
+  if (lua_isnoneornil(L,idx))
+    return def;
+  
+  mode = 0;
+  txt  = luaL_checklstring(L,idx,&len);
   
   if (len == 3)
   {
@@ -236,7 +242,7 @@ static int fsys_chmod(lua_State *L)
   if (lua_isstring(L,1))
   {
     errno = 0;
-    chmod(luaL_checkstring(L,1),fsysL_checkmode(L,2));
+    chmod(luaL_checkstring(L,1),fsysL_checkmode(L,2,0666));
     lua_pushboolean(L,errno == 0);
     lua_pushinteger(L,errno);
     return 2;
@@ -244,7 +250,7 @@ static int fsys_chmod(lua_State *L)
   else if (luaL_callmeta(L,1,"_tofd"))
   {
     errno = 0;
-    fchmod(luaL_checkinteger(L,-1),fsysL_checkmode(L,2));
+    fchmod(luaL_checkinteger(L,-1),fsysL_checkmode(L,2,0664));
     lua_pushboolean(L,errno == 0);
     lua_pushinteger(L,errno);
     return 2;
@@ -259,7 +265,7 @@ static int fsys_chmod(lua_State *L)
 
 static int fsys_umask(lua_State *L)
 {
-  fsysL_pushperm(L,~umask(~fsysL_checkmode(L,1)) & 0777);
+  fsysL_pushperm(L,~umask(~fsysL_checkmode(L,1,0777)) & 0777);
   return 1;
 }
 
@@ -268,7 +274,7 @@ static int fsys_umask(lua_State *L)
 static int fsys_mkfifo(lua_State *L)
 {
   errno = 0;
-  mkfifo(luaL_checkstring(L,1),fsysL_checkmode(L,2));
+  mkfifo(luaL_checkstring(L,1),fsysL_checkmode(L,2,0666));
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
@@ -279,7 +285,7 @@ static int fsys_mkfifo(lua_State *L)
 static int fsys_mkdir(lua_State *L)
 {
   errno = 0;
-  mkdir(luaL_checkstring(L,1),fsysL_checkmode(L,2));
+  mkdir(luaL_checkstring(L,1),fsysL_checkmode(L,2,0777));
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
