@@ -298,14 +298,14 @@ static int net_toproto(lua_State *L,int idx)
 #if defined(__SunOS)
     presult = getprotobyname_r(proto,&result,tmp,sizeof(tmp));
     if (presult == NULL)
-      return luaL_error(L,"invalid protocol");
+      return luaL_error(L,"protocol: %s",strerror(errno));
 #elif defined(__linux__)
     if (getprotobyname_r(proto,&result,tmp,sizeof(tmp),&presult) != 0)
-      return luaL_error(L,"invalid protocol");
+      return luaL_error(L,"protocol: %s",strerror(errno));
 #else
     presult = getprotobyname(proto);
     if (presult == NULL)
-      return luaL_error(L,"invalid protocol");
+      return luaL_error(L,"protocol: %s",strerror(errno));
     result = *presult;
 #endif
     return result.p_proto;
