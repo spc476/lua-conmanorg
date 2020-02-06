@@ -189,7 +189,7 @@ local function eventloop(done_f)
     return eventloop(done_f)
   end
   
-  for _,event in ipairs(events) do
+  for event in events do
     event.obj(event)
   end
   

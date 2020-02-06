@@ -21,13 +21,13 @@ io.stdout:write("\ttesting type of implementation ... ")
 local set do
 	set     = pollset()
 	assert(set._implementation)
-	io.stdout:write("GO!\n")
+	io.stdout:write(set._implementation," GO!\n")
 end
 
 io.stdout:write("\ttesting timeout (will take 5 seconds) ... ")
 io.stdout:flush()
 do
-	local err = set:insert(fsys.fileno(pipe.read),"r")
+	local err = set:insert(pipe.read,"r")
 	assert(err == 0)
 
 	local zen        = os.time()
@@ -36,7 +36,7 @@ do
 
 	assert(err == 0)
 	assert((now - zen) >= 5)
-	assert(#events == 0)
+	assert(events() == nil)
 	io.stdout:write("GO!\n")
 end
 
@@ -50,8 +50,10 @@ do
 	
 	assert(err == 0)
 	assert((now-zen) <= 1)
-	assert(#events == 1)
-	assert(events[1].read)
+	local e = events()
+	assert(e)
+	assert(e.read)
+	assert(events() == nil)
 
 	local blob = pipe.read:read(256)
 	assert(#blob == 256)
@@ -60,7 +62,7 @@ end
 
 io.stdout:write("\ttesting set removal ... ")
 do
-	local err = set:remove(fsys.fileno(pipe.read))
+	local err = set:remove(pipe.read)
 	assert(err == 0)
 	io.stdout:write("GO!\n")
 end
@@ -68,10 +70,10 @@ end
 io.stdout:write("\ttesting write readiness ... ")
 do
 
-	local err = set:insert(fsys.fileno(pipe.read),"r")
+	local err = set:insert(pipe.read,"r")
 	assert(err == 0)
 	
-	local err = set:insert(fsys.fileno(pipe.write),"w")
+	local err = set:insert(pipe.write,"w")
 	assert(err == 0)
 
 	local zen = os.time()
@@ -80,8 +82,10 @@ do
 	
 	assert(err == 0)
 	assert((now-zen) <= 1)
-	assert(#events == 1)
-	assert(events[1].write)
+	local e = events()
+	assert(e)
+	assert(e.write)
+	assert(events() == nil)
 	
 	pipe.write:write(data)
 	
@@ -91,7 +95,9 @@ do
 	
 	assert(err == 0)
 	assert((now-zen) <= 1)
-	assert(events[1].read)
+	local e = events()
+	assert(e)
+	assert(e.read)
 	
 	local blob = pipe.read:read(256)
 	assert(#blob == 256)

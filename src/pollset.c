@@ -112,8 +112,9 @@
 * Desc:		Return list of events
 * Input:	timeout (number/optional) timeout in seconds, if not given,
 *			| function will block until an event is received
-* Return:	events (table) array of events (nil on error),
-*			| each entry is a table:
+* Return:	events (function) used in "for event in events do ... end"
+*			| Each time the function is called, a table is
+*			| returned with the following fields:
 *			| * read (boolean) read event
 *			| * write (boolean) write event
 *			| * priority (boolean) priority data event
@@ -136,8 +137,11 @@
 
 typedef struct
 {
-  int    efh;
-  size_t idx;
+  int                 efh;
+  size_t              idx;
+  struct epoll_event *list;
+  int                 max;
+  int                 count;
 } pollset__t;
 
 /**********************************************************************/
@@ -179,26 +183,57 @@ static void pollset_pushevents(lua_State *L,int events)
 
 /**********************************************************************/
 
+static int pollset_next(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,lua_upvalueindex(1),TYPE_POLL);
+  
+  if (set->count < set->max)
+  {
+    lua_getuservalue(L,lua_upvalueindex(1));
+    pollset_pushevents(L,set->list[set->count].events);
+    lua_pushinteger(L,set->list[set->count].data.fd);
+    lua_gettable(L,-3);
+    lua_setfield(L,-2,"obj");
+    set->count++;
+  }
+  else
+  {
+    free(set->list);
+    set->list = NULL;
+    lua_pushnil(L);
+  }
+  
+  return 1;
+}
+
+/**********************************************************************/
+
 static int pollset_lua(lua_State *L)
 {
   pollset__t *set;
+  int         efh;
   
-  set      = lua_newuserdata(L,sizeof(pollset__t));
-  set->idx = 0;
-  set->efh = epoll_create(10);
-  
-  if (set->efh == -1)
+  efh = epoll_create(10);
+  if (efh == -1)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
     return 2;
   }
   
+  set        = lua_newuserdata(L,sizeof(pollset__t));
+  set->efh   = efh;
+  set->list  = NULL;
+  set->idx   = 0;
+  set->max   = 0;
+  set->count = 0;
+  
   lua_createtable(L,0,0);
   lua_setuservalue(L,-2);
   luaL_getmetatable(L,TYPE_POLL);
   lua_setmetatable(L,-2);
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /**********************************************************************/
@@ -223,6 +258,8 @@ static int polllua___tostring(lua_State *L)
 static int polllua___gc(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
+  if (set->list)
+    free(set->list);
   close(set->efh);
   return 0;
 }
@@ -326,16 +363,12 @@ static int polllua_remove(lua_State *L)
 }
 
 /**********************************************************************/
-
+  
 static int polllua_events(lua_State *L)
 {
   pollset__t         *set      = luaL_checkudata(L,1,TYPE_POLL);
   lua_Number          dtimeout = luaL_optnumber(L,2,-1.0);
-  struct epoll_event *events   = NULL;
   int                 timeout;
-  int                 count;
-  size_t              idx;
-  int                 i;
   
   if (dtimeout < 0)
     timeout = -1;
@@ -344,38 +377,28 @@ static int polllua_events(lua_State *L)
   
   if (set->idx > 0)
   {
-    events = calloc(set->idx,sizeof(struct epoll_event));
-    if (events == NULL)
-      count = -1;
+    set->list = calloc(set->idx,sizeof(struct epoll_event));
+    if (set->list == NULL)
+      set->max = -1;
     else
-      count = epoll_wait(set->efh,events,set->idx,timeout);
+      set->max = epoll_wait(set->efh,set->list,set->idx,timeout);
   }
   else
-    count = 0;
+    set->max = 0;
   
-  if (count < 0)
+  if (set->max < 0)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
-    free(events);
+    free(set->list);
     return 2;
   }
   
-  lua_getuservalue(L,1);
-  lua_createtable(L,set->idx,0);
+  set->count = 0;
   
-  for (idx = 1 , i = 0 ; i < count ; i++)
-  {
-    lua_pushnumber(L,idx++);
-    pollset_pushevents(L,events[i].events);
-    lua_pushinteger(L,events[i].data.fd);
-    lua_gettable(L,-5);
-    lua_setfield(L,-2,"obj");
-    lua_settable(L,-3);
-  }
-  
+  lua_pushvalue(L,1);
+  lua_pushcclosure(L,pollset_next,1);
   lua_pushinteger(L,0);
-  free(events);
   return 2;
 }
 
@@ -400,8 +423,11 @@ static int polllua_events(lua_State *L)
 
 typedef struct
 {
-  int    qfh;
-  size_t idx;
+  int            qfh;
+  size_t         idx;
+  struct kevent *list;
+  int            max;
+  int            count;
 } pollset__t;
 
 /**********************************************************************/
@@ -448,26 +474,57 @@ static void pollset_pushevents(lua_State *L,struct kevent const *event)
 
 /**********************************************************************/
 
+static int pollset_next(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,lua_upvalueindex(1),TYPE_POLL);
+  
+  if (set->count < set->max)
+  {
+    lua_getuservalue(L,lua_upvalueindex(1));
+    pollset_pushevents(L,&set->list[set->count]);
+    lua_pushinteger(L,set->list[set->count].ident);
+    lua_gettable(L,-3);
+    lua_setfield(L,-2,"obj");
+    set->count++;
+  }
+  else
+  {
+    free(set->list);
+    set->list = NULL;
+    lua_pushnil(L);
+  }
+  
+  return 1;
+}
+
+/**********************************************************************/
+
 static int pollset_lua(lua_State *L)
 {
   pollset__t *set;
+  int         qfh;
   
-  set = lua_newuserdata(L,sizeof(pollset__t));
-  set->idx = 0;
-  set->qfh = kqueue();
-  
-  if (set->qfh == -1)
+  qfh = kqueue();
+  if (qfh == -1)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
     return 2;
   }
   
+  set        = lua_newuserdata(L,sizeof(pollset__t));
+  set->qfh   = qfh;
+  set->list  = NULL;
+  set->idx   = 0;
+  set->max   = 0;
+  set->count = 0;
+  
   lua_createtable(L,0,0);
   lua_setuservalue(L,1);
   luaL_getmetatable(L,TYPE_POLL);
   lua_setmetatable(L,-2);
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /**********************************************************************/
@@ -492,6 +549,8 @@ static int polllua___tostring(lua_State *L)
 static int polllua___gc(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
+  if (set->list)
+    free(set->list);
   close(set->qfh);
   return 0;
 }
@@ -646,12 +705,8 @@ static int polllua_events(lua_State *L)
 {
   pollset__t      *set      = luaL_checkudata(L,1,TYPE_POLL);
   lua_Number       dtimeout = luaL_optnumber(L,2,-1.0);
-  struct kevent   *events   = NULL;
   struct timespec *ptimeout;
   struct timespec  timeout;
-  size_t           idx;
-  int              count;
-  int              i;
   
   if (dtimeout >= 0)
   {
@@ -666,11 +721,11 @@ static int polllua_events(lua_State *L)
   
   if (set->idx > 0)
   {
-    events = calloc(set->idx,sizeof(struct kevent));
-    if (events == NULL)
+    set->list = calloc(set->idx,sizeof(struct kevent));
+    if (set->list == NULL)
       count = -1;
     else
-      count = kevent(set->qfh,NULL,0,events,set->idx,ptimeout);
+      count = kevent(set->qfh,NULL,0,set->list,set->idx,ptimeout);
   }
   else
     count = 0;
@@ -679,25 +734,15 @@ static int polllua_events(lua_State *L)
   {
     lua_pushnil(L);
     lua_pushinteger(L,errno);
-    free(events);
+    free(set->list);
     return 2;
   }
   
-  lua_getuservalue(L,1);
-  lua_createtable(L,set->idx,0);
+  set->count = 0;
   
-  for (idx = 1 , i = 0 ; i < count ; i++)
-  {
-    lua_pushnumber(L,idx++);
-    pollset_pushevents(L,&events[i]);
-    lua_pushinteger(L,events[i].ident);
-    lua_gettable(L,-5);
-    lua_setfield(L,-2,"obj");
-    lua_settable(L,-3);
-  }
-  
+  lua_pushvalue(L,1);
+  lua_pushcclosure(L,pollset_next,1);
   lua_pushinteger(L,0);
-  free(events);
   return 2;
 }
 
@@ -728,6 +773,7 @@ typedef struct
   struct pollfd *set;
   size_t         idx;
   size_t         max;
+  size_t         count;
 } pollset__t;
 
 /**********************************************************************/
@@ -767,6 +813,31 @@ static void pollset_pushevents(lua_State *L,int events)
   lua_setfield(L,-2,"hangup");
   lua_pushboolean(L,(events & POLLNVAL) != 0);
   lua_setfield(L,-2,"invalid");
+}
+
+/**********************************************************************/
+
+static int pollset_next(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,lua_upvalueindex(1),TYPE_POLL);
+  
+  while(set->count < set->idx)
+  {
+    if (set->set[set->count].revents != 0)
+    {
+      lua_getuservalue(L,lua_upvalueindex(1));
+      pollset_pushevents(L,set->set[set->count].revents);
+      lua_pushinteger(L,set->set[set->count].fd);
+      lua_gettable(L,-3);
+      lua_setfield(L,-2,"obj");
+      set->count++;
+      return 1;
+    }
+    set->count++;
+  }
+  
+  lua_pushnil(L);
+  return 1;
 }
 
 /**********************************************************************/
@@ -984,22 +1055,10 @@ static int polllua_events(lua_State *L)
     return 2;
   }
   
-  lua_getuservalue(L,1);
-  lua_createtable(L,set->idx,0);
+  set->count = 0;
   
-  for (size_t idx = 1 , i = 0 ; i < set->idx ; i++)
-  {
-    if (set->set[i].revents != 0)
-    {
-      lua_pushnumber(L,idx++);
-      pollset_pushevents(L,set->set[i].revents);
-      lua_pushinteger(L,set->set[i].fd);
-      lua_gettable(L,-5);
-      lua_setfield(L,-2,"obj");
-      lua_settable(L,-3);
-    }
-  }
-  
+  lua_pushvalue(L,1);
+  lua_pushcclosure(L,pollset_next,1);
   lua_pushinteger(L,0);
   return 2;
 }
@@ -1024,8 +1083,12 @@ typedef struct
   fd_set read;
   fd_set write;
   fd_set except;
+  fd_set sread;
+  fd_set swrite;
+  fd_set sexcept;
   int    min;
   int    max;
+  int    count;
   size_t idx;
 } pollset__t;
 
@@ -1056,6 +1119,30 @@ static void pollset_pushevents(lua_State *L,pollset__t *set,int fd)
   lua_setfield(L,-2,"write");
   lua_pushboolean(L,FD_ISSET(fd,&set->except));
   lua_setfield(L,-2,"priority");
+}
+
+/**********************************************************************/
+
+static int pollset_next(lua_State *L)
+{
+  pollset__t *set = luaL_checkudata(L,lua_upvalueindex(1),TYPE_POLL);
+  
+  while(set->count <= set->max)
+  {
+    if (FD_ISSET(set->count,&set->sread) || FD_ISSET(set->count,&set->swrite) || FD_ISSET(set->count,&set->sexcept))
+    {
+      lua_getuservalue(L,lua_upvalueindex(1));
+      pollset_pushevents(L,set,set->count);
+      lua_pushinteger(L,set->count);
+      lua_gettable(L,-3);
+      lua_setfield(L,-2,"obj");
+      set->count++;
+      return 1;
+    }
+    set->count++;
+  }
+  lua_pushnil(L);
+  return 1;
 }
 
 /**********************************************************************/
@@ -1214,12 +1301,7 @@ static int polllua_events(lua_State *L)
   double          timeout = luaL_optnumber(L,2,-1.0);
   struct timeval  tout;
   struct timeval *ptout;
-  fd_set          read;
-  fd_set          write;
-  fd_set          except;
   int             rc;
-  int             i;
-  size_t          idx;
   
   if (timeout < 0)
     ptout = NULL;
@@ -1234,11 +1316,11 @@ static int polllua_events(lua_State *L)
     ptout        = &tout;
   }
   
-  read   = set->read;
-  write  = set->write;
-  except = set->except;
+  set->sread   = set->read;
+  set->swrite  = set->write;
+  set->sexcept = set->except;
   
-  rc = select(FD_SETSIZE,&read,&write,&except,ptout);
+  rc = select(FD_SETSIZE,&set->sread,&set->swrite,&set->sexcept,ptout);
   if (rc < 0)
   {
     lua_pushnil(L);
@@ -1246,22 +1328,9 @@ static int polllua_events(lua_State *L)
     return 2;
   }
   
-  lua_getuservalue(L,1);
-  lua_createtable(L,set->idx,0);
-  
-  for (idx = 1 , i = set->min ; i <= set->max ; i++)
-  {
-    if (FD_ISSET(i,&read) || FD_ISSET(i,&write) || FD_ISSET(i,&except))
-    {
-      lua_pushnumber(L,idx++);
-      pollset_pushevents(L,set,i);
-      lua_pushinteger(L,i);
-      lua_gettable(L,-5);
-      lua_setfield(L,-2,"obj");
-      lua_settable(L,-3);
-    }
-  }
-  
+  set->count = 0;
+  lua_pushvalue(L,1);
+  lua_pushcclosure(L,pollset_next,1);
   lua_pushinteger(L,0);
   return 2;
 }
