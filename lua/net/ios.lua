@@ -103,6 +103,20 @@ end
 
 local READER =
 {
+
+  -- ============================================================
+  -- format for number (from Lua source ode) (Lua 5.3-liolib.c:440)
+  --
+  -- optional white space
+  -- optional sign +-
+  -- if leading 0,
+  --	0[Xx] - flag hex digits
+  --		else digits (and accept leading 0)
+  -- digits*
+  -- optional decimal point (or locale point) followed by (hex)digits
+  -- if digits, optional ([pP]/[eE]) '+-'? decdigits*
+  -- =============================================================
+  
   ['*n'] = function()
     error "Not implemented"
   end,
@@ -322,11 +336,11 @@ end
 
 return function()
   return {
-    close   = close,
-    flush   = flush,
+    close   = close,   -- override
+    flush   = flush,   -- override
     lines   = lines,
     read    = read,
-    seek    = seek,
+    seek    = seek,    -- override
     setvbuf = setvbuf,
     write   = write,
     
