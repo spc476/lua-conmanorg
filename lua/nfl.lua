@@ -235,7 +235,7 @@ end
 -- **********************************************************************
 
 function info()
-  return REFQUEUE._n,#RUNQUEUE
+  return REFQUEUE._n,#RUNQUEUE,#TOQUEUE,#SOCKETS
 end
 
 -- **********************************************************************
