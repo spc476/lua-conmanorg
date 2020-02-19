@@ -36,7 +36,6 @@ local _VERSION     = _VERSION
 local print        = print
 local assert       = assert
 local pairs        = pairs
-local ipairs       = ipairs
 local unpack       = table.unpack or unpack
 local tostring     = tostring
 local setmetatable = setmetatable
@@ -183,13 +182,13 @@ local function eventloop(done_f)
     timeout = 0
   end
   
-  local events,err = SOCKETS:events(timeout)
-  if not events then
+  local okay,err = SOCKETS:wait(timeout)
+  if not okay then
     syslog('error',"SOCKETS:events() = %s",errno[err])
     return eventloop(done_f)
   end
   
-  for event in events do
+  for event in SOCKETS:events() do
     event.obj(event)
   end
   
