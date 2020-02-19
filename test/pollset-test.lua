@@ -30,13 +30,15 @@ do
 	local err = set:insert(pipe.read,"r")
 	assert(err == 0)
 
-	local zen        = os.time()
-	local events,err = set:events(5)
-	local now        = os.time()
-
+	local zen      = os.time()
+	local okay,err = set:wait(5)
+	local now      = os.time()
+        
+        assert(okay)
 	assert(err == 0)
 	assert((now - zen) >= 5)
-	assert(events() == nil)
+	local events,state,var = set:events()
+	assert(events(state,var) == nil)
 	io.stdout:write("GO!\n")
 end
 
@@ -45,15 +47,18 @@ do
 	pipe.write:write(data)
 
 	local zen        = os.time()
-	local events,err = set:events(5)
+	local okay,err   = set:wait(5)
 	local now        = os.time()
 	
+	assert(okay)
 	assert(err == 0)
 	assert((now-zen) <= 1)
-	local e = events()
+	local events,state,var = set:events()
+	assert(events)
+	local e = events(state,var)
 	assert(e)
 	assert(e.read)
-	assert(events() == nil)
+	assert(events(state,var) == nil)
 
 	local blob = pipe.read:read(256)
 	assert(#blob == 256)
@@ -77,25 +82,31 @@ do
 	assert(err == 0)
 
 	local zen = os.time()
-	local events,err = set:events(5)
+	local okay,err = set:wait(5)
 	local now = os.time()
 	
+	assert(okay)
 	assert(err == 0)
 	assert((now-zen) <= 1)
-	local e = events()
+	local events,state,var = set:events()
+	assert(events)
+	local e = events(state,var)
 	assert(e)
 	assert(e.write)
-	assert(events() == nil)
+	assert(events(state,var) == nil)
 	
 	pipe.write:write(data)
 	
 	local zen = os.time()
-	local events,err = set:events(5)
+	local okay,err = set:wait(5)
 	local now = os.time()
 	
+	assert(okay)
 	assert(err == 0)
 	assert((now-zen) <= 1)
-	local e = events()
+	local events,state,var = set:events()
+	assert(events)
+	local e = events(state,var)
 	assert(e)
 	assert(e.read)
 	
