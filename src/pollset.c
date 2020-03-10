@@ -726,6 +726,7 @@ static int polllua_wait(lua_State *L)
   lua_Number       dtimeout = luaL_optnumber(L,2,-1.0);
   struct timespec *ptimeout;
   struct timespec  timeout;
+  int              count;
   
   if (dtimeout >= 0)
   {
