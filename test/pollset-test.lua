@@ -96,6 +96,7 @@ do
 	assert(events(state,var) == nil)
 	
 	pipe.write:write(data)
+	set:remove(pipe.write)
 	
 	local zen = os.time()
 	local okay,err = set:wait(5)

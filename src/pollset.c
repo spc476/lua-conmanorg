@@ -726,7 +726,6 @@ static int polllua_wait(lua_State *L)
   lua_Number       dtimeout = luaL_optnumber(L,2,-1.0);
   struct timespec *ptimeout;
   struct timespec  timeout;
-  int              count;
   
   if (dtimeout >= 0)
   {
@@ -743,16 +742,16 @@ static int polllua_wait(lua_State *L)
   {
     set->list = calloc(set->idx,sizeof(struct kevent));
     if (set->list == NULL)
-      count = -1;
+      set->max = -1;
     else
-      count = kevent(set->qfh,NULL,0,set->list,set->idx,ptimeout);
+      set->max = kevent(set->qfh,NULL,0,set->list,set->idx,ptimeout);
   }
   else
-    count = 0;
+    set->max = 0;
   
   set->count = 0;
   
-  if (count < 0)
+  if (set->max < 0)
   {
     lua_pushboolean(L,false);
     lua_pushinteger(L,errno);
