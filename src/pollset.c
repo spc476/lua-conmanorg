@@ -1399,8 +1399,8 @@ int luaopen_org_conman_pollset(lua_State *L)
   lua_pushliteral(L,POLLSET_IMPL);
   lua_setfield(L,-2,"_implementation");
   lua_pushvalue(L,-1);
-  lua_pushliteral(L,"start");
-  lua_setfield(L,-2,"_style");
+  lua_pushboolean(L,false);
+  lua_setfield(L,-2,"_iocp");
   lua_setfield(L,-1,"__index");
   
   lua_pushcfunction(L,pollset_lua);
