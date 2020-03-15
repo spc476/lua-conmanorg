@@ -909,6 +909,34 @@ static int netlua_pton(lua_State *L)
 
 /***********************************************************************/  
 
+static int netlua_ifname(lua_State *L)
+{
+  char name[IF_NAMESIZE];
+  
+  if (if_indextoname(luaL_checkinteger(L,1),name) == NULL)
+  {
+    lua_pushnil(L);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushstring(L,name);
+    lua_pushinteger(L,0);
+  }
+  
+  return 2;
+}
+
+/***********************************************************************/
+
+static int netlua_ifindex(lua_State *L)
+{
+  lua_pushinteger(L,if_nametoindex(luaL_checkstring(L,1)));
+  return 1;
+}
+
+/***********************************************************************/
+
 static int socklua___tostring(lua_State *L)
 {
   sock__t *sock;
@@ -1781,6 +1809,8 @@ static luaL_Reg const m_net_reg[] =
   { "ntop"              , netlua_ntop           } ,
   { "pton"              , netlua_pton           } ,
   { "_fromfd"           , netlua__fromfd        } ,
+  { "ifname"            , netlua_ifname         } ,
+  { "ifindex"           , netlua_ifindex        } ,
   { NULL                , NULL                  }
 };
 
