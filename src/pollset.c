@@ -108,13 +108,14 @@
 * Note:		file must have been added with set:insert(); otherwise
 *		results are undefined
 *
-* Usage:	okay,err = set:wait([timeout])
+* Usage:	okay,toerr = set:wait([timeout])
 * Desc:		Wait for events to trigger
 * Input:	timeout (number/optional) timeout in sections, if not given,
 *			| function will block until an event is received
 * Return:	okay (boolean) true if success, false if error
-*		err (integer) system error value
-*
+*		toerr (integer boolean)
+*			| okay = true, err = timedout (boolean)
+*			| okay = false, err = integer (system error)
 * Usage:	for event in set:events() do ... end
 * Desc:		Return an event iterator
 * Return:	events (function) used in "for event in events do ... end"
@@ -406,7 +407,7 @@ static int polllua_wait(lua_State *L)
   else
   {
     lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
+    lua_pushboolean(L,set->max == 0);
     return 2;
   }
 }
@@ -762,7 +763,7 @@ static int polllua_wait(lua_State *L)
   else
   {
     lua_pushboolean(L,true);
-    lua_pushinteger(L,0);
+    lua_pushboolean(L,set->max == 0);
     return 2;
   }
 }
@@ -794,6 +795,7 @@ static int polllua_events(lua_State *L)
 #ifdef POLLSET_IMPL_POLL
 #define POLLSET_IMPL    "poll"
 
+#include <stdbool.h>
 #include <string.h>
 #include <poll.h>
 #include <sys/time.h>
@@ -1074,6 +1076,7 @@ static int polllua_wait(lua_State *L)
   pollset__t *set      = luaL_checkudata(L,1,TYPE_POLL);
   lua_Number  dtimeout = luaL_optnumber(L,2,-1.0);
   int         timeout;
+  int         events;
   
   if (dtimeout < 0)
     timeout = -1;
@@ -1081,10 +1084,17 @@ static int polllua_wait(lua_State *L)
     timeout = (int)(dtimeout * 1000.0);
   
   set->count = 0;
-  errno      = 0;
-  poll(set->set,set->idx,timeout);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
+  events     = poll(set->set,set->idx,timeout);
+  if (events == -1)
+  {
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushboolean(L,events == 0);
+  }
   return 2;
 }
 
@@ -1111,6 +1121,7 @@ static int polllua_events(lua_State *L)
 #ifdef POLLSET_IMPL_SELECT
 #define POLLSET_IMPL    "select"
 
+#include <stdbool.h>
 #include <math.h>
 #include <sys/select.h>
 
@@ -1338,6 +1349,7 @@ static int polllua_wait(lua_State *L)
   double          timeout = luaL_optnumber(L,2,-1.0);
   struct timeval  tout;
   struct timeval *ptout;
+  int             events;
   
   if (timeout < 0)
     ptout = NULL;
@@ -1356,11 +1368,18 @@ static int polllua_wait(lua_State *L)
   set->swrite  = set->write;
   set->sexcept = set->except;
   set->count   = 0;
-  errno        = 0;
+  events       = select(FD_SETSIZE,&set->sread,&set->swrite,&set->sexcept,ptout);
   
-  select(FD_SETSIZE,&set->sread,&set->swrite,&set->sexcept,ptout);
-  lua_pushboolean(L,errno == 0);
-  lua_pushinteger(L,errno);
+  if (events == -1)
+  {
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,errno);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushboolean(L,events == 0);
+  }
   return 2;
 }
 
