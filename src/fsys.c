@@ -883,12 +883,12 @@ static int fsys_pipe(lua_State *L)
 
 /***********************************************************************/
 
-static int fsys_isfile(lua_State *L)
+static int fsys_isatty(lua_State *L)
 {
   if (!luaL_callmeta(L,1,"_tofd"))
     lua_pushboolean(L,false);
   else
-    lua_pushboolean(L,!isatty(luaL_checkinteger(L,-1)));
+    lua_pushboolean(L,isatty(luaL_checkinteger(L,-1)));
   return 1;
 }
 
@@ -1229,7 +1229,7 @@ static struct luaL_Reg const reg_fsys[] =
   { "dirname"   , fsys_dirname   } ,
   { "pipe"      , fsys_pipe      } ,
   { "redirect"  , fsys_redirect  } ,
-  { "isfile"    , fsys_isfile    } ,
+  { "isatty"    , fsys_isatty    } ,
   { "fnmatch"   , fsys_fnmatch   } ,
   { "expand"    , fsys_expand    } ,
   { "gexpand"   , fsys_gexpand   } ,
