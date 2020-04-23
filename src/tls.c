@@ -1080,11 +1080,17 @@ static int Ltls_accept_socket(lua_State *L)
 *			* tls.WANT_INPUT
 *			* tls.WANT_OUTPUT
 *
+* Note:		Only upon rc == 0 or tls.ERROR will the reference to the
+*		context be removed.  This way, we can still deal with
+*		closing out the connection with more I/O.
 ***************************************************************************/
 
 static int Ltls_close(lua_State *L)
 {
-  lua_pushinteger(L,tls_close(*(struct tls **)lua_touserdata(L,1)));
+  int rc = tls_close(*(struct tls **)lua_touserdata(L,1));
+  if ((rc != TLS_WANT_POLLIN) && (rc != TLS_WANT_POLLOUT))
+    Ltls___gc(L);
+  lua_pushinteger(L,rc);
   return 1;
 }
 
