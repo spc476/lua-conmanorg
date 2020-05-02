@@ -219,7 +219,7 @@ static int Ltlsconf_ca_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ca_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -239,7 +239,7 @@ static int Ltlsconf_ca_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ca_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   ca->buf , ca->len
           ) == 0);
   return 1;
@@ -257,7 +257,7 @@ static int Ltlsconf_ca_path(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ca_path(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
   ) == 0);
   return 1;
@@ -275,7 +275,7 @@ static int Ltlsconf_cert_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_cert_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -295,7 +295,7 @@ static int Ltlsconf_cert_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_cert_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   cert->buf , cert->len
           ) == 0);
   return 1;
@@ -313,7 +313,7 @@ static int Ltlsconf_ciphers(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ciphers(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -328,7 +328,7 @@ static int Ltlsconf_ciphers(lua_State *L)
 
 static int Ltlsconf_clear_keys(lua_State *L)
 {
-  tls_config_clear_keys(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_clear_keys(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -344,7 +344,7 @@ static int Ltlsconf_dheparams(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_dheparams(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -362,7 +362,7 @@ static int Ltlsconf_ecdhecurve(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ecdhecurve(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -378,7 +378,7 @@ static int Ltlsconf_ecdhecurve(lua_State *L)
 
 static int Ltlsconf_error(lua_State *L)
 {
-  lua_pushstring(L,tls_config_error(*(struct tls_config **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_config_error(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF)));
   return 1;
 }
 
@@ -391,7 +391,7 @@ static int Ltlsconf_error(lua_State *L)
 
 static int Ltlsconf_insecure_no_verify_cert(lua_State *L)
 {
-  tls_config_insecure_noverifycert(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_insecure_noverifycert(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -404,7 +404,7 @@ static int Ltlsconf_insecure_no_verify_cert(lua_State *L)
 
 static int Ltlsconf_insecure_no_verify_name(lua_State *L)
 {
-  tls_config_insecure_noverifyname(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_insecure_noverifyname(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -417,7 +417,7 @@ static int Ltlsconf_insecure_no_verify_name(lua_State *L)
 
 static int Ltlsconf_insecure_no_verify_time(lua_State *L)
 {
-  tls_config_insecure_noverifytime(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_insecure_noverifytime(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -433,7 +433,7 @@ static int Ltlsconf_key_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_key_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -453,7 +453,7 @@ static int Ltlsconf_key_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_key_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   key->buf , key->len
           ) == 0);
   return 1;
@@ -466,7 +466,7 @@ static int Ltlsconf_key_mem(lua_State *L)
 
 static int Ltlsconf_prefer_ciphers_client(lua_State *L)
 {
-  tls_config_prefer_ciphers_client(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_prefer_ciphers_client(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -477,7 +477,7 @@ static int Ltlsconf_prefer_ciphers_client(lua_State *L)
 
 static int Ltlsconf_prefer_ciphers_server(lua_State *L)
 {
-  tls_config_prefer_ciphers_server(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_prefer_ciphers_server(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -498,7 +498,7 @@ static int Ltlsconf_prefer_ciphers_server(lua_State *L)
 
 static int Ltlsconf_protocols(lua_State *L)
 {
-  struct tls_config **tlsconf  = lua_touserdata(L,1);
+  struct tls_config **tlsconf  = luaL_checkudata(L,1,TYPE_TLS_CONF);
   char const         *protostr = luaL_checkstring(L,2);
   uint32_t            proto;
   
@@ -521,7 +521,7 @@ static int Ltlsconf_protocols(lua_State *L)
 
 static int Ltlsconf_verify(lua_State *L)
 {
-  tls_config_verify(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_verify(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -534,7 +534,7 @@ static int Ltlsconf_verify(lua_State *L)
 
 static int Ltlsconf_verify_client(lua_State *L)
 {
-  tls_config_verify_client(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_verify_client(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -547,7 +547,7 @@ static int Ltlsconf_verify_client(lua_State *L)
 
 static int Ltlsconf_verify_client_optional(lua_State *L)
 {
-  tls_config_verify_client_optional(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_verify_client_optional(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -563,7 +563,7 @@ static int Ltlsconf_verify_depth(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_verify_depth(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   lua_tointeger(L,2)
           ) == 0);
   return 1;
@@ -582,7 +582,7 @@ static int Ltlsconf_keypair_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_keypair_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2),
                   luaL_checkstring(L,3)
           ) == 0);
@@ -604,7 +604,7 @@ static int Ltlsconf_keypair_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_keypair_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   cert->buf , cert->len ,
                   key->buf  , key->len
           ) == 0);
@@ -626,7 +626,7 @@ static int Ltlsconf_add_keypair_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_add_keypair_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2),
                   luaL_checkstring(L,3)
           ) == 0);
@@ -648,7 +648,7 @@ static int Ltlsconf_add_keypair_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_add_keypair_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   cert->buf , cert->len ,
                   key->buf  , key->len
           ) == 0);
@@ -668,7 +668,7 @@ static int Ltlsconf_alpn(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_alpn(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
   ) == 0);
   return 1;
@@ -688,7 +688,7 @@ static int Ltlsconf_add_keypair_ocsp_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_add_keypair_ocsp_file(
-                *(struct tls_config **)lua_touserdata(L,1),
+                *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                 luaL_checkstring(L,2),
                 luaL_checkstring(L,3),
                 luaL_checkstring(L,4)
@@ -712,7 +712,7 @@ static int Ltlsconf_add_keypair_ocsp_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_add_keypair_ocsp_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   cert->buf   , cert->len ,
                   key->buf    , key->len  ,
                   staple->buf , staple->len
@@ -751,7 +751,7 @@ static int Ltlsconf_keypair_ocsp_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_keypair_ocsp_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2),
                   luaL_checkstring(L,3),
                   luaL_checkstring(L,4)
@@ -775,7 +775,7 @@ static int Ltlsconf_keypair_ocsp_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_keypair_ocsp_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   cert->buf   , cert->len ,
                   key->buf    , key->len  ,
                   staple->buf , staple->len
@@ -792,7 +792,7 @@ static int Ltlsconf_keypair_ocsp_mem(lua_State *L)
 
 static int Ltlsconf_ocsp_require_stapling(lua_State *L)
 {
-  tls_config_ocsp_require_stapling(*(struct tls_config **)lua_touserdata(L,1));
+  tls_config_ocsp_require_stapling(*(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 0;
 }
 
@@ -808,7 +808,7 @@ static int Ltlsconf_ocsp_staple_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ocsp_staple_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -828,7 +828,7 @@ static int Ltlsconf_ocsp_staple_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ocsp_staple_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   staple->buf , staple->len
           ) == 0);
   return 1;
@@ -849,7 +849,7 @@ static int Ltlsconf_session_id(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_session_id(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   sid,len
           ) == 0);
   return 1;
@@ -867,7 +867,7 @@ static int Ltlsconf_session_lifetime(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_session_lifetime(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkinteger(L,2)
           ) == 0);
   return 1;
@@ -888,7 +888,7 @@ static int Ltlsconf_crl_file(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_crl_file(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -908,7 +908,7 @@ static int Ltlsconf_crl_mem(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_crl_mem(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   crl->buf , crl->len
           ) == 0);
   return 1;
@@ -928,7 +928,7 @@ static int Ltlsconf_ecdhecurves(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_ecdhecurves(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkstring(L,2)
           ) == 0);
   return 1;
@@ -948,7 +948,7 @@ static int Ltlsconf_session_fd(lua_State *L)
   lua_pushboolean(
           L,
           tls_config_set_session_fd(
-                  *(struct tls_config **)lua_touserdata(L,1),
+                  *(struct tls_config **)luaL_checkudata(L,1,TYPE_TLS_CONF),
                   luaL_checkinteger(L,2)
           ) == 0);
   return 1;
@@ -1022,7 +1022,7 @@ static int Ltls___gc(lua_State *L)
 static int Ltls_accept_fds(lua_State *L)
 {
   struct tls **ctls;
-  struct tls **tls     = lua_touserdata(L,1);
+  struct tls **tls     = luaL_checkudata(L,1,TYPE_TLS);
   int          fdread  = luaL_checkinteger(L,2);
   int          fdwrite = luaL_checkinteger(L,3);
   
@@ -1051,7 +1051,7 @@ static int Ltls_accept_fds(lua_State *L)
 static int Ltls_accept_socket(lua_State *L)
 {
   struct tls **ctls;
-  struct tls **tls  = lua_touserdata(L,1);
+  struct tls **tls  = luaL_checkudata(L,1,TYPE_TLS);
   int          sock = luaL_checkinteger(L,2);
   
   ctls = lua_newuserdata(L,sizeof(struct tls *));
@@ -1087,7 +1087,7 @@ static int Ltls_accept_socket(lua_State *L)
 
 static int Ltls_close(lua_State *L)
 {
-  int rc = tls_close(*(struct tls **)lua_touserdata(L,1));
+  int rc = tls_close(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS));
   if ((rc != TLS_WANT_POLLIN) && (rc != TLS_WANT_POLLOUT))
     Ltls___gc(L);
   lua_pushinteger(L,rc);
@@ -1104,7 +1104,7 @@ static int Ltls_close(lua_State *L)
 
 static int Ltls_configure(lua_State *L)
 {
-  struct tls        **tls     = lua_touserdata(L,1);
+  struct tls        **tls     = luaL_checkudata(L,1,TYPE_TLS);
   struct tls_config **tlsconf = luaL_checkudata(L,2,TYPE_TLS_CONF);
   
   lua_pushboolean(L,tls_configure(*tls,*tlsconf) == 0);
@@ -1119,7 +1119,7 @@ static int Ltls_configure(lua_State *L)
 
 static int Ltls_conn_cipher(lua_State *L)
 {
-  lua_pushstring(L,tls_conn_cipher(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_conn_cipher(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1131,7 +1131,7 @@ static int Ltls_conn_cipher(lua_State *L)
 
 static int Ltls_conn_version(lua_State *L)
 {
-  lua_pushstring(L,tls_conn_version(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_conn_version(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1153,7 +1153,7 @@ static int Ltls_conn_version(lua_State *L)
 
 static int Ltls_connect(lua_State *L)
 {
-  struct tls **tls = lua_touserdata(L,1);
+  struct tls **tls = luaL_checkudata(L,1,TYPE_TLS);
   int          rc;
   
   if (lua_isnoneornil(L,4))
@@ -1196,7 +1196,7 @@ static int Ltls_connect_fds(lua_State *L)
   lua_pushboolean(
           L,
           tls_connect_fds(
-                  *(struct tls **)lua_touserdata(L,1),
+                  *(struct tls **)luaL_checkudata(L,1,TYPE_TLS),
                   luaL_checkinteger(L,2),
                   luaL_checkinteger(L,3),
                   luaL_checkstring(L,4)
@@ -1219,7 +1219,7 @@ static int Ltls_connect_fds(lua_State *L)
 static int Ltls_connect_socket(lua_State *L)
 {
   lua_pushboolean(L,tls_connect_socket(
-          *(struct tls **)lua_touserdata(L,1),
+          *(struct tls **)luaL_checkudata(L,1,TYPE_TLS),
           luaL_checkinteger(L,2),
           luaL_checkstring(L,3)
         ) == 0);
@@ -1234,7 +1234,7 @@ static int Ltls_connect_socket(lua_State *L)
 
 static int Ltls_error(lua_State *L)
 {
-  lua_pushstring(L,tls_error(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_error(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1253,7 +1253,7 @@ static int Ltls_error(lua_State *L)
 
 static int Ltls_handshake(lua_State *L)
 {
-  lua_pushinteger(L,tls_handshake(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_handshake(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1269,7 +1269,7 @@ static int Ltls_peer_cert_contains_name(lua_State *L)
   lua_pushboolean(
           L,
           tls_peer_cert_contains_name(
-                  *(struct tls **)lua_touserdata(L,1),
+                  *(struct tls **)luaL_checkudata(L,1,TYPE_TLS),
                   luaL_checkstring(L,2)
           ));
   return 1;
@@ -1286,7 +1286,7 @@ static int Ltls_peer_cert_contains_name(lua_State *L)
 
 static int Ltls_peer_cert_hash(lua_State *L)
 {
-  lua_pushstring(L,tls_peer_cert_hash(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_peer_cert_hash(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1298,7 +1298,7 @@ static int Ltls_peer_cert_hash(lua_State *L)
 
 static int Ltls_peer_cert_issuer(lua_State *L)
 {
-  lua_pushstring(L,tls_peer_cert_issuer(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_peer_cert_issuer(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1310,7 +1310,7 @@ static int Ltls_peer_cert_issuer(lua_State *L)
 
 static int Ltls_peer_cert_provided(lua_State *L)
 {
-  lua_pushboolean(L,tls_peer_cert_provided(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushboolean(L,tls_peer_cert_provided(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1322,7 +1322,7 @@ static int Ltls_peer_cert_provided(lua_State *L)
 
 static int Ltls_peer_cert_subject(lua_State *L)
 {
-  lua_pushstring(L,tls_peer_cert_subject(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_peer_cert_subject(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1346,7 +1346,7 @@ static int Ltls_peer_cert_subject(lua_State *L)
 
 static int Ltls_read(lua_State *L)
 {
-  struct tls  **tls = lua_touserdata(L,1);
+  struct tls  **tls = luaL_checkudata(L,1,TYPE_TLS);
   size_t        len = luaL_optinteger(L,2,LUAL_BUFFERSIZE);
   luaL_Buffer   buf;
   char         *p;
@@ -1373,7 +1373,7 @@ static int Ltls_read(lua_State *L)
 
 static int Ltls_reset(lua_State *L)
 {
-  struct tls **tls = lua_touserdata(L,1);
+  struct tls **tls = luaL_checkudata(L,1,TYPE_TLS);
   
   tls_reset(*tls);
   lua_pushlightuserdata(L,*tls);
@@ -1410,7 +1410,7 @@ static int Ltls_reset(lua_State *L)
 
 static int Ltls_write(lua_State *L)
 {
-  struct tls **tls  = lua_touserdata(L,1);
+  struct tls **tls  = luaL_checkudata(L,1,TYPE_TLS);
   size_t       len;
   char const  *data = luaL_checklstring(L,2,&len);
   
@@ -1427,7 +1427,7 @@ static int Ltls_write(lua_State *L)
 
 static int Ltls_peer_cert_notafter(lua_State *L)
 {
-  lua_pushinteger(L,tls_peer_cert_notafter(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_peer_cert_notafter(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1439,7 +1439,7 @@ static int Ltls_peer_cert_notafter(lua_State *L)
 
 static int Ltls_peer_cert_notbefore(lua_State *L)
 {
-  lua_pushinteger(L,tls_peer_cert_notbefore(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_peer_cert_notbefore(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 #endif
@@ -1451,7 +1451,7 @@ static int Ltls_peer_cert_notbefore(lua_State *L)
 
 static int Ltls_accept_cbs(lua_State *L)
 {
-  struct tls **tls = lua_touserdata(L,1);
+  struct tls **tls = luaL_checkudata(L,1,TYPE_TLS);
   struct tls **ctls;
   
   lua_settop(L,4);
@@ -1492,7 +1492,7 @@ static int Ltls_accept_cbs(lua_State *L)
 
 static int Ltls_conn_alpn_selected(lua_State *L)
 {
-  lua_pushstring(L,tls_conn_alpn_selected(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_conn_alpn_selected(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1504,7 +1504,7 @@ static int Ltls_conn_alpn_selected(lua_State *L)
 
 static int Ltls_conn_servername(lua_State *L)
 {
-  lua_pushstring(L,tls_conn_servername(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_conn_servername(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1527,7 +1527,7 @@ static int Ltls_conn_servername(lua_State *L)
 
 static int Ltls_connect_cbs(lua_State *L)
 {
-  struct tls **tls = lua_touserdata(L,1);
+  struct tls **tls = luaL_checkudata(L,1,TYPE_TLS);
   
   lua_settop(L,5);
   
@@ -1575,7 +1575,7 @@ static int Ltls_ocsp_process_response(lua_State *L)
   lua_pushboolean(
           L,
           tls_ocsp_process_response(
-                  *(struct tls **)lua_touserdata(L,1),
+                  *(struct tls **)luaL_checkudata(L,1,TYPE_TLS),
                   (unsigned char const *)response,
                   len
           ) == 0);
@@ -1590,7 +1590,7 @@ static int Ltls_ocsp_process_response(lua_State *L)
 
 static int Ltls_peer_ocsp_cert_status(lua_State *L)
 {
-  lua_pushinteger(L,tls_peer_ocsp_cert_status(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_peer_ocsp_cert_status(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1602,7 +1602,7 @@ static int Ltls_peer_ocsp_cert_status(lua_State *L)
 
 static int Ltls_peer_ocsp_crl_reason(lua_State *L)
 {
-  lua_pushinteger(L,tls_peer_ocsp_crl_reason(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_peer_ocsp_crl_reason(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1616,7 +1616,7 @@ static int Ltls_peer_ocsp_next_update(lua_State *L)
 {
   lua_pushinteger(
           L,
-          tls_peer_ocsp_next_update(*(struct tls **)lua_touserdata(L,1))
+          tls_peer_ocsp_next_update(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS))
   );
   return 1;
 }
@@ -1629,7 +1629,7 @@ static int Ltls_peer_ocsp_next_update(lua_State *L)
 
 static int Ltls_peer_ocsp_response_status(lua_State *L)
 {
-  lua_pushinteger(L,tls_peer_ocsp_response_status(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_peer_ocsp_response_status(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1641,7 +1641,7 @@ static int Ltls_peer_ocsp_response_status(lua_State *L)
 
 static int Ltls_peer_ocsp_revocation_time(lua_State *L)
 {
-  lua_pushinteger(L,tls_peer_ocsp_revocation_time(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_peer_ocsp_revocation_time(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1653,7 +1653,7 @@ static int Ltls_peer_ocsp_revocation_time(lua_State *L)
 
 static int Ltls_peer_ocsp_this_update(lua_State *L)
 {
-  lua_pushinteger(L,tls_peer_ocsp_this_update(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushinteger(L,tls_peer_ocsp_this_update(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 
@@ -1665,7 +1665,7 @@ static int Ltls_peer_ocsp_this_update(lua_State *L)
 
 static int Ltls_peer_ocsp_url(lua_State *L)
 {
-  lua_pushstring(L,tls_peer_ocsp_url(*(struct tls **)lua_touserdata(L,1)));
+  lua_pushstring(L,tls_peer_ocsp_url(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
 #endif
@@ -1683,7 +1683,7 @@ static int Ltls_peer_cert_chain_pem(lua_State *L)
   char const *chain;
   size_t      len;
   
-  chain = (char const *)tls_peer_cert_chain_pem(*(struct tls **)lua_touserdata(L,1),&len);
+  chain = (char const *)tls_peer_cert_chain_pem(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS),&len);
   if (chain != NULL)
     lua_pushlstring(L,chain,len);
   else
@@ -1703,7 +1703,7 @@ static int Ltls_conn_session_resumed(lua_State *L)
 {
   lua_pushboolean(
           L,
-          tls_conn_session_resumed(*(struct tls **)lua_touserdata(L,1))
+          tls_conn_session_resumed(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS))
   );
   return 1;
 }
@@ -1722,7 +1722,7 @@ static int Ltls_conn_session_resumed(lua_State *L)
 
 static int Ltlsmem___tostring(lua_State *L)
 {
-  struct Ltlsmem *mem = lua_touserdata(L,1);
+  struct Ltlsmem *mem = luaL_checkudata(L,1,TYPE_TLS_MEM);
   lua_pushlstring(L,(char const *)mem->buf,mem->len);
   return 1;
 }
