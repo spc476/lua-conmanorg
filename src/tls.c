@@ -25,6 +25,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include <syslog.h>
 #include <openssl/opensslv.h>
 #include <tls.h>
 
@@ -1003,6 +1004,8 @@ static int Ltls___gc(lua_State *L)
   struct tls **tls = luaL_checkudata(L,1,TYPE_TLS);
   if (*tls != NULL)
   {
+    luaL_traceback(L,L,"__gc",0);
+    lua_setuservalue(L,1);
     lua_pushlightuserdata(L,*tls);
     lua_pushnil(L);
     lua_settable(L,LUA_REGISTRYINDEX);
@@ -1414,7 +1417,18 @@ static int Ltls_write(lua_State *L)
   size_t       len;
   char const  *data = luaL_checklstring(L,2,&len);
   
-  lua_pushinteger(L,tls_write(*tls,data,len));
+  if (*tls == NULL)
+  {
+    lua_getuservalue(L,1);
+    if (!lua_isnil(L,-1))
+      syslog(LOG_NOTICE,"%s",lua_tostring(L,-1));
+    luaL_traceback(L,L,"write",0);
+    syslog(LOG_NOTICE,"%s",lua_tostring(L,-1));
+    lua_pop(L,2);
+    lua_pushinteger(L,-1);
+  }
+  else
+    lua_pushinteger(L,tls_write(*tls,data,len));
   return 1;
 }
 
