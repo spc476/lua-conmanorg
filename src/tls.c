@@ -962,6 +962,23 @@ static int Ltlsconf_session_fd(lua_State *L)
 *
 ***************************************************************************/
 
+#if LUA_VERSION_NUM >= 502
+  static int Ltls____next(lua_State *L)
+  {
+    return lua_next(L,1) ? 2 : 0;
+  }
+  
+  static int Ltls___pairs(lua_State *L)
+  {
+    lua_pushcfunction(L,Ltls____next);
+    lua_getuservalue(L,1);
+    lua_pushnil(L);
+    return 3;
+  }
+#endif
+
+/**************************************************************************/
+
 static int Ltls___index(lua_State *L)
 {
   lua_getmetatable(L,1);
@@ -1956,6 +1973,9 @@ static luaL_Reg const m_tlsconfmeta[] =
 
 static luaL_Reg const m_tlsmeta[] =
 {
+#if LUA_VERSION_NUM >= 502
+  { "__pairs"                   , Ltls___pairs                     } ,
+#endif
   { "__index"                   , Ltls___index                     } ,
   { "__newindex"                , Ltls___newindex                  } ,
   { "__tostring"                , Ltls___tostring                  } ,
