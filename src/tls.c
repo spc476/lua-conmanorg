@@ -190,7 +190,7 @@ static ssize_t Xtls_write(struct tls *tls,void const *buf,size_t buflen,void *cb
 
 static int Ltlsconf___tostring(lua_State *L)
 {
-  lua_pushfstring(L,"tlsconf: %p",lua_touserdata(L,1));
+  lua_pushfstring(L,"tlsconf: %p",luaL_checkudata(L,1,TYPE_TLS_CONF));
   return 1;
 }
 
@@ -198,7 +198,7 @@ static int Ltlsconf___tostring(lua_State *L)
 
 static int Ltlsconf___gc(lua_State *L)
 {
-  struct tls_config **tlsconf = lua_touserdata(L,1);
+  struct tls_config **tlsconf = luaL_checkudata(L,1,TYPE_TLS_CONF);
   if (*tlsconf != NULL)
   {
     tls_config_free(*tlsconf);
@@ -992,7 +992,7 @@ static int Ltls___newindex(lua_State *L)
 
 static int Ltls___tostring(lua_State *L)
 {
-  lua_pushfstring(L,"tls: %p",lua_touserdata(L,1));
+  lua_pushfstring(L,"tls: %p",luaL_checkudata(L,1,TYPE_TLS));
   return 1;
 }
 
@@ -1000,7 +1000,7 @@ static int Ltls___tostring(lua_State *L)
 
 static int Ltls___gc(lua_State *L)
 {
-  struct tls **tls = lua_touserdata(L,1);
+  struct tls **tls = luaL_checkudata(L,1,TYPE_TLS);
   if (*tls != NULL)
   {
     lua_pushlightuserdata(L,*tls);
