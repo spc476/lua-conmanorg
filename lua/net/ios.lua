@@ -68,47 +68,6 @@ local HEADERS  = CRLF * CRLF * lpeg.Cp() * lpeg.Cp() * lpeg.Cc(true)
                +                                  lpeg.Cp() * lpeg.Cp() * lpeg.Cc(false)
 
 -- *******************************************************************
-
-local WS = lpeg.S" \t\r\n"^1 * lpeg.Cc(true) * lpeg.Cp()
-         + lpeg.Cc(false) * lpeg.Cp()
-
-local number do
-  local Cc = lpeg.Cc
-  local Cp = lpeg.Cp
-  local C  = lpeg.C
-  local P  = lpeg.P
-  local R  = lpeg.R
-  local S  = lpeg.S
-  
-  -- ============================================================
-  -- format for number (from Lua source ode) (Lua 5.3-liolib.c:440)
-  --
-  -- optional white space
-  -- optional sign +-
-  -- if leading 0,
-  --	0[Xx] - flag hex digits
-  --		else digits (and accept leading 0)
-  -- digits*
-  -- optional decimal point (or locale point) followed by (hex)digits
-  -- if digits, optional ([pP]/[eE]) '+-'? decdigits*
-  -- =============================================================
-  
-  local sign   = S"+-"^-1
-  local dec    = R"09"
-  local hex    = R("09","af","AF")
-  
-  local hexadecimal = C(sign * (P"0x" + P"0X") *  hex * hex^0     * P"." * hex^0 * S"Pp" * sign * dec^0) * Cc('float')
-                    + C(sign * (P"0x" + P"0X") *  hex * hex^0 * S"Pp" * sign * dec^0) * Cc('float')
-                    + C(sign * (P"0x" + P"0X") * (hex * hex^0)^-1 * P"." * hex^0) * Cc('float')
-                    + C(sign * (P"0x" + P"0X") *  hex * hex^0) * Cc('int')
-  local decimal     = C(sign *  dec * dec^0     * P"." * dec^0 * S"Ee" * sign * dec^0) * Cc('float')
-                    + C(sign *  dec * dec^0  * S"Ee" * sign * dec^0) * Cc('float')
-                    + C(sign * (dec * dec^0)^-1 * P"." * dec^0) * Cc('float')
-                    + C(sign *  dec * dec^0) * Cc('int')
-  number            = (hexadecimal + decimal) * Cp()
-end
-
--- *******************************************************************
 -- usage:	data = read_data(ios,pattern)
 -- desc:	Read data from a source
 -- input:	ios (table) Input/Output object
@@ -148,93 +107,78 @@ end
 -- desc:	Read a number (in text form) to a number
 -- input:	ios (table) Input/Output object
 -- return:	number (number) data from source, nil on error
+--
+-- Note:	This is a direct translation of read_number() from
+--		liolib.c
 -- *******************************************************************
 
 local function read_number(ios)
-  local ws,wpos = WS:match(ios._readbuf,ios._rpos)
-
-  if ws then
-    ios._readbuf = ios._readbuf:sub(wpos,-1)
-    ios._rpos    = 1
-  end
-  
-  -- ------------------------------------------------------------------------
-  -- Okay, by now we've skipped any leading whitespace left in the buffer.
-  -- We now need to start reading a number.  To get past the variations in
-  -- numbers, we need at least four characters (sign, 0x, digit) to ensure a
-  -- proper read of a number.  If there's no more data, then we hit EOF
-  -- without reading a number.
-  --
-  -- Also, integer literals are limited in size, so go through the pain of
-  -- handling that case too (additional numnbers are NOT parsed over).  The
-  -- handling around that issue *might* not match exact, but I think it's
-  -- close enough for now.  There are also a few very odd edge cases I'm
-  -- missing, but I'll deal with those as they come.
-  --
-  -- Also, this code was tested against Lua 5.3.  Lua versions 5.1 and 5.2
-  -- might see some odd behavior.
-  -- ------------------------------------------------------------------------
-  
-  if #ios._readbuf < 4 then
-    local data = ios:_refill()
-    if not data or #data == 0 then
-      ios._eof = true
-      return nil
-    end
-    ios._readbuf = ios._readbuf .. data
-    return read_number(ios)
-  end
-  
-  local c,ntype,pos = number:match(ios._readbuf,ios._rpos)
-  
-  if not c then
-    local data = ios:_refill()
-    
-    if not data or #data == 0 then
-      ios._eof = true
-      return nil
-    end
-    ios._readbuf = ios._readbuf .. data
-    return read_number(ios)
-  end
-  
-  if pos > #ios._readbuf then
-    local data = ios:_refill()
-    if not data or #data == 0 then
-      if ntype == 'int' and #c > 20 then
-        ios._readbuf = ios._readbuf:sub(20,-1)
-        ios._rpos    = 1
-        if #ios._readbuf == 0 then
-          ios._eof = true
-        end
-        return nil
-      end
-      
-      ios._eof = true
-      
-      if ntype == 'int' then
-        return tointeger(c)
-      else
-        return tonumber(c)
-      end
-    end
-    
-    ios._readbuf = ios._readbuf .. data
-    return read_number(ios)
-  else
-    if ntype == 'int' and #c > 20 then
-      ios._readbuf = ios._readbuf:sub(20,-1)
-      ios._rpos    = 1
-      return nil
-    end
-    
-    ios._readbuf = ios._readbuf:sub(pos,-1)
-    ios._rpos    = 1
-    if ntype == 'int' then
-      return tointeger(c)
+  local function nextc(rn)
+    if #rn.buff >= 200 then
+      return false
     else
-      return tonumber(c)
+      rn.buff = rn.buff .. rn.c
+      rn.c    = ios:read(1)
+      return true
     end
+  end
+  
+  local function test2(rn,c1,c2)
+    if rn.c == c1 or rn.c == c2 then
+      return nextc(rn)
+    else
+      return false
+    end
+  end
+  
+  local function readdigits(rn,hex)
+    local count = 0
+    while rn.c and rn.c:match(hex) and nextc(rn) do
+      count = count + 1
+    end
+    return count
+  end
+
+  local rn        = { buff = "" , c = "" }
+  local hex       = "%d"
+  local exp1,exp2 = 'e','E'
+  local count     = 0
+  local integer   = true
+  
+  repeat
+    rn.c = ios:read(1)
+  until not rn.c or not rn.c:match"%s"
+  
+  test2(rn,'-','+')
+  if test2(rn,'0','0') then
+    if test2(rn,'x','X') then
+      hex = "%x"
+      exp1,exp2 = 'p','P'
+    else
+      count = 1
+    end
+  end
+  
+  count = count + readdigits(rn,hex)
+  if test2(rn,'.','.') then
+    count   = count + readdigits(rn,hex)
+    integer = false
+  end
+  
+  if count > 0 and test2(rn,exp1,exp2) then
+    test2(rn,'-','+')
+    readdigits(rn,"%d")
+    integer = false
+  end
+  
+  if rn.c then
+    ios._readbuf = rn.c .. ios._readbuf -- ungetc()
+  end
+  
+  if integer then
+    return tointeger(rn.buff)
+  else
+    return tonumber(rn.buff)
   end
 end
 
@@ -338,8 +282,22 @@ end
 
 local function read(ios,...)
   local function read_bytes(amount)
-    if ios._eof    then return     end
-    if amount == 0 then return ""  end
+    if ios._eof then return end
+    
+    if amount == 0 then
+      if #ios._readbuf > 0 then return "" end
+      local data,err = ios:_refill()
+      if not data then
+        return nil,err
+      end
+      
+      if data == "" then
+        ios._eof = true
+        return nil
+      end
+      ios._readbuf = data
+      return ""
+    end
     
     if #ios._readbuf >= amount then
       local data   = ios._readbuf:sub(1,amount)
@@ -440,7 +398,7 @@ end
 
 local function write(ios,...)
   if ios._eof then
-    return false,errno[errno.ECONNRESET],errno.ECONNRESET
+    return false,errno[errno.EBADF],errno.EBADF
   end
   
   local output = ""
