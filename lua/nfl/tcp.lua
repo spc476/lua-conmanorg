@@ -62,6 +62,19 @@ local function create_handler(conn,remote)
   end
   
   ios.close = function()
+    -- ---------------------------------------------------------------------
+    -- It might be a bug *somewhere*, but on Linux, this is required to get
+    -- Unix domain sockets to work with the NFL driver.  There's a race
+    -- condition where writting data then calling close() may cause the
+    -- other side to receive no data.  This does NOT appoear to happen with
+    -- TCP sockets, but this doesn't hurt the TCP side in any case.
+    -- ---------------------------------------------------------------------
+    
+    while conn.sendqueue and conn.sendqueue > 0 do
+      nfl.SOCKETS:update(conn,'w')
+      coroutine.yield()
+    end
+    
     nfl.SOCKETS:remove(conn)
     local err = conn:close()
     return err == 0,errno[err],err
