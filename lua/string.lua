@@ -174,11 +174,14 @@ local hyphen     = P"-"
                  + P"\239\188\141" -- fullwidth hyphen-minus
                  + P"\239\189\165" -- halfwidth Katakana middle dot
                  
+local reset      = P"\194\133"     -- NEL-definitely break here
+                 
 local chars      = whitespace * lpeg.Cp() * lpeg.Cc'space'
                  + shy        * lpeg.Cp() * lpeg.Cc'shy'
                  + hyphen     * lpeg.Cp() * lpeg.Cc'hyphen'
                  + combining  * lpeg.Cp() * lpeg.Cc'combine'
                  + ignore     * lpeg.Cp() * lpeg.Cc'ignore'
+                 + reset      * lpeg.Cp() * lpeg.Cc'reset'
                  + uchar      * lpeg.Cp() * lpeg.Cc'char'
                  +              lpeg.Cp() * lpeg.Cc'bad'
                  
@@ -236,6 +239,15 @@ function wrapt(s,margin)
       -- combining chars don't count
     elseif ctype == 'ignore' then -- luacheck: ignore
       -- ignore characters are ignored
+    elseif ctype == 'reset' then
+      -- ----------------------------------------------------------
+      -- the only control character we accept here, the NEL, which
+      -- here means "definitely break here!"
+      -- ----------------------------------------------------------
+      
+      breakhere = i - 1
+      resume    = n
+      cnt       = margin + 1
     elseif ctype == 'bad' then
       assert(false,"bad character")
     end
