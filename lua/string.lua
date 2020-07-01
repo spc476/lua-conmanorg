@@ -245,7 +245,7 @@ function wrapt(s,margin)
       -- here means "definitely break here!"
       -- ----------------------------------------------------------
       
-      breakhere = i - 1 -- XXX bug here? Loosing a character?
+      breakhere = i
       resume    = n
       cnt       = margin + 1
     elseif ctype == 'bad' then
