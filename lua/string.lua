@@ -32,6 +32,7 @@ local _VERSION = _VERSION
 local require  = require
 local type     = type
 local tostring = tostring
+local assert   = assert
 
 if _VERSION == "Lua 5.1" then
   module("org.conman.string")
