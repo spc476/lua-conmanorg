@@ -680,7 +680,30 @@ static int fsys_dirname(lua_State *L)
   return 1;
 }
 
-/***********************************************************************/
+/***********************************************************************
+* Usage:	ext = fsys.extension(path)
+* Desc:		Return the extension (if any) of a filename
+* Input:	path (string)
+* Return:	ext (string)
+*
+* Note:		Returns an empty string if no extension exists.
+**********************************************************************/
+
+static int fsys_extension(lua_State *L)
+{
+  char const *name  = luaL_checkstring(L,1);
+  char const *slash = strrchr(name,*LUA_DIRSEP);
+  char const *dot   = strrchr(name,'.');
+  
+  if (dot && (dot > slash))
+    lua_pushstring(L,dot + 1);
+  else
+    lua_pushliteral(L,"");
+  
+  return 1;
+}
+
+/************************************************************************/
 
 static int fsyslib_close(lua_State *L)
 {
@@ -1227,6 +1250,7 @@ static struct luaL_Reg const reg_fsys[] =
   { "_safename" , fsys__safename } ,
   { "basename"  , fsys_basename  } ,
   { "dirname"   , fsys_dirname   } ,
+  { "extension" , fsys_extension } ,
   { "pipe"      , fsys_pipe      } ,
   { "redirect"  , fsys_redirect  } ,
   { "isatty"    , fsys_isatty    } ,
