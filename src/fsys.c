@@ -705,6 +705,22 @@ static int fsys_extension(lua_State *L)
 
 /************************************************************************/
 
+static int fsys_filename(lua_State *L)
+{
+  char const *name  = luaL_checkstring(L,1);
+  char const *slash = strrchr(name,*LUA_DIRSEP);
+  char const *dot   = strrchr(name,'.');
+  
+  if (dot && (dot > slash))
+    lua_pushlstring(L,name,(size_t)(dot - name));
+  else
+    lua_pushvalue(L,1);
+    
+  return 1;
+}
+
+/************************************************************************/
+
 static int fsyslib_close(lua_State *L)
 {
 #if LUA_VERSION_NUM == 501
@@ -1251,6 +1267,7 @@ static struct luaL_Reg const reg_fsys[] =
   { "basename"  , fsys_basename  } ,
   { "dirname"   , fsys_dirname   } ,
   { "extension" , fsys_extension } ,
+  { "filename"  , fsys_filename  } ,
   { "pipe"      , fsys_pipe      } ,
   { "redirect"  , fsys_redirect  } ,
   { "isatty"    , fsys_isatty    } ,

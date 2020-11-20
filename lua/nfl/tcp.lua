@@ -85,6 +85,7 @@ local function create_handler(conn,remote)
       nfl.SOCKETS:remove(conn)
       ios._eof = true
       nfl.schedule(ios.__co,false,errno.ECONNREFUSED)
+      return
     end
     
     if event.read then
@@ -95,9 +96,14 @@ local function create_handler(conn,remote)
           ios._eof = true
         end
         nfl.schedule(ios.__co,packet)
+        if ios._eof then return end
       else
         if err ~= errno.EAGAIN then
           syslog('error',"socket:recv() = %s",errno[err])
+          nfl.SOCKETS:remove(conn)
+          ios._eof = true
+          nfl.schedule(ios.__co,false,err)
+          return
         end
       end
     end
@@ -109,6 +115,10 @@ local function create_handler(conn,remote)
           writebuf = writebuf:sub(bytes + 1,-1)
         else
           syslog('error',"socket:send() = %s",errno[err])
+          nfl.SOCKETS:remove(conn)
+          ios._eof = true
+          nfl.schedule(ios.__co,false,err)
+          return
         end
       end
       
