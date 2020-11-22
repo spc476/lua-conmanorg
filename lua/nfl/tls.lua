@@ -154,7 +154,7 @@ local function create_handler(conn,remote)
         if #packet == 0 then
           nfl.SOCKETS:remove(conn)
           ios._eof = true
-          nfl.schedule(ios.__co,true)
+          nfl.schedule(ios.__co,"")
         end
         
         ios.__rawbuf = ios.__rawbuf .. packet
