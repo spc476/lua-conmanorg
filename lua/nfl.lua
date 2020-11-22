@@ -196,7 +196,7 @@ local function eventloop(done_f)
     local co        = table.remove(RUNQUEUE,1)
     RUNQUEUE[co[1]] = nil
     
-    assert(coroutine.status(co[1]) == 'suspended')
+    assert(coroutine.status(co[1]) == 'suspended' or coroutine.status(co[1]) == 'dead')
     
     local ret = { coroutine.resume(unpack(co)) }
     
