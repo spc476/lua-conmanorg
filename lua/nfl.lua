@@ -196,19 +196,40 @@ local function eventloop(done_f)
     local co        = table.remove(RUNQUEUE,1)
     RUNQUEUE[co[1]] = nil
     
-    assert(coroutine.status(co[1]) == 'suspended' or coroutine.status(co[1]) == 'dead')
+    local status = coroutine.status(co[1])
     
-    local ret = { coroutine.resume(unpack(co)) }
+    if status == 'dead' then
+      syslog('critical',"A dead coroutine was scheduled to run")
+      assert(REFQUEUE._n > 0)
+      REFQUEUE[co[1]] = nil
+      REFQUEUE._n     = REFQUEUE._n - 1
     
-    if not ret[1] then
-      syslog('error',"CRASH: coroutine %s dead: %s",tostring(co[1]),ret[2])
-      local msg = debug.traceback(co[1])
-      for entry in msg:gmatch("[^%\n]+") do
-        syslog('error',"CRASH: %s: %s",tostring(co[1]),entry)
+    elseif status == 'suspended' then
+      local ret = { coroutine.resume(unpack(co)) }
+      
+      if not ret[1] then
+        syslog('error',"CRASH: coroutine %s dead: %s",tostring(co[1]),ret[2])
+        local msg = debug.traceback(co[1])
+        for entry in msg:gmatch("[^%\n]+") do
+          syslog('error',"CRASH: %s: %s",tostring(co[1]),entry)
+        end
       end
-    end
+      
+      if coroutine.status(co[1]) == 'dead' then
+        assert(REFQUEUE._n > 0)
+        REFQUEUE[co[1]] = nil
+        REFQUEUE._n     = REFQUEUE._n - 1
+      end
     
-    if coroutine.status(co[1]) == 'dead' then
+    else
+      -- =====================================================================
+      -- I'm not sure what's happening here, but somehow a coroutine is
+      -- getting into a state that isn't 'dead' or 'suspended'.  If that
+      -- happens, let's print out the status, and dereference.  It will
+      -- eventually be reclaimed.
+      -- =====================================================================
+    
+      syslog('critical',"unexpected coroutine state %q",status)
       assert(REFQUEUE._n > 0)
       REFQUEUE[co[1]] = nil
       REFQUEUE._n     = REFQUEUE._n - 1
