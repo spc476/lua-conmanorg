@@ -34,7 +34,6 @@ local setmetatable = setmetatable
 
 local string = require "string"
 local os     = require "os"
-local table  = require "table"
 local zip    = require "org.conman.zip"
 local idiv   = zip.idiv
 
@@ -203,7 +202,6 @@ function eocd(zf)
       return nil,"bad offset"
     end
     
-    zf:seek('set',eocd.offset)
     return eocd
   end
 end
@@ -301,16 +299,16 @@ local extra = setmetatable(
 
 -- ************************************************************************
 
-function dir(zf,entries)
-  local list = {}
+function dir(zf,eocd)
+  zf:seek('set',eocd.offset)
   
-  for _ = 1 , entries do
+  local function next()
     local magic = zf:read(4)
-    local dir   = {}
-    
     if magic == zip.magic.DIR then
+      local dir = {}
+      
       dir.byversion    = version(zf)
-      dir.forversio    = version(zf)
+      dir.forversion   = version(zf)
       dir.flags        = flags(zf)
       dir.compression  = r16(zf)
       dir.modtime      = mstounix(zf)
@@ -344,15 +342,17 @@ function dir(zf,entries)
       end
       
       dir.comment = zf:read(commentlen)
-      table.insert(list,dir)
+      return dir
     end
   end
-  return list
+  
+  return next,eocd,0
 end
 
 -- **********************************************************************
 
-function file(zf)
+function file(zf,dir)
+  zf:seek('set',dir.offset)
   local magic = zf:read(4)
   local file  = {}
   
