@@ -125,7 +125,7 @@ static int magicmeta_error(lua_State *L)
 *
 *************************************************************************/
 
-static char const *m_magic_options[] =
+static char const *const m_magic_options[] =
 {
   "debug",
   "symlink",
