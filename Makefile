@@ -73,26 +73,27 @@ lib/%.so : src/%.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
 
 all : lib		\
+	lib/base64.so	\
+	lib/clock.so	\
+	lib/crc.so	\
 	lib/env.so	\
 	lib/errno.so	\
 	lib/fsys.so	\
-	lib/math.so	\
-	lib/syslog.so	\
-	lib/iconv.so	\
-	lib/crc.so	\
 	lib/hash.so	\
+	lib/iconv.so	\
+	lib/lfsr.so     \
+	lib/idn.so      \
 	lib/magic.so	\
-	lib/process.so	\
+	lib/math.so	\
 	lib/net.so	\
 	lib/pollset.so	\
-	lib/tcc.so	\
-	lib/sys.so	\
-	lib/strcore.so	\
-	lib/base64.so	\
-	lib/signal.so	\
-	lib/clock.so	\
+	lib/process.so	\
 	lib/ptscore.so	\
-	lib/lfsr.so     \
+	lib/signal.so	\
+	lib/strcore.so	\
+	lib/sys.so	\
+	lib/syslog.so	\
+	lib/tcc.so	\
 	lib/tls.so	\
 	build/bin2c
 
@@ -105,6 +106,7 @@ lib :
 lib/hash.so    : LDLIBS = -lcrypto
 lib/magic.so   : LDLIBS = -lmagic
 lib/tcc.so     : LDLIBS = -ltcc
+lib/idn.so     : LDLIBS = -lidn
 
 # If tls.so doesn't compile, adjust the following lines until it does.
 # If your system already comes with libressl/libtls, then just comment
@@ -126,26 +128,27 @@ install : all
 	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman/nfl
 	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/org/conman/fsys
+	$(INSTALL_PROGRAM) lib/base64.so   $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/clock.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/crc.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/env.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/errno.so    $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/fsys.so     $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/math.so     $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/syslog.so   $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/iconv.so    $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/crc.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/hash.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/iconv.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/lfsr.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/idn.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/magic.so    $(DESTDIR)$(LIBDIR)/org/conman/fsys
-	$(INSTALL_PROGRAM) lib/process.so  $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/math.so     $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/net.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/pollset.so  $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/tcc.so      $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/sys.so      $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/strcore.so  $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/base64.so   $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/signal.so   $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/clock.so    $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/process.so  $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/ptscore.so  $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/lfsr.so     $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/signal.so   $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/strcore.so  $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/sys.so      $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/syslog.so   $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_PROGRAM) lib/tcc.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/tls.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_DATA)    lua/*.lua       $(DESTDIR)$(LUADIR)/org/conman	
 	$(INSTALL_DATA)    lua/dns/*.lua   $(DESTDIR)$(LUADIR)/org/conman/dns
