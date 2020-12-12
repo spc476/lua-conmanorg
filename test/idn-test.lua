@@ -132,3 +132,36 @@ for _,test in ipairs(data) do
   assert(e == test.puny,string.format("encode %s:\n%s\n%s",test.what,e,test.puny))
   assert(d == test.orig,string.format("decode %s:\n%s\n%s",test.what,d,test.orig))
 end
+
+local data2 =
+{
+  {
+    what = "Normalization 1",
+    orig = "re\u{0301}sume\u{0301}",
+    puny = "xn--rsum-bpad",
+    tran = "r\u{00E9}sum\u{00E9}",
+  },
+  
+  {
+    what = "Normalization 2",
+    orig = "fo\u{0301}\u{0321}b",
+    puny = "xn--fb-5ja64t",
+    tran = "f\u{00F3}\u{0321}b",
+  },
+  
+  {
+    what = "Normalization 3",
+    orig = "fo\u{0321}\u{0301}b",
+    puny = "xn--fb-5ja64t",
+    tran = "f\u{00F3}\u{0321}b",
+  },
+}
+
+for _,test in ipairs(data2) do
+  local e = idn.encode(test.orig)
+  assert(e,string.format("encode %s: failed\n",test.what))
+  local d = idn.decode(e)
+  assert(d,string.format("decode %s: failed\n",test.what))
+  assert(e == test.puny,string.format("encode %s:\n%s\n%s",test.what,e,test.puny))
+  assert(d == test.tran,string.format("decode %s:\n%s\n%s",test.what,d,test.tran))
+end
