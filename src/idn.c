@@ -50,23 +50,38 @@ union wstr
 
 /************************************************************************/
 
-static void add_segment(luaL_Buffer *buf,char const *seg,size_t len)
+static bool add_segment(luaL_Buffer *buf,char const *seg,size_t len)
 {
   char        *normalized;
   union wstrp  domain;
   char         topuny[64];
   size_t       domainsize;
   size_t       topunysize;
+  bool         rc;
   
+  rc         = false;
   normalized = stringprep_utf8_nfkc_normalize(seg,len);
-  domain.uc  = stringprep_utf8_to_ucs4(normalized,-1,&domainsize);
-  topunysize = 64;
   
-  punycode_encode(domainsize,domain.pc,NULL,&topunysize,topuny);
-  luaL_addlstring(buf,"xn--",4);
-  luaL_addlstring(buf,topuny,topunysize);
-  free(domain.uc);
-  free(normalized);
+  if (normalized != NULL)
+  {
+    domain.uc  = stringprep_utf8_to_ucs4(normalized,-1,&domainsize);
+    if (domain.uc != NULL)
+    {
+      topunysize = 64;
+  
+      if (punycode_encode(domainsize,domain.pc,NULL,&topunysize,topuny) == PUNYCODE_SUCCESS)
+      {
+        luaL_addlstring(buf,"xn--",4);
+        luaL_addlstring(buf,topuny,topunysize);
+        rc = true;
+      }
+      free(domain.uc);
+    }
+    
+    free(normalized);
+  }
+  
+  return rc;
 }
 
 /************************************************************************/
@@ -86,9 +101,13 @@ static int idn_encode(lua_State *L)
     if (orig[di] == '\0')
     {
       if (utf8)
-        add_segment(&buf,&orig[si],di - si);
+      {
+        if (!add_segment(&buf,&orig[si],di - si))
+          return 0;
+      }
       else
         luaL_addlstring(&buf,&orig[si],di - si);
+      
       luaL_pushresult(&buf);
       return 1;
     }
@@ -96,7 +115,10 @@ static int idn_encode(lua_State *L)
     if (orig[di] == '.')
     {
       if (utf8)
-        add_segment(&buf,&orig[si],di - si);
+      {
+        if (!add_segment(&buf,&orig[si],di - si))
+          return 0;
+      }
       else
         luaL_addlstring(&buf,&orig[si],di - si);
       
@@ -129,10 +151,16 @@ static int idn_decode(lua_State *L)
       size_t      frompunysize = 64;
       char       *result;
       
-      punycode_decode(len-4,&orig[4],&frompunysize,frompuny.pc,NULL);
+      if (punycode_decode(len-4,&orig[4],&frompunysize,frompuny.pc,NULL) != PUNYCODE_SUCCESS)
+        return 0;
+
       result = stringprep_ucs4_to_utf8(frompuny.uc,frompunysize,NULL,NULL);
-      luaL_addstring(&buf,result);
-      free(result);      
+
+      if (result != NULL)
+      {
+        luaL_addstring(&buf,result);
+        free(result);
+      }
     }
     else
       luaL_addlstring(&buf,orig,len);
@@ -166,7 +194,6 @@ int luaopen_org_conman_idn(lua_State *L)
 #else
   luaL_newlib(L,m_idn_reg);
 #endif
-
   return 1;
 }
 
