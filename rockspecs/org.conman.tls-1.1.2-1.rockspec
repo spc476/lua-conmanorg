@@ -1,6 +1,6 @@
 
 package = "org.conman.tls"
-version = "1.1.1-1"
+version = "1.1.2-1"
 
 source =
 {
@@ -24,7 +24,7 @@ description =
 
 dependencies =
 {
-  "lua >= 5.1, < 5.4"
+  "lua >= 5.1, <= 5.4"
 }
 
 external_dependencies =
