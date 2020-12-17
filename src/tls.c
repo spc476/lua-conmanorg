@@ -1105,10 +1105,20 @@ static int Ltls_accept_socket(lua_State *L)
 
 static int Ltls_close(lua_State *L)
 {
-  int rc = tls_close(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS));
-  if ((rc != TLS_WANT_POLLIN) && (rc != TLS_WANT_POLLOUT))
-    Ltls___gc(L);
-  lua_pushinteger(L,rc);
+  struct tls **tls;
+  int          rc;
+  
+  tls = luaL_checkudata(L,1,TYPE_TLS);
+  if (*tls != NULL)
+  {
+    rc = tls_close(*tls);
+    if ((rc != TLS_WANT_POLLIN) && (rc != TLS_WANT_POLLOUT))
+      Ltls___gc(L);
+    lua_pushinteger(L,rc);
+  }
+  else
+    lua_pushinteger(L,0);
+  
   return 1;
 }
 
