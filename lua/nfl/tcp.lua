@@ -28,8 +28,9 @@ local mkios     = require "org.conman.net.ios"
 local nfl       = require "org.conman.nfl"
 local coroutine = require "coroutine"
 
-local _VERSION  = _VERSION
-local tostring  = tostring
+local _VERSION     = _VERSION
+local tostring     = tostring
+local setmetatable = setmetatable
 
 if _VERSION == "Lua 5.1" then
   module(...)
@@ -78,6 +79,15 @@ local function create_handler(conn,remote)
     nfl.SOCKETS:remove(conn)
     local err = conn:close()
     return err == 0,errno[err],err
+  end
+  
+  if _VERSION >= "Lua 5.2" then
+    local mt = {}
+    mt.__gc = ios.close
+    if _VERSION >= "Lua 5.4" then
+      mt.__close = ios.close
+    end
+    setmetatable(ios,mt)
   end
   
   return ios,function(event)

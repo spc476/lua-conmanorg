@@ -26,7 +26,8 @@ local net    = require "org.conman.net"
 local errno  = require "org.conman.errno"
 local ios    = require "org.conman.net.ios"
 
-local _VERSION = _VERSION
+local _VERSION     = _VERSION
+local setmetatable = setmetatable
 
 if _VERSION == "Lua 5.1" then
   module("org.conman.net.tcp")
@@ -47,6 +48,15 @@ local function make_ios(conn,remote)
   state._drain   = function(self,buffer) self.__sock:send(nil,buffer) end
   state.__remote = remote
   state.__sock   = conn
+  
+  if _VERSION >= "Lua 5.2" then
+    local mt = {}
+    mt.__gc = state.close
+    if _VERSION >= "Lua 5.4" then
+      mt.__close = state.close
+    end
+    setmetatable(ios,mt)
+  end
   
   return state
 end

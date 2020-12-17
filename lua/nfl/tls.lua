@@ -31,8 +31,9 @@ local tls       = require "org.conman.tls"
 local nfl       = require "org.conman.nfl"
 local coroutine = require "coroutine"
 
-local _VERSION  = _VERSION
-local assert    = assert
+local _VERSION     = _VERSION
+local assert       = assert
+local setmetatable = setmetatable
 
 assert(tls.LIBRESSL_VERSION >= 0x2050000f,"too old a version of TLS")
 
@@ -140,6 +141,15 @@ local function create_handler(conn,remote)
     return err == 0,errno[err],err
   end
   
+  if _VERSION >= "Lua 5.2" then
+    local mt = {}
+    mt.__gc = ios.close
+    if _VERSION >= "Lua 5.4" then
+      mt.__close = ios.close
+    end
+    setmetatable(ios,mt)
+  end
+
   return ios,function(event)
     if event.hangup then
       nfl.SOCKETS:remove(conn)

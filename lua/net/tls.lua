@@ -26,7 +26,8 @@ local net    = require "org.conman.net"
 local tls    = require "org.conman.tls"
 local ios    = require "org.conman.net.ios"
 
-local _VERSION = _VERSION
+local _VERSION     = _VERSION
+local setmetatable = setmetatable
 
 if _VERSION == "Lua 5.1" then
   module(...)
@@ -39,20 +40,29 @@ end
 local function make_ios(ctx)
   local state = ios()
 
-  function state:close()
+  function state:close() -- luacheck: ignore
     return ctx:close()
   end
   
-  function state:_handshake()
+  function state:_handshake() -- luacheck: ignore
     return ctx:handshake() == 0
   end
   
-  function state:_refill()
+  function state:_refill() -- luacheck: ignore
     return ctx:read(tls.BUFFERSIZE)
   end
   
-  function state:_drain(data)
+  function state:_drain(data)  -- luacheck: ignore
     return ctx:write(data)
+  end
+  
+  if _VERSION >= "Lua 5.2" then
+    local mt = {}
+    mt.__gc = state.close
+    if _VERSION >= "Lua 5.4" then
+      mt.__close = state.close
+    end
+    setmetatable(ios,mt)
   end
   
   return state
