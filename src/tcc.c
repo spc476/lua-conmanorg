@@ -99,6 +99,9 @@ static struct luaL_Reg const mtcc_meta[] =
 {
   { "__tostring"        , tcclua___tostring             } ,
   { "__gc"              , tcclua___gc                   } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , tcclua___gc                   } ,
+#endif
   { "enable_debug"      , tcclua_enable_debug           } ,
   { "set_warning"       , tcclua_set_warning            } ,
   
@@ -203,8 +206,13 @@ static int tcclua___tostring(lua_State *L)
 
 static int tcclua___gc(lua_State *L)
 {
+  TCCState **ps = luaL_checkudata(L,1,TYPE_TCC);
   syslog(LOG_DEBUG,"garbage collect TCC");
-  tcc_delete(*(TCCState **)luaL_checkudata(L,1,TYPE_TCC));
+  if (*ps != NULL)
+  {
+    tcc_delete(*ps);
+    *ps = NULL;
+  }
   return 0;
 }
 

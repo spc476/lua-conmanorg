@@ -1818,6 +1818,9 @@ static luaL_Reg const m_sock_meta[] =
 {
   { "__tostring"        , socklua___tostring    } ,
   { "__gc"              , socklua_close         } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , socklua_close         } ,
+#endif
   { "__index"           , socklua___index       } ,
   { "__newindex"        , socklua___newindex    } ,
   { "peer"              , socklua_peer          } ,

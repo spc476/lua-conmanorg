@@ -1890,6 +1890,9 @@ static luaL_Reg const m_tlsmemmeta[] =
 {
   { "__tostring"                , Ltlsmem___tostring               } ,
   { "__gc"                      , Ltlstop_unload_file              } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"                   , Ltlstop_unload_file              } ,
+#endif
   { NULL                        , NULL                             }
 };
 
@@ -1898,7 +1901,10 @@ static luaL_Reg const m_tlsmemmeta[] =
 static luaL_Reg const m_tlsconfmeta[] =
 {
   { "__tostring"                , Ltlsconf___tostring              } ,
-  { "__gc"                      , Ltlsconf___gc                    } ,  
+  { "__gc"                      , Ltlsconf___gc                    } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"                   , Ltlsconf___gc                    } ,
+#endif
   { "ca_file"                   , Ltlsconf_ca_file                 } ,
   { "ca_mem"                    , Ltlsconf_ca_mem                  } ,
   { "ca_path"                   , Ltlsconf_ca_path                 } ,
@@ -1967,6 +1973,9 @@ static luaL_Reg const m_tlsmeta[] =
   { "__newindex"                , Ltls___newindex                  } ,
   { "__tostring"                , Ltls___tostring                  } ,
   { "__gc"                      , Ltls___gc                        } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"                   , Ltls___gc                        } ,
+#endif
   { "accept_fds"                , Ltls_accept_fds                  } ,
   { "accept_socket"             , Ltls_accept_socket               } ,
   { "close"                     , Ltls_close                       } ,

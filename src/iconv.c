@@ -153,7 +153,12 @@ static int luametaiconv___tostring(lua_State *L)
 
 static int luametaiconv___gc(lua_State *L)
 {
-  iconv_close(*(iconv_t *)luaL_checkudata(L,1,TYPE_ICONV));
+  iconv_t *ic = luaL_checkudata(L,1,TYPE_ICONV);
+  if (*ic != NULL)
+  {
+    iconv_close(*ic);
+    *ic = NULL;
+  }    
   return 0;
 }
 
@@ -164,6 +169,9 @@ static struct luaL_Reg const reg_iconv_meta[] =
   { "__call"            , luametaiconv___call           } ,
   { "__tostring"        , luametaiconv___tostring       } ,
   { "__gc"              , luametaiconv___gc             } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , luametaiconv___gc             } ,
+#endif
   { NULL                , NULL                          }
 };
 

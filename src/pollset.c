@@ -265,7 +265,10 @@ static int polllua___gc(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   free(set->list);
-  close(set->efh);
+  if (set->efh != -1)
+    close(set->efh);
+  set->list = NULL;
+  set->efh  = -1;
   return 0;
 }
 
@@ -571,7 +574,10 @@ static int polllua___gc(lua_State *L)
 {
   pollset__t *set = luaL_checkudata(L,1,TYPE_POLL);
   free(set->list);
-  close(set->qfh);
+  if (set->qfh != -1)
+    close(set->qfh);
+  set->list = NULL;
+  set->qfh  = -1;
   return 0;
 }
 
@@ -917,6 +923,8 @@ static int polllua___gc(lua_State *L)
   pollset__t *set    = luaL_checkudata(L,1,TYPE_POLL);
   lua_Alloc   allocf = lua_getallocf(L,&ud);
   (*allocf)(ud,set->set,set->max * sizeof(struct pollfd),0);
+  set->set = NULL;
+  set->max = 0;
   return 0;
 }
 
@@ -1403,6 +1411,9 @@ static luaL_Reg const m_polllua[] =
   { "__len"             , polllua___len         } ,
   { "__tostring"        , polllua___tostring    } ,
   { "__gc"              , polllua___gc          } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , polllua___gc          } ,
+#endif
   { "insert"            , polllua_insert        } ,
   { "update"            , polllua_update        } ,
   { "remove"            , polllua_remove        } ,

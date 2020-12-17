@@ -1283,6 +1283,9 @@ static luaL_Reg const m_dir_meta[] =
 {
   { "__tostring"        , dir_meta___tostring   } ,
   { "__gc"              , dir_meta___gc         } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , dir_meta___gc         } ,
+#endif
   { "_tofd"             , dir_meta__tofd        } ,
   { "rewind"            , dir_meta_rewind       } ,
   { "read"              , dir_meta_read         } ,
@@ -1293,6 +1296,9 @@ static luaL_Reg const m_dir_meta[] =
 static luaL_Reg const m_expand_meta[] =
 {
   { "__gc"              , expand_meta___gc      } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , expand_meta___gc      } ,
+#endif
   { NULL                , NULL                  }
 };
 

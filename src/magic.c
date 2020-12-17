@@ -92,7 +92,12 @@ static int magicmeta___tostring(lua_State *L)
 
 static int magicmeta___gc(lua_State *L)
 {
-  magic_close(*(magic_t *)luaL_checkudata(L,1,TYPE_MAGIC));
+  magic_t *m = luaL_checkudata(L,1,TYPE_MAGIC);
+  if (*m != NULL)
+  {
+    magic_close(*m);
+    *m = NULL;
+  }
   return 0;
 }
 
@@ -275,6 +280,9 @@ static struct luaL_Reg const mmagic_reg_meta[] =
   { "__call"            , magicmeta___call      } ,
   { "__tostring"        , magicmeta___tostring  } ,
   { "__gc"              , magicmeta___gc        } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , magicmeta___gc        } ,
+#endif
   { "close"             , magicmeta___gc        } ,
   { "error"             , magicmeta_error       } ,
   { "flags"             , magicmeta_flags       } ,
