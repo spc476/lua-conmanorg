@@ -62,7 +62,7 @@ local function make_ios(ctx)
     if _VERSION >= "Lua 5.4" then
       mt.__close = state.close
     end
-    setmetatable(ios,mt)
+    setmetatable(state,mt)
   end
   
   return state
