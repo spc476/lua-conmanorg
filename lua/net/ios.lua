@@ -404,7 +404,7 @@ local function read(ios,...)
     if not data then break end
     
     table.insert(res,data)
-    ios._rbytes = ios._rbytes + #data
+    ios._rbytes = ios._rbytes + #tostring(data)
   end
   
   return unpack(res)
