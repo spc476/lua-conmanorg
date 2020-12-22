@@ -21,10 +21,8 @@
 -- luacheck: globals accept listena listen connecta connect
 -- luacheck: ignore 611
 
-local errno  = require "org.conman.errno"
 local string = require "string"
 local table  = require "table"
-local lpeg   = require "lpeg"
 local math   = require "math"
 
 local select    = select
@@ -32,84 +30,17 @@ local type      = type
 local error     = error
 local unpack    = table.unpack or unpack
 local tonumber  = tonumber
+local tostring  = tostring
 local tointeger = math.tointeger or function(s) return tonumber(s) end
 
 -- *******************************************************************
-
-local CRLF     = lpeg.P"\r"^-1 * lpeg.P"\n"
-local notCRLF  = lpeg.R("\0\9","\11\12","\14\255")
-
-	-- -------------------------------------------------------
-	-- The LPEG patterns LINE, LINEcrlf and HEADERS return the
-	-- following values:
-	--
-	--	poscap	- maximum position of capture
-	--	posres	- position to resume scanning
-	--	eol	- true for full capture, false if need more
-	-- --------------------------------------------------------
-
-local LINE     = notCRLF^0 * lpeg.Cp()
-               * (
-                   CRLF * lpeg.Cp() * lpeg.Cc(true)
-                        + lpeg.Cp() * lpeg.Cc(false)
-                 )
-local LINEcrlf = notCRLF^0
-               * (
-                   CRLF * lpeg.Cp() * lpeg.Cp() * lpeg.Cc(true)
-                        + lpeg.Cp() * lpeg.Cp() * lpeg.Cc(false)
-                 )
-local restq    = CRLF       * lpeg.Cp()       * lpeg.Cp() * lpeg.Cc(true)
-               + notCRLF^1  * lpeg.Cp()       * lpeg.Cp() * lpeg.Cc(false)
-               + lpeg.P(-1) * lpeg.Cb('here') * lpeg.Cp() * lpeg.Cc(false)
-local HEADERS  = CRLF * CRLF * lpeg.Cp() * lpeg.Cp() * lpeg.Cc(true)
-               + CRLF * (notCRLF^1 * lpeg.Cg(lpeg.Cp(),'here') * CRLF)^1 * restq
-               +        (notCRLF^1 * lpeg.Cg(lpeg.Cp(),'here') * CRLF)^1 * restq
-               +         notCRLF^1 * lpeg.P(-1) * lpeg.Cp() * lpeg.Cp() * lpeg.Cc(false)
-               +                                  lpeg.Cp() * lpeg.Cp() * lpeg.Cc(false)
-
--- *******************************************************************
--- usage:	data = read_data(ios,pattern)
--- desc:	Read data from a source
--- input:	ios (table) Input/Output object
---		pattern (userdata/LPEG) one of LINE, LINEcrlf or HEADERS
--- return:	data (string) data from data source
--- *******************************************************************
-
-local function read_data(ios,pattern)
-  if ios._eof then
-    return nil
-  end
-  
-  local poscap,posres,eol = pattern:match(ios._readbuf,ios._rpos)
-  
-  if not eol then
-    local data = ios:_refill()
-    
-    if not data or #data == 0 then
-      ios._eof = true
-      return ios._readbuf
-    end
-    
-    ios._rpos    = posres
-    ios._readbuf = ios._readbuf .. data
-    return read_data(ios,pattern)
-    
-  else
-    local data   = ios._readbuf:sub(1,poscap-1)
-    ios._readbuf = ios._readbuf:sub(posres,-1)
-    ios._rpos    = 1
-    return data
-  end
-end
-
--- *******************************************************************
--- usage:	number = read_number(ios)
--- desc:	Read a number (in text form) to a number
--- input:	ios (table) Input/Output object
--- return:	number (number) data from source, nil on error
+-- usage:       number = read_number(ios)
+-- desc:        Read a number (in text form) to a number
+-- input:       ios (table) Input/Output object
+-- return:      number (number) data from source, nil on error
 --
--- Note:	This is a direct translation of read_number() from
---		liolib.c
+-- Note:        This is a direct translation of read_number() from
+--              liolib.c
 -- *******************************************************************
 
 local function read_number(ios)
@@ -138,7 +69,7 @@ local function read_number(ios)
     end
     return count
   end
-
+  
   local rn        = { buff = "" , c = "" }
   local hex       = "%d"
   local exp1,exp2 = 'e','E'
@@ -184,19 +115,83 @@ end
 
 -- *******************************************************************
 
-local READER =
+local function refill(ios)
+  local data = ios:_refill()
+  if not data then
+    return false
+  end
+  
+  ios._readbuf = ios._readbuf .. data
+  ios._eof     = #data == 0
+  
+  return true
+end
+
+-- *******************************************************************
+
+local READER READER =
 {
   ['*n'] = function(ios)
     return read_number(ios)
   end,
   
+  -- ====================================================================
+  
   ['*l'] = function(ios)
-    return read_data(ios,LINE)
+    if ios._eof then
+      local data   = ios._readbuf
+      ios._readbuf = nil
+      return data
+    end
+    
+    local s = ios._readbuf:find("[\r\n]",ios._ridx)
+    if not s then
+      ios._ridx = #ios._readbuf + 1
+      if not refill(ios) then return nil end
+      return READER['*l'](ios)
+    end
+    
+    local s2,e2 = ios._readbuf:find("\r?\n",s)
+    if not s2 then
+      if not refill(ios) then return nil end
+      return READER['*l'](ios)
+    end
+    
+    local data   = ios._readbuf:sub(1,s2-1)
+    ios._readbuf = ios._readbuf:sub(e2 + 1,-1)
+    ios._ridx    = 1
+    return data
   end,
   
+  -- ====================================================================
+  
   ['*L'] = function(ios)
-    return read_data(ios,LINEcrlf)
+    if ios._eof then
+      local data = ios._readbuf
+      ios._readbuf = nil
+      return data
+    end
+    
+    local s = ios._readbuf:find("[\r\n]",ios._ridx)
+    if not s then
+      ios._ridx = #ios._readbuf + 1
+      if not refill(ios) then return nil end
+      return READER['*L'](ios)
+    end
+    
+    local s2,e2 = ios._readbuf:find("\r?\n",s)
+    if not s2 then
+      if not refill(ios) then return nil end
+      return READER['*L'](ios)
+    end
+    
+    local data   = ios._readbuf:sub(1,e2)
+    ios._readbuf = ios._readbuf:sub(e2 + 1,-1)
+    ios._ridx    = 1
+    return data
   end,
+  
+  -- ====================================================================
   
   ['*a'] = function(ios)
     if ios._eof then
@@ -214,8 +209,78 @@ local READER =
     return ios._readbuf
   end,
   
+  -- ====================================================================
+  
   ['*h'] = function(ios)
-    return read_data(ios,HEADERS)
+    if ios._eof then
+      local data = ios._readbuf
+      ios._readbuf = nil
+      return data
+    end
+    
+    -- ------------------------
+    -- Scan for first CR or LF
+    -- ------------------------
+    
+    local s = ios._readbuf:find("[\r\n]",ios._ridx)
+    if not s then
+      ios._ridx = #ios._readbuf + 1
+      if not refill(ios) then return nil end
+      return READER['*h'](ios)
+    end
+    
+    -- ---------------
+    -- Check for CRLF
+    -- ---------------
+    
+    local s2,e2 = ios._readbuf:find("\r?\n",s)
+    if not s2 then
+      if not refill(ios) then return nil end
+      return READER['*h'](ios)
+    end
+    
+    -- --------------------------------------------------
+    -- Check for CRLFCRLF.  If not, then advance pointer
+    -- --------------------------------------------------
+    
+    local s3,e3 = ios._readbuf:find("\r?\n\r?\n",s2)
+    
+    if not s3 then
+      ios._ridx = e2 + 1
+      if not refill(ios) then return nil end
+      return READER['*h'](ios)
+    end
+    
+    local data   = ios._readbuf:sub(1,e3)
+    ios._readbuf = ios._readbuf:sub(e3+1,-1)
+    ios._ridx    = 1
+    return data
+  end,
+  
+  -- ====================================================================
+  
+  ['*b'] = function(ios)
+    if ios._eof then
+      local data   = ios._readbuf
+      ios._readbuf = nil
+      return data
+    end
+    
+    if ios._readbuf == "" then
+      local data = ios:_refill()
+      if not data then return nil end
+      if #data == 0 then
+        ios._eof = true
+        return nil
+      else
+        return data
+      end
+    end
+    
+    local data   = ios._readbuf
+    ios._readbuf = ""
+    ios._ridx    = 1
+    return data
   end,
 }
 
@@ -223,11 +288,12 @@ READER['a'] = READER['*a']
 READER['l'] = READER['*l']
 READER['n'] = READER['*n']
 READER['L'] = READER['*L']
-READER['h'] = READER['*h']
+READER['h'] = READER['*h'] -- extension
+READER['b'] = READER['*b'] -- extension
 
 -- *******************************************************************
 --
---	IO Routines
+--      IO Routines
 --
 -- These mimic the Lua file:*() routines (duck typing and all that).  So
 -- these *can* be used in places where you might otherwise use a file, but
@@ -240,11 +306,11 @@ READER['h'] = READER['*h']
 -- Return:      okay (boolean) true if success, false if error
 --              errmsg (string/optional) system error message
 --              err (integer/optional) system error code
--- NOTE:	This should be overridden
+-- NOTE:        This should be overridden
 -- *******************************************************************
 
 local function close()
-  return false,errno[errno.ENOSYS],errno.ENOSYS
+  return false,"Not implemented",-1
 end
 
 -- *******************************************************************
@@ -253,10 +319,11 @@ end
 -- Return       okay (boolean) true if success, false if error
 --              errmsg (string/optional) system error message
 --              err (integer/optional) sytem error code
+-- NOTE:        This should be overridden
 -- *******************************************************************
 
 local function flush()
-  return true
+  return false,"Not implemented",-1
 end
 
 -- *******************************************************************
@@ -282,43 +349,32 @@ end
 
 local function read(ios,...)
   local function read_bytes(amount)
-    if ios._eof then return end
-    
-    if amount == 0 then
-      if #ios._readbuf > 0 then return "" end
-      local data,err = ios:_refill()
-      if not data then
-        return nil,err
-      end
-      
-      if data == "" then
-        ios._eof = true
-        return nil
-      end
-      ios._readbuf = data
-      return ""
-    end
-    
+  
     if #ios._readbuf >= amount then
       local data   = ios._readbuf:sub(1,amount)
       ios._readbuf = ios._readbuf:sub(amount + 1,-1)
       return data
     end
     
-    local data,err = ios:_refill()
+    if ios.eof then
+      if #ios._readbuf > 0 then
+        local data = ios._readbuf
+        ios._readbuf = ""
+        return data
+      else
+        return nil
+      end
+    end
+    
+    local data = ios:_refill()
     
     if not data then
-      return nil,err
+      return nil
+    else
+      ios.eof = #data == 0
+      ios._readbuf = ios._readbuf .. data
+      return read_bytes(amount)
     end
-    
-    if data == "" then
-      ios._eof = true
-      assert(#ios._readbuf <= amount)
-      return ios._readbuf
-    end
-    
-    ios._readbuf = ios._readbuf .. data
-    return read_bytes(amount)
   end
   
   -- -----------------------------------------------------
@@ -345,7 +401,10 @@ local function read(ios,...)
       end
     end
     
+    if not data then break end
+    
     table.insert(res,data)
+    ios._rbytes = ios._rbytes + #data
   end
   
   return unpack(res)
@@ -363,11 +422,11 @@ end
 --              errmsg (string/optional) system error message
 --              err (integer/optional) system error code
 --
--- NOTE:	This should be overriden.
+-- NOTE:        This should be overriden.
 -- *******************************************************************
 
 local function seek()
-  return nil,errno[errno.ESPIPE],errno.ESPIPE
+  return nil,"Not implemented",-1
 end
 
 -- *******************************************************************
@@ -381,10 +440,11 @@ end
 -- Return:      okay (boolean) true if success, false if error
 --              errmsg (string/optional) system error message
 --              err (integer/optional) system error code
+-- NOTE:        This should be overridden
 -- *******************************************************************
 
 local function setvbuf()
-  return true
+  return false,"Not implemented",-1
 end
 
 -- *******************************************************************
@@ -398,21 +458,25 @@ end
 
 local function write(ios,...)
   if ios._eof then
-    return false,errno[errno.EBADF],errno.EBADF
+    return false,"stream closed",-3
   end
-  
-  local output = ""
   
   for i = 1 , select('#',...) do
     local data = select(i,...)
     if type(data) ~= 'string' and type(data) ~= 'number' then
-      error("string or number expected, got " .. type(data))
+      error(string.format("bad argument #%d to 'write' (string expected, got %s)",i,type(data)))
     end
     
-    output = output .. data
+    data = tostring(data)
+    
+    local okay,err,ev = ios:_drain(data)
+    if not okay then
+      return okay,err,ev
+    end
+    
+    ios._wbytes = ios._wbytes + #data
   end
-  
-  return ios:_drain(output)
+  return true
 end
 
 -- *******************************************************************
@@ -424,12 +488,15 @@ return function()
     lines   = lines,
     read    = read,
     seek    = seek,    -- override
-    setvbuf = setvbuf,
+    setvbuf = setvbuf, -- override
     write   = write,
     
     _readbuf = "",
     _rpos    = 1,
     _eof     = false,
+    _ridx    = 1,
+    _wbytes  = 0,
+    _rbytes  = 0,
     _refill  = function() error("failed to provide ios._refill()") end,
     _drain   = function() error("failed to provide ios._drain()")  end,
   }
