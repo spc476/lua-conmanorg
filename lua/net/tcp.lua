@@ -43,7 +43,11 @@ local function make_ios(conn,remote)
   state.close    = function(self) self.__sock:close() return true end
   state._refill  = function(self)
     local _,data = self.__sock:recv()
-    return data
+    if data and #data > 0 then
+      return data
+    else
+      return nil
+    end
   end
   state._drain   = function(self,buffer) self.__sock:send(nil,buffer) end
   state.__remote = remote

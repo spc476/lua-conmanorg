@@ -49,7 +49,12 @@ local function make_ios(ctx)
   end
   
   function state:_refill() -- luacheck: ignore
-    return ctx:read(tls.BUFFERSIZE)
+    local data = ctx:read(tls.BUFFERSIZE)
+    if data and #data > 0 then
+      return data
+    else
+      return nil
+    end
   end
   
   function state:_drain(data)  -- luacheck: ignore
