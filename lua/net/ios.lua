@@ -117,14 +117,15 @@ end
 
 local function refill(ios)
   local data = ios:_refill()
-  if not data then
-    return false
+  
+  if data then
+    ios._readbuf = ios._readbuf .. data
+  else
+    ios._eof = true
+    if #ios._readbuf == 0 then
+      ios._readbuf = nil
+    end
   end
-  
-  ios._readbuf = ios._readbuf .. data
-  ios._eof     = #data == 0
-  
-  return true
 end
 
 -- *******************************************************************
@@ -147,13 +148,13 @@ local READER READER =
     local s = ios._readbuf:find("[\r\n]",ios._ridx)
     if not s then
       ios._ridx = #ios._readbuf + 1
-      if not refill(ios) then return nil end
+      refill(ios)
       return READER['*l'](ios)
     end
     
     local s2,e2 = ios._readbuf:find("\r?\n",s)
     if not s2 then
-      if not refill(ios) then return nil end
+      refill(ios)
       return READER['*l'](ios)
     end
     
@@ -175,13 +176,13 @@ local READER READER =
     local s = ios._readbuf:find("[\r\n]",ios._ridx)
     if not s then
       ios._ridx = #ios._readbuf + 1
-      if not refill(ios) then return nil end
+      refill(ios)
       return READER['*L'](ios)
     end
     
     local s2,e2 = ios._readbuf:find("\r?\n",s)
     if not s2 then
-      if not refill(ios) then return nil end
+      refill(ios)
       return READER['*L'](ios)
     end
     
@@ -203,7 +204,7 @@ local READER READER =
       if data then
         ios._readbuf = ios._readbuf .. data
       end
-    until not data or #data == 0
+    until not data
     
     ios._eof = true
     return ios._readbuf
@@ -225,7 +226,7 @@ local READER READER =
     local s = ios._readbuf:find("[\r\n]",ios._ridx)
     if not s then
       ios._ridx = #ios._readbuf + 1
-      if not refill(ios) then return nil end
+      refill(ios)
       return READER['*h'](ios)
     end
     
@@ -235,7 +236,7 @@ local READER READER =
     
     local s2,e2 = ios._readbuf:find("\r?\n",s)
     if not s2 then
-      if not refill(ios) then return nil end
+      refill(ios)
       return READER['*h'](ios)
     end
     
@@ -247,7 +248,7 @@ local READER READER =
     
     if not s3 then
       ios._ridx = e2 + 1
-      if not refill(ios) then return nil end
+      refill(ios)
       return READER['*h'](ios)
     end
     
@@ -267,21 +268,18 @@ local READER READER =
     end
     
     if ios._readbuf == "" then
-      local data = ios:_refill()
-      if not data then return nil end
-      if #data == 0 then
+      ios._readbuf = ios:_refill()
+      if not ios._readbuf then
         ios._eof = true
         return nil
-      else
-        return data
       end
     end
     
-    local data   = ios._readbuf
+    local data = ios._readbuf
     ios._readbuf = ""
     ios._ridx    = 1
     return data
-  end,
+  end
 }
 
 READER['a'] = READER['*a']
@@ -349,32 +347,29 @@ end
 
 local function read(ios,...)
   local function read_bytes(amount)
-  
+    if ios._eof and #ios._readbuf == 0 then return nil end
+    
     if #ios._readbuf >= amount then
       local data   = ios._readbuf:sub(1,amount)
       ios._readbuf = ios._readbuf:sub(amount + 1,-1)
       return data
     end
     
-    if ios.eof then
-      if #ios._readbuf > 0 then
-        local data = ios._readbuf
-        ios._readbuf = nil
-        return data
-      else
-        return nil
-      end
+    if ios._eof then
+      local data = ios._readbuf
+      ios._readbuf = ""
+      return data
     end
     
     local data = ios:_refill()
     
     if not data then
-      return nil
+      ios._eof = true
     else
-      ios.eof = #data == 0
       ios._readbuf = ios._readbuf .. data
-      return read_bytes(amount)
     end
+    
+    return read_bytes(amount)
   end
   
   -- -----------------------------------------------------
@@ -476,6 +471,7 @@ local function write(ios,...)
     
     ios._wbytes = ios._wbytes + #data
   end
+  
   return true
 end
 
