@@ -359,7 +359,7 @@ local function read(ios,...)
     if ios.eof then
       if #ios._readbuf > 0 then
         local data = ios._readbuf
-        ios._readbuf = ""
+        ios._readbuf = nil
         return data
       else
         return nil
