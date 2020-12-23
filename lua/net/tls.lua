@@ -20,6 +20,7 @@
 -- *******************************************************************
 -- luacheck: globals accept listens listena listen connecta connect
 -- luacheck: ignore 611
+
 local syslog = require "org.conman.syslog"
 local errno  = require "org.conman.errno"
 local net    = require "org.conman.net"
