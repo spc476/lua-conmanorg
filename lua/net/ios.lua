@@ -122,9 +122,6 @@ local function refill(ios)
     ios._readbuf = ios._readbuf .. data
   else
     ios._eof = true
-    if #ios._readbuf == 0 then
-      ios._readbuf = nil
-    end
   end
 end
 
@@ -145,9 +142,9 @@ local READER READER =
       return data
     end
     
-    local s = ios._readbuf:find("[\r\n]",ios._ridx)
+    local s = ios._readbuf:find("[\r\n]",ios._rpos)
     if not s then
-      ios._ridx = #ios._readbuf + 1
+      ios._rpos = #ios._readbuf + 1
       refill(ios)
       return READER['*l'](ios)
     end
@@ -160,7 +157,33 @@ local READER READER =
     
     local data   = ios._readbuf:sub(1,s2-1)
     ios._readbuf = ios._readbuf:sub(e2 + 1,-1)
-    ios._ridx    = 1
+    ios._rpos    = 1
+    return data
+  end,
+  
+  -- ====================================================================
+  
+  ['*a'] = function(ios)
+    local data
+    
+    if ios._eof then
+      if ios._readbuf then
+        data = ios._readbuf
+        ios._readbuf = nil
+      end
+      return data
+    end
+    
+    repeat
+      data = ios:_refill()
+      if data then
+        ios._readbuf = ios._readbuf .. data
+      end
+    until not data
+    
+    data         = ios._readbuf
+    ios._readbuf = nil
+    ios._eof     = true
     return data
   end,
   
@@ -173,9 +196,9 @@ local READER READER =
       return data
     end
     
-    local s = ios._readbuf:find("[\r\n]",ios._ridx)
+    local s = ios._readbuf:find("[\r\n]",ios._rpos)
     if not s then
-      ios._ridx = #ios._readbuf + 1
+      ios._rpos = #ios._readbuf + 1
       refill(ios)
       return READER['*L'](ios)
     end
@@ -188,26 +211,8 @@ local READER READER =
     
     local data   = ios._readbuf:sub(1,e2)
     ios._readbuf = ios._readbuf:sub(e2 + 1,-1)
-    ios._ridx    = 1
+    ios._rpos    = 1
     return data
-  end,
-  
-  -- ====================================================================
-  
-  ['*a'] = function(ios)
-    if ios._eof then
-      return ""
-    end
-    
-    repeat
-      local data = ios:_refill()
-      if data then
-        ios._readbuf = ios._readbuf .. data
-      end
-    until not data
-    
-    ios._eof = true
-    return ios._readbuf
   end,
   
   -- ====================================================================
@@ -223,9 +228,9 @@ local READER READER =
     -- Scan for first CR or LF
     -- ------------------------
     
-    local s = ios._readbuf:find("[\r\n]",ios._ridx)
+    local s = ios._readbuf:find("[\r\n]",ios._rpos)
     if not s then
-      ios._ridx = #ios._readbuf + 1
+      ios._rpos = #ios._readbuf + 1
       refill(ios)
       return READER['*h'](ios)
     end
@@ -247,14 +252,14 @@ local READER READER =
     local s3,e3 = ios._readbuf:find("\r?\n\r?\n",s2)
     
     if not s3 then
-      ios._ridx = e2 + 1
+      ios._rpos = e2 + 1
       refill(ios)
       return READER['*h'](ios)
     end
     
     local data   = ios._readbuf:sub(1,e3)
     ios._readbuf = ios._readbuf:sub(e3+1,-1)
-    ios._ridx    = 1
+    ios._rpos    = 1
     return data
   end,
   
@@ -275,11 +280,11 @@ local READER READER =
       end
     end
     
-    local data = ios._readbuf
+    local data   = ios._readbuf
     ios._readbuf = ""
-    ios._ridx    = 1
+    ios._rpos    = 1
     return data
-  end
+  end,
 }
 
 READER['a'] = READER['*a']
@@ -328,7 +333,7 @@ end
 -- Usage:       intf = ios:lines()
 -- Desc:        Interate through lines
 -- Return:      intf (function) interator
--- Note:        This function doesn't work in Lua 5.1
+-- NOTE:        This function doesn't work in Lua 5.1
 -- *******************************************************************
 
 local function lines(ios)
@@ -347,7 +352,12 @@ end
 
 local function read(ios,...)
   local function read_bytes(amount)
-    if ios._eof and #ios._readbuf == 0 then return nil end
+    if ios._eof then
+      if not ios._readbuf or #ios._readbuf == 0 then
+        ios._readbuf = nil
+        return nil
+      end
+    end
     
     if #ios._readbuf >= amount then
       local data   = ios._readbuf:sub(1,amount)
@@ -453,26 +463,21 @@ end
 
 local function write(ios,...)
   if ios._eof then
-    return false,"stream closed",-3
+    return false,"stream closed",-2
   end
+  
+  local output = ""
   
   for i = 1 , select('#',...) do
     local data = select(i,...)
     if type(data) ~= 'string' and type(data) ~= 'number' then
-      error(string.format("bad argument #%d to 'write' (string expected, got %s)",i,type(data)))
+      error("string or number expected, got " .. type(data))
     end
     
-    data = tostring(data)
-    
-    local okay,err,ev = ios:_drain(data)
-    if not okay then
-      return okay,err,ev
-    end
-    
-    ios._wbytes = ios._wbytes + #data
+    output = output .. data
   end
   
-  return true
+  return ios:_drain(output)
 end
 
 -- *******************************************************************
@@ -490,7 +495,6 @@ return function()
     _readbuf = "",
     _rpos    = 1,
     _eof     = false,
-    _ridx    = 1,
     _wbytes  = 0,
     _rbytes  = 0,
     _refill  = function() error("failed to provide ios._refill()") end,

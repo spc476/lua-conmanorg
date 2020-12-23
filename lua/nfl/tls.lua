@@ -46,22 +46,20 @@ end
 -- **********************************************************************
 
 local function create_handler(conn,remote)
-  local ios      = mkios()
-  ios.__writebuf = ""
-  ios.__rawbuf   = ""
-  ios.__sock     = conn
-  ios.__remote   = remote
+  local ios    = mkios()
+  ios.__input  = ""
+  ios.__sock   = conn
+  ios.__remote = remote
+  ios.__rtotal = 0
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
     if rc == tls.WANT_INPUT then
-      ios.__resume = true
       coroutine.yield()
       return self:_handshake()
     
     elseif rc == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
-      ios.__resume = true
       coroutine.yield()
       return self:_handshake()
     
@@ -74,22 +72,16 @@ local function create_handler(conn,remote)
     local str,len = self.__ctx:read(tls.BUFFERSIZE)
 
     if len == tls.ERROR then
-      return nil,self.__ctx:error()
+      return nil
     elseif len == tls.WANT_INPUT then
-      ios.__resume = true
       coroutine.yield()
       return self:_refill()
     elseif len == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
-      ios.__resume = true
       coroutine.yield()
       return self:_refill()
     else
-      if len > 0 then
-        return str
-      else
-        return nil
-      end
+      return str
     end
   end
   
@@ -107,19 +99,16 @@ local function create_handler(conn,remote)
       return false,self.__ctx:error()
       
     elseif bytes == tls.WANT_INPUT then
-      self.__resume = true
       coroutine.yield()
       return self:_drain(data)
       
     elseif bytes == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
-      self.__resume = true
       coroutine.yield()
       return self:_drain(data)
       
     elseif bytes < #data then
       nfl.SOCKETS:update(conn,"rw")
-      self.__resume = true
       coroutine.yield()
       return self:_drain(data:sub(bytes+1,-1))
     end
@@ -130,12 +119,10 @@ local function create_handler(conn,remote)
   ios.close = function(self)
     local rc = ios.__ctx:close()
     if rc == tls.WANT_INPUT then
-      ios.__resume = true
       coroutine.yield()
       return self:close()
     elseif rc == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
-      ios.__resume = true
       coroutine.yield()
       return self:close()
     end
@@ -155,41 +142,35 @@ local function create_handler(conn,remote)
   end
 
   return ios,function(event)
-    if event.hangup then
-      nfl.SOCKETS:remove(conn)
-      ios._eof = true
-      nfl.schedule(ios.__co,false,errno.ECONNREFUSED)
-      return
+    if event.write then
+      nfl.SOCKETS:update(conn,'r')
     end
     
     if event.read then
       local _,packet,err = conn:recv()
       if packet then
+        ios.__rtotal = ios.__rtotal + #packet
         if #packet == 0 then
           nfl.SOCKETS:remove(conn)
           ios._eof = true
-          nfl.schedule(ios.__co,"")
+        else
+          ios.__input = ios.__input .. packet
         end
-        
-        ios.__rawbuf = ios.__rawbuf .. packet
-        if ios._eof then return end
       else
         syslog('error',"TLS.socket:recv() = %s",errno[err])
         nfl.SOCKETS:remove(conn)
         ios._eof = true
-        nfl.schedule(ios.__co,false,err)
-        return
       end
     end
     
-    if event.write then
-      nfl.SOCKETS:update(conn,"r")
+    if event.hangup then
+      if not ios._eof then
+        nfl.SOCKETS:remove(conn)
+        ios._eof = true
+      end
     end
     
-    if ios.__resume then
-      ios.__resume = false
-      nfl.schedule(ios.__co,true) -- XXX there may be a bug here
-    end
+    nfl.schedule(ios.__co,true)
   end
 end
 
@@ -200,13 +181,13 @@ end
 -- **********************************************************************
 
 local function tlscb_read(_,len,ios)
-  if #ios.__rawbuf == 0 then
+  if #ios.__input == 0 then
     if ios._eof then return "",0 end
     return nil,tls.WANT_INPUT
   end
   
-  local ret    = ios.__rawbuf:sub(1,len)
-  ios.__rawbuf = ios.__rawbuf:sub(len + 1,-1)
+  local ret   = ios.__input:sub(1,len)
+  ios.__input = ios.__input:sub(len + 1,-1)
   return ret,0
 end
 
@@ -350,7 +331,6 @@ function connecta(addr,hostname,to,conf)
   -- ------------------------------------------------------------
   
   nfl.SOCKETS:insert(sock,'w',packet_handler)
-  ios.__resume = true
   if to then nfl.timeout(to,false,errno.ETIMEDOUT) end
   
   sock:connect(addr)
