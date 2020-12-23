@@ -20,7 +20,7 @@
 -- *******************************************************************
 -- luacheck: globals accept listens listena listen connecta connect
 -- luacheck: ignore 611
-
+local syslog = require "org.conman.syslog"
 local errno  = require "org.conman.errno"
 local net    = require "org.conman.net"
 local tls    = require "org.conman.tls"
@@ -37,28 +37,62 @@ end
 
 -- *******************************************************************
 
-local function make_ios(ctx)
-  local state = ios()
-
+local function make_ios(ctx,conn)
+  local state  = ios()
+  state.__ctx  = ctx
+  state.__sock = conn
+  
   function state:close() -- luacheck: ignore
-    return ctx:close()
+    local advice = self.__ctx:close()
+    if advice == tls.WANT_INPUT or advice == tls.WANT_OUTPUT then
+      return self:close()
+    else
+      local err = self.__sock:close()
+      return err == 0,errno[err],err
+    end
   end
   
   function state:_handshake() -- luacheck: ignore
-    return ctx:handshake() == 0
+    local advise = self.__ctx:handshake()
+    if advise == tls.WANT_INPUT or advise == tls.WANT_OUTPUT then
+      return self:_handshake()
+    elseif advise == -1 then
+      local msg = self.__ctx:error() or "error"
+      syslog('error',"tls:_handshake() = %s",msg)
+      return false,msg
+    else
+      return true
+    end
   end
   
   function state:_refill() -- luacheck: ignore
-    local data = ctx:read(tls.BUFFERSIZE)
-    if data and #data > 0 then
-      return data
+    local data,size = self.__ctx:read(tls.BUFFERSIZE)
+    if size == tls.WANT_INPUT or size == tls.WANT_OUTPUT then
+      return self:_refill()
+    elseif size == -1 then
+      local msg = self.__ctx:error() or "error"
+      syslog('error',"tls:_refill() = %s",msg)
+      return nil,msg
     else
-      return nil
+      if #data > 0 then
+        return data
+      else
+        return nil
+      end
     end
   end
   
   function state:_drain(data)  -- luacheck: ignore
-    return ctx:write(data)
+    local size = self.__ctx:write(data)
+    if size == tls.WANT_INPUT or size == tls.WANT_OUTPUT then
+      return self:_drain(data)
+    elseif size == -1 then
+      local msg = self.__ctx:error()
+      syslog('error',"tls:_drain() = %s",msg)
+      return false,msg
+    else
+      return size
+    end
   end
   
   if _VERSION >= "Lua 5.2" then
@@ -184,7 +218,7 @@ function connecta(addr,hostname,conf)
     return false,ctx:error()
   end
   
-  return make_ios(ctx)
+  return make_ios(ctx,sock)
 end
 
 -- *******************************************************************
