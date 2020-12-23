@@ -81,7 +81,11 @@ local function create_handler(conn,remote)
       coroutine.yield()
       return self:_refill()
     else
-      return str
+      if #str == 0 then
+        return nil
+      else
+        return str
+      end
     end
   end
   
