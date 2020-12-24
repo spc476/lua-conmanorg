@@ -50,7 +50,6 @@ local function create_handler(conn,remote)
   ios.__input  = ""
   ios.__sock   = conn
   ios.__remote = remote
-  ios.__rtotal = 0
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
@@ -153,7 +152,6 @@ local function create_handler(conn,remote)
     if event.read then
       local _,packet,err = conn:recv()
       if packet then
-        ios.__rtotal = ios.__rtotal + #packet
         if #packet == 0 then
           nfl.SOCKETS:remove(conn)
           ios._eof = true
