@@ -173,14 +173,18 @@ local function create_handler(conn,remote)
       if packet then
         if #packet == 0 then
           nfl.SOCKETS:remove(conn)
-          ios._eof = true
+          ios._eof    = true
+          ios.__waitw = false
+          ios.__waitr = false
         else
           ios.__input = ios.__input .. packet
         end
       else
         syslog('error',"TLS.socket:recv() = %s",errno[err])
         nfl.SOCKETS:remove(conn)
-        ios._eof = true
+        ios._eof    = true
+        ios.__waitw = false
+        ios.__waitr = false
       end
     end
     
@@ -194,7 +198,7 @@ local function create_handler(conn,remote)
       end
     end
     
-    if resume then
+    if resume or ios._eof then
       nfl.schedule(ios.__co,true)
     end
   end
