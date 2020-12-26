@@ -267,13 +267,12 @@ local READER READER =
     end
     
     -- --------------------------------------------------
-    -- Check for CRLFCRLF.  If not, then advance pointer
+    -- Check for CRLFCRLF.
     -- --------------------------------------------------
     
     local s3,e3 = ios._readbuf:find("\r?\n\r?\n",s2)
     
     if not s3 then
-      ios._rpos = e2 + 1
       refill(ios)
       return READER['*h'](ios)
     end
