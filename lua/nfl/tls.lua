@@ -50,15 +50,19 @@ local function create_handler(conn,remote)
   ios.__input  = ""
   ios.__sock   = conn
   ios.__remote = remote
+  ios.__waitr  = false
+  ios.__waitw  = false
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
     if rc == tls.WANT_INPUT then
+      ios.__waitr = true
       coroutine.yield()
       return self:_handshake()
     
     elseif rc == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
+      ios.__waitw = true
       coroutine.yield()
       return self:_handshake()
     
@@ -73,10 +77,12 @@ local function create_handler(conn,remote)
     if len == tls.ERROR then
       return nil
     elseif len == tls.WANT_INPUT then
+      ios.__waitr = true
       coroutine.yield()
       return self:_refill()
     elseif len == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
+      ios.__waitw = true
       coroutine.yield()
       return self:_refill()
     else
@@ -102,16 +108,19 @@ local function create_handler(conn,remote)
       return false,self.__ctx:error()
       
     elseif bytes == tls.WANT_INPUT then
+      ios.__waitr = true
       coroutine.yield()
       return self:_drain(data)
       
     elseif bytes == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
+      ios.__waitw = true
       coroutine.yield()
       return self:_drain(data)
       
     elseif bytes < #data then
       nfl.SOCKETS:update(conn,"rw")
+      ios._waitw = true
       coroutine.yield()
       return self:_drain(data:sub(bytes+1,-1))
     end
@@ -122,10 +131,12 @@ local function create_handler(conn,remote)
   ios.close = function(self)
     local rc = ios.__ctx:close()
     if rc == tls.WANT_INPUT then
+      ios._waitr = true
       coroutine.yield()
       return self:close()
     elseif rc == tls.WANT_OUTPUT then
       nfl.SOCKETS:update(conn,"rw")
+      ios.__waitw = true
       coroutine.yield()
       return self:close()
     end
@@ -145,11 +156,19 @@ local function create_handler(conn,remote)
   end
 
   return ios,function(event)
+    assert(not (ios.__waitr and ios.__waitw))
+    
+    local resume = false
+    
     if event.write then
+      resume      = resume or ios.__waitw
+      ios.__waitw = false
       nfl.SOCKETS:update(conn,'r')
     end
     
     if event.read then
+      resume      = resume or ios.__waitr
+      ios.__waitr = false;
       local _,packet,err = conn:recv()
       if packet then
         if #packet == 0 then
@@ -166,13 +185,18 @@ local function create_handler(conn,remote)
     end
     
     if event.hangup then
+      resume      = true
+      ios.__waitw = false
+      ios.__waitr = false
       if not ios._eof then
         nfl.SOCKETS:remove(conn)
         ios._eof = true
       end
     end
     
-    nfl.schedule(ios.__co,true)
+    if resume then
+      nfl.schedule(ios.__co,true)
+    end
   end
 end
 
@@ -337,6 +361,7 @@ function connecta(addr,hostname,to,conf)
   
   sock:connect(addr)
   
+  ios.__waitw = true
   local okay,err1 = coroutine.yield()
   
   if to then nfl.timeout(0) end
