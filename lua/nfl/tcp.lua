@@ -31,6 +31,7 @@ local coroutine = require "coroutine"
 local _VERSION     = _VERSION
 local tostring     = tostring
 local setmetatable = setmetatable
+local assert       = assert
 
 if _VERSION == "Lua 5.1" then
   module(...)
@@ -48,21 +49,22 @@ end
 -- **********************************************************************
 
 local function create_handler(conn,remote)
-  local writebuf = ""
-  local ios      = mkios()
-  ios.__remote   = remote
+  local ios    = mkios()
+  ios.__socket = conn
+  ios.__remote = remote
+  ios.__output = ""
   
   ios._refill = function()
     return coroutine.yield()
   end
   
-  ios._drain = function(_,data)
-    writebuf = data
-    nfl.SOCKETS:update(conn,'w')
+  ios._drain = function(self,data)
+    ios.__output = data
+    nfl.SOCKETS:update(self.__socket,'w')
     return coroutine.yield()
   end
   
-  ios.close = function()
+  ios.close = function(self)
     -- ---------------------------------------------------------------------
     -- It might be a bug *somewhere*, but on Linux, this is required to get
     -- Unix domain sockets to work with the NFL driver.  There's a race
@@ -71,7 +73,7 @@ local function create_handler(conn,remote)
     -- TCP sockets, but this doesn't hurt the TCP side in any case.
     -- ---------------------------------------------------------------------
     
-    while conn.sendqueue and conn.sendqueue > 0 do
+    while self.__socket.sendqueue and ios.__socket.sendqueue > 0 do
       nfl.SOCKETS:update(conn,'w')
       coroutine.yield()
     end
@@ -91,10 +93,14 @@ local function create_handler(conn,remote)
   end
   
   return ios,function(event)
+    assert(not (event.read and event.write))
+    
     if event.hangup then
-      nfl.SOCKETS:remove(conn)
-      ios._eof = true
-      nfl.schedule(ios.__co,false,errno.ECONNREFUSED)
+      if not ios._eof then
+        nfl.SOCKETS:remove(conn)
+        ios._eof = true
+        nfl.schedule(ios.__co)
+      end
       return
     end
     
@@ -103,38 +109,36 @@ local function create_handler(conn,remote)
       if packet then
         if #packet == 0 then
           nfl.SOCKETS:remove(conn)
-          ios._eof = true
-          packet   = false
+          ios._eof    = true
+          nfl.schedule(ios.__co)
+        else
+          nfl.schedule(ios.__co,packet)
         end
-        nfl.schedule(ios.__co,packet)
-        if ios._eof then return end
       else
         if err ~= errno.EAGAIN then
           syslog('error',"socket:recv() = %s",errno[err])
           nfl.SOCKETS:remove(conn)
-          ios._eof = true
-          nfl.schedule(ios.__co,false,err)
-          return
+          ios._eof     = true
+          nfl.schedule(ios.__co,false,errno[err],err)
         end
       end
     end
     
     if event.write then
-      if #writebuf > 0 then
-        local bytes,err = conn:send(nil,writebuf)
+      if #ios.__output > 0 then
+        local bytes,err = conn:send(nil,ios.__output)
         if err == 0 then
-          writebuf = writebuf:sub(bytes + 1,-1)
+          ios.__output = ios.__output:sub(bytes + 1,-1)
         else
           syslog('error',"socket:send() = %s",errno[err])
           nfl.SOCKETS:remove(conn)
-          ios._eof = true
-          nfl.schedule(ios.__co,false,err)
-          return
+          ios._eof    = true
+          nfl.schedule(ios.__co,false,errno[err],err)
         end
       end
       
-      if #writebuf == 0 then
-        nfl.SOCKETS:update(conn,'r')
+      if #ios.__output == 0 then
+        nfl.SOCKETS:update(ios.__socket,'r')
         nfl.schedule(ios.__co,true)
       end
     end
