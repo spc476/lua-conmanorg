@@ -20,6 +20,27 @@
 -- *******************************************************************
 -- luacheck: globals accept listena listen connecta connect
 -- luacheck: ignore 611
+--
+-- ===================================================================
+--
+-- This module requires the use of two callback functions:
+--
+-- Usage:	data[,errmsg,err] = _refill(ios)
+-- Desc:	Request data from a source object
+-- Input:	ios (table) Input/Output object
+-- Return:	data (string) data to collect, nil on error/EOF
+--		errmsg (string/optional) if error, error message
+--		err (integer/optional) system error code
+--
+-- Usage:	okay[,errmsg,err] = _drain(ios,data)
+-- Desc:	Write data to a destination object
+-- Input:	ios (table) Input/Ouput object
+--		data (string) data to write
+-- Return:	okay (boolean) true if success, false if error
+--		errmsg (string/optional) error message
+--		err (integer/optional) system error code
+--
+-- ===================================================================
 
 local string = require "string"
 local table  = require "table"
