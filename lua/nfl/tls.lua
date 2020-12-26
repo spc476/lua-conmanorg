@@ -47,25 +47,21 @@ end
 
 local function create_handler(conn,remote)
   local ios    = mkios()
-  ios.__input  = ""
-  ios.__sock   = conn
+  ios.__socket = conn
   ios.__remote = remote
-  ios.__waitr  = false
-  ios.__waitw  = false
+  ios.__input  = ""
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
     if rc == tls.WANT_INPUT then
-      ios.__waitr = true
       coroutine.yield()
       return self:_handshake()
-    
+      
     elseif rc == tls.WANT_OUTPUT then
-      nfl.SOCKETS:update(conn,"rw")
-      ios.__waitw = true
+      nfl.SOCKETS:update(conn,"w")
       coroutine.yield()
       return self:_handshake()
-    
+      
     else
       return rc == 0
     end
@@ -73,7 +69,7 @@ local function create_handler(conn,remote)
   
   ios._refill = function(self)
     local str,len = self.__ctx:read(tls.BUFFERSIZE)
-
+    
     if len == tls.ERROR then
       return nil
     elseif len == tls.WANT_INPUT then
@@ -81,8 +77,7 @@ local function create_handler(conn,remote)
       coroutine.yield()
       return self:_refill()
     elseif len == tls.WANT_OUTPUT then
-      nfl.SOCKETS:update(conn,"rw")
-      ios.__waitw = true
+      nfl.SOCKETS:update(conn,"w")
       coroutine.yield()
       return self:_refill()
     else
@@ -108,19 +103,16 @@ local function create_handler(conn,remote)
       return false,self.__ctx:error()
       
     elseif bytes == tls.WANT_INPUT then
-      ios.__waitr = true
       coroutine.yield()
       return self:_drain(data)
       
     elseif bytes == tls.WANT_OUTPUT then
-      nfl.SOCKETS:update(conn,"rw")
-      ios.__waitw = true
+      nfl.SOCKETS:update(conn,"w")
       coroutine.yield()
       return self:_drain(data)
       
     elseif bytes < #data then
-      nfl.SOCKETS:update(conn,"rw")
-      ios._waitw = true
+      nfl.SOCKETS:update(conn,"w")
       coroutine.yield()
       return self:_drain(data:sub(bytes+1,-1))
     end
@@ -131,12 +123,10 @@ local function create_handler(conn,remote)
   ios.close = function(self)
     local rc = ios.__ctx:close()
     if rc == tls.WANT_INPUT then
-      ios._waitr = true
       coroutine.yield()
       return self:close()
     elseif rc == tls.WANT_OUTPUT then
-      nfl.SOCKETS:update(conn,"rw")
-      ios.__waitw = true
+      nfl.SOCKETS:update(conn,"w")
       coroutine.yield()
       return self:close()
     end
@@ -154,51 +144,39 @@ local function create_handler(conn,remote)
     end
     setmetatable(ios,mt)
   end
-
+  
   return ios,function(event)
-    assert(not (ios.__waitr and ios.__waitw))
+    assert(not (event.read and event.write))
     
-    local resume = false
-    
-    if event.write then
-      resume      = resume or ios.__waitw
-      ios.__waitw = false
-      nfl.SOCKETS:update(conn,'r')
+    if event.hangup then
+      if not ios._eof then
+        nfl.SOCKETS:remove(conn)
+        ios._eof = true
+        nfl.schedule(ios.__co)
+      end
+      return
     end
     
     if event.read then
-      resume      = resume or ios.__waitr
-      ios.__waitr = false;
       local _,packet,err = conn:recv()
       if packet then
         if #packet == 0 then
           nfl.SOCKETS:remove(conn)
           ios._eof    = true
-          ios.__waitw = false
-          ios.__waitr = false
         else
           ios.__input = ios.__input .. packet
         end
+        nfl.schedule(ios.__co)
       else
         syslog('error',"TLS.socket:recv() = %s",errno[err])
         nfl.SOCKETS:remove(conn)
         ios._eof    = true
-        ios.__waitw = false
-        ios.__waitr = false
+        nfl.schedule(ios.__co,false,errno[err],err)
       end
     end
     
-    if event.hangup then
-      resume      = true
-      ios.__waitw = false
-      ios.__waitr = false
-      if not ios._eof then
-        nfl.SOCKETS:remove(conn)
-        ios._eof = true
-      end
-    end
-    
-    if resume or ios._eof then
+    if event.write then
+      nfl.SOCKETS:update(conn,'r')
       nfl.schedule(ios.__co,true)
     end
   end
@@ -224,7 +202,7 @@ end
 -- **********************************************************************
 
 local function tlscb_write(_,str,ios)
-  local bytes,err = ios.__sock:send(nil,str)
+  local bytes,err = ios.__socket:send(nil,str)
   if bytes == -1 then
     if err == errno.EAGAIN then
       bytes = tls.WANT_OUTPUT
