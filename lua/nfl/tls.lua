@@ -209,6 +209,9 @@ local function tlscb_write(_,str,ios)
     else
       bytes = tls.ERROR
     end
+  elseif bytes < #str then
+    nfl.SOCKETS:update(ios.__socket,"w")
+    coroutine.yield()
   end
   
   return bytes
