@@ -74,12 +74,12 @@ local function create_handler(conn,remote)
     -- ---------------------------------------------------------------------
     
     while self.__socket.sendqueue and ios.__socket.sendqueue > 0 do
-      nfl.SOCKETS:update(conn,'w')
+      nfl.SOCKETS:update(self.__socket,'w')
       coroutine.yield()
     end
     
-    nfl.SOCKETS:remove(conn)
-    local err = conn:close()
+    nfl.SOCKETS:remove(self.__socket)
+    local err = self.__socket:close()
     return err == 0,errno[err],err
   end
   
@@ -97,7 +97,7 @@ local function create_handler(conn,remote)
     
     if event.hangup then
       if not ios._eof then
-        nfl.SOCKETS:remove(conn)
+        nfl.SOCKETS:remove(self.__socket)
         ios._eof = true
         nfl.schedule(ios.__co)
       end
@@ -105,10 +105,10 @@ local function create_handler(conn,remote)
     end
     
     if event.read then
-      local _,packet,err = conn:recv()
+      local _,packet,err = ios.__socket:recv()
       if packet then
         if #packet == 0 then
-          nfl.SOCKETS:remove(conn)
+          nfl.SOCKETS:remove(ios.__socket)
           ios._eof    = true
           nfl.schedule(ios.__co)
         else
@@ -117,7 +117,7 @@ local function create_handler(conn,remote)
       else
         if err ~= errno.EAGAIN then
           syslog('error',"socket:recv() = %s",errno[err])
-          nfl.SOCKETS:remove(conn)
+          nfl.SOCKETS:remove(ios.__socket)
           ios._eof     = true
           nfl.schedule(ios.__co,false,errno[err],err)
         end
@@ -126,12 +126,12 @@ local function create_handler(conn,remote)
     
     if event.write then
       if #ios.__output > 0 then
-        local bytes,err = conn:send(nil,ios.__output)
+        local bytes,err = ios.__socket:send(nil,ios.__output)
         if err == 0 then
           ios.__output = ios.__output:sub(bytes + 1,-1)
         else
           syslog('error',"socket:send() = %s",errno[err])
-          nfl.SOCKETS:remove(conn)
+          nfl.SOCKETS:remove(ios.__socket)
           ios._eof    = true
           nfl.schedule(ios.__co,false,errno[err],err)
         end
