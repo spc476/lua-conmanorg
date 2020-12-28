@@ -219,8 +219,12 @@ int main(int argc,char *argv[])
       case 't':
            tag = optarg;
            for ( ; *optarg ; optarg++)
+           {
              if (*optarg == '-') 
                *optarg = '_';
+             else if (*optarg == '.')
+               *optarg = '_';
+           }
            break;
            
       case 'o':
