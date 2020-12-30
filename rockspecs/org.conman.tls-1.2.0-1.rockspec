@@ -1,15 +1,15 @@
 
 package = "org.conman.tls"
-version = "1.1.2-1"
+version = "1.2.0-1"
 
 source =
 {
-  url ="https://raw.github.com/spc476/lua-conmanorg/tls-1.1.1/src/tls.c"
+  url ="https://raw.github.com/spc476/lua-conmanorg/tls-1.2.0/src/tls.c"
 }
 
 description =
 {
-  homepage = "https://github.com/spc476/lua-conmanorg/blob/tls-1.1.1/src/tls.c",
+  homepage = "https://github.com/spc476/lua-conmanorg/blob/tls-1.2.0/src/tls.c",
   maintainer = "Sean Conner <sean@conman.org>",
   license = "LGPL3",
   summary = "A Lua module for libtls from LibreSSL",

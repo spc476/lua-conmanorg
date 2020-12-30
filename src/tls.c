@@ -1737,6 +1737,23 @@ static int Ltls_conn_session_resumed(lua_State *L)
 }
 #endif
 
+#if LIBRESSL_VERSION_NUMBER >= 0x3010000fL
+/**************************************************************************
+* Usage:        resumed = ctx:conn_session_resumed()
+* Desc:         Has this session resumed from a previous session?
+* Return:       resumed (boolean) yeah or nay
+***************************************************************************/
+
+static int Ltls_conn_cipher_strength(lua_State *L)
+{
+  lua_pushinteger(
+          L,
+          tls_conn_cipher_strength(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS))
+  );
+  return 1;
+}
+#endif
+          
 /**************************************************************************
 *
 *                                  TLS API
@@ -2031,6 +2048,9 @@ static luaL_Reg const m_tlsmeta[] =
 #endif
 #if LIBRESSL_VERSION_NUMBER >= 0x2070000fL
   { "conn_session_resumed"      , Ltls_conn_session_resumed        } ,
+#endif
+#if LIBRESSL_VERSION_NUMBER >= 0x3010000fL
+  { "conn_cipher_strength"      , Ltls_conn_cipher_strength        } ,
 #endif
   { NULL                        , NULL                             }
 };
