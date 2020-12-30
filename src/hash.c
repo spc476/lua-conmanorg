@@ -20,14 +20,20 @@
 *************************************************************************/
 
 #include <limits.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <errno.h>
 
+#include <openssl/opensslv.h>
 #include <openssl/evp.h>
 
 #include <lua.h>
 #include <lauxlib.h>
+
+#ifndef OPENSSL_VERSION_NUMBER
+#  error Could not determine OpenSSL version
+#endif
 
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
 #  error You need to compile against Lua 5.1 or higher
@@ -60,9 +66,9 @@ static int hash_hexa(
 
 static int hashlua_new(lua_State *L)
 {
-  EVP_MD const *m;
-  EVP_MD_CTX   *ctx;
-  char const   *alg;
+  char const    *alg;
+  EVP_MD const  *m;
+  EVP_MD_CTX   **ctx;
   
   alg = luaL_optstring(L,1,"md5");
   m   = EVP_get_digestbyname(alg);
@@ -72,8 +78,14 @@ static int hashlua_new(lua_State *L)
     return 1;
   }
   
-  ctx = lua_newuserdata(L,sizeof(EVP_MD_CTX));
-  EVP_DigestInit(ctx,m);
+  ctx  = lua_newuserdata(L,sizeof(*ctx));
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+  *ctx = malloc(sizeof(EVP_MD_CTX));
+#else
+  *ctx = EVP_MD_CTX_new();
+#endif
+
+  EVP_DigestInit(*ctx,m);
   luaL_getmetatable(L,TYPE_HASH);
   lua_setmetatable(L,-2);
   return 1;
@@ -83,9 +95,9 @@ static int hashlua_new(lua_State *L)
 
 static int hashlua_update(lua_State *L)
 {
-  EVP_MD_CTX *ctx;
-  char const *data;
-  size_t      size;
+  EVP_MD_CTX **ctx;
+  char const  *data;
+  size_t       size;
   
   ctx  = luaL_checkudata(L,1,TYPE_HASH);
   data = luaL_checklstring(L,2,&size);
@@ -97,7 +109,7 @@ static int hashlua_update(lua_State *L)
     return 2;
   }
   
-  EVP_DigestUpdate(ctx,data,size);
+  EVP_DigestUpdate(*ctx,data,size);
   lua_pushboolean(L,true);
   return 1;
 }
@@ -106,14 +118,14 @@ static int hashlua_update(lua_State *L)
 
 static int hashlua_final(lua_State *L)
 {
-  EVP_MD_CTX    *ctx;
-  unsigned char  hash[EVP_MAX_MD_SIZE];
-  unsigned int   hashsize;
+  EVP_MD_CTX    **ctx;
+  unsigned char   hash[EVP_MAX_MD_SIZE];
+  unsigned int    hashsize;
   
   ctx      = luaL_checkudata(L,1,TYPE_HASH);
   hashsize = sizeof(hash);
   
-  EVP_DigestFinal(ctx,hash,&hashsize);
+  EVP_DigestFinal(*ctx,hash,&hashsize);
   lua_pushlstring(L,(char *)hash,hashsize);
   return 1;
 }
@@ -135,7 +147,7 @@ static int hashlua_finalhexa(lua_State *L)
 static int hashlua_sum(lua_State *L)
 {
   EVP_MD const  *m;
-  EVP_MD_CTX     ctx;
+  EVP_MD_CTX    *ctx;
   char const    *data;
   size_t         size;
   char const    *alg;
@@ -160,10 +172,23 @@ static int hashlua_sum(lua_State *L)
     return 2;
   }
   
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+  ctx = malloc(sizeof(EVP_MD_CTX));
+#else
+  ctx = EVP_MD_CTX_new();
+#endif
+  
   hashsize = sizeof(hash);
-  EVP_DigestInit(&ctx,m);
-  EVP_DigestUpdate(&ctx,data,size);
-  EVP_DigestFinal(&ctx,hash,&hashsize);
+  EVP_DigestInit(ctx,m);
+  EVP_DigestUpdate(ctx,data,size);
+  EVP_DigestFinal(ctx,hash,&hashsize);
+  
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+  free(ctx);
+#else
+  EVP_MD_CTX_free(ctx);
+#endif
+  
   lua_pushlstring(L,(char *)hash,hashsize);
   return 1;
 }
@@ -186,7 +211,7 @@ static int hashlua_sumhexa(lua_State *L)
   char const *data;
   size_t      size;
   int         rc;
-  
+    
   rc = hashlua_sum(L);
   if (!lua_isstring(L,-1))
     return rc;
@@ -201,6 +226,24 @@ static int hashlua___tostring(lua_State *L)
 {
   lua_pushfstring(L,"hash (%p)",lua_touserdata(L,1));
   return 1;
+}
+
+/***********************************************************************/
+
+static int hashlua___gc(lua_State *L)
+{
+  EVP_MD_CTX **ctx = luaL_checkudata(L,1,TYPE_HASH);
+  if (*ctx != NULL)
+  {
+#if OPENSSL_VERSION_NUMBER < 0x1010000fL
+    free(*ctx);
+#else
+    EVP_MD_CTX_free(*ctx);
+#endif
+    *ctx = NULL;
+  }
+  
+  return 0;
 }
 
 /***********************************************************************/
@@ -222,6 +265,10 @@ static struct luaL_Reg const hashlua_meta[] =
   { "final"             , hashlua_final         } ,
   { "finalhexa"         , hashlua_finalhexa     } ,
   { "__tostring"        , hashlua___tostring    } ,
+  { "__gc"              , hashlua___gc          } ,
+#if LUA_VERSION_NUM >= 504
+  { "__close"           , hashlua___gc          } ,
+#endif
   { NULL                , NULL                  }
 };
 
