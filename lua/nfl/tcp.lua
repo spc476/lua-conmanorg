@@ -97,7 +97,7 @@ local function create_handler(conn,remote)
     
     if event.hangup then
       if not ios._eof then
-        nfl.SOCKETS:remove(self.__socket)
+        nfl.SOCKETS:remove(ios.__socket)
         ios._eof = true
         nfl.schedule(ios.__co)
       end
