@@ -99,7 +99,7 @@ local function create_handler(conn,remote)
       if not ios._eof then
         nfl.SOCKETS:remove(ios.__socket)
         ios._eof = true
-        nfl.schedule(ios.__co)
+        nfl.schedule(ios.__co,false,0)
       end
       return
     end
@@ -110,7 +110,7 @@ local function create_handler(conn,remote)
         if #packet == 0 then
           nfl.SOCKETS:remove(ios.__socket)
           ios._eof    = true
-          nfl.schedule(ios.__co)
+          nfl.schedule(ios.__co,false,0)
         else
           nfl.schedule(ios.__co,packet)
         end
@@ -238,10 +238,8 @@ function connecta(addr,to)
   
   nfl.SOCKETS:insert(sock,'w',packet_handler)
   if to then nfl.timeout(to,false,errno.ETIMEDOUT) end
-  
   sock:connect(addr)
   local okay,err1 = coroutine.yield()
-  
   if to then nfl.timeout(0) end
   
   if not okay then
