@@ -112,7 +112,7 @@ lib/idn.so     : LDLIBS = -lidn
 # If your system already comes with libressl/libtls, then just comment
 # out these lines.
 
-SSL := $(HOME)/JAIL
+SSL := $(HOME)/JAIL2
 lib/tls.so : override CFLAGS  += -I$(SSL)/include
 lib/tls.so : override LDFLAGS += -L$(SSL)/lib -Wl,-rpath,$(SSL)/lib
 lib/tls.so : override LDLIBS  += -ltls

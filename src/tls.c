@@ -25,21 +25,18 @@
 #include <string.h>
 #include <assert.h>
 
-#include <syslog.h>
-#include <openssl/opensslv.h>
 #include <tls.h>
-
 #include <lua.h>
 #include <lauxlib.h>
 
-/*----------------------------------------------------------------------
-; See http://boston.conman.org/2018/08/07.1 for why I'm checking
-; LIBRESSL_VERSION_NUMBER and not TLS_API; also, why I'm not supporting
-; LibreSSL prior to version 2.3.0
-;-----------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------
+; See <http://boston.conman.org/2021/01/01.1> to see why the minimum support
+; API is now 20180210 (which was released for LibreSSL 2.7.0).  For more
+; background information, check <http://boston.conman.org/2018/08/07.1>.
+;----------------------------------------------------------------------------*/
 
-#if LIBRESSL_VERSION_NUMBER < 0x20030000L
-#  error This requires LibreSSL version 2.3.0 or higher
+#if TLS_API < 20180210
+#  error This require TLS_API 20180210 or higher.
 #endif
 
 #if LUA_VERSION_NUM == 501
@@ -73,11 +70,9 @@ static struct strint const m_tls_consts[] =
 {
   { "ERROR"                             , -1                                    } ,
   { "BUFFERSIZE"                        , LUAL_BUFFERSIZE                       } ,
-  { "LIBRESSL_VERSION"                  , LIBRESSL_VERSION_NUMBER               } ,
   { "API"                               , TLS_API                               } ,
   { "WANT_INPUT"                        , TLS_WANT_POLLIN                       } ,
   { "WANT_OUTPUT"                       , TLS_WANT_POLLOUT                      } ,
-#if LIBRESSL_VERSION_NUMBER >= 0x2050100fL
   { "MAX_SESSION_ID_LENGTH"             , TLS_MAX_SESSION_ID_LENGTH             } ,
   { "TICKET_KEY_SIZE"                   , TLS_TICKET_KEY_SIZE                   } ,
   { "OCSP_CERT_GOOD"                    , TLS_OCSP_CERT_GOOD                    } ,
@@ -99,13 +94,11 @@ static struct strint const m_tls_consts[] =
   { "OCSP_RESPONSE_SUCCESSFUL"          , TLS_OCSP_RESPONSE_SUCCESSFUL          } ,
   { "OCSP_RESPONSE_TRYLATER"            , TLS_OCSP_RESPONSE_TRYLATER            } ,
   { "OCSP_RESPONSE_UNAUTHORIZED"        , TLS_OCSP_RESPONSE_UNAUTHORIZED        } ,
-#endif
   { NULL                                , 0                                     }
 };
 
 /**************************************************************************/
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2050000fL
 static ssize_t Xtls_read(struct tls *tls,void *buf,size_t buflen,void *cb_arg)
 {
   lua_State  *L = cb_arg;
@@ -181,7 +174,6 @@ static ssize_t Xtls_write(struct tls *tls,void const *buf,size_t buflen,void *cb
   lua_pop(L,2);
   return len;
 }
-#endif
 
 /**************************************************************************
 *
@@ -489,8 +481,9 @@ static int Ltlsconf_prefer_ciphers_server(lua_State *L)
 *                       * 'tlsv1.0'
 *                       * 'tlsv1.1'
 *                       * 'tlsv1.2'
+*			* 'tlsv1.3'
 *                       * 'all'
-*                       * 'secure'  (same as 'tlsv1.2')
+*                       * 'secure'  (same as 'tlsv1.2,tlsv1.3')
 *                       * 'default' (same as 'secure')
 *                       * 'legacy'  (same as 'all')
 * Return:       okay (boolean) true of okay, false if error
@@ -570,7 +563,6 @@ static int Ltlsconf_verify_depth(lua_State *L)
   return 1;
 }
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2040000fL
 /**************************************************************************
 * Usage:
 * Desc:
@@ -611,9 +603,7 @@ static int Ltlsconf_keypair_mem(lua_State *L)
           ) == 0);
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2050000fL
 /**************************************************************************
 * Usage:        okay = config:add_keypair_file(cert_file,key_file)
 * Desc;         Add the cert and key file pair
@@ -674,9 +664,7 @@ static int Ltlsconf_alpn(lua_State *L)
   ) == 0);
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2050100fL
 /**************************************************************************
 * Usage:
 * Desc:
@@ -874,9 +862,6 @@ static int Ltlsconf_session_lifetime(lua_State *L)
   return 1;
 }
 
-#endif
-
-#if LIBRESSL_VERSION_NUMBER >= 0x2060000fL
 /**************************************************************************
 * Usage:
 * Desc:
@@ -914,9 +899,7 @@ static int Ltlsconf_crl_mem(lua_State *L)
           ) == 0);
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2060100fL
 /**************************************************************************
 * Usage:
 * Desc:
@@ -934,9 +917,7 @@ static int Ltlsconf_ecdhecurves(lua_State *L)
           ) == 0);
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2070000fL
 /**************************************************************************
 * Usage:
 * Desc:
@@ -954,7 +935,6 @@ static int Ltlsconf_session_fd(lua_State *L)
           ) == 0);
   return 1;
 }
-#endif
 
 /**************************************************************************
 *
@@ -1446,7 +1426,6 @@ static int Ltls_write(lua_State *L)
   return 1;
 }
 
-#if LIBRESSL_VERSION_NUMBER >= 0x20030001L
 /**************************************************************************
 * Usage:        when = ctx:peer_cert_notafter()
 * Desc:         Return the time of the end of the certificate validity period
@@ -1470,9 +1449,7 @@ static int Ltls_peer_cert_notbefore(lua_State *L)
   lua_pushinteger(L,tls_peer_cert_notbefore(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2050000fL
 /**************************************************************************
 * Usage:        cctx = cts:accept_cbs(userdata,readf,writef)
 ***************************************************************************/
@@ -1583,9 +1560,7 @@ static int Ltls_connect_cbs(lua_State *L)
   
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2050100fL
 /**************************************************************************
 * Usage:        okay = ctx:ocsp_process_response(data)
 * Desc:         Process a raw OCSP response (???)
@@ -1696,9 +1671,7 @@ static int Ltls_peer_ocsp_url(lua_State *L)
   lua_pushstring(L,tls_peer_ocsp_url(*(struct tls **)luaL_checkudata(L,1,TYPE_TLS)));
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2060000fL
 /**************************************************************************
 * Usage:        pem = ctx:peer_cert_chain_pem()
 * Desc:         Return the raw PEM encoded certificate chain for the peer
@@ -1718,9 +1691,7 @@ static int Ltls_peer_cert_chain_pem(lua_State *L)
     lua_pushnil(L);
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2070000fL
 /**************************************************************************
 * Usage:        resumed = ctx:conn_session_resumed()
 * Desc:         Has this session resumed from a previous session?
@@ -1735,9 +1706,8 @@ static int Ltls_conn_session_resumed(lua_State *L)
   );
   return 1;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x3010000fL
+#if TLS_API >= 20200120
 /**************************************************************************
 * Usage:        resumed = ctx:conn_session_resumed()
 * Desc:         Has this session resumed from a previous session?
@@ -1879,7 +1849,6 @@ static int Ltlstop_server(lua_State *L)
   return 1;
 }
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2060000fL
 /**************************************************************************
 * Usage:        tls.unload_file(mem)
 * Desc;         Unload a certicate or key (opened via tls.load_file()) from
@@ -1895,9 +1864,7 @@ static int Ltlstop_unload_file(lua_State *L)
   mem->len = 0;
   return 0;
 }
-#endif
 
-#if LIBRESSL_VERSION_NUMBER >= 0x2090000fL
 /**************************************************************************
 * Usage:        cert = tls.default_ca_cert_file()
 * Desc;         Return the name of the default CA cert file
@@ -1909,7 +1876,6 @@ static int Ltlstop_default_ca_cert_file(lua_State *L)
   lua_pushstring(L,tls_default_ca_cert_file());
   return 1;
 }
-#endif
 
 /**************************************************************************/
 
@@ -1932,6 +1898,12 @@ static luaL_Reg const m_tlsconfmeta[] =
 #if LUA_VERSION_NUM >= 504
   { "__close"                   , Ltlsconf___gc                    } ,
 #endif
+  { "add_keypair_file"          , Ltlsconf_add_keypair_file        } ,
+  { "add_keypair_mem"           , Ltlsconf_add_keypair_mem         } ,
+  { "add_keypair_ocsp_file"     , Ltlsconf_add_keypair_ocsp_file   } ,
+  { "add_keypair_ocsp_mem"      , Ltlsconf_add_keypair_ocsp_mem    } ,
+  { "add_ticket_key"            , Ltlsconf_add_ticket_key          } , // XXX
+  { "alpn"                      , Ltlsconf_alpn                    } ,
   { "ca_file"                   , Ltlsconf_ca_file                 } ,
   { "ca_mem"                    , Ltlsconf_ca_mem                  } ,
   { "ca_path"                   , Ltlsconf_ca_path                 } ,
@@ -1939,8 +1911,11 @@ static luaL_Reg const m_tlsconfmeta[] =
   { "cert_mem"                  , Ltlsconf_cert_mem                } ,
   { "ciphers"                   , Ltlsconf_ciphers                 } ,
   { "clear_keys"                , Ltlsconf_clear_keys              } ,
+  { "crl_file"                  , Ltlsconf_crl_file                } ,
+  { "crl_mem"                   , Ltlsconf_crl_mem                 } ,
   { "dheparams"                 , Ltlsconf_dheparams               } ,
   { "ecdhecurve"                , Ltlsconf_ecdhecurve              } ,
+  { "ecdhecurves"               , Ltlsconf_ecdhecurves             } ,
   { "error"                     , Ltlsconf_error                   } ,
   { "free"                      , Ltlsconf___gc                    } ,
   { "insecure_no_verify_cert"   , Ltlsconf_insecure_no_verify_cert } ,
@@ -1948,44 +1923,23 @@ static luaL_Reg const m_tlsconfmeta[] =
   { "insecure_no_verify_time"   , Ltlsconf_insecure_no_verify_time } ,
   { "key_file"                  , Ltlsconf_key_file                } ,
   { "key_mem"                   , Ltlsconf_key_mem                 } ,
-  { "prefer_ciphers_client"     , Ltlsconf_prefer_ciphers_client   } ,
-  { "prefer_ciphers_server"     , Ltlsconf_prefer_ciphers_server   } ,
-  { "protocols"                 , Ltlsconf_protocols               } ,
-  { "verify"                    , Ltlsconf_verify                  } ,
-  { "verify_client"             , Ltlsconf_verify_client           } ,
-  { "verify_client_optional"    , Ltlsconf_verify_client_optional  } ,
-  { "verify_depth"              , Ltlsconf_verify_depth            } ,
-#if LIBRESSL_VERSION_NUMBER >= 0x2040000fL
   { "keypair_file"              , Ltlsconf_keypair_file            } ,
   { "keypair_mem"               , Ltlsconf_keypair_mem             } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2050000fL
-  { "add_keypair_file"          , Ltlsconf_add_keypair_file        } ,
-  { "add_keypair_mem"           , Ltlsconf_add_keypair_mem         } ,
-  { "alpn"                      , Ltlsconf_alpn                    } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2050100fL
-  { "add_keypair_ocsp_file"     , Ltlsconf_add_keypair_ocsp_file   } ,
-  { "add_keypair_ocsp_mem"      , Ltlsconf_add_keypair_ocsp_mem    } ,
-  { "add_ticket_key"            , Ltlsconf_add_ticket_key          } , // XXX
   { "keypair_ocsp_file"         , Ltlsconf_keypair_ocsp_file       } ,
   { "keypair_ocsp_mem"          , Ltlsconf_keypair_ocsp_mem        } ,
   { "ocsp_require_stapling"     , Ltlsconf_ocsp_require_stapling   } ,
   { "ocsp_staple_file"          , Ltlsconf_ocsp_staple_file        } ,
   { "ocsp_staple_mem"           , Ltlsconf_ocsp_staple_mem         } ,
+  { "prefer_ciphers_client"     , Ltlsconf_prefer_ciphers_client   } ,
+  { "prefer_ciphers_server"     , Ltlsconf_prefer_ciphers_server   } ,
+  { "protocols"                 , Ltlsconf_protocols               } ,
+  { "session_fd"                , Ltlsconf_session_fd              } ,
   { "session_id"                , Ltlsconf_session_id              } ,
   { "session_lifetime"          , Ltlsconf_session_lifetime        } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2060000fL
-  { "crl_file"                  , Ltlsconf_crl_file                } ,
-  { "crl_mem"                   , Ltlsconf_crl_mem                 } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2060100fL
-  { "ecdhecurves"               , Ltlsconf_ecdhecurves             } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2070000fL
-  { "session_fd"                , Ltlsconf_session_fd              } ,
-#endif
+  { "verify"                    , Ltlsconf_verify                  } ,
+  { "verify_client"             , Ltlsconf_verify_client           } ,
+  { "verify_client_optional"    , Ltlsconf_verify_client_optional  } ,
+  { "verify_depth"              , Ltlsconf_verify_depth            } ,
   { NULL                        , NULL                             }
 };
 
@@ -2003,38 +1957,32 @@ static luaL_Reg const m_tlsmeta[] =
 #if LUA_VERSION_NUM >= 504
   { "__close"                   , Ltls___gc                        } ,
 #endif
+  { "accept_cbs"                , Ltls_accept_cbs                  } ,
   { "accept_fds"                , Ltls_accept_fds                  } ,
   { "accept_socket"             , Ltls_accept_socket               } ,
   { "close"                     , Ltls_close                       } ,
   { "configure"                 , Ltls_configure                   } ,
+  { "conn_alpn_selected"        , Ltls_conn_alpn_selected          } ,
   { "conn_cipher"               , Ltls_conn_cipher                 } ,
+  { "conn_servername"           , Ltls_conn_servername             } ,
+  { "conn_session_resumed"      , Ltls_conn_session_resumed        } ,
   { "conn_version"              , Ltls_conn_version                } ,
   { "connect"                   , Ltls_connect                     } ,
+  { "connect_cbs"               , Ltls_connect_cbs                 } ,
   { "connect_fds"               , Ltls_connect_fds                 } ,
   { "connect_socket"            , Ltls_connect_socket              } ,
   { "error"                     , Ltls_error                       } ,
   { "free"                      , Ltls___gc                        } ,
   { "handshake"                 , Ltls_handshake                   } ,
+  { "ocsp_process_response"     , Ltls_ocsp_process_response       } , // XXX
+  { "peer_cert_chain_pem"       , Ltls_peer_cert_chain_pem         } ,
   { "peer_cert_contains_name"   , Ltls_peer_cert_contains_name     } ,
   { "peer_cert_hash"            , Ltls_peer_cert_hash              } ,
   { "peer_cert_issuer"          , Ltls_peer_cert_issuer            } ,
-  { "peer_cert_provided"        , Ltls_peer_cert_provided          } ,
-  { "peer_cert_subject"         , Ltls_peer_cert_subject           } ,
-  { "read"                      , Ltls_read                        } ,
-  { "reset"                     , Ltls_reset                       } ,
-  { "write"                     , Ltls_write                       } ,
-#if LIBRESSL_VERSION_NUMBER >= 0x20030001L
   { "peer_cert_notafter"        , Ltls_peer_cert_notafter          } ,
   { "peer_cert_notbefore"       , Ltls_peer_cert_notbefore         } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2050000fL
-  { "accept_cbs"                , Ltls_accept_cbs                  } ,
-  { "conn_alpn_selected"        , Ltls_conn_alpn_selected          } ,
-  { "conn_servername"           , Ltls_conn_servername             } ,
-  { "connect_cbs"               , Ltls_connect_cbs                 } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2050100fL
-  { "ocsp_process_response"     , Ltls_ocsp_process_response       } , // XXX
+  { "peer_cert_provided"        , Ltls_peer_cert_provided          } ,
+  { "peer_cert_subject"         , Ltls_peer_cert_subject           } ,
   { "peer_ocsp_cert_status"     , Ltls_peer_ocsp_cert_status       } ,
   { "peer_ocsp_crl_reason"      , Ltls_peer_ocsp_crl_reason        } ,
   { "peer_ocsp_next_update"     , Ltls_peer_ocsp_next_update       } ,
@@ -2042,14 +1990,10 @@ static luaL_Reg const m_tlsmeta[] =
   { "peer_ocsp_revocation_time" , Ltls_peer_ocsp_revocation_time   } ,
   { "peer_ocsp_this_update"     , Ltls_peer_ocsp_this_update       } ,
   { "peer_ocsp_url"             , Ltls_peer_ocsp_url               } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2060000fL
-  { "peer_cert_chain_pem"       , Ltls_peer_cert_chain_pem         } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2070000fL
-  { "conn_session_resumed"      , Ltls_conn_session_resumed        } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x3010000fL
+  { "read"                      , Ltls_read                        } ,
+  { "reset"                     , Ltls_reset                       } ,
+  { "write"                     , Ltls_write                       } ,
+#if TLS_API >= 20200120
   { "conn_cipher_strength"      , Ltls_conn_cipher_strength        } ,
 #endif
   { NULL                        , NULL                             }
@@ -2063,12 +2007,8 @@ static luaL_Reg const m_tlsreg[] =
   { "config"                    , Ltlstop_config                   } ,
   { "load_file"                 , Ltlstop_load_file                } ,
   { "server"                    , Ltlstop_server                   } ,
-#if LIBRESSL_VERSION_NUMBER >= 0x2060000fL
   { "unload_file"               , Ltlstop_unload_file              } ,
-#endif
-#if LIBRESSL_VERSION_NUMBER >= 0x2090000fL
   { "default_ca_cert_file"      , Ltlstop_default_ca_cert_file     } ,
-#endif
   { NULL                        , NULL                             }
 };
 

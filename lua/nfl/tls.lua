@@ -35,8 +35,6 @@ local _VERSION     = _VERSION
 local assert       = assert
 local setmetatable = setmetatable
 
-assert(tls.LIBRESSL_VERSION >= 0x2050000f,"too old a version of TLS")
-
 if _VERSION == "Lua 5.1" then
   module(...)
 else

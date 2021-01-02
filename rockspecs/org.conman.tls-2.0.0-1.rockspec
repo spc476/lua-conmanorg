@@ -1,15 +1,15 @@
 
 package = "org.conman.tls"
-version = "1.2.0-1"
+version = "2.0.0-1"
 
 source =
 {
-  url ="https://raw.github.com/spc476/lua-conmanorg/tls-1.2.0/src/tls.c"
+  url ="https://raw.github.com/spc476/lua-conmanorg/tls-2.0.0/src/tls.c"
 }
 
 description =
 {
-  homepage = "https://github.com/spc476/lua-conmanorg/blob/tls-1.2.0/src/tls.c",
+  homepage = "https://github.com/spc476/lua-conmanorg/blob/tls-2.0.0/src/tls.c",
   maintainer = "Sean Conner <sean@conman.org>",
   license = "LGPL3",
   summary = "A Lua module for libtls from LibreSSL",
@@ -32,12 +32,7 @@ external_dependencies =
   TLS = 
   {
     header  = "tls.h",
-  },
-  
-  LIBRESSL =
-  {
-    header = "openssl/opensslv.h",
-  },
+  },  
 }
 
 build =
@@ -49,7 +44,7 @@ build =
     ['org.conman.tls'] =
     {
       sources   = "tls.c",
-      incdirs   = { "$(TLS_INCDIR)" , "$(LIBRESSL_INCDIR)" },
+      incdirs   = { "$(TLS_INCDIR)" },
       libraries = { 'tls' },
     }
   }  
