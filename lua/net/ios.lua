@@ -429,7 +429,6 @@ local function read(ios,...)
     if not data then break end
     
     table.insert(res,data)
-    ios._rbytes = ios._rbytes + #tostring(data)
   end
   
   return unpack(res)
@@ -515,8 +514,6 @@ return function()
     _readbuf = "",
     _rpos    = 1,
     _eof     = false,
-    _wbytes  = 0,
-    _rbytes  = 0,
     _refill  = function() error("failed to provide ios._refill()") end,
     _drain   = function() error("failed to provide ios._drain()")  end,
   }
