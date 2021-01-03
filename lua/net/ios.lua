@@ -51,7 +51,6 @@ local type      = type
 local error     = error
 local unpack    = table.unpack or unpack
 local tonumber  = tonumber
-local tostring  = tostring
 local tointeger = math.tointeger or function(s) return tonumber(s) end
 
 -- *******************************************************************
@@ -260,7 +259,7 @@ local READER READER =
     -- Check for CRLF
     -- ---------------
     
-    local s2,e2 = ios._readbuf:find("\r?\n",s)
+    local s2 = ios._readbuf:find("\r?\n",s)
     if not s2 then
       refill(ios)
       return READER['*h'](ios)
