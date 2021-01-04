@@ -347,7 +347,7 @@ function connecta(addr,hostname,to,conf)
   if not okay then
     syslog('error',"tls:connect(%s) = %s",hostname,err1 or "(nil)")
     nfl.SOCKETS:remove(sock)
-    return false,errno[err1]
+    return false,err1
   end
   return ios
 end
