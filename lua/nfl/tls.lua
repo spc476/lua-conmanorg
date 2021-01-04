@@ -345,7 +345,7 @@ function connecta(addr,hostname,to,conf)
   if to then nfl.timeout(0) end
   
   if not okay then
-    syslog('error',"tls:connect(%s) = %s",hostname,errno[err1])
+    syslog('error',"tls:connect(%s) = %s",hostname,err1 or "(nil)")
     nfl.SOCKETS:remove(sock)
     return false,errno[err1]
   end
