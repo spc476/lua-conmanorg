@@ -29,6 +29,7 @@ local ios    = require "org.conman.net.ios"
 
 local _VERSION     = _VERSION
 local setmetatable = setmetatable
+local ipairs       = ipairs
 
 if _VERSION == "Lua 5.1" then
   module(...)
@@ -234,7 +235,12 @@ end
 function connect(host,port,conf)
   local addr = net.address2(host,'any','tcp',port)
   if addr then
-    return connecta(addr[1],host,conf)
+    for _,a in ipairs(addr) do
+      local conn = connecta(a,host,conf)
+      if conn then
+        return conn
+      end
+    end
   end
 end
 

@@ -32,6 +32,7 @@ local _VERSION     = _VERSION
 local tostring     = tostring
 local setmetatable = setmetatable
 local assert       = assert
+local ipairs       = ipairs
 
 if _VERSION == "Lua 5.1" then
   module(...)
@@ -99,7 +100,7 @@ local function create_handler(conn,remote)
       if not ios._eof then
         nfl.SOCKETS:remove(ios.__socket)
         ios._eof = true
-        nfl.schedule(ios.__co,false,0)
+        nfl.schedule(ios.__co,false,"disconnect")
       end
       return
     end
@@ -110,7 +111,7 @@ local function create_handler(conn,remote)
         if #packet == 0 then
           nfl.SOCKETS:remove(ios.__socket)
           ios._eof    = true
-          nfl.schedule(ios.__co,false,0)
+          nfl.schedule(ios.__co,false,"disconnect")
         else
           nfl.schedule(ios.__co,packet)
         end
@@ -237,7 +238,7 @@ function connecta(addr,to)
   -- ------------------------------------------------------------
   
   nfl.SOCKETS:insert(sock,'w',packet_handler)
-  if to then nfl.timeout(to,false,errno.ETIMEDOUT) end
+  if to then nfl.timeout(to,false,errno[errno.ETIMEDOUT]) end
   sock:connect(addr)
   local okay,err1 = coroutine.yield()
   if to then nfl.timeout(0) end
@@ -245,7 +246,7 @@ function connecta(addr,to)
   if not okay then
     nfl.SOCKETS:remove(sock)
     sock:close()
-    syslog('error',"sock:connect(%s) = %s",tostring(addr),errno[err1])
+    syslog('error',"sock:connect(%s) = %s",tostring(addr),err1)
     return nil
   end
   return ios
@@ -263,7 +264,13 @@ end
 function connect(host,port,to)
   local addr = net.address2(host,'any','tcp',port)
   if addr then
-    return connecta(addr[1],to)
+    for _,a in ipairs(addr) do
+      syslog('debug',"trying %s",tostring(a))
+      local conn = connecta(a,to)
+      if conn then
+        return conn
+      end
+    end
   end
 end
 
