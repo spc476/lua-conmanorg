@@ -54,6 +54,8 @@ local function create_handler(conn,remote)
   ios.__socket = conn
   ios.__remote = remote
   ios.__output = ""
+  ios.__rbytes = 0
+  ios.__wbytes = 0
   
   ios._refill = function()
     return coroutine.yield()
@@ -113,6 +115,7 @@ local function create_handler(conn,remote)
           ios._eof    = true
           nfl.schedule(ios.__co,false,"disconnect")
         else
+          ios.__rbytes = ios.__rbytes + #packet
           nfl.schedule(ios.__co,packet)
         end
       else
@@ -129,6 +132,7 @@ local function create_handler(conn,remote)
       if #ios.__output > 0 then
         local bytes,err = ios.__socket:send(nil,ios.__output)
         if err == 0 then
+          ios.__wbytes = ios.__wbytes + bytes
           ios.__output = ios.__output:sub(bytes + 1,-1)
         else
           syslog('error',"socket:send() = %s",errno[err])

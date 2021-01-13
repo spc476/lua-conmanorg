@@ -45,10 +45,14 @@ end
 -- **********************************************************************
 
 local function create_handler(conn,remote)
-  local ios    = mkios()
-  ios.__socket = conn
-  ios.__remote = remote
-  ios.__input  = ""
+  local ios       = mkios()
+  ios.__socket    = conn
+  ios.__remote    = remote
+  ios.__input     = ""
+  ios.__rbytesraw = 0
+  ios.__rbytes    = 0
+  ios.__wbytesraw = 0
+  ios.__wbytes    = 0
   
   ios._handshake = function(self)
     local rc = ios.__ctx:handshake()
@@ -82,6 +86,7 @@ local function create_handler(conn,remote)
       if #str == 0 then
         return nil
       else
+        ios.__rbytes = ios.__rbytes + #str
         return str
       end
     end
@@ -110,9 +115,12 @@ local function create_handler(conn,remote)
       return self:_drain(data)
       
     elseif bytes < #data then
+      ios.__wbytes = ios.__wbytes + bytes
       nfl.SOCKETS:update(self.__socket,"w")
       coroutine.yield()
       return self:_drain(data:sub(bytes+1,-1))
+    else
+      ios.__wbytes = ios.__wbytes + bytes
     end
     
     return true
@@ -162,7 +170,8 @@ local function create_handler(conn,remote)
           nfl.SOCKETS:remove(ios.__socket)
           ios._eof    = true
         else
-          ios.__input = ios.__input .. packet
+          ios.__input  = ios.__input .. packet
+          ios.__rbytesraw = ios.__rbytesraw + #packet
         end
         nfl.schedule(ios.__co)
       else
@@ -207,6 +216,8 @@ local function tlscb_write(_,str,ios)
     else
       bytes = tls.ERROR
     end
+  else
+    ios.__wbytesraw = ios.__wbytesraw + bytes
   end
   
   return bytes
