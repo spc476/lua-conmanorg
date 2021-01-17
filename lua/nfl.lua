@@ -172,7 +172,9 @@ local function eventloop(done_f)
         break
       end
       
-      schedule(co.co,unpack(co))
+      if coroutine.status(co.co) ~= 'dead' then
+        schedule(co.co,unpack(co))
+      end
     end
     
     TOQUEUE:remove()
