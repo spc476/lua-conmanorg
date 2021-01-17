@@ -1,9 +1,9 @@
 
-This is a collection of Lua 5.1 modules I've written.  Yes, they include
-functionality found in other Lua modules like luasockets and luaposix.  I
-wrote these not to reinvent the wheel (although I did) but to learn how to
-program in Lua.  As such, I do find these modules useful and actually prefer
-them to such modules as luasockets and luaposix. 
+This is a collection of Lua 5.1 .. 5.4 modules I've written.  Yes, they
+include functionality found in other Lua modules like luasockets and
+luaposix.  I wrote these not to reinvent the wheel (although I did) but to
+learn how to program in Lua.  As such, I do find these modules useful and
+actually prefer them to such modules as luasockets and luaposix.
 
 Now, because of the functionality overlap of some of these modules with
 existing Lua modules, I decided to place them under a name that I know won't
