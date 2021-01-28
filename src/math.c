@@ -36,6 +36,32 @@
 
 /************************************************************************/
 
+static int math_seed(lua_State *L)
+{
+#if LUA_VERSION_NUM >= 504
+  lua_Integer seed[2];
+#else
+  lua_Integer seed[1];
+#endif
+
+  FILE *fp = fopen("/dev/urandom","rb");
+  if (fp == NULL)
+    return 0;
+  fread(seed,sizeof(seed),1,fp);
+  fclose(fp);
+  
+#if LUA_VERSION_NUM >= 504
+  lua_pushinteger(L,seed[0]);
+  lua_pushinteger(L,seed[1]);
+  return 2;
+#else
+  lua_pushinteger(L,seed[0]);
+  return 1;
+#endif
+}
+
+/************************************************************************/
+
 static int math_randomseed(lua_State *const L)
 {
   char         *seedbank;
@@ -230,6 +256,7 @@ static int math_div(lua_State *const L)
 
 static const struct luaL_Reg reg_math[] =
 {
+  { "seed"              , math_seed       },
   { "randomseed"        , math_randomseed },
   { "idiv"              , math_idiv       },
   { "div"               , math_div        },
