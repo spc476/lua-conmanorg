@@ -1,5 +1,5 @@
 package = "org.conman.iconv"
-version = "2.0.0-2"
+version = "2.0.0-4"
 
 source =
 {
@@ -10,7 +10,7 @@ description =
 {
   homepage = "https://github.com/spc476/lua-conmanorg/blob/iconv-2.0.0/src/iconv.c",
   maintainer = "Sean Conner <sean@conman.org>",
-  license    = "LGPL",
+  license    = "LGPL3+",
   summary    = "Lua wrapper for IConv",
   detailed   = [[
 	A Lua module that wraps the iconv library call.  It's simple to use:
@@ -27,7 +27,7 @@ description =
 
 dependencies =
 {
-  "lua >= 5.1, < 5.4"
+  "lua >= 5.1, <= 5.4"
 }
 
 local iconv_library_dependency_override =

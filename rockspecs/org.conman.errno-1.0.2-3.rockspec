@@ -1,5 +1,5 @@
 package = "org.conman.errno"
-version = "1.0.2-1"
+version = "1.0.2-3"
 
 source = 
 {
@@ -10,7 +10,7 @@ description =
 {
   homepage   = "https://github.com/spc476/lua-conmanorg/blob/errno-1.0.2/src/errno.c",
   maintainer = "Sean Conner <sean@conman.org>",
-  license    = "LGPL",
+  license    = "LGPL3+",
   summary    = "C and POSIX system error codes.",
   detailed   = [[
 	A Lua module that enumerates all C and POSIX system error codes in
@@ -20,7 +20,7 @@ description =
 
 dependencies =
 {
-  "lua >= 5.1, < 5.4",
+  "lua >= 5.1, <= 5.4",
 }
 
 build =

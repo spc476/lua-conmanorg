@@ -1,6 +1,6 @@
 
 package = "org.conman.tls"
-version = "2.0.0-2"
+version = "2.0.0-3"
 
 source =
 {
@@ -11,7 +11,7 @@ description =
 {
   homepage = "https://github.com/spc476/lua-conmanorg/blob/tls-2.0.0/src/tls.c",
   maintainer = "Sean Conner <sean@conman.org>",
-  license = "LGPL3",
+  license = "LGPL3+",
   summary = "A Lua module that implements TLS via the libtls API.",
   detailed = [[
 

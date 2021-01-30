@@ -12,7 +12,7 @@ description =
 {
   homepage   = "https://github.com/spc476/lua-conmanorg/blob/syslog-2.1.4/src/syslog.c",
   maintainer = "Sean Conner <sean@conman.org>",
-  license    = "LGPL",
+  license    = "LGPL3+",
   summary    = "Lua interface to syslog()",
   detailed   = [[
 	A Lua module that interfaces with syslog().
@@ -21,7 +21,7 @@ description =
 
 dependencies =
 {
-  "lua >= 5.1, < 5.4",
+  "lua >= 5.1, <= 5.4",
 }
 
 build =

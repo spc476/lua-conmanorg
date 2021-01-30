@@ -1,16 +1,16 @@
 package = "org.conman.env"
-version = "1.0.2-2"
+version = "1.0.2-4"
 
 source = 
 {
-  url = "https://raw.githubusercontent.com/spc476/lua-conmanorg/env-1.0.2/src/env.c"
+  url = "https://raw.githubusercontent.com/spc476/lua-conmanorg/env-1.0.2/src/env.c",
 }
 
 description =
 {
   homepage   = "https://github.com/spc476/lua-conmanorg/blob/env-1.0.2/src/env.c",
   maintainer = "Sean Conner <sean@conman.org>",
-  license    = "LGPL",
+  license    = "LGPL3+",
   summary    = "Loads all environment variables into a table.",
   detailed   = [[
 	A Lua module that loads all current environment variables into a 
@@ -20,7 +20,7 @@ description =
 
 dependencies =
 {
-  "lua >= 5.1, < 5.4",
+  "lua >= 5.1, <= 5.4",
 }
 
 build =
