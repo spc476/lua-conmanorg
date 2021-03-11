@@ -202,7 +202,14 @@ local function eventloop(done_f)
     
     if status == 'dead' then
       syslog('critical',"A dead coroutine was scheduled to run")
+      -- -------------------------------------------------------------------
+      -- At this point, REFQUEUE[co[1]] should be true, and REFQUEUE._n > 0.
+      -- Why are these being triggered?
+      -- -------------------------------------------------------------------
+      
+      assert(REFQUEUE[co[1]])
       assert(REFQUEUE._n > 0)
+      
       REFQUEUE[co[1]] = nil
       REFQUEUE._n     = REFQUEUE._n - 1
     
