@@ -217,7 +217,7 @@ function connecta(addr,hostname,conf)
   
   if not ctx:connect_socket(sock:_tofd(),hostname) then
     sock:close()
-    return false,ctx:error()
+    return false,ctx:error() or "failed to connect"
   end
   
   return make_ios(ctx,sock)
@@ -233,7 +233,7 @@ end
 -- *******************************************************************
 
 function connect(host,port,conf)
-  local addr = net.address2(host,'any','tcp',port)
+  local addr,err = net.address2(host,'any','tcp',port)
   if addr then
     for _,a in ipairs(addr) do
       local conn = connecta(a,host,conf)
@@ -241,6 +241,8 @@ function connect(host,port,conf)
         return conn
       end
     end
+  else
+    return nil,net.errno[err]
   end
 end
 
