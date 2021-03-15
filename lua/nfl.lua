@@ -207,12 +207,18 @@ local function eventloop(done_f)
       -- Why are these being triggered?
       -- -------------------------------------------------------------------
       
-      assert(REFQUEUE[co[1]])
-      assert(REFQUEUE._n > 0)
+      if not REFQUEUE[co[1]] then
+        syslog('warning',"Why is there no corotine in the REFQUEUE?")
+      else
+        REFQUEUE[co[1]] = nil
+      end
       
-      REFQUEUE[co[1]] = nil
-      REFQUEUE._n     = REFQUEUE._n - 1
-    
+      if REFQUEUE._n > 0 then
+        REFQUEUE._n = REFQUEUE._n - 1
+      else
+        syslog('warning',"Why is the REFQUEUE count %d?",REFQUEUE._n)
+      end
+      
     elseif status == 'suspended' then
       local ret = { coroutine.resume(unpack(co)) }
       
