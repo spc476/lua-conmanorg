@@ -1,15 +1,15 @@
 package = "org.conman.const.gopher-types"
-version = "1.0.3-2"
+version = "2.0.0-1"
 
 source =
 {
-  url = "https://raw.github.com/spc476/lua-conmanorg/gopher-types-1.0.3/lua/const/gopher-types.lua",
-  md5 = "201c3821590f3bfb732d9e1517072fe2",
+  url = "https://raw.github.com/spc476/lua-conmanorg/gopher-types-2.0.0/lua/const/gopher-types.lua",
+  md5 = "1b5ee8a8aa12fb1a26a08253b99698b0",
 }
 
 description =
 {
-  homepage = "https://github.com/spc476/lua-conmanorg/blob/gopher-types-1.0.3/lua/const/gopher-types.lua",
+  homepage = "https://github.com/spc476/lua-conmanorg/blob/gopher-types-2.0.0/lua/const/gopher-types.lua",
   maintainer = "Sean Conner <sean@conman.org>",
   license = "LGPL3+",
   summary = "Gopher Protocol selector types",
