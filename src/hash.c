@@ -291,23 +291,6 @@ int luaopen_org_conman_hash(lua_State *L)
 #else
   luaL_newlib(L,hashlua);
 #endif
-
-  lua_createtable(L,0,7);
-  lua_pushinteger(L,128);
-  lua_setfield(L,-2,"md2");
-  lua_pushinteger(L,128);
-  lua_setfield(L,-2,"md4");
-  lua_pushinteger(L,128);
-  lua_setfield(L,-2,"md5");
-  lua_pushinteger(L,128);
-  lua_setfield(L,-2,"mdc2");
-  lua_pushinteger(L,160);
-  lua_setfield(L,-2,"sha1");
-  lua_pushinteger(L,160);
-  lua_setfield(L,-2,"dss1");
-  lua_pushinteger(L,160);
-  lua_setfield(L,-2,"ripemd");
-  lua_setfield(L,-2,"hashes");
   
   return 1;
 }
