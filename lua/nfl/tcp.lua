@@ -269,7 +269,6 @@ function connect(host,port,to)
   local addr = net.address2(host,'any','tcp',port)
   if addr then
     for _,a in ipairs(addr) do
-      syslog('debug',"trying %s",tostring(a))
       local conn = connecta(a,to)
       if conn then
         return conn
