@@ -138,7 +138,15 @@ function dump_value(name,value,path,level,marked)
   if type(name) == "nil" then
     return ""
   elseif type(name) == "number" then
-    name = string.format("[%d]",name)
+    if _VERSION >= "Lua 5.3" then
+      if math.type(name) == 'integer' then
+        name = string.format("[%d]",name)
+      else
+        name = string.format("[%f]",name)
+      end
+    else
+      name = string.format("[%f]",name)
+    end
   elseif type(name) == 'string' then
     if not name:match "^[A-Za-z_][A-Za-z0-9_]*$" then
       name = "[" .. safestring(name) .. "]"
