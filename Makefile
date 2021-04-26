@@ -23,7 +23,7 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME),Linux)
   CC      = gcc -std=c99
-  CFLAGS  = -g -Wall -Wextra -pedantic
+  CFLAGS  = -g -Wall -Wextra -pedantic -Wwrite-strings
   LDFLAGS = -g -shared
   lib/clock.so : LDLIBS = -lrt
 endif

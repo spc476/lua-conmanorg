@@ -41,7 +41,7 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-extern char **environ;
+extern char const **environ;
 
 #if LUA_VERSION_NUM == 501
   static struct luaL_Reg const env[] =
@@ -62,9 +62,9 @@ int luaopen_org_conman_env(lua_State *L)
 
   for (i = 0 ; environ[i] != NULL ; i++)
   {
-    char   *value = strchr(environ[i],'=');
-    size_t  len;
-    int     type;
+    char const *value = strchr(environ[i],'=');
+    size_t      len;
+    int         type;
     
     if (value != NULL)
     {
@@ -103,4 +103,3 @@ int luaopen_org_conman_env(lua_State *L)
   
   return 1;
 }
-

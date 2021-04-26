@@ -199,10 +199,10 @@ void process(
 
 int main(int argc,char *argv[])
 {
-  FILE *fpout;
-  char *tag;
-  int   c;
-  int   level;
+  FILE       *fpout;
+  char const *tag;
+  int         c;
+  int         level;
   
   fpout = stdout;
   tag   = "data";

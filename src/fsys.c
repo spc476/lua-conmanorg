@@ -853,8 +853,8 @@ static int fsys_pipe(lua_State *L)
   FILE        *fpr;
   FILE        *fpw;
   int          fh[2];
-  char        *rm;
-  char        *wm;
+  char const  *rm;
+  char const  *wm;
   
   if (lua_isboolean(L,1))
   {
