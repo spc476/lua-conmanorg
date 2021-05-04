@@ -230,25 +230,9 @@ static int math_div(lua_State *const L)
   double numer = luaL_checknumber(L,1);
   double denom = luaL_checknumber(L,2);
   
-  if (denom == 0.0)
-  {
-    if (numer < 0.0)
-    {
-      lua_pushnumber(L,-HUGE_VAL);
-      lua_pushnumber(L,-HUGE_VAL);
-    }
-    else
-    {
-      lua_pushnumber(L,HUGE_VAL);
-      lua_pushnumber(L,HUGE_VAL);
-    }
-  }
-  else
-  {
-  
-    lua_pushnumber(L,numer / denom);
-    lua_pushnumber(L,fmod(numer,denom));
-  }
+  lua_pushnumber(L,numer / denom);
+  lua_pushnumber(L,fmod(numer,denom));
+
   return 2;
 }
 
