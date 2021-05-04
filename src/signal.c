@@ -422,7 +422,7 @@ static int siglua_defined(lua_State *L)
 
 /**********************************************************************/
 
-static struct const luaL_Reg m_sig_reg[] =
+static struct luaL_Reg const m_sig_reg[] =
 {
   { "caught"    , siglua_caught         } ,
   { "catch"     , siglua_catch          } ,
@@ -442,7 +442,11 @@ int luaopen_org_conman_signal(lua_State *L)
     m_handlers[i].name      = NULL;
   }
   
+#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.signal-ansi",m_sig_reg);
+#else
+  luaL_newlib(L,m_sig_reg);
+#endif
   lua_pushliteral(L,"ANSI");
   lua_setfield(L,-2,"_implementation");
   
