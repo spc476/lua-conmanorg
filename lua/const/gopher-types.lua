@@ -20,7 +20,8 @@
 -- ************************************************************************
 -- luacheck: ignore 611
 
-return {
+return setmetatable(
+{
   ['0'] = 'file',     -- RFC-1436
   ['1'] = 'dir',
   ['2'] = 'CSO',
@@ -72,4 +73,8 @@ return {
   PDF        = 'P',
   MIME       = 'M',
   video      = ';',
+},
+{
+  __index = function(_,key) return key end
 }
+)
