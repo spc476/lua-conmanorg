@@ -1166,6 +1166,8 @@ static int fsys__close(lua_State *L)
 
 static int monkeypatch_mod__fromfd(lua_State *L)
 {
+  lua_settop(L,2);
+  
   FILE *fp = fdopen(luaL_checkinteger(L,1),luaL_checkstring(L,2));
   
   if (fp == NULL)
@@ -1181,6 +1183,7 @@ static int monkeypatch_mod__fromfd(lua_State *L)
   FILE **pfp = lua_newuserdata(L,sizeof(FILE *));
   luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_setmetatable(L,-2);
+  lua_createtable(L,0,0);
   lua_pushcfunction(L,fsyslib_close);
   lua_setfield(L,-2,"__close");
   lua_setfenv(L,-2);
