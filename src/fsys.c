@@ -485,7 +485,11 @@ static int dir_meta___gc(lua_State *L)
 
 static int dir_meta__tofd(lua_State *L)
 {
+#if defined(__SunOS_5_10)
+  lua_pushinteger(L,-1);
+#else
   lua_pushinteger(L,dirfd(*(DIR **)luaL_checkudata(L,1,TYPE_DIR)));
+#endif
   return 1;
 }
 
