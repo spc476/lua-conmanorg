@@ -180,9 +180,8 @@ static int proclua_getpgrp(lua_State *L)
 
 static int proclua_fork(lua_State *L)
 {
-  pid_t child;
-  
-  child = fork();
+  pid_t child = fork();
+
   if (child < 0)
   {
     lua_pushnil(L);
@@ -394,16 +393,13 @@ static int proclua_exit(lua_State *L)
 
 static int proclua_wait(lua_State *L)
 {
-  pid_t child;
   int   status;
-  int   flag;
-  int   rc;
+  pid_t child = luaL_optinteger(L,1,-1);
+  int   flag  = lua_toboolean(L,2)
+              ? WUNTRACED | WCONTINUED | WNOHANG
+              : WUNTRACED | WCONTINUED;
+  int   rc    = waitpid(child,&status,flag);
   
-  child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2)
-                ? WUNTRACED | WCONTINUED | WNOHANG
-                : WUNTRACED | WCONTINUED;
-  rc    = waitpid(child,&status,flag);
   if (rc == -1)
   {
     lua_pushnil(L);
@@ -431,52 +427,36 @@ static void proc_pushrusage(
 )
 {
   lua_createtable(L,0,0);
-  
   lua_pushnumber(L,usage->ru_utime.tv_sec + ((double)usage->ru_utime.tv_usec / 1000000.0));
   lua_setfield(L,-2,"utime");
-  
   lua_pushnumber(L,usage->ru_stime.tv_sec + ((double)usage->ru_stime.tv_usec / 1000000.0));
   lua_setfield(L,-2,"stime");
-  
   lua_pushnumber(L,usage->ru_maxrss);
   lua_setfield(L,-2,"maxrss");
-  
   lua_pushnumber(L,usage->ru_ixrss);
   lua_setfield(L,-2,"text");
-  
   lua_pushnumber(L,usage->ru_idrss);
   lua_setfield(L,-2,"data");
-  
   lua_pushnumber(L,usage->ru_isrss);
   lua_setfield(L,-2,"stack");
-  
   lua_pushnumber(L,usage->ru_minflt);
   lua_setfield(L,-2,"softfaults");
-  
   lua_pushnumber(L,usage->ru_majflt);
   lua_setfield(L,-2,"hardfaults");
-  
   lua_pushnumber(L,usage->ru_nswap);
   lua_setfield(L,-2,"swapped");
-  
   lua_pushnumber(L,usage->ru_inblock);
   lua_setfield(L,-2,"inblock");
-  
   lua_pushnumber(L,usage->ru_oublock);
   lua_setfield(L,-2,"outblock");
-  
   lua_pushnumber(L,usage->ru_msgsnd);
   lua_setfield(L,-2,"ipcsend");
-  
   lua_pushnumber(L,usage->ru_msgrcv);
   lua_setfield(L,-2,"ipcreceive");
-  
   lua_pushnumber(L,usage->ru_nsignals);
   lua_setfield(L,-2,"signals");
-  
   lua_pushnumber(L,usage->ru_nvcsw);
   lua_setfield(L,-2,"coopcs");
-  
   lua_pushnumber(L,usage->ru_nivcsw);
   lua_setfield(L,-2,"preemptcs");
 }
@@ -486,16 +466,13 @@ static void proc_pushrusage(
 static int proclua_waitusage(lua_State *L)
 {
   struct rusage usage;
-  pid_t         child;
   int           status;
-  int           flag;
-  int           rc;
+  pid_t         child = luaL_optinteger(L,1,-1);
+  int           flag  = lua_toboolean(L,2)
+                      ? WUNTRACED | WCONTINUED | WNOHANG
+                      : WUNTRACED | WCONTINUED ;
+  int           rc    = wait4(child,&status,flag,&usage);
   
-  child = luaL_optinteger(L,1,-1);
-  flag  = lua_toboolean(L,2)
-                ? WUNTRACED | WCONTINUED | WNOHANG
-                : WUNTRACED | WCONTINUED ;
-  rc    = wait4(child,&status,flag,&usage);
   if (rc == -1)
   {
     lua_pushnil(L);
@@ -522,17 +499,14 @@ static int proclua_waitusage(lua_State *L)
 static int proclua_waitid(lua_State *L)
 {
   siginfo_t info;
-  pid_t     child;
-  idtype_t  idtype;
-  int       flag;
-  
-  child = luaL_checkinteger(L,1);
-  flag  = lua_toboolean(L,2)
-        ? WEXITED | WSTOPPED | WCONTINUED | WNOHANG
-        : WEXITED | WSTOPPED | WCONTINUED;
-  idtype = (child == 0) ? P_ALL : P_PID;
+  pid_t    child  = luaL_checkinteger(L,1);
+  int      flag   = lua_toboolean(L,2)
+                  ? WEXITED | WSTOPPED | WCONTINUED | WNOHANG
+                  : WEXITED | WSTOPPED | WCONTINUED;
+  idtype_t idtype = (child == 0) ? P_ALL : P_PID;
   
   memset(&info,0,sizeof(info));
+  
   if (waitid(idtype,child,&info,flag) == -1)
   {
     lua_pushnil(L);
