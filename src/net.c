@@ -982,6 +982,9 @@ static struct sockoptions const m_sockoptions[] =
   { "linger"            , SOL_SOCKET    , 0             , SO_LINGER             , SOPT_LINGER   , true , true  } ,
   { "maxsegment"        , IPPROTO_TCP   , 0             , TCP_MAXSEG            , SOPT_INT      , true , true  } ,
   { "nodelay"           , IPPROTO_TCP   , 0             , TCP_NODELAY           , SOPT_FLAG     , true , true  } ,
+#ifdef TCP_QUICKACK
+  { "quickack"          , IPPROTO_TCP   , 0             , TCP_QUICKACK          , SOPT_FLAG     , true , true  } ,
+#endif
   { "nonblock"          , F_GETFL       , F_SETFL       , O_NONBLOCK            , SOPT_FCNTL    , true , true  } ,
 #ifdef SO_NOSIGPIPE
   { "nosigpipe"         , SOL_SOCKET    , 0             , SO_NOSIGPIPE          , SOPT_FLAG     , true , true  } ,
