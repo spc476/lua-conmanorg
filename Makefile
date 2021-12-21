@@ -67,7 +67,7 @@ endif
 
 # ===================================================
 
-.PHONY:	all clean install uninstall
+.PHONY:	all clean install uninstall obsolete install-obsolete
 
 lib/%.so : src/%.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
@@ -93,9 +93,10 @@ all : lib		\
 	lib/strcore.so	\
 	lib/sys.so	\
 	lib/syslog.so	\
-	lib/tcc.so	\
 	lib/tls.so	\
 	build/bin2c
+
+obsolete: lib lib/tcc.so
 
 build/bin2c : build/bin2c.c
 	$(CC) $(CFLAGS) -o $@ $< -lz
@@ -148,7 +149,6 @@ install : all
 	$(INSTALL_PROGRAM) lib/strcore.so  $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/sys.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/syslog.so   $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/tcc.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/tls.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_DATA)    lua/*.lua       $(DESTDIR)$(LUADIR)/org/conman	
 	$(INSTALL_DATA)    lua/dns/*.lua   $(DESTDIR)$(LUADIR)/org/conman/dns
@@ -156,6 +156,12 @@ install : all
 	$(INSTALL_DATA)    lua/const/*.lua $(DESTDIR)$(LUADIR)/org/conman/const
 	$(INSTALL_DATA)    lua/net/*.lua   $(DESTDIR)$(LUADIR)/org/conman/net
 	$(INSTALL_DATA)    lua/nfl/*.lua   $(DESTDIR)$(LUADIR)/org/conman/nfl
+
+install-obsolete: obsolete
+	$(INSTALL) -d $(DESTDIR)$(LUADIR)/org/conman
+	$(INSTALL) -d $(DESTDIR)$(LIBDIR)/org/conman	
+	$(INSTALL_PROGRAM) lib/tcc.so $(DESTDIR)$(LIBDIR)/org/conman
+	$(INSTALL_DATA)    lua/cc.lua $(DESTDIR)$(LUADIR)/org/conman
 
 uninstall:
 	$(RM) -r $(DESTDIR)$(LIBDIR)/org/conman
