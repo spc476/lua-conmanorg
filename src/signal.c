@@ -1217,8 +1217,13 @@ static int siglua_ignore(lua_State *L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
   {
-    int sig = slua_tosignal(L,i,NULL);
-    sigignore(sig);
+    struct sigaction act;
+    int sig        = slua_tosignal(L,i,NULL);
+    act.sa_handler = SIG_IGN;
+    act.sa_flags   = 0;
+    
+    sigemptyset(&act.sa_mask);
+    sigaction(sig,&act,NULL);
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
     sigemptyset(&m_handlers[sig].blocked);
     m_handlers[sig].fref      = LUA_NOREF;
@@ -1244,8 +1249,13 @@ static int siglua_default(lua_State *L)
 {
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
   {
-    int sig = slua_tosignal(L,i,NULL);
-    sigset(sig,SIG_DFL);
+    struct sigaction act;
+    int sig        = slua_tosignal(L,i,NULL);
+    act.sa_handler = SIG_DFL;
+    act.sa_flags   = 0;
+    
+    sigemptyset(&act.sa_mask);
+    sigaction(sig,&act,NULL);
     luaL_unref(L,LUA_REGISTRYINDEX,m_handlers[sig].fref);
     sigemptyset(&m_handlers[sig].blocked);
     m_handlers[sig].fref      = LUA_NOREF;
@@ -1322,8 +1332,13 @@ static int siglua_defined(lua_State *L)
 
 static int siglua_allow(lua_State *L)
 {
+  sigset_t set;
+  sigemptyset(&set);
+  
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-    sigrelse(slua_tosignal(L,i,NULL));
+    sigaddset(&set,slua_tosignal(L,i,NULL));
+    
+  sigprocmask(SIG_UNBLOCK,&set,NULL);
   return 0;
 }
 
@@ -1339,8 +1354,13 @@ static int siglua_allow(lua_State *L)
 
 static int siglua_block(lua_State *L)
 {
+  sigset_t set;
+  sigemptyset(&set);
+  
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
-    sighold(slua_tosignal(L,i,NULL));
+    sigaddset(&set,slua_tosignal(L,i,NULL));
+  
+  sigprocmask(SIG_BLOCK,&set,NULL);
   return 0;
 }
 
