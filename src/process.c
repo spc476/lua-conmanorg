@@ -20,6 +20,7 @@
 *************************************************************************/
 
 #ifdef __linux
+#  define _DEFAULT_SOURCE
 #  define _POSIX_SOURCE
 #  define _SVID_SOURCE
 #  define _GNU_SOURCE

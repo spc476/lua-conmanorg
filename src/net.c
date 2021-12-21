@@ -24,6 +24,7 @@
 #endif
 
 #ifdef __linux
+#  define _DEFAULT_SOURCE
 #  define _BSD_SOURCE
 #  define _POSIX_SOURCE
 #  include <sys/ioctl.h>
