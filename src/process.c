@@ -345,14 +345,7 @@ static void proc_pushstatus(
     int rc = WEXITSTATUS(status);
     lua_pushinteger(L,rc);
     lua_setfield(L,-2,"rc");
-    lua_pushfstring(
-        L,
-        "%s %d",
-        (rc == EXIT_SUCCESS)
-                ? "success"
-                : "failure",
-        rc
-    );
+    lua_pushstring(L,(rc == EXIT_SUCCESS) ? "success" : "failure");
     lua_setfield(L,-2,"description");
     lua_pushliteral(L,"normal");
     lua_setfield(L,-2,"status");
@@ -523,10 +516,12 @@ static int proclua_waitid(lua_State *L)
   
   if (info.si_code == CLD_EXITED)
   {
-    lua_pushliteral(L,"normal");
-    lua_setfield(L,-2,"status");
     lua_pushinteger(L,info.si_status);
     lua_setfield(L,-2,"rc");
+    lua_pushstring(L,(info.si_status == EXIT_SUCCESS) ? "success" : "failure");
+    lua_setfield(L,-2,"description");
+    lua_pushliteral(L,"normal");
+    lua_setfield(L,-2,"status");
   }
   else
   {
