@@ -23,7 +23,8 @@
 *                       last   = "+/",
 *                       pad    = "=",
 *                       len    = 76,
-*                       ignore = true
+*                       ignore = true,
+*                       strict = false,
 *                     }
 *
 *       x = base64:encode("blahblahblah")
@@ -41,6 +42,19 @@
         print(msg == dec)
         
 *
+* The 'strict' parameter deals with data that should be ignored but isn't 0.
+* For instance, The following strings will decode to the letter 'A':
+*
+*       QQ==
+*       QR==
+*       QS==
+*       Qf==
+*
+* This could be an attack, depending upon the context Base-64 encoding is
+* being used for.  Making the 'strict' field true will include checks for
+* extraneous data that should be 0.  See
+* https://cendyne.dev/posts/2022-01-23-base64.html
+* for more information on this.
 *********************************************************************/
 
 #include <stddef.h>
@@ -63,6 +77,7 @@ typedef struct
   size_t len;
   char   pad;
   bool   ignore;
+  bool   strict;
   char   transtable[64];
 } base64__s;
 
@@ -183,7 +198,7 @@ static bool Ib64_readout(
     {
       (*skip)++;
       *pdata = data + 1;
-      *pr    = b64->pad;
+      *pr    = '\0';
       return true;
     }
     
@@ -238,9 +253,28 @@ static int b64meta_decode(lua_State *L)
     if (!Ib64_readout4(b64,buf,&skip,&data))
       return luaL_error(L,"invalid character '%c'",*data);
       
-    luaL_addchar(&b,(buf[0] << 2) | (buf[1] >> 4));
-    if (skip < 2) luaL_addchar(&b,(buf[1] << 4) | (buf[2] >> 2));
-    if( skip < 1) luaL_addchar(&b,(buf[2] << 6) | (buf[3]     ));
+    assert(skip <= 2);
+    
+    uint8_t ac = (buf[0] << 2) | (buf[1] >> 4);
+    uint8_t bc = (buf[1] << 4) | (buf[2] >> 2);
+    uint8_t cc = (buf[2] << 6) | (buf[3]     );
+    
+    luaL_addchar(&b,ac);
+    
+    if (b64->strict)
+    {
+      if (
+             ((skip == 2) && ((bc != 0) || (cc != 0)))
+          || ((skip == 1) &&  (cc != 0))
+         )
+      {
+        luaL_pushresult(&b);
+        return 0;
+      }
+    }
+    
+    if (skip < 2) luaL_addchar(&b,bc);
+    if (skip < 1) luaL_addchar(&b,cc);
   }
   
   luaL_pushresult(&b);
@@ -267,6 +301,7 @@ static int b64lua(lua_State *L)
   b64->len    = 76;
   b64->pad    = '=';
   b64->ignore = true;
+  b64->strict = false;
   memcpy(b64->transtable,mbase,64);
   
   if (!lua_isnil(L,1))
@@ -284,15 +319,13 @@ static int b64lua(lua_State *L)
     
     lua_getfield(L,1,"pad");
     b64->pad = *luaL_optstring(L,-1,"=");
-    
     lua_getfield(L,1,"len");
     b64->len = luaL_optinteger(L,-1,64);
-    
     lua_getfield(L,1,"ignore");
-    if (lua_isboolean(L,-1))
-      b64->ignore = lua_toboolean(L,-1);
-      
-    lua_pop(L,4);
+    b64->ignore = lua_toboolean(L,-1);
+    lua_getfield(L,1,"strict");
+    b64->strict = lua_toboolean(L,-1);
+    lua_pop(L,5);
   }
   
   luaL_getmetatable(L,TYPE_BASE64);
