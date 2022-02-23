@@ -545,6 +545,17 @@ static int dir_meta_read(lua_State *L)
 *
 **************************************************************************/
 
+static int dir_meta_nil(lua_State *L)
+{
+  /*--------------------------------------------------------------------
+  ; This function is used for our iterator function when we can't open a
+  ; directory for reading.
+  ;---------------------------------------------------------------------*/
+  
+  (void)L;
+  return 0;
+}
+
 static int dir_meta_next(lua_State *L)
 {
   struct dirent  *entry;
@@ -604,9 +615,17 @@ static int fsys_opendir(lua_State *L)
 static int fsys_dir(lua_State *L)
 {
   fsys_opendir(L);
-  lua_pushcfunction(L,dir_meta_next);
-  lua_insert(L,-3);
-  return 3;
+  lua_pop(L,1); /* remove errno from stack */
+  
+  if (lua_isnil(L,-1))
+    lua_pushcfunction(L,dir_meta_nil);
+  else
+    lua_pushcfunction(L,dir_meta_next);
+  
+  lua_insert(L,-2);
+  lua_pushnil(L);      /* no initial value */
+  lua_pushvalue(L,-2); /* Lua 5.4 toclose variable, safe to set pre 5.4 */
+  return 4;
 }
 
 /*************************************************************************/
@@ -1054,7 +1073,9 @@ static int fsys_gexpand(lua_State *L)
   if (glob(pattern,0,NULL,&data->gbuf) != 0)
     data->gc = true;
   
-  return 2;
+  lua_pushnil(L);
+  lua_pushvalue(L,-2);
+  return 4;
 }
 
 /************************************************************************
