@@ -37,7 +37,6 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#include <syslog.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
