@@ -755,13 +755,13 @@ static int fsyslib_close(lua_State *L)
 static int fsys_pipe(lua_State *L)
 {
 #if LUA_VERSION_NUM == 501
-  FILE **pfpread;
-  FILE **pfpwrite;
-  FILE  *fpr;
-  FILE  *fpw;
-  int    fh[2];
-  char  *rm;
-  char  *wm;
+  FILE       **pfpread;
+  FILE       **pfpwrite;
+  FILE        *fpr;
+  FILE        *fpw;
+  int          fh[2];
+  char const  *rm;
+  char const  *wm;
   
   /*------------------------------------------------------------------------
   ; This is done first because there may not be a paramter, and if we create
