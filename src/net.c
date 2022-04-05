@@ -324,19 +324,32 @@ static int net_toport(lua_State *L,int idx,int proto)
   else if (lua_isstring(L,idx))
   {
     char const     *serv = lua_tostring(L,idx);
+    char const     *tproto;
     struct servent *presult;
     struct servent  result;
     char            tmp[BUFSIZ] __attribute__((unused));
     
+    switch(proto)
+    {
+      case IPPROTO_TCP:   tproto = "tcp";  break;
+      case IPPROTO_UDP:   tproto = "udp";  break;
+#ifdef IPPROTO_SCTP
+      case IPPROTO_SCTP:  tproto = "sctp"; break;
+#endif
+      default:
+           assert(0);
+           luaL_error(L,"invalid protocol");
+           break;
+    }
 #if defined(__SunOS)
-    presult = getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp));
+    presult = getservbyname_r(serv,tproto,&result,tmp,sizeof(tmp));
     if (presult == NULL)
       return luaL_error(L,"invalid service");
 #elif defined(__linux__)
-    if (getservbyname_r(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp",&result,tmp,sizeof(tmp),&presult) != 0)
+    if (getservbyname_r(serv,tproto,&result,tmp,sizeof(tmp),&presult) != 0)
       return luaL_error(L,"invalid service");
 #else
-    presult = getservbyname(serv,(proto == IPPROTO_TCP) ? "tcp" : "udp");
+    presult = getservbyname(serv,tproto);
     if (presult == NULL)
       return luaL_error(L,"invalid service");
     result = *presult;
@@ -509,6 +522,10 @@ static int netlua_socket(lua_State *L)
     type = SOCK_STREAM;
   else if (proto == IPPROTO_UDP)
     type = SOCK_DGRAM;
+#ifdef IPPROTO_SCTP
+  else if (proto == IPPROTO_SCTP)
+    type = SOCK_SEQPACKET;
+#endif
   else
     type = SOCK_RAW;
     
@@ -700,6 +717,10 @@ static int netlua_address2(lua_State *L)
     hints.ai_socktype = SOCK_STREAM;
   else if (protocol == IPPROTO_UDP)
     hints.ai_socktype = SOCK_DGRAM;
+#ifdef IPPROTO_SCTP
+  else if (protocol == IPPROTO_SCTP)
+    hints.ai_socktype = SOCK_SEQPACKET;
+#endif
   else if (protocol != 0)
     hints.ai_socktype = SOCK_RAW;
     
@@ -804,7 +825,13 @@ static int netlua_address(lua_State *L)
   
   proto = net_toproto(L,2);
   
-  if ((proto == IPPROTO_TCP) || (proto == IPPROTO_UDP))
+  if (
+          (proto == IPPROTO_TCP)
+       || (proto == IPPROTO_UDP)
+#ifdef IPPROTO_SCTP
+       || (proto == IPPROTO_SCTP)
+#endif
+  )
     Inet_setport(addr,net_toport(L,3,proto));
   else
     Inet_setport(addr,proto);
@@ -855,7 +882,13 @@ static int netlua_addressraw(lua_State *L)
   
   proto = net_toproto(L,2);
   
-  if ((proto == IPPROTO_TCP) || (proto == IPPROTO_UDP))
+  if (
+          (proto == IPPROTO_TCP)
+       || (proto == IPPROTO_UDP)
+#ifdef IPPROTO_SCTP
+       || (proto == IPPROTO_SCTP)
+#endif
+  )
     Inet_setport(addr,net_toport(L,3,proto));
   else
     Inet_setport(addr,proto);
