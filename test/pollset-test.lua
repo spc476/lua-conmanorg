@@ -35,7 +35,7 @@ do
 	local now      = os.time()
         
         assert(okay)
-	assert(err == 0)
+	assert(err)
 	assert((now - zen) >= 5)
 	local events,state,var = set:events()
 	assert(events(state,var) == nil)
@@ -51,7 +51,7 @@ do
 	local now        = os.time()
 	
 	assert(okay)
-	assert(err == 0)
+	assert(not err)
 	assert((now-zen) <= 1)
 	local events,state,var = set:events()
 	assert(events)
@@ -86,7 +86,7 @@ do
 	local now = os.time()
 	
 	assert(okay)
-	assert(err == 0)
+	assert(not err)
 	assert((now-zen) <= 1)
 	local events,state,var = set:events()
 	assert(events)
@@ -103,7 +103,7 @@ do
 	local now = os.time()
 	
 	assert(okay)
-	assert(err == 0)
+	assert(not err)
 	assert((now-zen) <= 1)
 	local events,state,var = set:events()
 	assert(events)
