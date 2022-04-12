@@ -112,19 +112,30 @@ static void fsysL_pushmode(lua_State *L,mode_t mode)
 
 /*************************************************************************/
 
+static void fsysL_pushdev(lua_State *L,dev_t dev)
+{
+  lua_createtable(L,0,2);
+  lua_pushinteger(L,major(dev));
+  lua_setfield(L,-2,"major");
+  lua_pushinteger(L,minor(dev));
+  lua_setfield(L,-2,"minor");
+}
+
+/*************************************************************************/
+
 static void fsysL_pushstat(lua_State *L,struct stat const *status)
 {
   assert(L      != NULL);
   assert(status != NULL);
   
   lua_createtable(L,0,13);
-  lua_pushinteger(L,status->st_dev);     lua_setfield(L,-2,"dev");
+  fsysL_pushdev  (L,status->st_dev);     lua_setfield(L,-2,"dev");
   lua_pushinteger(L,status->st_ino);     lua_setfield(L,-2,"inode");
   fsysL_pushmode (L,status->st_mode);    lua_setfield(L,-2,"mode");
   lua_pushinteger(L,status->st_nlink);   lua_setfield(L,-2,"nlink");
   lua_pushinteger(L,status->st_uid);     lua_setfield(L,-2,"uid");
   lua_pushinteger(L,status->st_gid);     lua_setfield(L,-2,"gid");
-  lua_pushinteger(L,status->st_rdev);    lua_setfield(L,-2,"rdev");
+  fsysL_pushdev  (L,status->st_rdev);    lua_setfield(L,-2,"rdev");
   lua_pushinteger(L,status->st_size);    lua_setfield(L,-2,"size");
   lua_pushinteger(L,status->st_blksize); lua_setfield(L,-2,"blocksize");
   lua_pushinteger(L,status->st_blocks);  lua_setfield(L,-2,"blocks");
