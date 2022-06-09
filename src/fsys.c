@@ -251,25 +251,17 @@ static int fsys_lstat(lua_State *L)
 
 static int fsys_chmod(lua_State *L)
 {
+  errno = 0;
+
   if (lua_isstring(L,1))
-  {
-    errno = 0;
     chmod(luaL_checkstring(L,1),fsysL_checkmode(L,2,0666));
-    lua_pushboolean(L,errno == 0);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
   else if (luaL_callmeta(L,1,"_tofd"))
-  {
-    errno = 0;
     fchmod(luaL_checkinteger(L,-1),fsysL_checkmode(L,2,0664));
-    lua_pushboolean(L,errno == 0);
-    lua_pushinteger(L,errno);
-    return 2;
-  }
+  else
+    errno = EINVAL;
   
-  lua_pushboolean(L,false);
-  lua_pushinteger(L,EINVAL);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
@@ -325,13 +317,12 @@ static int fsys_redirect(lua_State *L)
     
     errno = 0;
     dup2(orig,copy);
-    lua_pushboolean(L,errno == 0);
-    lua_pushinteger(L,errno);
-    return 2;
   }
+  else
+    errno = EINVAL;
   
-  lua_pushboolean(L,false);
-  lua_pushinteger(L,EINVAL);
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
   return 2;
 }
 
