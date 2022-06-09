@@ -1,4 +1,5 @@
 
+-- luacheck: ignore 611 631
 -- Examples pulled from RFC-3492
 
 local idn  = require "org.conman.idn"
