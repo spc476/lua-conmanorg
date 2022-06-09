@@ -1116,35 +1116,34 @@ static int fsys_gexpand(lua_State *L)
 *
 ************************************************************************/
 
-static char const *const m_pathconfopts[] =
-{
-  "link",
-  "canon",
-  "input",
-  "name",
-  "path",
-  "pipe",
-  "chown",
-  "trunc",
-  "vdisable",
-  NULL
-};
-
-static int const m_pathconfmap[] =
-{
-  _PC_LINK_MAX,
-  _PC_MAX_CANON,
-  _PC_MAX_INPUT,
-  _PC_NAME_MAX,
-  _PC_PATH_MAX,
-  _PC_PIPE_BUF,
-  _PC_CHOWN_RESTRICTED,
-  _PC_NO_TRUNC,
-  _PC_VDISABLE
-};
-
 static int fsys_pathconf(lua_State *L)
 {
+  static char const *const m_pathconfopts[] =
+  {
+    "link",
+    "canon",
+    "input",
+    "name",
+    "path",
+    "pipe",
+    "chown",
+    "trunc",
+    "vdisable",
+    NULL
+  };
+
+  static int const m_pathconfmap[] =
+  {
+    _PC_LINK_MAX,
+    _PC_MAX_CANON,
+    _PC_MAX_INPUT,
+    _PC_NAME_MAX,
+    _PC_PATH_MAX,
+    _PC_PIPE_BUF,
+    _PC_CHOWN_RESTRICTED,
+    _PC_NO_TRUNC,
+    _PC_VDISABLE
+  };
   long res;
   
   if (lua_type(L,1) == LUA_TUSERDATA)
