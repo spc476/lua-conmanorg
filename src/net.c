@@ -31,13 +31,10 @@
 #  include <linux/sockios.h>
 #endif
 
-#include <signal.h>
 #include <math.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -60,7 +57,6 @@
 
 #include <lua.h>
 #include <lauxlib.h>
-#include <lualib.h>
 
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
 #  error You need to compile against Lua 5.1 or higher
