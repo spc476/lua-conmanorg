@@ -54,10 +54,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#ifdef __linux__
-#  include <ifaddrs.h>
-#endif
-
 #ifdef __APPLE__
 #  include <sys/ioctl.h>
 #endif
@@ -346,133 +342,6 @@ static int err_meta___index(lua_State *L)
     lua_pushstring(L,strerror(err));
   return 1;
 }
-
-/**********************************************************************
-*
-* Usage:        list,err = net.interfaces()
-* Desc:         Return a list of network interfaces
-* Return:       list (table) A list of interfaces (see Note), nil on error
-*               err (integer) system error, 0 on success
-* Note:         This is a Linux-only routine.
-*
-*               The list is a table, where the keys are the names of the
-*               interfaces, and the values are an array of address/mask/-
-*               broadcast values:
-*
-*                       {
-*                         addr      = <addr userdata>,
-*                         mask      = <addr userdata>,
-*                         broadcast = <addr usedata> -- only for IPv4
-*                       }
-*
-*               An example;
-*
-*                       {
-*                         lo =
-*                         {
-*                           {
-*                             addr = <ip:127.0.0.1:0>,
-*                             mask = <ip:255.0.0.0:0>
-*                           },
-*                           {
-*                             addr = <ip6:[::1]:0>,
-*                             mask = <ip6:[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:0>
-*                           }
-*                         },
-*                         eth0 =
-*                         {
-*                           {
-*                             addr      = <ip:192.168.1.10:0>,
-*                             mask      = <ip:255.255.255.0:0>,
-*                             broadcast = <192.168.1.255:0>
-*                           }
-*                         }
-*                       }
-*
-**********************************************************************/
-
-#ifdef __linux__
-  static int netlua_interfaces(lua_State *L)
-  {
-    struct ifaddrs  *interfaces;
-    struct ifaddrs  *i;
-    sockaddr_all__t *addr;
-    
-    lua_settop(L,0);
-    
-    if (getifaddrs(&interfaces) < 0)
-    {
-      lua_pushnil(L);
-      lua_pushinteger(L,errno);
-      return 2;
-    }
-    
-    lua_createtable(L,0,0);
-    
-    for (i = interfaces ; i != NULL ; i = i->ifa_next)
-    {
-      if (
-              (i->ifa_addr->sa_family != AF_INET)
-           && (i->ifa_addr->sa_family != AF_INET6)
-         )
-        continue;
-        
-      lua_getfield(L,-1,i->ifa_name);
-      if (lua_isnil(L,-1))
-      {
-        lua_pop(L,1);
-        lua_createtable(L,0,0);
-        lua_pushvalue(L,-1);
-        lua_setfield(L,-3,i->ifa_name);
-      }
-      
-      lua_pushinteger(L,lua_rawlen(L,-1) + 1);
-      lua_createtable(L,0,0);
-      
-      addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-      memcpy(&addr->sa,i->ifa_addr,Inet_lensa(i->ifa_addr));
-      luaL_getmetatable(L,TYPE_ADDR);
-      lua_setmetatable(L,-2);
-      lua_setfield(L,-2,"addr");
-      
-      addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-      memcpy(&addr->sa,i->ifa_netmask,Inet_lensa(i->ifa_netmask));
-      luaL_getmetatable(L,TYPE_ADDR);
-      lua_setmetatable(L,-2);
-      lua_setfield(L,-2,"mask");
-      
-      if ((i->ifa_flags & IFF_BROADCAST) == IFF_BROADCAST)
-      {
-        if (i->ifa_ifu.ifu_broadaddr != NULL)
-        {
-          addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-          memcpy(&addr->sa,i->ifa_ifu.ifu_broadaddr,Inet_lensa(i->ifa_ifu.ifu_broadaddr));
-          luaL_getmetatable(L,TYPE_ADDR);
-          lua_setmetatable(L,-2);
-          lua_setfield(L,-2,"broadcast");
-        }
-      }
-      else if ((i->ifa_flags & IFF_POINTOPOINT) == IFF_POINTOPOINT)
-      {
-        if (i->ifa_ifu.ifu_dstaddr != NULL)
-        {
-          addr = lua_newuserdata(L,sizeof(sockaddr_all__t));
-          memcpy(&addr->sa,i->ifa_ifu.ifu_dstaddr,Inet_lensa(i->ifa_ifu.ifu_dstaddr));
-          luaL_getmetatable(L,TYPE_ADDR);
-          lua_setmetatable(L,-2);
-          lua_setfield(L,-2,"destaddr");
-        }
-      }
-      
-      lua_settable(L,-3);
-      lua_pop(L,1);
-    }
-    
-    freeifaddrs(interfaces);
-    lua_pushinteger(L,0);
-    return 2;
-  }
-#endif
 
 /**********************************************************************
 * Usage:        sock,err = net.socket(family,proto)
@@ -1813,9 +1682,6 @@ int luaopen_org_conman_net(lua_State *L)
 {
   static luaL_Reg const m_net_reg[] =
   {
-#ifdef __linux__
-    { "interfaces"        , netlua_interfaces     } ,
-#endif
     { "socket"            , netlua_socket         } ,
     { "socketfile"        , netlua_socketfile     } ,
     { "socketpair"        , netlua_socketpair     } ,
