@@ -103,31 +103,6 @@ struct strint
   int  const        value;
 };
 
-/*************************************************************************/
-
-static char const *const   m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
-static int const           m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
-static struct strint const m_errors[] =
-{
-  { "EAI_BADFLAGS"      , EAI_BADFLAGS          } ,
-  { "EAI_NONAME"        , EAI_NONAME            } ,
-  { "EAI_AGAIN"         , EAI_AGAIN             } ,
-  { "EAI_FAIL"          , EAI_FAIL              } ,
-#ifdef EAI_NODATA
-  { "EAI_NODATA"        , EAI_NODATA            } ,
-#endif
-  { "EAI_FAMILY"        , EAI_FAMILY            } ,
-  { "EAI_SOCKTYPE"      , EAI_SOCKTYPE          } ,
-  { "EAI_SERVICE"       , EAI_SERVICE           } ,
-#ifdef EAI_ADDRFAMILY
-  { "EAI_ADDRFAMILY"    , EAI_ADDRFAMILY        } ,
-#endif
-  { "EAI_MEMORY"        , EAI_MEMORY            } ,
-  { "EAI_SYSTEM"        , EAI_SYSTEM            } ,
-  { "EAI_OVERFLOW"      , EAI_OVERFLOW          } ,
-  { NULL                , 0                     }
-};
-
 /************************************************************************/
 
 static inline size_t Inet_addrlen(sockaddr_all__t const *addr)
@@ -272,12 +247,12 @@ static inline int Inet_comp(
   
   if ((rc = memcmp(pa,pb,len)) != 0)
     return rc;
-  
+    
   if (la < lb)
     return -1;
   else if (la > lb)
     return 1;
-  
+    
   return Inet_port(a) - Inet_port(b);
 }
 
@@ -510,6 +485,8 @@ static int err_meta___index(lua_State *L)
 
 static int netlua_socket(lua_State *L)
 {
+  static char const *const m_netfamilytext[] = { "ip"    , "ip6"    , "unix" , NULL };
+  static int const         m_netfamily[]     = { AF_INET , AF_INET6 , AF_UNIX };
   int      family;
   int      proto;
   int      type;
@@ -932,7 +909,7 @@ static int netlua_ntop(lua_State *L)
   
   return 2;
 }
-  
+
 /***********************************************************************/
 
 static int netlua_pton(lua_State *L)
@@ -941,7 +918,7 @@ static int netlua_pton(lua_State *L)
   return 0;
 }
 
-/***********************************************************************/  
+/***********************************************************************/
 
 static int netlua_ifname(lua_State *L)
 {
@@ -1688,7 +1665,7 @@ static int addrmeta_display(lua_State *L)
 * Why do we use a function, and not just use the table?  Because I want to
 * be able to do:
 *
-*	family = address.family
+*       family = address.family
 *
 * If we set __index to the metatable, then we return the function that this
 * represents, not the actual family.  Thus, we check for fields and return
@@ -1832,62 +1809,83 @@ static int addrlua___len(lua_State *L)
 
 /*********************************************************************/
 
-static luaL_Reg const m_net_reg[] =
-{
-#ifdef __linux__
-  { "interfaces"        , netlua_interfaces     } ,
-#endif
-  { "socket"            , netlua_socket         } ,
-  { "socketfile"        , netlua_socketfile     } ,
-  { "socketpair"        , netlua_socketpair     } ,
-  { "address2"          , netlua_address2       } ,
-  { "address"           , netlua_address        } ,
-  { "addressraw"        , netlua_addressraw     } ,
-  { "ntop"              , netlua_ntop           } ,
-  { "pton"              , netlua_pton           } ,
-  { "_fromfd"           , netlua__fromfd        } ,
-  { "ifname"            , netlua_ifname         } ,
-  { "ifindex"           , netlua_ifindex        } ,
-  { NULL                , NULL                  }
-};
-
-static luaL_Reg const m_sock_meta[] =
-{
-  { "__tostring"        , socklua___tostring    } ,
-  { "__gc"              , socklua_close         } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"           , socklua_close         } ,
-#endif
-  { "__index"           , socklua___index       } ,
-  { "__newindex"        , socklua___newindex    } ,
-  { "peer"              , socklua_peer          } ,
-  { "addr"              , socklua_addr          } ,
-  { "bind"              , socklua_bind          } ,
-  { "connect"           , socklua_connect       } ,
-  { "listen"            , socklua_listen        } ,
-  { "accept"            , socklua_accept        } ,
-  { "recv"              , socklua_recv          } ,
-  { "send"              , socklua_send          } ,
-  { "shutdown"          , socklua_shutdown      } ,
-  { "close"             , socklua_close         } ,
-  { "_tofd"             , socklua__tofd         } ,
-  { "_dup"              , socklua__dup          } ,
-  { NULL                , NULL                  }
-};
-
-static luaL_Reg const m_addr_meta[] =
-{
-  { "__index"           , addrlua___index       } ,
-  { "__tostring"        , addrlua___tostring    } ,
-  { "__eq"              , addrlua___eq          } ,
-  { "__lt"              , addrlua___lt          } ,
-  { "__le"              , addrlua___le          } ,
-  { "__len"             , addrlua___len         } ,
-  { NULL                , NULL                  }
-};
-
 int luaopen_org_conman_net(lua_State *L)
 {
+  static luaL_Reg const m_net_reg[] =
+  {
+#ifdef __linux__
+    { "interfaces"        , netlua_interfaces     } ,
+#endif
+    { "socket"            , netlua_socket         } ,
+    { "socketfile"        , netlua_socketfile     } ,
+    { "socketpair"        , netlua_socketpair     } ,
+    { "address2"          , netlua_address2       } ,
+    { "address"           , netlua_address        } ,
+    { "addressraw"        , netlua_addressraw     } ,
+    { "ntop"              , netlua_ntop           } ,
+    { "pton"              , netlua_pton           } ,
+    { "_fromfd"           , netlua__fromfd        } ,
+    { "ifname"            , netlua_ifname         } ,
+    { "ifindex"           , netlua_ifindex        } ,
+    { NULL                , NULL                  }
+  };
+  
+  static luaL_Reg const m_sock_meta[] =
+  {
+    { "__tostring"        , socklua___tostring    } ,
+    { "__gc"              , socklua_close         } ,
+#if LUA_VERSION_NUM >= 504
+    { "__close"           , socklua_close         } ,
+#endif
+    { "__index"           , socklua___index       } ,
+    { "__newindex"        , socklua___newindex    } ,
+    { "peer"              , socklua_peer          } ,
+    { "addr"              , socklua_addr          } ,
+    { "bind"              , socklua_bind          } ,
+    { "connect"           , socklua_connect       } ,
+    { "listen"            , socklua_listen        } ,
+    { "accept"            , socklua_accept        } ,
+    { "recv"              , socklua_recv          } ,
+    { "send"              , socklua_send          } ,
+    { "shutdown"          , socklua_shutdown      } ,
+    { "close"             , socklua_close         } ,
+    { "_tofd"             , socklua__tofd         } ,
+    { "_dup"              , socklua__dup          } ,
+    { NULL                , NULL                  }
+  };
+  
+  static luaL_Reg const m_addr_meta[] =
+  {
+    { "__index"           , addrlua___index       } ,
+    { "__tostring"        , addrlua___tostring    } ,
+    { "__eq"              , addrlua___eq          } ,
+    { "__lt"              , addrlua___lt          } ,
+    { "__le"              , addrlua___le          } ,
+    { "__len"             , addrlua___len         } ,
+    { NULL                , NULL                  }
+  };
+  
+  static struct strint const m_errors[] =
+  {
+    { "EAI_BADFLAGS"      , EAI_BADFLAGS          } ,
+    { "EAI_NONAME"        , EAI_NONAME            } ,
+    { "EAI_AGAIN"         , EAI_AGAIN             } ,
+    { "EAI_FAIL"          , EAI_FAIL              } ,
+#ifdef EAI_NODATA
+    { "EAI_NODATA"        , EAI_NODATA            } ,
+#endif
+    { "EAI_FAMILY"        , EAI_FAMILY            } ,
+    { "EAI_SOCKTYPE"      , EAI_SOCKTYPE          } ,
+    { "EAI_SERVICE"       , EAI_SERVICE           } ,
+#ifdef EAI_ADDRFAMILY
+    { "EAI_ADDRFAMILY"    , EAI_ADDRFAMILY        } ,
+#endif
+    { "EAI_MEMORY"        , EAI_MEMORY            } ,
+    { "EAI_SYSTEM"        , EAI_SYSTEM            } ,
+    { "EAI_OVERFLOW"      , EAI_OVERFLOW          } ,
+    { NULL                , 0                     }
+  };
+  
   luaL_newmetatable(L,TYPE_SOCK);
   luaL_setfuncs(L,m_sock_meta,0);
   
