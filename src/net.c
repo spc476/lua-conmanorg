@@ -1681,14 +1681,14 @@ int luaopen_org_conman_net(lua_State *L)
     { "socket"            , netlua_socket         } ,
     { "socketfile"        , netlua_socketfile     } ,
     { "socketpair"        , netlua_socketpair     } ,
-    { "address2"          , netlua_address2       } ,
+    { "address2"          , netlua_address2       } , /* rename? */
     { "address"           , netlua_address        } ,
     { "addressraw"        , netlua_addressraw     } ,
-    { "ntop"              , netlua_ntop           } ,
-    { "pton"              , netlua_pton           } ,
+    { "ntop"              , netlua_ntop           } , /* remove? */
+    { "pton"              , netlua_pton           } , /* remove? */
     { "_fromfd"           , netlua__fromfd        } ,
-    { "ifname"            , netlua_ifname         } ,
-    { "ifindex"           , netlua_ifindex        } ,
+    { "ifname"            , netlua_ifname         } , /* remove? */
+    { "ifindex"           , netlua_ifindex        } , /* remove? */
     { NULL                , NULL                  }
   };
   
