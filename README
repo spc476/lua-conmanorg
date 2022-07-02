@@ -8,29 +8,32 @@ actually prefer them to such modules as luasockets and luaposix.
 Now, because of the functionality overlap of some of these modules with
 existing Lua modules, I decided to place them under a name that I know won't
 conflict with existing modules.  I took a play out of the Java playbook and
-placed all these modules under the "org.conman" table.  
+placed all these modules under the "org.conman" table.
 
                                   * * * * *
 
                              MODULES AS LUAROCKS
 
-org.conman.const.gopher-types
+org.conman.const.exit		(Lua)
+	A table of standardize exit values.
+
+org.conman.const.gopher-types	(Lua)
 	A table mapping Gopher resource types (RFC-1436) to human
 	readable types and back again.
 
-org.conman.env
+org.conman.env			(C)
 	A table containing all environtment variables.
 
-org.conman.errno
+org.conman.errno		(C)
 	A table containing defined error codes from C and POSIX.
 
-org.conman.iconv
+org.conman.iconv		(C)
 	A wrapper for the GNU iconv library.
 
-org.conman.syslog
+org.conman.syslog		(C)
 	A wrapper for the syslog logging system.
 
-org.conman.tls
+org.conman.tls			(C)
 	A wrapp for the libressl library libtls.
 
                                   * * * * *
@@ -43,9 +46,6 @@ org.conman.base64
 org.conman.clock
 	A POSIX timers interface.
 
-org.conman.crc
-	A function to calculate the standard CRC-32.
-
 org.conman.fsys
 	A module of POSIX functions releated to filesystems.
 
@@ -56,7 +56,7 @@ org.conman.lfsr
 	A function to generate 8, 16 or 32 bit linear feedback shift
 	registers.
 
-org.conman.magic
+org.conman.fsys.magic
 	A wrapper around the GNU magic (file types) database.
 
 org.conman.net
@@ -64,8 +64,9 @@ org.conman.net
 	IPv4, IPv6 and Unix sockets.
 
 org.conman.pollset
-	A wrapper around the POSIX select() call, POSIX poll() call, and
-	Linux specific epoll() with the same API.
+	A wrapper around the POSIX select() call, POSIX poll() call, the
+	Linux epoll() call and the Mac OS-X kqueue() call, with the same
+	API.
 
 org.conman.process
 	A module of POSIX functions related to processes.
@@ -87,9 +88,6 @@ Modules written in Lua:
 
 org.conman.const.entity
 	A table of HTML entities with their UTF-8 equivilents.
-
-org.conman.const.exit
-	A table of standardize exit values.
 
 org.conman.const.http-response
 	A table of HTTP response codes.
@@ -119,6 +117,10 @@ org.conman.net.ios
 org.conman.net.tcp
 	A module to turn a TCP connection into something that mimics the
 	Lua's file:read()/file:write()/etc. API.
+
+org.conman.net.tls
+	A module, with the API as org.conman.net.tcp, to manage TLS based
+	connections.
 
 org.conman.nfl
 	An event driven framework to manage network based connections via
