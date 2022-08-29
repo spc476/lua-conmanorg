@@ -305,7 +305,7 @@ static int net_toport(lua_State *L,int idx,int proto)
 #endif
       default:
            assert(0);
-           luaL_error(L,"invalid protocol");
+           return luaL_error(L,"invalid protocol");
            break;
     }
 #if defined(__SunOS)

@@ -101,6 +101,7 @@ static int lfsr(lua_State *L)
          
     default:
          assert(0);
+         return luaL_error(L,"bad mask value");
   }
   
   lua_pushinteger(L,mask);
