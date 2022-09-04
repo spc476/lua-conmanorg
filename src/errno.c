@@ -557,21 +557,17 @@ static int errno___index(lua_State *L)
 
 /***********************************************************************/
 
-#if LUA_VERSION_NUM == 501
-  static struct luaL_Reg const m_reg_errno[] =
-  {
-    { NULL , NULL }
-  };
-#endif
-
-/***********************************************************************/
-
 int luaopen_org_conman_errno(lua_State *L)
 {
   size_t i;
   
 #if LUA_VERSION_NUM == 501
-  luaL_register(L,"org.conman.errno",m_reg_errno);
+  static struct luaL_Reg const reg_errno[] =
+  {
+    { NULL , NULL }
+  };
+
+  luaL_register(L,"org.conman.errno",reg_errno);
 #else
   lua_createtable(L,0,(sizeof(m_errors) / sizeof(struct strint)) - 1);
 #endif
