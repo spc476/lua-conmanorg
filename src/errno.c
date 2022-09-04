@@ -65,485 +65,486 @@ static struct strint const m_errors[] =
 #endif
 
 #ifdef EACCES
-    { "EACCES" , EACCES } ,
+  { "EACCES" , EACCES } ,
 #endif
 
 #ifdef EADDRINUSE
-    { "EADDRINUSE" , EADDRINUSE } ,
+  { "EADDRINUSE" , EADDRINUSE } ,
 #endif
 
 #ifdef EADDRNOTAVAIL
-    { "EADDRNOTAVAIL" , EADDRNOTAVAIL } ,
+  { "EADDRNOTAVAIL" , EADDRNOTAVAIL } ,
 #endif
 
 #ifdef EADV
-    { "EADV" , EADV } ,
+  { "EADV" , EADV } ,
 #endif
 
 #ifdef EAFNOSUPPORT
-    { "EAFNOSUPPORT" , EAFNOSUPPORT } ,
+  { "EAFNOSUPPORT" , EAFNOSUPPORT } ,
 #endif
 
 #ifdef EAGAIN
-    { "EAGAIN" , EAGAIN } ,
+  { "EAGAIN" , EAGAIN } ,
 #endif
 
 #ifdef EALREADY
-    { "EALREADY" , EALREADY } ,
+  { "EALREADY" , EALREADY } ,
 #endif
 
 #ifdef EBADE
-    { "EBADE" , EBADE } ,
+  { "EBADE" , EBADE } ,
 #endif
 
 #ifdef EBADF
-    { "EBADF" , EBADF } ,
+  { "EBADF" , EBADF } ,
 #endif
 
 #ifdef EBADFD
-    { "EBADFD" , EBADFD } ,
+  { "EBADFD" , EBADFD } ,
 #endif
 
 #ifdef EBADMSG
-    { "EBADMSG" , EBADMSG } ,
+  { "EBADMSG" , EBADMSG } ,
 #endif
 
 #ifdef EBADR
-    { "EBADR" , EBADR } ,
+  { "EBADR" , EBADR } ,
 #endif
 
 #ifdef EBADRQC
-    { "EBADRQC" , EBADRQC } ,
+  { "EBADRQC" , EBADRQC } ,
 #endif
 
 #ifdef EBADSLT
-    { "EBADSLT" , EBADSLT } ,
+  { "EBADSLT" , EBADSLT } ,
 #endif
 
 #ifdef EBFONT
-    { "EBFONT" , EBFONT } ,
+  { "EBFONT" , EBFONT } ,
 #endif
 
 #ifdef EBUSY
-    { "EBUSY" , EBUSY } ,
+  { "EBUSY" , EBUSY } ,
 #endif
 
 #ifdef ECANCELED
-    { "ECANCELED" , ECANCELED } ,
+  { "ECANCELED" , ECANCELED } ,
 #endif
 
 #ifdef ECHILD
-    { "ECHILD" , ECHILD } ,
+  { "ECHILD" , ECHILD } ,
 #endif
 
 #ifdef ECHRNG
-    { "ECHRNG" , ECHRNG } ,
+  { "ECHRNG" , ECHRNG } ,
 #endif
 
 #ifdef ECOMM
-    { "ECOMM" , ECOMM } ,
+  { "ECOMM" , ECOMM } ,
 #endif
 
 #ifdef ECONNABORTED
-    { "ECONNABORTED" , ECONNABORTED } ,
+  { "ECONNABORTED" , ECONNABORTED } ,
 #endif
 
 #ifdef ECONNREFUSED
-    { "ECONNREFUSED" , ECONNREFUSED } ,
+  { "ECONNREFUSED" , ECONNREFUSED } ,
 #endif
 
 #ifdef ECONNRESET
-    { "ECONNRESET" , ECONNRESET } ,
+  { "ECONNRESET" , ECONNRESET } ,
 #endif
 
 #ifdef EDEADLK
-    { "EDEADLK" , EDEADLK } ,
+  { "EDEADLK" , EDEADLK } ,
 #endif
 
 #ifdef EDEADLOCK
-    { "EDEADLOCK" , EDEADLOCK } ,
+  { "EDEADLOCK" , EDEADLOCK } ,
 #endif
 
 #ifdef EDESTADDRREQ
-    { "EDESTADDRREQ" , EDESTADDRREQ } ,
+  { "EDESTADDRREQ" , EDESTADDRREQ } ,
 #endif
 
 #ifdef EDOTDOT
-    { "EDOTDOT" , EDOTDOT } ,
+  { "EDOTDOT" , EDOTDOT } ,
 #endif
 
 #ifdef EDQUOT
-    { "EDQUOT" , EDQUOT } ,
+  { "EDQUOT" , EDQUOT } ,
 #endif
 
 #ifdef EEXIST
-    { "EEXIST" , EEXIST } ,
+  { "EEXIST" , EEXIST } ,
 #endif
 
 #ifdef EFAULT
-    { "EFAULT" , EFAULT } ,
+  { "EFAULT" , EFAULT } ,
 #endif
 
 #ifdef EFBIG
-    { "EFBIG" , EFBIG } ,
+  { "EFBIG" , EFBIG } ,
 #endif
 
 #ifdef EHOSTDOWN
-    { "EHOSTDOWN" , EHOSTDOWN } ,
+  { "EHOSTDOWN" , EHOSTDOWN } ,
 #endif
 
 #ifdef EHOSTUNREACH
-    { "EHOSTUNREACH" , EHOSTUNREACH } ,
+  { "EHOSTUNREACH" , EHOSTUNREACH } ,
 #endif
 
 #ifdef EIDRM
-    { "EIDRM" , EIDRM } ,
+  { "EIDRM" , EIDRM } ,
 #endif
 
 #ifdef EINPROGRESS
-    { "EINPROGRESS" , EINPROGRESS } ,
+  { "EINPROGRESS" , EINPROGRESS } ,
 #endif
 
 #ifdef EINTR
-    { "EINTR" , EINTR } ,
+  { "EINTR" , EINTR } ,
 #endif
 
 #ifdef EINVAL
-    { "EINVAL" , EINVAL } ,
+  { "EINVAL" , EINVAL } ,
 #endif
 
 #ifdef EIO
-    { "EIO" , EIO } ,
+  { "EIO" , EIO } ,
 #endif
 
 #ifdef EISCONN
-    { "EISCONN" , EISCONN } ,
+  { "EISCONN" , EISCONN } ,
 #endif
 
 #ifdef EISDIR
-    { "EISDIR" , EISDIR } ,
+  { "EISDIR" , EISDIR } ,
 #endif
 
 #ifdef EISNAM
-    { "EISNAM" , EISNAM } ,
+  { "EISNAM" , EISNAM } ,
 #endif
 
 #ifdef EKEYEXPIRED
-    { "EKEYEXPIRED" , EKEYEXPIRED } ,
+  { "EKEYEXPIRED" , EKEYEXPIRED } ,
 #endif
 
 #ifdef EKEYREJECTED
-    { "EKEYREJECTED" , EKEYREJECTED } ,
+  { "EKEYREJECTED" , EKEYREJECTED } ,
 #endif
 
 #ifdef EKEYREVOKED
-    { "EKEYREVOKED" , EKEYREVOKED } ,
+  { "EKEYREVOKED" , EKEYREVOKED } ,
 #endif
 
 #ifdef ELIBACC
-    { "ELIBACC" , ELIBACC } ,
+  { "ELIBACC" , ELIBACC } ,
 #endif
 
 #ifdef ELIBBAD
-    { "ELIBBAD" , ELIBBAD } ,
+  { "ELIBBAD" , ELIBBAD } ,
 #endif
 
 #ifdef ELIBEXEC
-    { "ELIBEXEC" , ELIBEXEC } ,
+  { "ELIBEXEC" , ELIBEXEC } ,
 #endif
 
 #ifdef ELIBMAX
-    { "ELIBMAX" , ELIBMAX } ,
+  { "ELIBMAX" , ELIBMAX } ,
 #endif
 
 #ifdef ELIBSCN
-    { "ELIBSCN" , ELIBSCN } ,
+  { "ELIBSCN" , ELIBSCN } ,
 #endif
 
 #ifdef ELNRNG
-    { "ELNRNG" , ELNRNG } ,
+  { "ELNRNG" , ELNRNG } ,
 #endif
 
 #ifdef ELOOP
-    { "ELOOP" , ELOOP } ,
+  { "ELOOP" , ELOOP } ,
 #endif
 
 #ifdef EMEDIUMTYPE
-    { "EMEDIUMTYPE" , EMEDIUMTYPE } ,
+  { "EMEDIUMTYPE" , EMEDIUMTYPE } ,
 #endif
 
 #ifdef EMFILE
-    { "EMFILE" , EMFILE } ,
+  { "EMFILE" , EMFILE } ,
 #endif
 
 #ifdef EMLINK
-    { "EMLINK" , EMLINK } ,
+  { "EMLINK" , EMLINK } ,
 #endif
 
 #ifdef EMSGSIZE
-    { "EMSGSIZE" , EMSGSIZE } ,
+  { "EMSGSIZE" , EMSGSIZE } ,
 #endif
 
 #ifdef EMULTIHOP
-    { "EMULTIHOP" , EMULTIHOP } ,
+  { "EMULTIHOP" , EMULTIHOP } ,
 #endif
 
 #ifdef ENAMETOOLONG
-    { "ENAMETOOLONG" , ENAMETOOLONG } ,
+  { "ENAMETOOLONG" , ENAMETOOLONG } ,
 #endif
 
 #ifdef ENAVAIL
-    { "ENAVAIL" , ENAVAIL } ,
+  { "ENAVAIL" , ENAVAIL } ,
 #endif
 
 #ifdef ENETDOWN
-    { "ENETDOWN" , ENETDOWN } ,
+  { "ENETDOWN" , ENETDOWN } ,
 #endif
 
 #ifdef ENETRESET
-    { "ENETRESET" , ENETRESET } ,
+  { "ENETRESET" , ENETRESET } ,
 #endif
 
 #ifdef ENETUNREACH
-    { "ENETUNREACH" , ENETUNREACH } ,
+  { "ENETUNREACH" , ENETUNREACH } ,
 #endif
 
 #ifdef ENFILE
-    { "ENFILE" , ENFILE } ,
+  { "ENFILE" , ENFILE } ,
 #endif
 
 #ifdef ENOANO
-    { "ENOANO" , ENOANO } ,
+  { "ENOANO" , ENOANO } ,
 #endif
 
 #ifdef ENOBUFS
-    { "ENOBUFS" , ENOBUFS } ,
+  { "ENOBUFS" , ENOBUFS } ,
 #endif
 
 #ifdef ENOCSI
-    { "ENOCSI" , ENOCSI } ,
+  { "ENOCSI" , ENOCSI } ,
 #endif
 
 #ifdef ENODATA
-    { "ENODATA" , ENODATA } ,
+  { "ENODATA" , ENODATA } ,
 #endif
 
 #ifdef ENODEV
-    { "ENODEV" , ENODEV } ,
+  { "ENODEV" , ENODEV } ,
 #endif
 
 #ifdef ENOENT
-    { "ENOENT" , ENOENT } ,
+  { "ENOENT" , ENOENT } ,
 #endif
 
 #ifdef ENOEXEC
-    { "ENOEXEC" , ENOEXEC } ,
+  { "ENOEXEC" , ENOEXEC } ,
 #endif
 
 #ifdef ENOKEY
-    { "ENOKEY" , ENOKEY } ,
+  { "ENOKEY" , ENOKEY } ,
 #endif
 
 #ifdef ENOLCK
-    { "ENOLCK" , ENOLCK } ,
+  { "ENOLCK" , ENOLCK } ,
 #endif
 
 #ifdef ENOLINK
-    { "ENOLINK" , ENOLINK } ,
+  { "ENOLINK" , ENOLINK } ,
 #endif
 
 #ifdef ENOMEDIUM
-    { "ENOMEDIUM" , ENOMEDIUM } ,
+  { "ENOMEDIUM" , ENOMEDIUM } ,
 #endif
 
 #ifdef ENOMEM
-    { "ENOMEM" , ENOMEM } ,
+  { "ENOMEM" , ENOMEM } ,
 #endif
 
 #ifdef ENOMSG
-    { "ENOMSG" , ENOMSG } ,
+  { "ENOMSG" , ENOMSG } ,
 #endif
 
 #ifdef ENONET
-    { "ENONET" , ENONET } ,
+  { "ENONET" , ENONET } ,
 #endif
 
 #ifdef ENOPKG
-    { "ENOPKG" , ENOPKG } ,
+  { "ENOPKG" , ENOPKG } ,
 #endif
 
 #ifdef ENOPROTOOPT
-    { "ENOPROTOOPT" , ENOPROTOOPT } ,
+  { "ENOPROTOOPT" , ENOPROTOOPT } ,
 #endif
 
 #ifdef ENOSPC
-    { "ENOSPC" , ENOSPC } ,
+  { "ENOSPC" , ENOSPC } ,
 #endif
 
 #ifdef ENOSR
-    { "ENOSR" , ENOSR } ,
+  { "ENOSR" , ENOSR } ,
 #endif
 
 #ifdef ENOSTR
-    { "ENOSTR" , ENOSTR } ,
+  { "ENOSTR" , ENOSTR } ,
 #endif
 
 #ifdef ENOSYS
-    { "ENOSYS" , ENOSYS } ,
+  { "ENOSYS" , ENOSYS } ,
 #endif
 
 #ifdef ENOTBLK
-    { "ENOTBLK" , ENOTBLK } ,
+  { "ENOTBLK" , ENOTBLK } ,
 #endif
 
 #ifdef ENOTCONN
-    { "ENOTCONN" , ENOTCONN } ,
+  { "ENOTCONN" , ENOTCONN } ,
 #endif
 
 #ifdef ENOTDIR
-    { "ENOTDIR" , ENOTDIR } ,
+  { "ENOTDIR" , ENOTDIR } ,
 #endif
 
 #ifdef ENOTEMPTY
-    { "ENOTEMPTY" , ENOTEMPTY } ,
+  { "ENOTEMPTY" , ENOTEMPTY } ,
 #endif
 
 #ifdef ENOTNAM
-    { "ENOTNAM" , ENOTNAM } ,
+  { "ENOTNAM" , ENOTNAM } ,
 #endif
 
 #ifdef ENOTSOCK
-    { "ENOTSOCK" , ENOTSOCK } ,
+  { "ENOTSOCK" , ENOTSOCK } ,
 #endif
 
 #ifdef ENOTTY
-    { "ENOTTY" , ENOTTY } ,
+  { "ENOTTY" , ENOTTY } ,
 #endif
 
 #ifdef ENOTUNIQ
-    { "ENOTUNIQ" , ENOTUNIQ } ,
+  { "ENOTUNIQ" , ENOTUNIQ } ,
 #endif
 
 #ifdef ENXIO
-    { "ENXIO" , ENXIO } ,
+  { "ENXIO" , ENXIO } ,
 #endif
 
 #ifdef EOPNOTSUPP
-    { "EOPNOTSUPP" , EOPNOTSUPP } ,
+  { "EOPNOTSUPP" , EOPNOTSUPP } ,
 #endif
 
 #ifdef EOVERFLOW
-    { "EOVERFLOW" , EOVERFLOW } ,
+  { "EOVERFLOW" , EOVERFLOW } ,
 #endif
 
 #ifdef EPERM
-    { "EPERM" , EPERM } ,
+  { "EPERM" , EPERM } ,
 #endif
 
 #ifdef EPFNOSUPPORT
-    { "EPFNOSUPPORT" , EPFNOSUPPORT } ,
+  { "EPFNOSUPPORT" , EPFNOSUPPORT } ,
 #endif
 
 #ifdef EPIPE
-    { "EPIPE" , EPIPE } ,
+  { "EPIPE" , EPIPE } ,
 #endif
 
 #ifdef EPROTO
-    { "EPROTO" , EPROTO } ,
+  { "EPROTO" , EPROTO } ,
 #endif
 
 #ifdef EPROTONOSUPPORT
-    { "EPROTONOSUPPORT" , EPROTONOSUPPORT } ,
+  { "EPROTONOSUPPORT" , EPROTONOSUPPORT } ,
 #endif
 
 #ifdef EPROTOTYPE
-    { "EPROTOTYPE" , EPROTOTYPE } ,
+  { "EPROTOTYPE" , EPROTOTYPE } ,
 #endif
 
 #ifdef EREMCHG
-    { "EREMCHG" , EREMCHG } ,
+  { "EREMCHG" , EREMCHG } ,
 #endif
 
 #ifdef EREMOTE
-    { "EREMOTE" , EREMOTE } ,
+  { "EREMOTE" , EREMOTE } ,
 #endif
 
 #ifdef EREMOTEIO
-    { "EREMOTEIO" , EREMOTEIO } ,
+  { "EREMOTEIO" , EREMOTEIO } ,
 #endif
 
 #ifdef ERESTART
-    { "ERESTART" , ERESTART } ,
+  { "ERESTART" , ERESTART } ,
 #endif
 
 #ifdef EROFS
-    { "EROFS" , EROFS } ,
+  { "EROFS" , EROFS } ,
 #endif
 
 #ifdef ESHUTDOWN
-    { "ESHUTDOWN" , ESHUTDOWN } ,
+  { "ESHUTDOWN" , ESHUTDOWN } ,
 #endif
 
 #ifdef ESOCKTNOSUPPORT
-    { "ESOCKTNOSUPPORT" , ESOCKTNOSUPPORT } ,
+  { "ESOCKTNOSUPPORT" , ESOCKTNOSUPPORT } ,
 #endif
 
 #ifdef ESPIPE
-    { "ESPIPE" , ESPIPE } ,
+  { "ESPIPE" , ESPIPE } ,
 #endif
 
 #ifdef ESRCH
-    { "ESRCH" , ESRCH } ,
+  { "ESRCH" , ESRCH } ,
 #endif
 
 #ifdef ESRMNT
-    { "ESRMNT" , ESRMNT } ,
+  { "ESRMNT" , ESRMNT } ,
 #endif
 
 #ifdef ESTALE
-    { "ESTALE" , ESTALE } ,
+  { "ESTALE" , ESTALE } ,
 #endif
 
 #ifdef ESTRPIPE
-    { "ESTRPIPE" , ESTRPIPE } ,
+  { "ESTRPIPE" , ESTRPIPE } ,
 #endif
 
 #ifdef ETIME
-    { "ETIME" , ETIME } ,
+  { "ETIME" , ETIME } ,
 #endif
 
 #ifdef ETIMEDOUT
-    { "ETIMEDOUT" , ETIMEDOUT } ,
+  { "ETIMEDOUT" , ETIMEDOUT } ,
 #endif
 
 #ifdef ETOOMANYREFS
-    { "ETOOMANYREFS" , ETOOMANYREFS } ,
+  { "ETOOMANYREFS" , ETOOMANYREFS } ,
 #endif
 
 #ifdef ETXTBSY
-    { "ETXTBSY" , ETXTBSY } ,
+  { "ETXTBSY" , ETXTBSY } ,
 #endif
 
 #ifdef EUCLEAN
-    { "EUCLEAN" , EUCLEAN } ,
+  { "EUCLEAN" , EUCLEAN } ,
 #endif
 
 #ifdef EUNATCH
-    { "EUNATCH" , EUNATCH } ,
+  { "EUNATCH" , EUNATCH } ,
 #endif
 
 #ifdef EUSERS
-    { "EUSERS" , EUSERS } ,
+  { "EUSERS" , EUSERS } ,
 #endif
 
 #ifdef EXDEV
-    { "EXDEV" , EXDEV } ,
+  { "EXDEV" , EXDEV } ,
 #endif
 
 #ifdef EXFULL
-    { "EXFULL" , EXFULL } ,
+  { "EXFULL" , EXFULL } ,
 #endif
-    { NULL , 0 }
+
+  { NULL , 0 }
 };
 
 /***************************************************************************/
@@ -559,7 +560,7 @@ static int errno___index(lua_State *L)
 #if LUA_VERSION_NUM == 501
   static struct luaL_Reg const m_reg_errno[] =
   {
-    { NULL      , NULL           }
+    { NULL , NULL }
   };
 #endif
 
@@ -590,4 +591,3 @@ int luaopen_org_conman_errno(lua_State *L)
 }
 
 /*************************************************************************/
-
