@@ -544,6 +544,22 @@ static struct strint const m_errors[] =
   { "EXFULL" , EXFULL } ,
 #endif
 
+#ifdef E2BIG
+  { "E2BIG" , E2BIG } ,
+#endif
+
+#ifdef ENOTRECOVERABLE
+  { "ENOTRECOVERABLE" , ENOTRECOVERABLE },
+#endif
+
+#ifdef ENOTSUP
+  { "ENOTSUP" , ENOTSUP } ,
+#endif
+
+#ifdef EOWNERDEAD
+  { "EOWNERDEAD" , EOWNERDEAD } ,
+#endif
+
   { NULL , 0 }
 };
 

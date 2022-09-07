@@ -1,14 +1,14 @@
 package = "org.conman.errno"
-version = "1.0.2-3"
+version = "1.1.0-1"
 
 source = 
 {
-  url = "https://raw.githubusercontent.com/spc476/lua-conmanorg/errno-1.0.2/src/errno.c"
+  url = "https://raw.githubusercontent.com/spc476/lua-conmanorg/errno-1.1.0/src/errno.c"
 }
 
 description =
 {
-  homepage   = "https://github.com/spc476/lua-conmanorg/blob/errno-1.0.2/src/errno.c",
+  homepage   = "https://github.com/spc476/lua-conmanorg/blob/errno-1.1.0/src/errno.c",
   maintainer = "Sean Conner <sean@conman.org>",
   license    = "LGPL3+",
   summary    = "C and POSIX system error codes.",
