@@ -133,14 +133,14 @@
 #ifdef CLOCK_IMPL_REALTIME
 #define IMPLEMENTATION  "clock_gettime"
 
-char const *const m_clocks[] =
+static char const *const m_clocks[] =
 {
   "realtime",
   "monotonic",
   NULL
 };
 
-clockid_t const m_clockids[] =
+static clockid_t const m_clockids[] =
 {
   CLOCK_REALTIME,
   CLOCK_MONOTONIC,
