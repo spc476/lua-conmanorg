@@ -92,14 +92,14 @@ static char const *const mbase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 static int b64meta_encode(lua_State *L)
 {
   base64__s const *b64;
-  uint8_t         *data;
+  uint8_t   const *data;
   size_t           size;
   size_t           len;
   luaL_Buffer      b;
   uint8_t          A,B,C,D;
   
   b64  = luaL_checkudata(L,1,TYPE_BASE64);
-  data = (uint8_t *)luaL_checklstring(L,2,&size);
+  data = (uint8_t const *)luaL_checklstring(L,2,&size);
   len  = 0;
   luaL_buffinit(L,&b);
   
