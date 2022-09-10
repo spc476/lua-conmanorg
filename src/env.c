@@ -31,8 +31,6 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <stdlib.h>
-#include <assert.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -41,20 +39,17 @@
 #  error You need to compile against Lua 5.1 or higher
 #endif
 
-extern char const **environ;
-
+int luaopen_org_conman_env(lua_State *L)
+{
+  extern char const **environ;
+  int i;
+  
 #if LUA_VERSION_NUM == 501
   static struct luaL_Reg const env[] =
   {
     { NULL , NULL }
   };
-#endif
-
-int luaopen_org_conman_env(lua_State *L)
-{
-  int i;
   
-#if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.env",env);
 #else
   lua_createtable(L,0,0);

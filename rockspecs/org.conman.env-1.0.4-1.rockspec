@@ -1,14 +1,14 @@
 package = "org.conman.env"
-version = "1.0.3-1"
+version = "1.0.4-1"
 
 source = 
 {
-  url = "https://raw.githubusercontent.com/spc476/lua-conmanorg/env-1.0.3/src/env.c",
+  url = "https://raw.githubusercontent.com/spc476/lua-conmanorg/env-1.0.4/src/env.c",
 }
 
 description =
 {
-  homepage   = "https://github.com/spc476/lua-conmanorg/blob/env-1.0.3/src/env.c",
+  homepage   = "https://github.com/spc476/lua-conmanorg/blob/env-1.0.4/src/env.c",
   maintainer = "Sean Conner <sean@conman.org>",
   license    = "LGPL3+",
   summary    = "Loads all environment variables into a table.",
