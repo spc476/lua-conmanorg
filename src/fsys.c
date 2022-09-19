@@ -1182,6 +1182,37 @@ static int fsys__close(lua_State *L)
 }
 
 /************************************************************************
+* Usage:	okay,err = fsys.fsync(file)
+* Desc:		Syncronize file's in-core state with disk
+* Input:	file (userdata) file
+* Return:	okay (boolean) true if okay, false if error
+*		err (integer) system error
+*************************************************************************/
+
+static int fsys_fsync(lua_State *L)
+{
+  if (!luaL_callmeta(L,1,"_tofd"))
+  {
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,EBADF);
+  }
+  else
+  {
+    if (isatty(luaL_checkinteger(L,-1)) == -1)
+    {
+      lua_pushboolean(L,false);
+      lua_pushinteger(L,errno);
+    }
+    else
+    {
+      lua_pushboolean(L,true);
+      lua_pushinteger(L,0);
+    }
+  }
+  return 2;
+}
+
+/************************************************************************
 *                 MONKEY PATCH! MONKEY PATCH! MONKEY PATCH!
 *
 * We add some functions to the io module
@@ -1308,6 +1339,7 @@ static struct luaL_Reg const reg_fsys[] =
   { "gexpand"   , fsys_gexpand   } ,
   { "pathconf"  , fsys_pathconf  } ,
   { "_close"    , fsys__close    } ,
+  { "fsync"     , fsys_fsync     } ,
   { NULL        , NULL           }
 };
 
