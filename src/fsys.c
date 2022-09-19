@@ -1198,16 +1198,10 @@ static int fsys_fsync(lua_State *L)
   }
   else
   {
-    if (isatty(luaL_checkinteger(L,-1)) == -1)
-    {
-      lua_pushboolean(L,false);
-      lua_pushinteger(L,errno);
-    }
-    else
-    {
-      lua_pushboolean(L,true);
-      lua_pushinteger(L,0);
-    }
+    errno = 0;
+    isatty(luaL_checkinteger(L,-1));
+    lua_pushboolean(L,errno == 0);
+    lua_pushinteger(L,errno);
   }
   return 2;
 }
