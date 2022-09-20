@@ -21,9 +21,9 @@
 *
 *       base64 = require "org.conman.base64" {
 *                       last   = "+/",
-*                       pad    = "=",
-*                       len    = 76,
-*                       ignore = true,
+*                       pad    = "=",  -- "" to get optional pad
+*                       len    = 76,   -- if -1, size==SIZE_MAX, no CRLF input
+*                       ignore = true, -- ignore non-Base-64 characters
 *                       strict = false,
 *                     }
 *
@@ -204,8 +204,15 @@ static bool Ib64_readout(
       return true;
     }
     
+    if ((b64->len < SIZE_MAX) && ((*data == '\r') || (*data == '\n')))
+    {
+      data++;
+      continue;
+    }
+    
     if (!b64->ignore)
       return false;
+    data++;
   }
 }
 
@@ -317,7 +324,17 @@ static int b64lua(lua_State *L)
     lua_getfield(L,1,"pad");
     b64->pad = *luaL_optstring(L,-1,"=");
     lua_getfield(L,1,"len");
-    b64->len = luaL_optinteger(L,-1,76);
+    if (!lua_isnil(L,-1))
+    {
+      int len = lua_tointeger(L,-1);
+      if (len < 0)
+        b64->len = SIZE_MAX;
+      else
+        b64->len = len;
+    }
+    else
+      b64->len = 76;
+      
     lua_getfield(L,1,"ignore");
     b64->ignore = lua_toboolean(L,-1);
     lua_getfield(L,1,"strict");
