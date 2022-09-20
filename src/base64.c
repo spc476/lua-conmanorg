@@ -317,7 +317,7 @@ static int b64lua(lua_State *L)
     lua_getfield(L,1,"pad");
     b64->pad = *luaL_optstring(L,-1,"=");
     lua_getfield(L,1,"len");
-    b64->len = luaL_optinteger(L,-1,64);
+    b64->len = luaL_optinteger(L,-1,76);
     lua_getfield(L,1,"ignore");
     b64->ignore = lua_toboolean(L,-1);
     lua_getfield(L,1,"strict");
