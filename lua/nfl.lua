@@ -201,23 +201,7 @@ local function eventloop(done_f)
     local status = coroutine.status(co[1])
     
     if status == 'dead' then
-      syslog('critical',"A dead coroutine was scheduled to run")
-      -- -------------------------------------------------------------------
-      -- At this point, REFQUEUE[co[1]] should be true, and REFQUEUE._n > 0.
-      -- Why are these being triggered?
-      -- -------------------------------------------------------------------
-      
-      if not REFQUEUE[co[1]] then
-        syslog('warning',"Why is there no corotine in the REFQUEUE?")
-      else
-        REFQUEUE[co[1]] = nil
-      end
-      
-      if REFQUEUE._n > 0 then
-        REFQUEUE._n = REFQUEUE._n - 1
-      else
-        syslog('warning',"Why is the REFQUEUE count %d?",REFQUEUE._n)
-      end
+      syslog('warning',"A dead coroutine was scheduled to run")
       
     elseif status == 'suspended' then
       local ret = { coroutine.resume(unpack(co)) }
