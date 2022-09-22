@@ -222,12 +222,25 @@ local function eventloop(done_f)
     
     else
       -- =====================================================================
-      -- I'm not sure what's happening here, but somehow a coroutine is
-      -- getting into a state that isn't 'dead' or 'suspended'.  If that
-      -- happens, let's print out the status, and dereference.  It will
-      -- eventually be reclaimed.
+      -- There are two states not accounted for---'normal' and 'running'.
+      -- Neither of these should happen.
+      --
+      -- 'running'
+      --        Shouldn't happen because then it means we are trying to
+      --        resume the coroutine that is currently running (namely, this
+      --        coroutine), which not only doesn't make sense, but I can't
+      --        see how this could happen.
+      --
+      -- 'normal'
+      --        We're doing this check from a coroutine that isn't running
+      --        and the coroutine we're checking is running, and I can't see
+      --        how that can happen (and doesn't make much sense either).
+      --
+      -- So this path is one of those "This should never happen" paths,
+      -- which should never happen.  And if it does, just remove the
+      -- reference to the coroutine, and log what happened.
       -- =====================================================================
-    
+      
       syslog('critical',"unexpected coroutine state %q",status)
       assert(REFQUEUE._n > 0)
       REFQUEUE[co[1]] = nil
