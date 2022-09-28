@@ -34,7 +34,8 @@ org.conman.syslog		(C)
 	A wrapper for the syslog logging system.
 
 org.conman.tls			(C)
-	A wrapp for the libressl library libtls.
+	A wrapp for the libressl library libtls.  This can also be used
+	by libretls, libtls for OpenSSL.
 
                                   * * * * *
 
