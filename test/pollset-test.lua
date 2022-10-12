@@ -1,5 +1,6 @@
 -- luacheck: ignore 611 411
 
+local tap     = require "tap14"
 local fsys    = require "org.conman.fsys"
 local pollset = require "org.conman.pollset"
 
@@ -16,84 +17,80 @@ pipe.write:setvbuf('no')
 -- Run the tests
 -- ----------------
 
-io.stdout:write("Testing minimal (select) level of support\n")
-io.stdout:write("\ttesting type of implementation ... ")
+tap.plan(6)
 local set do
-	set     = pollset()
-	assert(set._implementation)
-	io.stdout:write(set._implementation," GO!\n")
+  set = pollset()
+  tap.assertB(set,"set creation")
+  tap.assertB(set._implementation,"We're testing the %s implementation",set._implemenation or "-")
 end
 
-io.stdout:write("\ttesting timeout (will take 5 seconds) ... ")
-io.stdout:flush()
-do
+tap.plan(7,"timeout test (5 seconds)") do
 	local err = set:insert(pipe.read,"r")
-	assert(err == 0)
-
+	tap.assertB(err,"inserting the read event")
+	
 	local zen      = os.time()
 	local okay,err = set:wait(5)
 	local now      = os.time()
         
-        assert(okay)
-	assert(err)
-	assert((now - zen) >= 5)
+        tap.assert(okay,"waiting")
+        tap.assert(err,"we got an error (even if success)")
+        tap.assert((now - zen) >= 5,"we took five seconds")
+        
 	local events,state,var = set:events()
-	assert(events(state,var) == nil)
-	io.stdout:write("GO!\n")
+	tap.assert(events,"events exist")
+	tap.assert(state,"state info")
+	tap.assert(not var,"variable info")	
+	tap.done()
 end
 
-io.stdout:write("\ttesting read readiness ... ")
-do
+tap.plan(8,"testing read readiness") do
 	pipe.write:write(data)
 
 	local zen        = os.time()
 	local okay,err   = set:wait(5)
 	local now        = os.time()
 	
-	assert(okay)
-	assert(not err)
-	assert((now-zen) <= 1)
+	tap.assert(okay,"waiting for up to 5 seconds")
+	tap.assert(not err,"no error")
+	tap.assert((now-zen) <= 1,"we didn't actually wait")
 	local events,state,var = set:events()
-	assert(events)
+	tap.assert(events,"events exist")
 	local e = events(state,var)
-	assert(e)
-	assert(e.read)
-	assert(events(state,var) == nil)
+	tap.assert(e,"event item")
+	tap.assert(e.read,"event is read event")
+	tap.assert(events(state,var) == nil,"no further events")
 
 	local blob = pipe.read:read(256)
-	assert(#blob == 256)
-	io.stdout:write("GO!\n")
+	tap.assert(#blob == 256,"we have read data")
+	tap.done()
 end
 
-io.stdout:write("\ttesting set removal ... ")
 do
 	local err = set:remove(pipe.read)
-	assert(err == 0)
-	io.stdout:write("GO!\n")
+	tap.assert(err == 0,"file removed from set")
 end
 
-io.stdout:write("\ttesting write readiness ... ")
-do
+tap.plan(16,"testing write readiness") do
 
 	local err = set:insert(pipe.read,"r")
-	assert(err == 0)
+	tap.assertB(err == 0,"insert read file into set")
 	
 	local err = set:insert(pipe.write,"w")
-	assert(err == 0)
+	tap.assertB(err == 0,"insert write file into set")
 
 	local zen = os.time()
 	local okay,err = set:wait(5)
 	local now = os.time()
 	
-	assert(okay)
-	assert(not err)
-	assert((now-zen) <= 1)
+	tap.assert(okay,"wait for events")
+	tap.assert(not err,"no error while waiting")
+	tap.assert((now-zen) <= 1,"no waiting for data")
 	local events,state,var = set:events()
-	assert(events)
+	tap.assert(events,"we have events")
 	local e = events(state,var)
-	assert(e)
-	assert(e.write)
-	assert(events(state,var) == nil)
+	tap.assert(e,"first event")
+	tap.assert(e.write,"we can write")
+	tap.assert(events(state,var) == nil,"no further events")
 	
 	pipe.write:write(data)
 	set:remove(pipe.write)
@@ -102,16 +99,18 @@ do
 	local okay,err = set:wait(5)
 	local now = os.time()
 	
-	assert(okay)
-	assert(not err)
-	assert((now-zen) <= 1)
+	tap.assert(okay,"wait for more events")
+	tap.assert(not err,"no error")
+	tap.assert((now-zen) <= 1,"no waiting for data")
 	local events,state,var = set:events()
-	assert(events)
+	tap.assert(events,"we have events")
 	local e = events(state,var)
-	assert(e)
-	assert(e.read)
+	tap.assert(e,"first event")
+	tap.assert(e.read,"it's a read event")
 	
 	local blob = pipe.read:read(256)
-	assert(#blob == 256)
-	io.stdout:write("GO!\n")
+	tap.assert(#blob == 256,"we have data")
+	tap.done()
 end
+
+os.exit(tap.done(),true)

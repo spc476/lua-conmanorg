@@ -1,4 +1,5 @@
 
+local tap     = require "tap14"
 local clock   = require "org.conman.clock"
 local process = require "org.conman.process"
 local signal  = require "org.conman.signal"
@@ -25,4 +26,6 @@ else
   info = process.wait(child)
 end
 
-assert(info.rc == 0)
+tap.plan(1)
+tap.assert(info.rc == 0)
+tap.done()

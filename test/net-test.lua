@@ -1,6 +1,7 @@
 
 -- luacheck: ignore 611
 
+local tap = require "tap14"
 local net = require "org.conman.net"
 
 local function compare_lists(a,b)
@@ -15,31 +16,30 @@ end
 -- Address tests
 -- ---------------------------------------------------------------------
 
-io.stdout:write("Testing address manipulation\n")
+tap.plan(7)
 
 local function address_test(case)
-  io.stdout:write("\ttesting ",case.desc," ... ")
+  tap.plan(10,case.desc)
   local a1 = net.address(case.addr,case.proto,case.port)
   local a2 = net.address(case.addr,case.proto,case.port)
   
-  assert(a1  == a2)
-  assert(#a1 == case.len)
-  assert(#a2 == case.len)
+  tap.assert(a1  == a2,"equality works")
+  tap.assert(#a1 == case.len,"length works")
+  tap.assert(#a2 == case.len,"length works (again)")
   
-  assert(a1.family              == case.family)
-  assert(a1.addrbits            == case.addrbits)
-  assert(a1.port                == case.iport)
-  assert(tostring(a1)           == case.tostring)
-  assert(a1:display()           == case.display)
-  assert(a1:display(case.iport) == case.display_port)
+  tap.assert(a1.family              == case.family,"family")
+  tap.assert(a1.addrbits            == case.addrbits,"addrbits")
+  tap.assert(a1.port                == case.iport,"port")
+  tap.assert(tostring(a1)           == case.tostring,"tostring")
+  tap.assert(a1:display()           == case.display,"display")
+  tap.assert(a1:display(case.iport) == case.display_port,"display port")
   
   if a1.family == 'ip6' then
-    assert(a1.daddr == '[' .. a1.addr .. ']')
+    tap.assert(a1.daddr == '[' .. a1.addr .. ']',"daddr")
   else
-    assert(a1.daddr == a1.addr)
+    tap.assert(a1.daddr == a1.addr,"daddr")
   end
-  
-  io.stdout:write("GO!\n")
+  tap.done()
 end
 
 address_test {
@@ -124,8 +124,6 @@ address_test {
 	display_port = "[fc00::c0ff:eeba:d015:dead:beef]",
 }
 
-io.stdout:write("\ttesting address ordering ... ")
-
 local list1 =
 {
   net.address('192.168.1.10','udp',3333),
@@ -174,5 +172,5 @@ table.remove(list1) -- because the last call to net.address() fills in the
 table.remove(list2) -- last slot with 0.  So remove that 0.
 table.sort(list1)
 
-assert(compare_lists(list1,list2))
-io.stdout:write("GO!\n")
+tap.assert(compare_lists(list1,list2),"test sortability")
+os.exit(tap.done(),true)

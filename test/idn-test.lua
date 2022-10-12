@@ -2,7 +2,10 @@
 -- luacheck: ignore 611 631
 -- Examples pulled from RFC-3492
 
+local tap  = require "tap14"
 local idn  = require "org.conman.idn"
+
+tap.plan(2)
 
 local data =
 {
@@ -125,14 +128,18 @@ local data =
   --]]
 }
 
+tap.plan(#data,"test set 1")
 for _,test in ipairs(data) do
+  tap.plan(4,test.what)
   local e = idn.encode(test.orig)
-  assert(e,string.format("encode %s: failed\n",test.what))
+  tap.assert(e,"encode()")
+  tap.assert(e == test.puny,"encode() matches")
   local d = idn.decode(e)
-  assert(d,string.format("decode %s: failed\n",test.what))
-  assert(e == test.puny,string.format("encode %s:\n%s\n%s",test.what,e,test.puny))
-  assert(d == test.orig,string.format("decode %s:\n%s\n%s",test.what,d,test.orig))
+  tap.assert(d,"decode()")
+  tap.assert(d == test.orig,"decode() matches")
+  tap.done()
 end
+tap.done()
 
 local data2 =
 {
@@ -158,11 +165,16 @@ local data2 =
   },
 }
 
+tap.plan(#data2,"test set 2---normalization")
 for _,test in ipairs(data2) do
+  tap.plan(4,test.what)
   local e = idn.encode(test.orig)
-  assert(e,string.format("encode %s: failed\n",test.what))
+  tap.assert(e,"encode()")
+  tap.assert(e == test.puny,"encode() matches")
   local d = idn.decode(e)
-  assert(d,string.format("decode %s: failed\n",test.what))
-  assert(e == test.puny,string.format("encode %s:\n%s\n%s",test.what,e,test.puny))
-  assert(d == test.tran,string.format("decode %s:\n%s\n%s",test.what,d,test.tran))
+  tap.assert(d,"decode()")
+  tap.assert(d == test.tran,"decode() matches")
+  tap.done()
 end
+tap.done()
+os.exit(tap.done())

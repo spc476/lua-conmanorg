@@ -1,417 +1,322 @@
 -- luacheck: ignore 611
 
+local tap    = require "tap14"
 local signal = require "org.conman.signal"
 
--- ----------------------------------------------------------------------
--- The signal API, reguardless of implementation, should support at least
--- this level of activity.
--- ----------------------------------------------------------------------
-
-io.stdout:write("Testing ANSI level support\n")
-io.stdout:write("\ttesting for known functions ...")
-io.stdout:flush()
-
-assert(type(signal._implementation) == 'string')
-assert(type(signal.catch)           == 'function')
-assert(type(signal.caught)          == 'function')
-assert(type(signal.default)         == 'function')
-assert(type(signal.defined)         == 'function')
-assert(type(signal.ignore)          == 'function')
-assert(type(signal.raise)           == 'function')
-
-io.stdout:write(" GO!\n")
-
-for _,sig in ipairs {
-        'abrt' , 'fpe' , 'ill' , 'int' , 'segv' , 'term' ,
-        'abort' , 'illegal', 'interrupt' , 'segfault' , 'terminate' ,
-} do
-  io.stdout:write("\ttesting ",sig, " ...")
-  io.stdout:flush()
-  
-  -- ---------------------------------------------------------------
-  -- simple catch and test.
-  -- ---------------------------------------------------------------
-  
-  assert(signal.defined(sig)) -- ANSI C signals should always be defined
-  assert(signal.catch(sig))
-  assert(signal.raise(sig))
-  assert(signal.caught(sig))
-  assert(signal.raise(sig))
-  assert(signal.caught())
-  
-  -- -------------------------------------------------------------
-  -- test a signal handler.
-  -- -------------------------------------------------------------
-  
-  local res = {}
-  
-  assert(signal.catch(sig,function(s) res[#res + 1] = s end))
-  assert(signal.raise(sig))
-  assert(signal.raise(sig))
-  assert(#res == 2)
-  assert(res[1] == sig)
-  assert(res[2] == sig)
-  
-  -- --------------------------------------------------------------------
-  -- test catching a previously caught signal with a function, this time
-  -- catching it without a signal.
-  -- --------------------------------------------------------------------
-  
-  assert(signal.catch(sig))
-  assert(signal.raise(sig))
-  assert(signal.caught(sig))
-  assert(signal.raise(sig))
-  assert(signal.caught())
-  
-  -- ------------------------------------------------------------
-  -- test signal ignoring.  We can't test a default action since
-  -- the default action tends to be "not ignore".
-  -- ------------------------------------------------------------
-  
-  signal.ignore(sig)
-  assert(signal.raise(sig))
-  assert(not signal.caught(sig))
-  assert(signal.raise(sig))
-  assert(not signal.caught())
-  signal.default(sig)
-  
-  io.stdout:write(" GO!\n")
-end
-
--- --------------------------------------------------------------
--- The only other API we have is POSIX.
--- --------------------------------------------------------------
-
-if signal._implementation == 'ANSI' then
-  os.exit(0)
-end
-
-if signal._implementation ~= 'POSIX' then
-  io.stdout:write("NEED TO WRITE TESTS FOR ",signal._implementation,"\n")
-  os.exit(1)
-end
-
-io.stdout:write("Testing for POSIX level support\n")
-io.stdout:write("\ttesting for known functions ...")
-
-assert(type(signal.allow)   == 'function')
-assert(type(signal.block)   == 'function')
-assert(type(signal.mask)    == 'function')
-assert(type(signal.pending) == 'function')
-assert(type(signal.suspend) == 'function')
-assert(type(signal.set)     == 'function')
-
-io.stdout:write("GO!\n")
-io.stdout:write("\ttesting signal sets ... ")
-
-local a = signal.set('term','int')
-        assert(a)
-        assert(    a['term'])
-        assert(    a['int'])
-        assert(not a['abrt'])
-        assert(not a['fpe'])
-        assert(not a['ill'])
-        assert(not a['segv'])
-        
-local b = signal.set('abrt','fpe')
-        assert(b)
-        assert(    b['abrt'])
-        assert(    b['fpe'])
-        assert(not b['term'])
-        assert(not b['int'])
-        assert(not b['ill'])
-        assert(not b['segv'])
-        
-local c = a + b
-        assert(c)
-        assert(    c['term'])
-        assert(    c['int'])
-        assert(    c['abrt'])
-        assert(    c['fpe'])
-        assert(not c['ill'])
-        assert(not c['segv'])
-        
-        assert(    a['term'])
-        assert(    a['int'])
-        assert(not a['abrt'])
-        assert(not a['fpe'])
-        assert(not a['ill'])
-        assert(not a['segv'])
-        
-        assert(    b['abrt'])
-        assert(    b['fpe'])
-        assert(not b['term'])
-        assert(not b['int'])
-        assert(not b['ill'])
-        assert(not b['segv'])
-        
-local d = c - a
-        assert(d)
-        assert(not d['term'])
-        assert(not d['int'])
-        assert(    d['abrt'])
-        assert(    d['fpe'])
-        assert(not d['ill'])
-        assert(not d['segv'])
-        
-        assert(    c['term'])
-        assert(    c['int'])
-        assert(    c['abrt'])
-        assert(    c['fpe'])
-        assert(not c['ill'])
-        assert(not c['segv'])
-        
-        assert(    a['term'])
-        assert(    a['int'])
-        assert(not a['abrt'])
-        assert(not a['fpe'])
-        assert(not a['ill'])
-        assert(not a['segv'])
-        
-local e = -c
-        assert(e)
-        assert(not e['term'])
-        assert(not e['int'])
-        assert(not e['abrt'])
-        assert(not e['fpe'])
-        assert(    e['ill'])
-        assert(    e['segv'])
-        
-        assert(    c['term'])
-        assert(    c['int'])
-        assert(    c['abrt'])
-        assert(    c['fpe'])
-        assert(not c['ill'])
-        assert(not c['segv'])
-        
-io.stdout:write("GO!\n")
-
--- ----------------------------------------------------------------------
--- A list of signals to test.  'stop' and 'kill' can't be manipulated by
--- user processes, so they aren't listed.
--- ----------------------------------------------------------------------
-
-local list =
+local ANSI =
 {
-  -- ANSI signals
-  
-  { sig = 'abrt'          , level = "ANSI" } ,
-  { sig = 'fpe'           , level = "ANSI" } ,
-  { sig = 'ill'           , level = "ANSI" } ,
-  { sig = 'int'           , level = "ANSI" } ,
-  { sig = 'segv'          , level = "ANSI" } ,
-  { sig = 'term'          , level = "ANSI" } ,
-  
-  { sig = 'abort'         , level = "ANSI" } ,
-  { sig = 'illegal'       , level = "ANSI" } ,
-  { sig = 'interrupt'     , level = "ANSI" } ,
-  { sig = 'segfault'      , level = "ANSI" } ,
-  { sig = 'terminate'     , level = "ANSI" } ,
-  
-  -- POSIX signals
-  
-  { sig = 'alrm'          , level = "POSIX" } ,
-  { sig = 'bus'           , level = "POSIX" } ,
-  { sig = 'chld'          , level = "POSIX" } ,
-  { sig = 'cont'          , level = "POSIX" } ,
-  { sig = 'hup'           , level = "POSIX" } ,
-  { sig = 'pipe'          , level = "POSIX" } ,
-  { sig = 'poll'          , level = "POSIX" } ,
-  { sig = 'quit'          , level = "POSIX" } ,
-  { sig = 'sys'           , level = "POSIX" } ,
-  { sig = 'trap'          , level = "POSIX" } ,
-  { sig = 'tstp'          , level = "POSIX" } ,
-  { sig = 'ttin'          , level = "POSIX" } ,
-  { sig = 'ttou'          , level = "POSIX" } ,
-  { sig = 'urg'           , level = "POSIX" } ,
-  { sig = 'usr1'          , level = "POSIX" } ,
-  { sig = 'usr2'          , level = "POSIX" } ,
-  { sig = 'vtalrm'        , level = "POSIX" } ,
-  { sig = 'xcpu'          , level = "POSIX" } ,
-  { sig = 'xfsz'          , level = "POSIX" } ,
-  
-  { sig = 'alarm'         , level = "POSIX" } ,
-  { sig = 'breakpoint'    , level = "POSIX" } ,
-  { sig = 'child'         , level = "POSIX" } ,
-  { sig = 'cputime'       , level = "POSIX" } ,
-  { sig = 'filesize'      , level = "POSIX" } ,
-  { sig = 'hangup'        , level = "POSIX" } ,
-  { sig = 'profile'       , level = "POSIX" } ,
-  
-  -- Maybe defined, maybe not ...
-  -- your OS will decide
-  
-  { sig = 'cld'           , level = "non-standard" } ,
-  { sig = 'emt'           , level = "non-standard" } ,
-  { sig = 'info'          , level = "non-standard" } ,
-  { sig = 'io'            , level = "non-standard" } ,
-  { sig = 'iot'           , level = "non-standard" } ,
-  { sig = 'lost'          , level = "non-standard" } ,
-  { sig = 'pwr'           , level = "non-standard" } ,
-  { sig = 'stkflt'        , level = "non-standard" } ,
-  { sig = 'winch'         , level = "non-standard" } ,
-  
-  { sig = 'copstackfault' , level = "non-standard" } ,
-  { sig = 'emt'           , level = "non-standard" } ,
-  { sig = 'filelock'      , level = "non-standard" } ,
-  { sig = 'information'   , level = "non-standard" } ,
-  { sig = 'power'         , level = "non-standard" } ,
-  { sig = 'stkflt'        , level = "non-standard" } ,
-  { sig = 'windowchange'  , level = "non-standard" } ,
+  'abrt'  , 'ill'     , 'int'       , 'segv'     , 'term' , 'fpe' ,
+  'abort' , 'illegal' , 'interrupt' , 'segfault' , 'terminate'
 }
 
-local all   = signal.set(true)        -- set of all signals
-local empty = signal.set()            -- set of no signals
-local none  = signal.set(false)       -- set of no signals
+local POSIX =
+{
+  'alrm' , 'bus'  , 'chld' , 'cont' , 'hup'  , 'pipe' , 'poll' , 'quit' ,
+  'sys'  , 'trap' , 'tstp' , 'ttin' , 'ttou' , 'urg'  , 'usr1' , 'usr2' ,
+  'vtalrm' , 'xcpu' , 'xfsz',
+  
+  'alarm'    , 'breakpoint' , 'child' , 'cputime' ,
+  'filesize' , 'hangup'     , 'profile'
+}
 
-assert(all)
-assert(empty)
-assert(none)
+tap.plan(0)
+tap.assert(signal._implementation,"implementatin information")
+tap.assert(type(signal._implementation) == 'string',"implementation information is string")
+tap.assert(type(signal.catch)   == 'function',"catch() exists")
+tap.assert(type(signal.caught)  == 'function',"caught() exists")
+tap.assert(type(signal.default) == 'function',"default() exists")
+tap.assert(type(signal.defined) == 'function',"defined() exists")
+tap.assert(type(signal.ignore)  == 'function',"ignore() exists")
+tap.assert(type(signal.raise)   == 'function',"raise() exists")
 
-local function reset(sig1,sig2)
-  signal.default(sig1,sig2)
-  signal.mask(empty)
-  return {}
+tap.plan(#ANSI,"ANSI level support") do
+  for _,sig in ipairs(ANSI) do
+    tap.plan(3,sig) do
+      tap.plan(6,"simple catch and raise") do
+        tap.assert(signal.defined(sig),"%s defined",sig)
+        tap.assert(signal.catch(sig),"catch %s",sig)
+        tap.assert(signal.raise(sig),"raise %s",sig)
+        tap.assert(signal.caught(sig),"caught %s",sig)
+        tap.assert(signal.raise(sig),"raise %s",sig)
+        tap.assert(signal.caught(),"caught")
+        tap.done()
+      end
+      tap.plan(6,'test signal handler') do
+        local res = {}
+        tap.assert(signal.catch(sig,function(s) res[#res + 1] = s end),'%s catch function',sig)
+        tap.assert(signal.raise(sig),'raise %s',sig)
+        tap.assert(signal.raise(sig),'raise %s again',sig)
+        tap.assert(#res == 2,"caught two signals")
+        tap.assert(res[1] == sig,"%s caught once",sig)
+        tap.assert(res[2] == sig,"%s caught twice",sig)
+        tap.done()
+      end
+      tap.plan(5,'test signal ignoring') do
+        tap.assert(not signal.ignore(sig),"ignore %s",sig)
+        tap.assert(signal.raise(sig),"raise %s",sig)
+        tap.assert(not signal.caught(sig),"%s not caught",sig)
+        tap.assert(signal.raise(sig),"raise %s again",sig)
+        tap.assert(not signal.caught(),"no signal caught")
+        tap.done()
+      end
+    end
+    tap.done()
+  end
+  tap.done()
 end
 
-for _,entry in ipairs(list) do
-  local sig      = entry.sig
-  local standard = entry.level
+if signal._implementation == 'ANSI' then
+  os.exit(tap.done())
+end
+
+tap.assertB(signal._implementation == 'POSIX',"NEED TO WRITE TESTS FOR %s",signal._implementation)
+
+tap.plan(7,"POSIX level support") do
   
-  io.stdout:write("\ttesting ",sig," (",standard,") ...")
+  tap.plan(#POSIX,"POSIX signal definitions") do
+    for _,sig in ipairs(POSIX) do
+      tap.assert(signal.defined(sig),"%s defined",sig)
+    end
+    tap.done()
+  end
   
-  local exists = signal.defined(sig)
-  if not exists then
-    if standard == 'non-standard' then
-      io.stdout:write(" SKIP\n")
-    else
-      io.stdout:write(" no support!  STOP!\n")
-      os.exit(1)
-    end
-  else
+  tap.plan(6,"function support") do
+    tap.assert(type(signal.allow)   == 'function',"allow() exists")
+    tap.assert(type(signal.block)   == 'function',"block() exists")
+    tap.assert(type(signal.mask)    == 'function',"mask() exists")
+    tap.assert(type(signal.pending) == 'function',"pending() exists")
+    tap.assert(type(signal.suspend) == 'function',"suspend() exists")
+    tap.assert(type(signal.set)     == 'function',"set() exists")
+    tap.done()
+  end
   
-    assert(all[sig])
-    assert(not empty[sig])
-    assert(not none[sig])
+  tap.plan(70,"manipulation of signal sets") do
+    local a = signal.set('term','int')
+    tap.assert(a,"set a exists")
+    tap.assert(a['term'],"term in set a")
+    tap.assert(a['int'],"int in set a")
+    tap.assert(not a['abrt'],"abrt not in set a")
+    tap.assert(not a['fpe'], "fpe not in set a")
+    tap.assert(not a['ill'], "ill not in set a")
+    tap.assert(not a['segv'],"segv not in set a")
     
-    -- -----------------------------------------------------------------
-    -- test the flags by testing oneshot and resethandler flags.  This can
-    -- only be done with SIGWINCH and SIGURG since their default behavior is
-    -- SIG_IGN.  Testing the other flags involves child processes.
-    -- -----------------------------------------------------------------
+    local b = signal.set('abrt','fpe')
+    tap.assert(b,"set b exists")
+    tap.assert(b['abrt'],"abrt in set b")
+    tap.assert(b['fpe'],"fpe in set b")
+    tap.assert(not b['term'],"term not in set b")
+    tap.assert(not b['int'] ,"int not in set b")
+    tap.assert(not b['ill'] ,"ill not in set b")
+    tap.assert(not b['segv'],"setv not in set b")
     
-    if sig == 'winch' or sig == 'urg' then
-      local r = {}
-      assert(signal.catch(sig,function(s) r[#r + 1] = s end,'oneshot'))
-      assert(signal.raise(sig))
-      assert(signal.raise(sig))
-      assert(#r == 1)
-      assert(r[1] == sig)
-      
-      r = {}
-      assert(signal.catch(sig,function(s) r[#r + 1] = s end,'resethandler'))
-      assert(signal.raise(sig))
-      assert(signal.raise(sig))
-      assert(#r == 1)
-      assert(r[1] == sig)
-    end
+    local c = a + b
+    tap.assert(c,"c exists, = a + b")
+    tap.assert(c['term'],    "term in c=a+b")
+    tap.assert(c['int'],     "int in c=a+b")
+    tap.assert(c['abrt'],    "abrt in c=a+b")
+    tap.assert(c['fpe'],     "fpe in c=a+b")
+    tap.assert(not c['ill'], "ill not in c=a+b")
+    tap.assert(not c['segv'],"segv not in c=a+b")
     
-    -- ---------------------------------------------------------------------
-    -- Test blocking. Catch two signals, block the second one from being run
-    -- while the first one is being run.
-    -- ---------------------------------------------------------------------
+    tap.assert(a,"set a exists")
+    tap.assert(a['term'],"term in set a")
+    tap.assert(a['int'],"int in set a")
+    tap.assert(not a['abrt'],"abrt not in set a")
+    tap.assert(not a['fpe'], "fpe not in set a")
+    tap.assert(not a['ill'], "ill not in set a")
+    tap.assert(not a['segv'],"segv not in set a")
     
-    local sig2
+    tap.assert(b,"set b exists")
+    tap.assert(b['abrt'],"abrt in set b")
+    tap.assert(b['fpe'],"fpe in set b")
+    tap.assert(not b['term'],"term not in set b")
+    tap.assert(not b['int'] ,"int not in set b")
+    tap.assert(not b['ill'] ,"ill not in set b")
+    tap.assert(not b['segv'],"setv not in set b")
     
-    if sig == 'winch' or sig == 'windowchange' then
-      sig2 = 'urg'
-    else
-      sig2 = 'winch'
-    end
+    local d = c - a
+    tap.assert(d,"set d exists")
+    tap.assert(d['abrt'],"abrt in set d=c-a")
+    tap.assert(d['fpe'],"fpe in set d=c-a")
+    tap.assert(not d['term'],"term not in set d=c-a")
+    tap.assert(not d['int'] ,"int not in set d=c-a")
+    tap.assert(not d['ill'] ,"ill not in set d=c-a")
+    tap.assert(not d['segv'],"setv not in set d=c-a")
     
-    local block = signal.set(sig2)
+    tap.assert(c,"c exists")
+    tap.assert(c['term'],    "term in c")
+    tap.assert(c['int'],     "int in c")
+    tap.assert(c['abrt'],    "abrt in c")
+    tap.assert(c['fpe'],     "fpe in c")
+    tap.assert(not c['ill'], "ill not in c")
+    tap.assert(not c['segv'],"segv not in c")
     
-    assert(block)
-    assert(block[sig2])
+    tap.assert(a,"set a exists")
+    tap.assert(a['term'],"term in set a")
+    tap.assert(a['int'],"int in set a")
+    tap.assert(not a['abrt'],"abrt not in set a")
+    tap.assert(not a['fpe'], "fpe not in set a")
+    tap.assert(not a['ill'], "ill not in set a")
+    tap.assert(not a['segv'],"segv not in set a")
     
+    local e = -c
+    tap.assert(e,"c exists")
+    tap.assert(not e['term'],"term in e=-c")
+    tap.assert(not e['int'], "int in e=-c")
+    tap.assert(not e['abrt'],"abrt in e=-c")
+    tap.assert(not e['fpe'], "fpe in e=-c")
+    tap.assert(e['ill'],     "ill not in e=-c")
+    tap.assert(e['segv'],    "segv not in e=-c")
+    
+    tap.assert(c,"c exists")
+    tap.assert(c['term'],    "term in c")
+    tap.assert(c['int'],     "int in c")
+    tap.assert(c['abrt'],    "abrt in c")
+    tap.assert(c['fpe'],     "fpe in c")
+    tap.assert(not c['ill'], "ill not in c")
+    tap.assert(not c['segv'],"segv not in c")
+    
+    tap.done()
+  end
+  
+  tap.plan(3,"oneshot") do
     local r = {}
+    tap.assert(signal.catch('winch',function(s) r[#r + 1] = s end,'oneshot'),"arm oneshot")
+    signal.raise('winch')
+    signal.raise('winch')
+    tap.assert(#r == 1,"oneshot test")
+    tap.assert(r[1] == 'winch',"oneshot from winch")
+    tap.done()
+  end
+  
+  tap.plan(3,'resethandler')  do
+    local r = {}
+    tap.assert(signal.catch('winch',function(s) r[#r + 1] = s end,'resethandler'),"arm resethandler")
+    signal.raise('winch')
+    signal.raise('winch')
+    tap.assert(#r == 1,"resethandler test")
+    tap.assert(r[1] == 'winch',"resethandler from which")
+    tap.done()
+  end
+  
+  tap.plan(#ANSI * 3 + #POSIX * 3 + 3,'signal set tests') do
+    local all   = signal.set(true)
+    local empty = signal.set()
+    local none  = signal.set(false)
+    tap.assert(all,"all set exists")
+    tap.assert(empty,"empty set exists")
+    tap.assert(none,"none set exists")
+    for _,sig in ipairs(ANSI) do
+      tap.assert(all[sig],"%s in set all",sig)
+      tap.assert(not empty[sig],"%s not in set empty",sig)
+      tap.assert(not none[sig],"%s not in set empty",sig)
+    end
+    for _,sig in ipairs(POSIX) do
+      tap.assert(all[sig],"%s in set all",sig)
+      tap.assert(not empty[sig],"%s not in set empty",sig)
+      tap.assert(not none[sig],"%s not in set none",sig)
+    end
+    tap.done()
+  end
+  
+  tap.plan(29,'signal pending, allow, mask') do
+    local empty = signal.set()
+    local r
+    
+    local function reset(s1,s2)
+      signal.default(s1,s2)
+      signal.mask(empty)
+      return {}
+    end
+    
     local function handle1(s)
-      signal.raise(sig2)
+      signal.raise('urg')
       r[#r + 1] = s
     end
     local function handle2(s)
       r[#r + 1] = s
     end
     
-    r = reset(sig,sig2)
+    local block = signal.set('urg')
     
-    assert(signal.catch(sig,handle1,block))
-    assert(signal.catch(sig2,handle2))
-    assert(signal.raise(sig))
-    assert(#r == 2)
-    assert(r[1] == sig)
-    r = reset(sig,sig2)
+    -- signal.catch(sig,handler,block)
     
-    -- signal.block(), signal.pending() and signal.allow()
+    r = reset('winch','urg')
+    tap.assert(signal.catch('winch',handle1,block),"catch winch block urg")
+    tap.assert(signal.catch('urg',handle2),"catch urg")
+    tap.assert(signal.raise('winch'),"raise winch")
+    tap.assert(#r == 2,"caught 2 signals")
+    tap.assert(r[1] == 'winch',"caught winch")
+    tap.assert(r[2] == 'urg',"caught urg")
     
-    assert(signal.catch(sig,handle1))
-    assert(signal.catch(sig2,handle2))
-    signal.block(sig)
-    assert(signal.raise(sig))
-    assert(#r == 0)
+    -- signal.block(), signal.pendind(), signal.allow()
+    
+    r = reset('winch','urg')
+    signal.catch('winch',handle1)
+    signal.catch('urg',handle2)
+    signal.block('winch')
+    signal.raise('winch')
+    tap.assert(#r == 0,"blocked winch")
     local pending = signal.pending()
-    assert(pending[sig])
-    signal.allow(sig)
-    assert(#r == 2)
-    assert(r[1] == sig)
-    r = reset(sig,sig2)
+    tap.assert(pending['winch'],"winch is pending")
+    signal.allow('winch')
+    tap.assert(#r == 2,"signal delivered")
+    tap.assert(r[1] == 'winch',"winch delivered")
+    tap.assert(r[2] == 'urg',"urg also delivered")
     
     -- signal.mask(set)
     
-    assert(signal.catch(sig,handle1))
-    assert(signal.catch(sig2,handle2))
-    assert(signal.mask(block))
-    assert(signal.raise(sig))
-    assert(#r == 1)
-    assert(r[1] == sig)
-    r = reset(sig,sig2)
+    r = reset('winch','urg')
+    signal.catch('winch',handle1)
+    signal.catch('urg',handle2)
+    tap.assert(signal.mask(block),"signal.mask(block)")
+    signal.raise('winch')
+    tap.assert(#r == 1,"one signal")
+    tap.assert(r[1] == 'winch',"winch raised, no urg")
     
-    assert(signal.catch(sig,handle1))
-    assert(signal.catch(sig2,handle2))
-    assert(signal.mask('set',block))
-    assert(signal.raise(sig))
-    assert(#r == 1)
-    assert(r[1] == sig)
-    r = reset(sig,sig2)
+    -- signal.mask('set',set)
     
-    -- signal.mask('block') and signal.mask('unblock')
+    r = reset('winch','urg')
+    signal.catch('winch',handle1)
+    signal.catch('urg',handle2)
+    tap.assert(signal.mask('set',block),"signal.mask('set',block)")
+    signal.raise('winch')
+    tap.assert(#r == 1,"one signal")
+    tap.assert(r[1] == 'winch',"winch raised, no urg")
     
-    assert(signal.catch(sig,handle1))
-    assert(signal.catch(sig2,handle2))
-    assert(signal.mask('block',block))
-    assert(signal.raise(sig))
-    assert(#r == 1)
-    assert(r[1] == sig)
+    -- signal.mask('block',set), signal.mask('unblock',set)
+    
+    r = reset('winch','urg')
+    signal.catch('winch',handle1)
+    signal.catch('urg',handle2)
+    tap.assert(signal.mask('block',block),"signal.mask('block',block)")
+    signal.raise('winch')
+    tap.assert(#r == 1,"one signal")
+    tap.assert(r[1] == 'winch',"winch raised, no urg")
     r = {}
-    assert(signal.mask('unblock',block))
-    assert(signal.raise(sig))
-    assert(#r == 3)
-    assert(r[1] == sig2)
-    assert(r[2] == sig)
-    assert(r[3] == sig2)
-    r = reset(sig,sig2)
+    tap.assert(signal.mask('unblock',block),"signal.mask('unblock',block")
+    signal.raise('winch')
+    tap.assert(#r == 3,"three signals should be delivered")
+    tap.assert(r[1] == 'urg',"first is urg")
+    tap.assert(r[2] == 'winch',"second is winch")
+    tap.assert(r[3] == 'urg',"third is urg")
+    
+    -- get signal info
     
     local function handler_info(s,i)
       r[#r + 1] = s
       r[#r + 1] = i
     end
     
-    assert(signal.catch(sig,handler_info,'info'))
-    assert(signal.raise(sig))
-    assert(#r == 2)
-    assert(r[1] == sig)
-    assert(r[2].signal == sig)
-    
-    io.stdout:write(" GO!\n")
+    r = reset('winch','urg')
+    tap.assert(signal.catch('winch',handler_info,'info'),"catch signal with info")
+    signal.raise('winch')
+    tap.assert(#r == 2,"got back to items from handler")
+    tap.assert(r[1] == 'winch',"signal was winch")
+    tap.assert(r[2].signal == 'winch',"info was returned")
+    tap.done()
   end
+  tap.done()
 end
+
+return os.exit(tap.done())
