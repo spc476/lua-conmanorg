@@ -70,6 +70,7 @@
 #endif
 
 #if LUA_VERSION_NUM == 501
+#  include <lualib.h>
 #  define lua_rawlen(L,idx)       lua_objlen((L),(idx))
 #  define luaL_setfuncs(L,reg,up) luaI_openlib((L),NULL,(reg),(up))
 #endif
