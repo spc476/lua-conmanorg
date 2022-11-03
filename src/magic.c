@@ -130,39 +130,37 @@ static int magicmeta_error(lua_State *L)
 *
 *************************************************************************/
 
-static char const *const m_magic_options[] =
-{
-  "debug",
-  "symlink",
-  "compress",
-  "devices",
-  "mime",
-  "continue",
-  "check",
-  "preserve_atime",
-  "raw",
-  "error",
-  NULL
-};
-
-static int const m_magic_flags[] =
-{
-  MAGIC_DEBUG,
-  MAGIC_SYMLINK,
-  MAGIC_COMPRESS,
-  MAGIC_DEVICES,
-  MAGIC_MIME,
-  MAGIC_CONTINUE,
-  MAGIC_CHECK,
-  MAGIC_PRESERVE_ATIME,
-  MAGIC_RAW,
-  MAGIC_ERROR
-};
-
-/*------------------------------------------------------------------------*/
-
 static int magicmeta_flags(lua_State *L)
 {
+  static char const *const m_magic_options[] =
+  {
+    "debug",
+    "symlink",
+    "compress",
+    "devices",
+    "mime",
+    "continue",
+    "check",
+    "preserve_atime",
+    "raw",
+    "error",
+    NULL
+  };
+
+  static int const m_magic_flags[] =
+  {
+    MAGIC_DEBUG,
+    MAGIC_SYMLINK,
+    MAGIC_COMPRESS,
+    MAGIC_DEVICES,
+    MAGIC_MIME,
+    MAGIC_CONTINUE,
+    MAGIC_CHECK,
+    MAGIC_PRESERVE_ATIME,
+    MAGIC_RAW,
+    MAGIC_ERROR
+  };
+  
   magic_t *pm;
   int      flags;
   
@@ -275,28 +273,26 @@ static int magicmeta_errno(lua_State *L)
 
 /**************************************************************************/
 
-static struct luaL_Reg const mmagic_reg_meta[] =
-{
-  { "__call"            , magicmeta___call      } ,
-  { "__tostring"        , magicmeta___tostring  } ,
-  { "__gc"              , magicmeta___gc        } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"           , magicmeta___gc        } ,
-#endif
-  { "close"             , magicmeta___gc        } ,
-  { "error"             , magicmeta_error       } ,
-  { "flags"             , magicmeta_flags       } ,
-  { "load"              , magicmeta_load        } ,
-  { "compile"           , magicmeta_compile     } ,
-  { "check"             , magicmeta_check       } ,
-  { "errno"             , magicmeta_errno       } ,
-  { NULL                , NULL                  }
-};
-
-/*************************************************************************/
-
 int luaopen_org_conman_fsys_magic(lua_State *L)
 {
+  static struct luaL_Reg const mmagic_reg_meta[] =
+  {
+    { "__call"            , magicmeta___call      } ,
+    { "__tostring"        , magicmeta___tostring  } ,
+    { "__gc"              , magicmeta___gc        } ,
+  #if LUA_VERSION_NUM >= 504
+    { "__close"           , magicmeta___gc        } ,
+  #endif
+    { "close"             , magicmeta___gc        } ,
+    { "error"             , magicmeta_error       } ,
+    { "flags"             , magicmeta_flags       } ,
+    { "load"              , magicmeta_load        } ,
+    { "compile"           , magicmeta_compile     } ,
+    { "check"             , magicmeta_check       } ,
+    { "errno"             , magicmeta_errno       } ,
+    { NULL                , NULL                  }
+  };
+  
   magic_t  m;
   magic_t *pm;
   

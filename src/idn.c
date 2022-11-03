@@ -180,15 +180,15 @@ static int idn_decode(lua_State *L)
 
 /************************************************************************/
 
-static luaL_Reg const m_idn_reg[] =
-{
-  { "encode" , idn_encode },
-  { "decode" , idn_decode },
-  { NULL     , NULL       }
-};
-
 int luaopen_org_conman_idn(lua_State *L)
 {
+  static luaL_Reg const m_idn_reg[] =
+  {
+    { "encode" , idn_encode },
+    { "decode" , idn_decode },
+    { NULL     , NULL       }
+  };
+  
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.idn",m_idn_reg);
 #else
