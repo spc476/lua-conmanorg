@@ -294,9 +294,9 @@ static int b64meta___tostring(lua_State *L)
 
 static int b64lua(lua_State *L)
 {
- static char const mbase[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                             "abcdefghijklmnopqrstuvwxyz"
-                             "0123456789+/";
+  static char const mbase[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                              "abcdefghijklmnopqrstuvwxyz"
+                              "0123456789+/";
   base64__s *b64;
   
   lua_settop(L,1);
@@ -349,16 +349,16 @@ static int b64lua(lua_State *L)
 
 /**********************************************************************/
 
-static struct luaL_Reg const mb64_meta[] =
-{
-  { "encode"            , b64meta_encode        } ,
-  { "decode"            , b64meta_decode        } ,
-  { "__tostring"        , b64meta___tostring    } ,
-  { NULL                , NULL                  }
-};
-
 int luaopen_org_conman_base64(lua_State *L)
 {
+  static struct luaL_Reg const mb64_meta[] =
+  {
+    { "encode"     , b64meta_encode     } ,
+    { "decode"     , b64meta_decode     } ,
+    { "__tostring" , b64meta___tostring } ,
+    { NULL         , NULL               }
+  };
+  
   luaL_newmetatable(L,TYPE_BASE64);
 #if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,mb64_meta);
