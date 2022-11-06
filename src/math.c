@@ -238,17 +238,17 @@ static int math_div(lua_State *const L)
 
 /************************************************************************/
 
-static const struct luaL_Reg reg_math[] =
-{
-  { "seed"              , math_seed       },
-  { "randomseed"        , math_randomseed },
-  { "idiv"              , math_idiv       },
-  { "div"               , math_div        },
-  { NULL                , NULL            }
-};
-
 int luaopen_org_conman_math(lua_State *L)
 {
+  static const struct luaL_Reg reg_math[] =
+  {
+    { "seed"              , math_seed       },
+    { "randomseed"        , math_randomseed },
+    { "idiv"              , math_idiv       },
+    { "div"               , math_div        },
+    { NULL                , NULL            }
+  };
+  
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.math",reg_math);
 #else
@@ -258,4 +258,3 @@ int luaopen_org_conman_math(lua_State *L)
 }
 
 /**************************************************************************/
-

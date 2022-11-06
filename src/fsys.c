@@ -1301,67 +1301,67 @@ static int monkeypatch_meta__dup(lua_State *L)
 
 /************************************************************************/
 
-static struct luaL_Reg const reg_fsys[] =
-{
-  { "symlink"   , fsys_symlink   } ,
-  { "link"      , fsys_link      } ,
-  { "readlink"  , fsys_readlink  } ,
-  { "mkfifo"    , fsys_mkfifo    } ,
-  { "mkdir"     , fsys_mkdir     } ,
-  { "rmdir"     , fsys_rmdir     } ,
-  { "utime"     , fsys_utime     } ,
-  { "stat"      , fsys_stat      } ,
-  { "lstat"     , fsys_lstat     } ,
-  { "umask"     , fsys_umask     } ,
-  { "chmod"     , fsys_chmod     } ,
-  { "access"    , fsys_access    } ,
-  { "opendir"   , fsys_opendir   } ,
-  { "chroot"    , fsys_chroot    } ,
-  { "chdir"     , fsys_chdir     } ,
-  { "getcwd"    , fsys_getcwd    } ,
-  { "dir"       , fsys_dir       } ,
-  { "_safename" , fsys__safename } ,
-  { "basename"  , fsys_basename  } ,
-  { "dirname"   , fsys_dirname   } ,
-  { "extension" , fsys_extension } ,
-  { "filename"  , fsys_filename  } ,
-  { "pipe"      , fsys_pipe      } ,
-  { "redirect"  , fsys_redirect  } ,
-  { "isatty"    , fsys_isatty    } ,
-  { "fnmatch"   , fsys_fnmatch   } ,
-  { "expand"    , fsys_expand    } ,
-  { "gexpand"   , fsys_gexpand   } ,
-  { "pathconf"  , fsys_pathconf  } ,
-  { "_close"    , fsys__close    } ,
-  { "fsync"     , fsys_fsync     } ,
-  { NULL        , NULL           }
-};
-
-static luaL_Reg const m_dir_meta[] =
-{
-  { "__tostring"        , dir_meta___tostring   } ,
-  { "__gc"              , dir_meta___gc         } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"           , dir_meta___gc         } ,
-#endif
-  { "_tofd"             , dir_meta__tofd        } ,
-  { "rewind"            , dir_meta_rewind       } ,
-  { "read"              , dir_meta_read         } ,
-  { "next"              , dir_meta_next         } ,
-  { NULL                , NULL                  }
-};
-
-static luaL_Reg const m_expand_meta[] =
-{
-  { "__gc"              , expand_meta___gc      } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"           , expand_meta___gc      } ,
-#endif
-  { NULL                , NULL                  }
-};
-
 int luaopen_org_conman_fsys(lua_State *L)
 {
+  static struct luaL_Reg const reg_fsys[] =
+  {
+    { "symlink"   , fsys_symlink   } ,
+    { "link"      , fsys_link      } ,
+    { "readlink"  , fsys_readlink  } ,
+    { "mkfifo"    , fsys_mkfifo    } ,
+    { "mkdir"     , fsys_mkdir     } ,
+    { "rmdir"     , fsys_rmdir     } ,
+    { "utime"     , fsys_utime     } ,
+    { "stat"      , fsys_stat      } ,
+    { "lstat"     , fsys_lstat     } ,
+    { "umask"     , fsys_umask     } ,
+    { "chmod"     , fsys_chmod     } ,
+    { "access"    , fsys_access    } ,
+    { "opendir"   , fsys_opendir   } ,
+    { "chroot"    , fsys_chroot    } ,
+    { "chdir"     , fsys_chdir     } ,
+    { "getcwd"    , fsys_getcwd    } ,
+    { "dir"       , fsys_dir       } ,
+    { "_safename" , fsys__safename } ,
+    { "basename"  , fsys_basename  } ,
+    { "dirname"   , fsys_dirname   } ,
+    { "extension" , fsys_extension } ,
+    { "filename"  , fsys_filename  } ,
+    { "pipe"      , fsys_pipe      } ,
+    { "redirect"  , fsys_redirect  } ,
+    { "isatty"    , fsys_isatty    } ,
+    { "fnmatch"   , fsys_fnmatch   } ,
+    { "expand"    , fsys_expand    } ,
+    { "gexpand"   , fsys_gexpand   } ,
+    { "pathconf"  , fsys_pathconf  } ,
+    { "_close"    , fsys__close    } ,
+    { "fsync"     , fsys_fsync     } ,
+    { NULL        , NULL           }
+  };
+  
+  static luaL_Reg const m_dir_meta[] =
+  {
+    { "__tostring"        , dir_meta___tostring   } ,
+    { "__gc"              , dir_meta___gc         } ,
+  #if LUA_VERSION_NUM >= 504
+    { "__close"           , dir_meta___gc         } ,
+  #endif
+    { "_tofd"             , dir_meta__tofd        } ,
+    { "rewind"            , dir_meta_rewind       } ,
+    { "read"              , dir_meta_read         } ,
+    { "next"              , dir_meta_next         } ,
+    { NULL                , NULL                  }
+  };
+  
+  static luaL_Reg const m_expand_meta[] =
+  {
+    { "__gc"              , expand_meta___gc      } ,
+  #if LUA_VERSION_NUM >= 504
+    { "__close"           , expand_meta___gc      } ,
+  #endif
+    { NULL                , NULL                  }
+  };
+  
   luaL_getmetatable(L,LUA_FILEHANDLE);
   lua_pushcfunction(L,monkeypatch_meta__tofd);
   lua_setfield(L,-2,"_tofd");

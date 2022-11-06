@@ -1640,36 +1640,36 @@ static int sigsetmeta___unm(lua_State *L)
 
 /**********************************************************************/
 
-static struct luaL_Reg const m_sig_reg[] =
-{
-  { "caught"    , siglua_caught         } ,
-  { "catch"     , siglua_catch          } ,
-  { "ignore"    , siglua_ignore         } ,
-  { "default"   , siglua_default        } ,
-  { "raise"     , siglua_raise          } ,
-  { "defined"   , siglua_defined        } ,
-  { "allow"     , siglua_allow          } ,
-  { "block"     , siglua_block          } ,
-  { "mask"      , siglua_mask           } ,
-  { "pending"   , siglua_pending        } ,
-  { "suspend"   , siglua_suspend        } ,
-  { "set"       , siglua_set            } ,
-  { NULL        , NULL                  }
-};
-
-static struct luaL_Reg const m_sigset_meta[] =
-{
-  { "__tostring", sigsetmeta___tostring } ,
-  { "__index"   , sigsetmeta___index    } ,
-  { "__newindex", sigsetmeta___newindex } ,
-  { "__add"     , sigsetmeta___add      } ,
-  { "__sub"     , sigsetmeta___sub      } ,
-  { "__unm"     , sigsetmeta___unm      } ,
-  { NULL        , NULL                  }
-};
-
 int luaopen_org_conman_signal(lua_State *L)
 {
+  static struct luaL_Reg const m_sig_reg[] =
+  {
+    { "caught"    , siglua_caught         } ,
+    { "catch"     , siglua_catch          } ,
+    { "ignore"    , siglua_ignore         } ,
+    { "default"   , siglua_default        } ,
+    { "raise"     , siglua_raise          } ,
+    { "defined"   , siglua_defined        } ,
+    { "allow"     , siglua_allow          } ,
+    { "block"     , siglua_block          } ,
+    { "mask"      , siglua_mask           } ,
+    { "pending"   , siglua_pending        } ,
+    { "suspend"   , siglua_suspend        } ,
+    { "set"       , siglua_set            } ,
+    { NULL        , NULL                  }
+  };
+
+  static struct luaL_Reg const m_sigset_meta[] =
+  {
+    { "__tostring", sigsetmeta___tostring } ,
+    { "__index"   , sigsetmeta___index    } ,
+    { "__newindex", sigsetmeta___newindex } ,
+    { "__add"     , sigsetmeta___add      } ,
+    { "__sub"     , sigsetmeta___sub      } ,
+    { "__unm"     , sigsetmeta___unm      } ,
+    { NULL        , NULL                  }
+  };
+  
   for (int i = 0 ; i < NSIG ; i++)
   {
     m_handlers[i].fref      = LUA_NOREF;

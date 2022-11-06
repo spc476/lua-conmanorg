@@ -248,32 +248,32 @@ static int hashlua___gc(lua_State *L)
 
 /***********************************************************************/
 
-static struct luaL_Reg const hashlua[] =
-{
-  { "new"       , hashlua_new           } ,
-  { "update"    , hashlua_update        } ,
-  { "final"     , hashlua_final         } ,
-  { "sum"       , hashlua_sum           } ,
-  { "hexa"      , hashlua_hexa          } ,
-  { "sumhexa"   , hashlua_sumhexa       } ,
-  { NULL        , NULL                  }
-};
-
-static struct luaL_Reg const hashlua_meta[] =
-{
-  { "update"            , hashlua_update        } ,
-  { "final"             , hashlua_final         } ,
-  { "finalhexa"         , hashlua_finalhexa     } ,
-  { "__tostring"        , hashlua___tostring    } ,
-  { "__gc"              , hashlua___gc          } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"           , hashlua___gc          } ,
-#endif
-  { NULL                , NULL                  }
-};
-
 int luaopen_org_conman_hash(lua_State *L)
 {
+  static struct luaL_Reg const hashlua[] =
+  {
+    { "new"     , hashlua_new     } ,
+    { "update"  , hashlua_update  } ,
+    { "final"   , hashlua_final   } ,
+    { "sum"     , hashlua_sum     } ,
+    { "hexa"    , hashlua_hexa    } ,
+    { "sumhexa" , hashlua_sumhexa } ,
+    { NULL      , NULL            }
+  };
+  
+  static struct luaL_Reg const hashlua_meta[] =
+  {
+    { "update"     , hashlua_update     } ,
+    { "final"      , hashlua_final      } ,
+    { "finalhexa"  , hashlua_finalhexa  } ,
+    { "__tostring" , hashlua___tostring } ,
+    { "__gc"       , hashlua___gc       } ,
+  #if LUA_VERSION_NUM >= 504
+    { "__close"    , hashlua___gc       } ,
+  #endif
+    { NULL         , NULL               }
+  };
+  
   OpenSSL_add_all_digests();
   
   luaL_newmetatable(L,TYPE_HASH);

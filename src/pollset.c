@@ -1406,24 +1406,24 @@ static int polllua_events(lua_State *L)
 
 /**********************************************************************/
 
-static luaL_Reg const m_polllua[] =
-{
-  { "__len"             , polllua___len         } ,
-  { "__tostring"        , polllua___tostring    } ,
-  { "__gc"              , polllua___gc          } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"           , polllua___gc          } ,
-#endif
-  { "insert"            , polllua_insert        } ,
-  { "update"            , polllua_update        } ,
-  { "remove"            , polllua_remove        } ,
-  { "wait"              , polllua_wait          } ,
-  { "events"            , polllua_events        } ,
-  { NULL                , NULL                  }
-};
-
 int luaopen_org_conman_pollset(lua_State *L)
 {
+  static luaL_Reg const m_polllua[] =
+  {
+    { "__len"             , polllua___len         } ,
+    { "__tostring"        , polllua___tostring    } ,
+    { "__gc"              , polllua___gc          } ,
+  #if LUA_VERSION_NUM >= 504
+    { "__close"           , polllua___gc          } ,
+  #endif
+    { "insert"            , polllua_insert        } ,
+    { "update"            , polllua_update        } ,
+    { "remove"            , polllua_remove        } ,
+    { "wait"              , polllua_wait          } ,
+    { "events"            , polllua_events        } ,
+    { NULL                , NULL                  }
+  };
+  
   luaL_newmetatable(L,TYPE_POLL);
   luaL_setfuncs(L,m_polllua,0);
   lua_pushliteral(L,POLLSET_IMPL);

@@ -164,19 +164,19 @@ static int luametaiconv___gc(lua_State *L)
 
 /*************************************************************************/
 
-static struct luaL_Reg const reg_iconv_meta[] =
-{
-  { "__call"            , luametaiconv___call           } ,
-  { "__tostring"        , luametaiconv___tostring       } ,
-  { "__gc"              , luametaiconv___gc             } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"           , luametaiconv___gc             } ,
-#endif
-  { NULL                , NULL                          }
-};
-
 int luaopen_org_conman_iconv(lua_State *L)
 {
+  static struct luaL_Reg const reg_iconv_meta[] =
+  {
+    { "__call"            , luametaiconv___call           } ,
+    { "__tostring"        , luametaiconv___tostring       } ,
+    { "__gc"              , luametaiconv___gc             } ,
+  #if LUA_VERSION_NUM >= 504
+    { "__close"           , luametaiconv___gc             } ,
+  #endif
+    { NULL                , NULL                          }
+  };
+  
   luaL_newmetatable(L,TYPE_ICONV);
 #if LUA_VERSION_NUM == 501
   luaL_register(L,NULL,reg_iconv_meta);
@@ -188,4 +188,3 @@ int luaopen_org_conman_iconv(lua_State *L)
 }
 
 /**************************************************************************/
-

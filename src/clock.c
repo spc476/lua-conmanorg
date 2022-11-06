@@ -343,18 +343,18 @@ static int clocklua_itimer(lua_State *L)
 
 /**************************************************************************/
 
-static struct luaL_Reg const m_clock_reg[] =
-{
-  { "sleep"             , clocklua_sleep        } ,
-  { "get"               , clocklua_get          } ,
-  { "set"               , clocklua_set          } ,
-  { "resolution"        , clocklua_resolution   } ,
-  { "itimer"            , clocklua_itimer       } ,
-  { NULL                , NULL                  }
-};
-
 int luaopen_org_conman_clock(lua_State *const L)
 {
+  static struct luaL_Reg const m_clock_reg[] =
+  {
+    { "sleep"             , clocklua_sleep        } ,
+    { "get"               , clocklua_get          } ,
+    { "set"               , clocklua_set          } ,
+    { "resolution"        , clocklua_resolution   } ,
+    { "itimer"            , clocklua_itimer       } ,
+    { NULL                , NULL                  }
+  };
+  
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.clock",m_clock_reg);
 #else
@@ -364,4 +364,3 @@ int luaopen_org_conman_clock(lua_State *const L)
   lua_setfield(L,-2,"_implementation");
   return 1;
 }
-

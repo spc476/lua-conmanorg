@@ -1166,60 +1166,60 @@ static int proclua_setaffinity(lua_State *L)
 
 /***********************************************************************/
 
-static struct luaL_Reg const m_process_reg[] =
-{
-  { "setsid"            , proclua_setsid                } ,
-  { "setpgid"           , proclua_setpgid               } ,
-  { "getpgid"           , proclua_getpgid               } ,
-  { "setpgrp"           , proclua_setpgrp               } ,
-  { "getpgrp"           , proclua_getpgrp               } ,
-  { "getuid"            , proclua_getuid                } ,
-  { "getgid"            , proclua_getgid                } ,
-  { "setuid"            , proclua_setuid                } ,
-  { "setgid"            , proclua_setgid                } ,
-  { "exit"              , proclua_exit                  } ,
-  { "fork"              , proclua_fork                  } ,
-  { "wait"              , proclua_wait                  } ,
-  { "waitusage"         , proclua_waitusage             } ,
-  { "waitid"            , proclua_waitid                } ,
-  { "exec"              , proclua_exec                  } ,
-  { "times"             , proclua_times                 } ,
-  { "getrusage"         , proclua_getrusage             } ,
-  { "pause"             , proclua_pause                 } ,
-  { "getaffinity"       , proclua_getaffinity           } ,
-  { "setaffinity"       , proclua_setaffinity           } ,
-  { NULL                , NULL                          }
-};
-
-static struct luaL_Reg const m_process_meta[] =
-{
-  { "__index"           , proclua_meta___index          } ,
-  { "__newindex"        , proclua_meta___newindex       } ,
-  { NULL                , NULL                          }
-};
-
-static struct luaL_Reg const m_hlimit_meta[] =
-{
-  { "__index"           , hlimitlua_meta___index        } ,
-  { "__newindex"        , hlimitlua_meta___newindex     } ,
-#if LUA_VERSION_NUM >= 502
-  { "__pairs"           , hlimitlua_meta___pairs        } ,
-#endif
-  { NULL                , NULL                          }
-};
-
-static struct luaL_Reg const m_slimit_meta[] =
-{
-  { "__index"           , slimitlua_meta___index        } ,
-  { "__newindex"        , slimitlua_meta___newindex     } ,
-#if LUA_VERSION_NUM >= 502
-  { "__pairs"           , slimitlua_meta___pairs        } ,
-#endif
-  { NULL                , NULL                          }
-};
-
 int luaopen_org_conman_process(lua_State *L)
 {
+  static struct luaL_Reg const m_process_reg[] =
+  {
+    { "setsid"            , proclua_setsid                } ,
+    { "setpgid"           , proclua_setpgid               } ,
+    { "getpgid"           , proclua_getpgid               } ,
+    { "setpgrp"           , proclua_setpgrp               } ,
+    { "getpgrp"           , proclua_getpgrp               } ,
+    { "getuid"            , proclua_getuid                } ,
+    { "getgid"            , proclua_getgid                } ,
+    { "setuid"            , proclua_setuid                } ,
+    { "setgid"            , proclua_setgid                } ,
+    { "exit"              , proclua_exit                  } ,
+    { "fork"              , proclua_fork                  } ,
+    { "wait"              , proclua_wait                  } ,
+    { "waitusage"         , proclua_waitusage             } ,
+    { "waitid"            , proclua_waitid                } ,
+    { "exec"              , proclua_exec                  } ,
+    { "times"             , proclua_times                 } ,
+    { "getrusage"         , proclua_getrusage             } ,
+    { "pause"             , proclua_pause                 } ,
+    { "getaffinity"       , proclua_getaffinity           } ,
+    { "setaffinity"       , proclua_setaffinity           } ,
+    { NULL                , NULL                          }
+  };
+
+  static struct luaL_Reg const m_process_meta[] =
+  {
+    { "__index"           , proclua_meta___index          } ,
+    { "__newindex"        , proclua_meta___newindex       } ,
+    { NULL                , NULL                          }
+  };
+
+  static struct luaL_Reg const m_hlimit_meta[] =
+  {
+    { "__index"           , hlimitlua_meta___index        } ,
+    { "__newindex"        , hlimitlua_meta___newindex     } ,
+  #if LUA_VERSION_NUM >= 502
+    { "__pairs"           , hlimitlua_meta___pairs        } ,
+  #endif
+    { NULL                , NULL                          }
+  };
+
+  static struct luaL_Reg const m_slimit_meta[] =
+  {
+    { "__index"           , slimitlua_meta___index        } ,
+    { "__newindex"        , slimitlua_meta___newindex     } ,
+  #if LUA_VERSION_NUM >= 502
+    { "__pairs"           , slimitlua_meta___pairs        } ,
+  #endif
+    { NULL                , NULL                          }
+  };
+  
   assert(L != NULL);
   
   lua_createtable(L,0,11);
