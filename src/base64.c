@@ -25,6 +25,7 @@
 *                       len    = 76,   -- if -1, size==SIZE_MAX, no CRLF input
 *                       ignore = true, -- ignore non-Base-64 characters
 *                       strict = false,
+*                       base   = "..", -- use these 64 characters instead
 *                     }
 *
 *       x = base64:encode("blahblahblah")
@@ -311,6 +312,16 @@ static int b64lua(lua_State *L)
   if (!lua_isnil(L,1))
   {
     luaL_checktype(L,1,LUA_TTABLE);
+    lua_getfield(L,1,"base");
+    if (!lua_isnil(L,-1))
+    {
+      size_t size;
+      char const *base = luaL_checklstring(L,-1,&size);
+      if (size != 64)
+        return luaL_error(L,"incorrect length for base field");
+      memcpy(b64->transtable,base,64);
+    }
+    
     lua_getfield(L,1,"last");
     if (!lua_isnil(L,-1))
     {
@@ -339,7 +350,7 @@ static int b64lua(lua_State *L)
     b64->ignore = lua_toboolean(L,-1);
     lua_getfield(L,1,"strict");
     b64->strict = lua_toboolean(L,-1);
-    lua_pop(L,5);
+    lua_pop(L,6);
   }
   
   luaL_getmetatable(L,TYPE_BASE64);
