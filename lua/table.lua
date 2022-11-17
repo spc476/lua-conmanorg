@@ -195,7 +195,7 @@ function dump_value(name,value,path,level,marked)
   elseif type(value) == "function" then
     local err,func = pcall(string.dump,value)
     if err == false then
-      return ""
+      return string.format("%s%s = C_FUNCTION\n",lead,name)
     else
       return string.format("%s%s = loadstring(%q),\n",lead,name,func)
     end
