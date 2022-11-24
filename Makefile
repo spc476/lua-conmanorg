@@ -24,7 +24,7 @@ UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
   CC      = gcc -std=c99
   CFLAGS  = -g -Wall -Wextra -pedantic -Wwrite-strings
-  LDFLAGS = -g -shared
+  LDFLAGS = -g -shared -L/usr/local/lib
   lib/clock.so : LDLIBS = -lrt
 endif
 
@@ -108,7 +108,7 @@ lib/hash.so    : LDLIBS = -lcrypto
 lib/magic.so   : LDLIBS = -lmagic
 lib/tcc.so     : LDLIBS = -ltcc
 lib/idn.so     : LDLIBS = -lidn
-lib/tls.so     : LDLIBS = -ltls
+lib/tls.so     : LDLIBS = -ltls -lssl
 
 # ===================================================
 
