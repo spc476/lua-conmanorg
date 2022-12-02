@@ -1207,6 +1207,51 @@ static int fsys_fsync(lua_State *L)
 }
 
 /************************************************************************
+* Usage:        okay,err = fsys._lock(file[,mode][,nonblock])
+* Desc:         Lock or unlock a file
+* Input:        file (userdata) file
+*		mode (string/enum/optional)
+*			* read (default)
+*			* write
+*			* release
+*		nonblock (boolean/optional) Use nonblocking call
+* Return:       okay (boolean) true if okay, false if error
+*               err (integer) system error
+*
+* Note:		This function uses fcntl() to do the locking, and will
+*		lock the entire contents of the file.
+*************************************************************************/
+
+static int fsys__lock(lua_State *L)
+{
+  static char const *const modename[] = { "read"  , "write" , "release" };
+  static int const         mode[]     = { F_RDLCK , F_WRLCK , F_UNLCK   };
+#if LUA_VERSION_NUM == 501
+  FILE **pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  int    fh  = fileno(*pfp);
+#else
+  luaL_Stream *pfp = luaL_checkudata(L,1,LUA_FILEHANDLE);
+  int          fh  = fileno(pfp->f);
+#endif
+  int type = luaL_checkoption(L,2,"read",modename);
+  int cmd  = lua_toboolean(L,3) ? F_SETLK : F_SETLKW;
+  
+  fcntl(
+         fh,
+         cmd,
+         &(struct flock) {
+           .l_type   = mode[type],
+           .l_start  = 0,
+           .l_whence = SEEK_SET,
+           .l_len    = 0,
+         }
+       );
+  lua_pushboolean(L,errno == 0);
+  lua_pushinteger(L,errno);
+  return 2;
+}
+
+/************************************************************************
 *                 MONKEY PATCH! MONKEY PATCH! MONKEY PATCH!
 *
 * We add some functions to the io module
@@ -1336,6 +1381,7 @@ int luaopen_org_conman_fsys(lua_State *L)
     { "pathconf"  , fsys_pathconf  } ,
     { "_close"    , fsys__close    } ,
     { "fsync"     , fsys_fsync     } ,
+    { "_lock"     , fsys__lock     } ,
     { NULL        , NULL           }
   };
   
