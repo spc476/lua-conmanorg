@@ -744,76 +744,6 @@ static int netlua_addressraw(lua_State *L)
 
 /***********************************************************************/
 
-static int netlua_ntop(lua_State *L)
-{
-  size_t      rawlen;
-  char const *raw = luaL_checklstring(L,1,&rawlen);
-  char        buff[INET6_ADDRSTRLEN];
-  int         family;
-  
-  if (rawlen == 4)
-    family = AF_INET;
-  else if (rawlen == 16)
-    family = AF_INET6;
-  else
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,EAFNOSUPPORT);
-    return 2;
-  }
-  
-  if (inet_ntop(family,raw,buff,INET6_ADDRSTRLEN) == NULL)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushstring(L,buff);
-    lua_pushinteger(L,0);
-  }
-  
-  return 2;
-}
-
-/***********************************************************************/
-
-static int netlua_pton(lua_State *L)
-{
-  (void)L;
-  return 0;
-}
-
-/***********************************************************************/
-
-static int netlua_ifname(lua_State *L)
-{
-  char name[IF_NAMESIZE];
-  
-  if (if_indextoname(luaL_checkinteger(L,1),name) == NULL)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,errno);
-  }
-  else
-  {
-    lua_pushstring(L,name);
-    lua_pushinteger(L,0);
-  }
-  
-  return 2;
-}
-
-/***********************************************************************/
-
-static int netlua_ifindex(lua_State *L)
-{
-  lua_pushinteger(L,if_nametoindex(luaL_checkstring(L,1)));
-  return 1;
-}
-
-/***********************************************************************/
-
 static int socklua___tostring(lua_State *L)
 {
   sock__t *sock;
@@ -1685,11 +1615,7 @@ int luaopen_org_conman_net(lua_State *L)
     { "address2"          , netlua_address2       } , /* rename? */
     { "address"           , netlua_address        } ,
     { "addressraw"        , netlua_addressraw     } ,
-    { "ntop"              , netlua_ntop           } , /* remove? */
-    { "pton"              , netlua_pton           } , /* remove? */
     { "_fromfd"           , netlua__fromfd        } ,
-    { "ifname"            , netlua_ifname         } , /* remove? */
-    { "ifindex"           , netlua_ifindex        } , /* remove? */
     { NULL                , NULL                  }
   };
   
