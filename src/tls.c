@@ -58,45 +58,6 @@ struct Ltlsmem
   uint8_t *buf;
 };
 
-struct strint
-{
-  char const *const text;
-  int  const        value;
-};
-
-/**************************************************************************/
-
-static struct strint const m_tls_consts[] =
-{
-  { "ERROR"                             , -1                                    } ,
-  { "BUFFERSIZE"                        , LUAL_BUFFERSIZE                       } ,
-  { "API"                               , TLS_API                               } ,
-  { "WANT_INPUT"                        , TLS_WANT_POLLIN                       } ,
-  { "WANT_OUTPUT"                       , TLS_WANT_POLLOUT                      } ,
-  { "MAX_SESSION_ID_LENGTH"             , TLS_MAX_SESSION_ID_LENGTH             } ,
-  { "TICKET_KEY_SIZE"                   , TLS_TICKET_KEY_SIZE                   } ,
-  { "OCSP_CERT_GOOD"                    , TLS_OCSP_CERT_GOOD                    } ,
-  { "OCSP_CERT_REVOKED"                 , TLS_OCSP_CERT_REVOKED                 } ,
-  { "OCSP_CERT_UNKNOWN"                 , TLS_OCSP_CERT_UNKNOWN                 } ,
-  { "CRL_REASON_AA_COMPROMISE"          , TLS_CRL_REASON_AA_COMPROMISE          } ,
-  { "CRL_REASON_AFFILIATION_CHANGED"    , TLS_CRL_REASON_AFFILIATION_CHANGED    } ,
-  { "CRL_REASON_CA_COMPROMISE"          , TLS_CRL_REASON_CA_COMPROMISE          } ,
-  { "CRL_REASON_CERTIFICATE_HOLD"       , TLS_CRL_REASON_CERTIFICATE_HOLD       } ,
-  { "CRL_REASON_CESSATION_OF_OPERATION" , TLS_CRL_REASON_CESSATION_OF_OPERATION } ,
-  { "CRL_REASON_KEY_COMPROMISE"         , TLS_CRL_REASON_KEY_COMPROMISE         } ,
-  { "CRL_REASON_PRIVILEGE_WITHDRAWN"    , TLS_CRL_REASON_PRIVILEGE_WITHDRAWN    } ,
-  { "CRL_REASON_REMOVE_FROM_CRL"        , TLS_CRL_REASON_REMOVE_FROM_CRL        } ,
-  { "CRL_REASON_SUPERSEDED"             , TLS_CRL_REASON_SUPERSEDED             } ,
-  { "CRL_REASON_UNSPECIFIED"            , TLS_CRL_REASON_UNSPECIFIED            } ,
-  { "OCSP_RESPONSE_INTERNALERROR"       , TLS_OCSP_RESPONSE_INTERNALERROR       } ,
-  { "OCSP_RESPONSE_MALFORMED"           , TLS_OCSP_RESPONSE_MALFORMED           } ,
-  { "OCSP_RESPONSE_SIGREQUIRED"         , TLS_OCSP_RESPONSE_SIGREQUIRED         } ,
-  { "OCSP_RESPONSE_SUCCESSFUL"          , TLS_OCSP_RESPONSE_SUCCESSFUL          } ,
-  { "OCSP_RESPONSE_TRYLATER"            , TLS_OCSP_RESPONSE_TRYLATER            } ,
-  { "OCSP_RESPONSE_UNAUTHORIZED"        , TLS_OCSP_RESPONSE_UNAUTHORIZED        } ,
-  { NULL                                , 0                                     }
-};
-
 /**************************************************************************/
 
 static ssize_t Xtls_read(struct tls *tls,void *buf,size_t buflen,void *cb_arg)
@@ -1879,143 +1840,170 @@ static int Ltlstop_default_ca_cert_file(lua_State *L)
 
 /**************************************************************************/
 
-static luaL_Reg const m_tlsmemmeta[] =
-{
-  { "__tostring"                , Ltlsmem___tostring               } ,
-  { "__gc"                      , Ltlstop_unload_file              } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"                   , Ltlstop_unload_file              } ,
-#endif
-  { NULL                        , NULL                             }
-};
-
-/*------------------------------------------------------------------------*/
-
-static luaL_Reg const m_tlsconfmeta[] =
-{
-  { "__tostring"                , Ltlsconf___tostring              } ,
-  { "__gc"                      , Ltlsconf___gc                    } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"                   , Ltlsconf___gc                    } ,
-#endif
-  { "add_keypair_file"          , Ltlsconf_add_keypair_file        } ,
-  { "add_keypair_mem"           , Ltlsconf_add_keypair_mem         } ,
-  { "add_keypair_ocsp_file"     , Ltlsconf_add_keypair_ocsp_file   } ,
-  { "add_keypair_ocsp_mem"      , Ltlsconf_add_keypair_ocsp_mem    } ,
-  { "add_ticket_key"            , Ltlsconf_add_ticket_key          } , // XXX
-  { "alpn"                      , Ltlsconf_alpn                    } ,
-  { "ca_file"                   , Ltlsconf_ca_file                 } ,
-  { "ca_mem"                    , Ltlsconf_ca_mem                  } ,
-  { "ca_path"                   , Ltlsconf_ca_path                 } ,
-  { "cert_file"                 , Ltlsconf_cert_file               } ,
-  { "cert_mem"                  , Ltlsconf_cert_mem                } ,
-  { "ciphers"                   , Ltlsconf_ciphers                 } ,
-  { "clear_keys"                , Ltlsconf_clear_keys              } ,
-  { "crl_file"                  , Ltlsconf_crl_file                } ,
-  { "crl_mem"                   , Ltlsconf_crl_mem                 } ,
-  { "dheparams"                 , Ltlsconf_dheparams               } ,
-  { "ecdhecurve"                , Ltlsconf_ecdhecurve              } ,
-  { "ecdhecurves"               , Ltlsconf_ecdhecurves             } ,
-  { "error"                     , Ltlsconf_error                   } ,
-  { "free"                      , Ltlsconf___gc                    } ,
-  { "insecure_no_verify_cert"   , Ltlsconf_insecure_no_verify_cert } ,
-  { "insecure_no_verify_name"   , Ltlsconf_insecure_no_verify_name } ,
-  { "insecure_no_verify_time"   , Ltlsconf_insecure_no_verify_time } ,
-  { "key_file"                  , Ltlsconf_key_file                } ,
-  { "key_mem"                   , Ltlsconf_key_mem                 } ,
-  { "keypair_file"              , Ltlsconf_keypair_file            } ,
-  { "keypair_mem"               , Ltlsconf_keypair_mem             } ,
-  { "keypair_ocsp_file"         , Ltlsconf_keypair_ocsp_file       } ,
-  { "keypair_ocsp_mem"          , Ltlsconf_keypair_ocsp_mem        } ,
-  { "ocsp_require_stapling"     , Ltlsconf_ocsp_require_stapling   } ,
-  { "ocsp_staple_file"          , Ltlsconf_ocsp_staple_file        } ,
-  { "ocsp_staple_mem"           , Ltlsconf_ocsp_staple_mem         } ,
-  { "prefer_ciphers_client"     , Ltlsconf_prefer_ciphers_client   } ,
-  { "prefer_ciphers_server"     , Ltlsconf_prefer_ciphers_server   } ,
-  { "protocols"                 , Ltlsconf_protocols               } ,
-  { "session_fd"                , Ltlsconf_session_fd              } ,
-  { "session_id"                , Ltlsconf_session_id              } ,
-  { "session_lifetime"          , Ltlsconf_session_lifetime        } ,
-  { "verify"                    , Ltlsconf_verify                  } ,
-  { "verify_client"             , Ltlsconf_verify_client           } ,
-  { "verify_client_optional"    , Ltlsconf_verify_client_optional  } ,
-  { "verify_depth"              , Ltlsconf_verify_depth            } ,
-  { NULL                        , NULL                             }
-};
-
-/*------------------------------------------------------------------------*/
-
-static luaL_Reg const m_tlsmeta[] =
-{
-#if LUA_VERSION_NUM >= 502
-  { "__pairs"                   , Ltls___pairs                     } ,
-#endif
-  { "__index"                   , Ltls___index                     } ,
-  { "__newindex"                , Ltls___newindex                  } ,
-  { "__tostring"                , Ltls___tostring                  } ,
-  { "__gc"                      , Ltls___gc                        } ,
-#if LUA_VERSION_NUM >= 504
-  { "__close"                   , Ltls___gc                        } ,
-#endif
-  { "accept_cbs"                , Ltls_accept_cbs                  } ,
-  { "accept_fds"                , Ltls_accept_fds                  } ,
-  { "accept_socket"             , Ltls_accept_socket               } ,
-  { "close"                     , Ltls_close                       } ,
-  { "configure"                 , Ltls_configure                   } ,
-  { "conn_alpn_selected"        , Ltls_conn_alpn_selected          } ,
-  { "conn_cipher"               , Ltls_conn_cipher                 } ,
-  { "conn_servername"           , Ltls_conn_servername             } ,
-  { "conn_session_resumed"      , Ltls_conn_session_resumed        } ,
-  { "conn_version"              , Ltls_conn_version                } ,
-  { "connect"                   , Ltls_connect                     } ,
-  { "connect_cbs"               , Ltls_connect_cbs                 } ,
-  { "connect_fds"               , Ltls_connect_fds                 } ,
-  { "connect_socket"            , Ltls_connect_socket              } ,
-  { "error"                     , Ltls_error                       } ,
-  { "free"                      , Ltls___gc                        } ,
-  { "handshake"                 , Ltls_handshake                   } ,
-  { "ocsp_process_response"     , Ltls_ocsp_process_response       } , // XXX
-  { "peer_cert_chain_pem"       , Ltls_peer_cert_chain_pem         } ,
-  { "peer_cert_contains_name"   , Ltls_peer_cert_contains_name     } ,
-  { "peer_cert_hash"            , Ltls_peer_cert_hash              } ,
-  { "peer_cert_issuer"          , Ltls_peer_cert_issuer            } ,
-  { "peer_cert_notafter"        , Ltls_peer_cert_notafter          } ,
-  { "peer_cert_notbefore"       , Ltls_peer_cert_notbefore         } ,
-  { "peer_cert_provided"        , Ltls_peer_cert_provided          } ,
-  { "peer_cert_subject"         , Ltls_peer_cert_subject           } ,
-  { "peer_ocsp_cert_status"     , Ltls_peer_ocsp_cert_status       } ,
-  { "peer_ocsp_crl_reason"      , Ltls_peer_ocsp_crl_reason        } ,
-  { "peer_ocsp_next_update"     , Ltls_peer_ocsp_next_update       } ,
-  { "peer_ocsp_response_status" , Ltls_peer_ocsp_response_status   } ,
-  { "peer_ocsp_revocation_time" , Ltls_peer_ocsp_revocation_time   } ,
-  { "peer_ocsp_this_update"     , Ltls_peer_ocsp_this_update       } ,
-  { "peer_ocsp_url"             , Ltls_peer_ocsp_url               } ,
-  { "read"                      , Ltls_read                        } ,
-  { "reset"                     , Ltls_reset                       } ,
-  { "write"                     , Ltls_write                       } ,
-#if TLS_API >= 20200120
-  { "conn_cipher_strength"      , Ltls_conn_cipher_strength        } ,
-#endif
-  { NULL                        , NULL                             }
-};
-
-/*------------------------------------------------------------------------*/
-
-static luaL_Reg const m_tlsreg[] =
-{
-  { "client"                    , Ltlstop_client                   } ,
-  { "config"                    , Ltlstop_config                   } ,
-  { "load_file"                 , Ltlstop_load_file                } ,
-  { "server"                    , Ltlstop_server                   } ,
-  { "unload_file"               , Ltlstop_unload_file              } ,
-  { "default_ca_cert_file"      , Ltlstop_default_ca_cert_file     } ,
-  { NULL                        , NULL                             }
-};
-
-/**************************************************************************/
-
 int luaopen_org_conman_tls(lua_State *L)
 {
+  static struct strint
+  {
+    char const *const text;
+    int  const        value;
+  } const m_tls_consts[] =
+  {
+    { "ERROR"                             , -1                                    } ,
+    { "BUFFERSIZE"                        , LUAL_BUFFERSIZE                       } ,
+    { "API"                               , TLS_API                               } ,
+    { "WANT_INPUT"                        , TLS_WANT_POLLIN                       } ,
+    { "WANT_OUTPUT"                       , TLS_WANT_POLLOUT                      } ,
+    { "MAX_SESSION_ID_LENGTH"             , TLS_MAX_SESSION_ID_LENGTH             } ,
+    { "TICKET_KEY_SIZE"                   , TLS_TICKET_KEY_SIZE                   } ,
+    { "OCSP_CERT_GOOD"                    , TLS_OCSP_CERT_GOOD                    } ,
+    { "OCSP_CERT_REVOKED"                 , TLS_OCSP_CERT_REVOKED                 } ,
+    { "OCSP_CERT_UNKNOWN"                 , TLS_OCSP_CERT_UNKNOWN                 } ,
+    { "CRL_REASON_AA_COMPROMISE"          , TLS_CRL_REASON_AA_COMPROMISE          } ,
+    { "CRL_REASON_AFFILIATION_CHANGED"    , TLS_CRL_REASON_AFFILIATION_CHANGED    } ,
+    { "CRL_REASON_CA_COMPROMISE"          , TLS_CRL_REASON_CA_COMPROMISE          } ,
+    { "CRL_REASON_CERTIFICATE_HOLD"       , TLS_CRL_REASON_CERTIFICATE_HOLD       } ,
+    { "CRL_REASON_CESSATION_OF_OPERATION" , TLS_CRL_REASON_CESSATION_OF_OPERATION } ,
+    { "CRL_REASON_KEY_COMPROMISE"         , TLS_CRL_REASON_KEY_COMPROMISE         } ,
+    { "CRL_REASON_PRIVILEGE_WITHDRAWN"    , TLS_CRL_REASON_PRIVILEGE_WITHDRAWN    } ,
+    { "CRL_REASON_REMOVE_FROM_CRL"        , TLS_CRL_REASON_REMOVE_FROM_CRL        } ,
+    { "CRL_REASON_SUPERSEDED"             , TLS_CRL_REASON_SUPERSEDED             } ,
+    { "CRL_REASON_UNSPECIFIED"            , TLS_CRL_REASON_UNSPECIFIED            } ,
+    { "OCSP_RESPONSE_INTERNALERROR"       , TLS_OCSP_RESPONSE_INTERNALERROR       } ,
+    { "OCSP_RESPONSE_MALFORMED"           , TLS_OCSP_RESPONSE_MALFORMED           } ,
+    { "OCSP_RESPONSE_SIGREQUIRED"         , TLS_OCSP_RESPONSE_SIGREQUIRED         } ,
+    { "OCSP_RESPONSE_SUCCESSFUL"          , TLS_OCSP_RESPONSE_SUCCESSFUL          } ,
+    { "OCSP_RESPONSE_TRYLATER"            , TLS_OCSP_RESPONSE_TRYLATER            } ,
+    { "OCSP_RESPONSE_UNAUTHORIZED"        , TLS_OCSP_RESPONSE_UNAUTHORIZED        } ,
+    { NULL                                , 0                                     }
+  };
+  
+  static luaL_Reg const m_tlsmemmeta[] =
+  {
+    { "__tostring"                , Ltlsmem___tostring               } ,
+    { "__gc"                      , Ltlstop_unload_file              } ,
+#if LUA_VERSION_NUM >= 504
+    { "__close"                   , Ltlstop_unload_file              } ,
+#endif
+    { NULL                        , NULL                             }
+  };
+  
+  static luaL_Reg const m_tlsconfmeta[] =
+  {
+    { "__tostring"                , Ltlsconf___tostring              } ,
+    { "__gc"                      , Ltlsconf___gc                    } ,
+#if LUA_VERSION_NUM >= 504
+    { "__close"                   , Ltlsconf___gc                    } ,
+#endif
+    { "add_keypair_file"          , Ltlsconf_add_keypair_file        } ,
+    { "add_keypair_mem"           , Ltlsconf_add_keypair_mem         } ,
+    { "add_keypair_ocsp_file"     , Ltlsconf_add_keypair_ocsp_file   } ,
+    { "add_keypair_ocsp_mem"      , Ltlsconf_add_keypair_ocsp_mem    } ,
+    { "add_ticket_key"            , Ltlsconf_add_ticket_key          } , // XXX
+    { "alpn"                      , Ltlsconf_alpn                    } ,
+    { "ca_file"                   , Ltlsconf_ca_file                 } ,
+    { "ca_mem"                    , Ltlsconf_ca_mem                  } ,
+    { "ca_path"                   , Ltlsconf_ca_path                 } ,
+    { "cert_file"                 , Ltlsconf_cert_file               } ,
+    { "cert_mem"                  , Ltlsconf_cert_mem                } ,
+    { "ciphers"                   , Ltlsconf_ciphers                 } ,
+    { "clear_keys"                , Ltlsconf_clear_keys              } ,
+    { "crl_file"                  , Ltlsconf_crl_file                } ,
+    { "crl_mem"                   , Ltlsconf_crl_mem                 } ,
+    { "dheparams"                 , Ltlsconf_dheparams               } ,
+    { "ecdhecurve"                , Ltlsconf_ecdhecurve              } ,
+    { "ecdhecurves"               , Ltlsconf_ecdhecurves             } ,
+    { "error"                     , Ltlsconf_error                   } ,
+    { "free"                      , Ltlsconf___gc                    } ,
+    { "insecure_no_verify_cert"   , Ltlsconf_insecure_no_verify_cert } ,
+    { "insecure_no_verify_name"   , Ltlsconf_insecure_no_verify_name } ,
+    { "insecure_no_verify_time"   , Ltlsconf_insecure_no_verify_time } ,
+    { "key_file"                  , Ltlsconf_key_file                } ,
+    { "key_mem"                   , Ltlsconf_key_mem                 } ,
+    { "keypair_file"              , Ltlsconf_keypair_file            } ,
+    { "keypair_mem"               , Ltlsconf_keypair_mem             } ,
+    { "keypair_ocsp_file"         , Ltlsconf_keypair_ocsp_file       } ,
+    { "keypair_ocsp_mem"          , Ltlsconf_keypair_ocsp_mem        } ,
+    { "ocsp_require_stapling"     , Ltlsconf_ocsp_require_stapling   } ,
+    { "ocsp_staple_file"          , Ltlsconf_ocsp_staple_file        } ,
+    { "ocsp_staple_mem"           , Ltlsconf_ocsp_staple_mem         } ,
+    { "prefer_ciphers_client"     , Ltlsconf_prefer_ciphers_client   } ,
+    { "prefer_ciphers_server"     , Ltlsconf_prefer_ciphers_server   } ,
+    { "protocols"                 , Ltlsconf_protocols               } ,
+    { "session_fd"                , Ltlsconf_session_fd              } ,
+    { "session_id"                , Ltlsconf_session_id              } ,
+    { "session_lifetime"          , Ltlsconf_session_lifetime        } ,
+    { "verify"                    , Ltlsconf_verify                  } ,
+    { "verify_client"             , Ltlsconf_verify_client           } ,
+    { "verify_client_optional"    , Ltlsconf_verify_client_optional  } ,
+    { "verify_depth"              , Ltlsconf_verify_depth            } ,
+    { NULL                        , NULL                             }
+  };
+  
+  static luaL_Reg const m_tlsmeta[] =
+  {
+#if LUA_VERSION_NUM >= 502
+    { "__pairs"                   , Ltls___pairs                     } ,
+#endif
+    { "__index"                   , Ltls___index                     } ,
+    { "__newindex"                , Ltls___newindex                  } ,
+    { "__tostring"                , Ltls___tostring                  } ,
+    { "__gc"                      , Ltls___gc                        } ,
+#if LUA_VERSION_NUM >= 504
+    { "__close"                   , Ltls___gc                        } ,
+#endif
+    { "accept_cbs"                , Ltls_accept_cbs                  } ,
+    { "accept_fds"                , Ltls_accept_fds                  } ,
+    { "accept_socket"             , Ltls_accept_socket               } ,
+    { "close"                     , Ltls_close                       } ,
+    { "configure"                 , Ltls_configure                   } ,
+    { "conn_alpn_selected"        , Ltls_conn_alpn_selected          } ,
+    { "conn_cipher"               , Ltls_conn_cipher                 } ,
+    { "conn_servername"           , Ltls_conn_servername             } ,
+    { "conn_session_resumed"      , Ltls_conn_session_resumed        } ,
+    { "conn_version"              , Ltls_conn_version                } ,
+    { "connect"                   , Ltls_connect                     } ,
+    { "connect_cbs"               , Ltls_connect_cbs                 } ,
+    { "connect_fds"               , Ltls_connect_fds                 } ,
+    { "connect_socket"            , Ltls_connect_socket              } ,
+    { "error"                     , Ltls_error                       } ,
+    { "free"                      , Ltls___gc                        } ,
+    { "handshake"                 , Ltls_handshake                   } ,
+    { "ocsp_process_response"     , Ltls_ocsp_process_response       } , // XXX
+    { "peer_cert_chain_pem"       , Ltls_peer_cert_chain_pem         } ,
+    { "peer_cert_contains_name"   , Ltls_peer_cert_contains_name     } ,
+    { "peer_cert_hash"            , Ltls_peer_cert_hash              } ,
+    { "peer_cert_issuer"          , Ltls_peer_cert_issuer            } ,
+    { "peer_cert_notafter"        , Ltls_peer_cert_notafter          } ,
+    { "peer_cert_notbefore"       , Ltls_peer_cert_notbefore         } ,
+    { "peer_cert_provided"        , Ltls_peer_cert_provided          } ,
+    { "peer_cert_subject"         , Ltls_peer_cert_subject           } ,
+    { "peer_ocsp_cert_status"     , Ltls_peer_ocsp_cert_status       } ,
+    { "peer_ocsp_crl_reason"      , Ltls_peer_ocsp_crl_reason        } ,
+    { "peer_ocsp_next_update"     , Ltls_peer_ocsp_next_update       } ,
+    { "peer_ocsp_response_status" , Ltls_peer_ocsp_response_status   } ,
+    { "peer_ocsp_revocation_time" , Ltls_peer_ocsp_revocation_time   } ,
+    { "peer_ocsp_this_update"     , Ltls_peer_ocsp_this_update       } ,
+    { "peer_ocsp_url"             , Ltls_peer_ocsp_url               } ,
+    { "read"                      , Ltls_read                        } ,
+    { "reset"                     , Ltls_reset                       } ,
+    { "write"                     , Ltls_write                       } ,
+#if TLS_API >= 20200120
+    { "conn_cipher_strength"      , Ltls_conn_cipher_strength        } ,
+#endif
+    { NULL                        , NULL                             }
+  };
+  
+  static luaL_Reg const m_tlsreg[] =
+  {
+    { "client"                    , Ltlstop_client                   } ,
+    { "config"                    , Ltlstop_config                   } ,
+    { "load_file"                 , Ltlstop_load_file                } ,
+    { "server"                    , Ltlstop_server                   } ,
+    { "unload_file"               , Ltlstop_unload_file              } ,
+    { "default_ca_cert_file"      , Ltlstop_default_ca_cert_file     } ,
+    { NULL                        , NULL                             }
+  };
+  
   if (tls_init() != 0)
   {
     lua_pushnil(L);
