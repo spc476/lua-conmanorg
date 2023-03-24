@@ -20,7 +20,7 @@
 * ==================================================================
 *
 *       base64 = require "org.conman.base64" {
-*                       last   = "+/",
+*                       last   = "+/", -- characters to use for values 62 and 63
 *                       pad    = "=",  -- "" to get optional pad
 *                       len    = 76,   -- if -1, size==SIZE_MAX, no CRLF input
 *                       ignore = true, -- ignore non-Base-64 characters
@@ -28,8 +28,8 @@
 *                       base   = "..", -- use these 64 characters instead
 *                     }
 *
-*       x = base64:encode("blahblahblah")
-*       y = base64:decode("blahblahblah")
+*       x = base64:encode("blahblahblah")     -- == "YmxhaGJsYWhibGFo"
+*       y = base64:decode("YmxhaGJsYWhibGFo") -- == "blahblahblah"
 *
 * The default encoder/decoder (if base64() is called with no parameters) is
 * what people normally expect of base64.  The parameters are there to handle
@@ -56,6 +56,13 @@
 * extraneous data that should be 0.  See
 * https://cendyne.dev/posts/2022-01-23-base64.html
 * for more information on this.
+*
+* The 'base' parameter allows you to specify an alnternative 64-character
+* set to encode as base64.  It is okay to specify both 'base' and 'last' in
+* the same initialization call.  The default set of characters for base64 is:
+*
+*	ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+*
 *********************************************************************/
 
 #include <stddef.h>
