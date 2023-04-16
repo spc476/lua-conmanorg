@@ -69,7 +69,7 @@ if signal._implementation == 'ANSI' then
   os.exit(tap.done())
 end
 
-tap.assertB(signal._implementation == 'POSIX',"NEED TO WRITE TESTS FOR %s",signal._implementation)
+tap.assertB(signal._implementation == 'POSIX',"Check for %s implementation",signal._implementation)
 
 tap.plan(7,"POSIX level support") do
   
