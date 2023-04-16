@@ -24,14 +24,16 @@ UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
   CC      = gcc -std=c99
   CFLAGS  = -g -Wall -Wextra -pedantic -Wwrite-strings
-  LDFLAGS = -g -shared -L/usr/local/lib
+  SHARED  = -fPIC -shared -L/usr/local/lib
+  LDFLAGS = -g
   lib/clock.so : LDLIBS = -lrt
 endif
 
 ifeq ($(UNAME),SunOS)
   CC      = cc -xc99
   CFLAGS  = -g -mt -m64 -I /usr/sfw/include
-  LDFLAGS = -G -xcode=pic32
+  SHARED  = -G -xcode=pic32
+  LDFLAGS = -g
   lib/net.so   : LDLIBS = -lsocket -lnsl
   lib/clock.so : LDLIBS = -lrt
 endif
@@ -39,11 +41,10 @@ endif
 ifeq ($(UNAME),Darwin)
   CC      = gcc -std=c99
   CFLAGS  = -g -Wall -Wextra -pedantic
-  LDFLAGS = -g -bundle -undefined dynamic_lookup -all_load
+  SHARED  = -fPIC -bundle -undefined dynamic_lookup -all_load
+  LDFLAGS = -g
   lib/iconv.so : LDLIBS = -liconv
 endif
-
-override CFLAGS += -fPIC
 
 # ===================================================
 
@@ -70,7 +71,7 @@ endif
 .PHONY:	all clean install uninstall obsolete install-obsolete
 
 lib/%.so : src/%.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDLIBS)
+	$(CC) $(CFLAGS) $(SHARED) -o $@ $< $(LDLIBS)
 
 all : lib		\
 	lib/base64.so	\
@@ -98,17 +99,17 @@ all : lib		\
 
 obsolete: lib lib/tcc.so
 
+build/bin2c : LDLIBS = -lz
 build/bin2c : build/bin2c.c
-	$(CC) $(CFLAGS) -o $@ $< -lz
 
 lib :
 	mkdir lib
 
-lib/hash.so    : LDLIBS = -lcrypto
-lib/magic.so   : LDLIBS = -lmagic
-lib/tcc.so     : LDLIBS = -ltcc
-lib/idn.so     : LDLIBS = -lidn
-lib/tls.so     : LDLIBS = -ltls -lssl
+lib/hash.so  : LDLIBS = -lcrypto
+lib/magic.so : LDLIBS = -lmagic
+lib/tcc.so   : LDLIBS = -ltcc
+lib/idn.so   : LDLIBS = -lidn
+lib/tls.so   : LDLIBS = -ltls -lssl
 
 # ===================================================
 
