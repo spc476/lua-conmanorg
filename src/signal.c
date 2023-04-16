@@ -422,19 +422,19 @@ static int siglua_defined(lua_State *L)
 
 /**********************************************************************/
 
-static struct luaL_Reg const m_sig_reg[] =
-{
-  { "caught"    , siglua_caught         } ,
-  { "catch"     , siglua_catch          } ,
-  { "ignore"    , siglua_ignore         } ,
-  { "default"   , siglua_default        } ,
-  { "raise"     , siglua_raise          } ,
-  { "defined"   , siglua_defined        } ,
-  { NULL        , NULL                  }
-};
-
 int luaopen_org_conman_signal(lua_State *L)
 {
+  static struct luaL_Reg const m_sig_reg[] =
+  {
+    { "caught"    , siglua_caught         } ,
+    { "catch"     , siglua_catch          } ,
+    { "ignore"    , siglua_ignore         } ,
+    { "default"   , siglua_default        } ,
+    { "raise"     , siglua_raise          } ,
+    { "defined"   , siglua_defined        } ,
+    { NULL        , NULL                  }
+  };
+  
   for (size_t i = 0 ; i < MAX_SIG ; i++)
   {
     m_handlers[i].fref      = LUA_NOREF;
