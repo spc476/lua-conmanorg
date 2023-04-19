@@ -26,6 +26,8 @@
 *
 *********************************************************************/
 
+#define _GNU_SOURCE
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -39,34 +41,6 @@
 #if !defined(LUA_VERSION_NUM) || LUA_VERSION_NUM < 501
 #  error You need to compile against Lua 5.1 or higher
 #endif
-
-/************************************************************************/
-
-static int      strcore_metaphone       (lua_State *);
-static int      strcore_compare         (lua_State *);
-static int      strcore_comparen        (lua_State *);
-
-/************************************************************************/
-
-static luaL_Reg const m_strcore_reg[] =
-{
-  { "metaphone" , strcore_metaphone     } ,
-  { "compare"   , strcore_compare       } ,
-  { "comparen"  , strcore_comparen      } ,
-  { NULL        , NULL                  }
-};
-
-/************************************************************************/
-
-int luaopen_org_conman_strcore(lua_State *L)
-{
-#if LUA_VERSION_NUM == 501
-  luaL_register(L,"org.conman.string",m_strcore_reg);
-#else
-  luaL_newlib(L,m_strcore_reg);
-#endif
-  return 1;
-}
 
 /************************************************************************/
 
@@ -319,3 +293,40 @@ static int strcore_comparen(lua_State *L)
 }
 
 /************************************************************************/
+
+static int strcore_comparei(lua_State *L)
+{
+  lua_pushinteger(
+          L,
+          strcasecmp(
+                  luaL_checkstring(L,1),
+                  luaL_checkstring(L,2)
+          )
+  );
+  return 1;
+}
+
+/************************************************************************/
+
+int luaopen_org_conman_strcore(lua_State *L)
+{
+  static luaL_Reg const strcore_reg[] =
+  {
+    { "metaphone" , strcore_metaphone     } ,
+    { "compare"   , strcore_compare       } ,
+    { "comparen"  , strcore_comparen      } ,
+    { "comparei"  , strcore_comparei      } ,
+    { NULL        , NULL                  }
+  };
+
+
+#if LUA_VERSION_NUM == 501
+  luaL_register(L,"org.conman.string",strcore_reg);
+#else
+  luaL_newlib(L,strcore_reg);
+#endif
+  return 1;
+}
+
+/************************************************************************/
+

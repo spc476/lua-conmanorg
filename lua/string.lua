@@ -20,6 +20,7 @@
 -- ********************************************************************
 -- luacheck: globals wrapt metaphone compare comparen mksplit split
 -- luacheck: globals template filetemplate wrap safeascii safeutf8
+-- luacheck: globals comparei
 -- luacheck: ignore 611
 
 local uchar    = require "org.conman.parsers.utf8"
@@ -44,6 +45,7 @@ local x   = require "org.conman.strcore"
 metaphone = x.metaphone
 compare   = x.compare
 comparen  = x.comparen
+comparei  = x.comparei
 
 -- ********************************************************************
 
