@@ -58,6 +58,7 @@
 #define TYPE_EXPAND     "org.conman.fsys:expand"
 
 #if LUA_VERSION_NUM == 501
+#  define lua_rawlen(L,idx)       lua_objlen((L),(idx))
 #  define luaL_setfuncs(L,reg,up) luaI_openlib((L),NULL,(reg),(up))
 #endif
 
@@ -982,13 +983,21 @@ static int fsys_fnmatch(lua_State *L)
   return 1;
 }
 
-/************************************************************************/
+/************************************************************************
+* Usage:	list,err = fsys.expand(glob[,list2])
+* Desc:		Returns a list of filenames according to a file glob
+* Input:	glob (string)	       file specification
+*		list2 (table/optional) existing array of names
+* Return:	list (table)           list of filenames, or list2 with additional filenames
+*		err (inteter)          system error, 0 on success
+*************************************************************************/
 
 int fsys_expand(lua_State *L)
 {
   char const *pattern = luaL_checkstring(L,1);
   glob_t      gbuf;
   int         rc;
+  int         tab;
   
   memset(&gbuf,0,sizeof(gbuf));
   rc = glob(pattern,0,NULL,&gbuf);
@@ -1008,12 +1017,19 @@ int fsys_expand(lua_State *L)
     return 2;
   }
   
-  lua_createtable(L,gbuf.gl_pathc,0);
-  for (size_t i = 0 ; i < gbuf.gl_pathc ; i++)
+  if (lua_istable(L,2))
+    tab = 2;
+  else
   {
-    lua_pushinteger(L,i+1);
+    lua_createtable(L,gbuf.gl_pathc,0);
+    tab = lua_gettop(L);
+  }
+  
+  for (size_t i = 0 , idx = lua_rawlen(L,tab) + 1 ; i < gbuf.gl_pathc ; i++ , idx++)
+  {
+    lua_pushinteger(L,idx);
     lua_pushstring(L,gbuf.gl_pathv[i]);
-    lua_settable(L,-3);
+    lua_settable(L,tab);
   }
   
   globfree(&gbuf);
