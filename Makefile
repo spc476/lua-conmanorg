@@ -109,7 +109,7 @@ lib/hash.so  : LDLIBS = -lcrypto
 lib/magic.so : LDLIBS = -lmagic
 lib/tcc.so   : LDLIBS = -ltcc
 lib/idn.so   : LDLIBS = -lidn
-lib/tls.so   : LDLIBS = -ltls -lssl
+lib/tls.so   : LDLIBS = -lcrypto -ltls -lssl
 
 # ===================================================
 
