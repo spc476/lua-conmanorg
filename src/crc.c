@@ -100,18 +100,15 @@ static int crc32(lua_State *L)
     0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94,
     0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
   };
-
-  uint8_t const *p;
-  size_t         size;
-  uint32_t       crc;
   
-  p   = (uint8_t const *)luaL_checklstring(L,1,&size);
-  crc = luaL_optinteger(L,2,0xFFFFFFFFuL);
+  size_t         size;
+  uint8_t const *p   = (uint8_t const *)luaL_checklstring(L,1,&size);
+  uint32_t       crc = ~luaL_optinteger(L,2,0);
   
   while(size--)
     crc = (crc >> 8) ^ m_crc32_table[ (crc ^ *p++) & 0xFF ];
     
-  lua_pushinteger(L,crc);
+  lua_pushinteger(L,~crc);
   return 1;
 }
 
@@ -119,21 +116,7 @@ static int crc32(lua_State *L)
 
 int luaopen_org_conman_crc(lua_State *L)
 {
-  static struct luaL_Reg const reg_crc[] =
-  {
-    { "crc32"     , crc32 },
-    { NULL        , NULL  }
-  };
-  
-#if LUA_VERSION_NUM == 501
-  luaL_register(L,"org.conman.crc",reg_crc);
-#else
-  luaL_newlib(L,reg_crc);
-#endif
-
-  lua_pushinteger(L,0xFFFFFFFFuL);
-  lua_setfield(L,-2,"INITCRC32");
-  
+  lua_pushcfunction(L,crc32);
   return 1;
 }
 
