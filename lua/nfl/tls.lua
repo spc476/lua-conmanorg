@@ -251,6 +251,7 @@ function listens(sock,mainf,conf)
     end
     
     conn.nonblock            = true
+    conn.nodelay             = true
     local ios,packet_handler = create_handler(conn,remote)
     ios.__ctx                = server:accept_cbs(ios,tlscb_read,tlscb_write)
     ios.__co                 = nfl.spawn(mainf,ios)

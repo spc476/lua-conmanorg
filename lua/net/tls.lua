@@ -119,6 +119,7 @@ end
 function accept(sock)
   local conn,remote = sock:accept()
   if conn then
+    sock.nodelay = true
     return make_ios(conn,remote)
   end
 end

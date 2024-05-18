@@ -169,6 +169,7 @@ function listens(sock,mainf)
     end
     
     conn.nonblock = true
+    conn.nodelay  = true
     local ios,packet_handler = create_handler(conn,remote)
     ios.__co = nfl.spawn(mainf,ios)
     nfl.SOCKETS:insert(conn,'r',packet_handler)
