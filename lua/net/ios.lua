@@ -314,6 +314,46 @@ READER['h'] = READER['*h'] -- extension
 READER['b'] = READER['*b'] -- extension
 
 -- *******************************************************************
+
+local MODE MODE =
+{
+  ['no'] = function(self)
+    local okay,errm,err = self:_drain(self._writebuf)
+    if okay then
+      self._writebuf = ""
+    end
+    return okay,errm,err
+  end,
+  
+  ['line'] = function(self)
+    while true do
+      local nl = self._writebuf:find("\n",1,true)
+      if not nl then
+        return MODE.full(self)
+      else
+        local okay,errm,err = self:_drain(self._writebuf:sub(1,nl))
+        if not okay then
+          return okay,errm,err
+        end
+        self._writebuf = self._writebuf:sub(nl+1,-1)
+      end
+    end
+  end,
+  
+  ['full'] = function(self)
+    while #self._writebuf >= self._wsize do
+      local okay,errm,err = self:_drain(self._writebuf:sub(1,self._wsize))
+      if not okay then
+        return okay,errm,err
+      end
+      self._writebuf = self._writebuf:sub(self._wsize + 1, -1)
+    end
+    
+    return true
+  end,
+}
+
+-- *******************************************************************
 --
 --      IO Routines
 --
@@ -344,8 +384,15 @@ end
 -- NOTE:        This should be overridden
 -- *******************************************************************
 
-local function flush()
-  return false,"Not implemented",-1
+local function flush(ios)
+  if #ios._writebuf > 0 then
+    local okay,errm,err = ios._drain(ios,ios._writebuf)
+    if okay then
+      ios._writebuf = ""
+    end
+    return okay,errm,err
+  end
+  return true
 end
 
 -- *******************************************************************
@@ -466,8 +513,21 @@ end
 -- NOTE:        This should be overridden
 -- *******************************************************************
 
-local function setvbuf()
-  return false,"Not implemented",-1
+local function setvbuf(ios,mode,size)
+  if not MODE[mode] then
+    error(string.format("bad argument #1 to 'setvbuf' (invalid option '%s')",mode))
+  end
+  ios._mode = MODE[mode]
+  
+  if not size then
+    ios._wsize = 4096
+  elseif size < 0 then
+    ios._wsize = 0
+  else
+    ios._wsize = size
+  end
+  
+  return true
 end
 
 -- *******************************************************************
@@ -484,18 +544,16 @@ local function write(ios,...)
     return false,"stream closed",-2
   end
   
-  local output = ""
-  
   for i = 1 , select('#',...) do
     local data = select(i,...)
     if type(data) ~= 'string' and type(data) ~= 'number' then
       error("string or number expected, got " .. type(data))
     end
     
-    output = output .. data
+    ios._writebuf = ios._writebuf .. data
   end
   
-  return ios:_drain(output)
+  return ios:_mode()
 end
 
 -- *******************************************************************
@@ -503,17 +561,20 @@ end
 return function()
   return {
     close   = close,   -- override
-    flush   = flush,   -- override
+    flush   = flush,
     lines   = lines,
     read    = read,
     seek    = seek,    -- override
-    setvbuf = setvbuf, -- override
+    setvbuf = setvbuf,
     write   = write,
     
-    _readbuf = "",
-    _rpos    = 1,
-    _eof     = false,
-    _refill  = function() error("failed to provide ios._refill()") end,
-    _drain   = function() error("failed to provide ios._drain()")  end,
+    _readbuf  = "",
+    _rpos     = 1,
+    _writebuf = "",
+    _wsize    = 4096,
+    _mode     = MODE.full,
+    _eof      = false,
+    _refill   = function() error("failed to provide ios._refill()") end,
+    _drain    = function() error("failed to provide ios._drain()")  end,
   }
 end
