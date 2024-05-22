@@ -151,6 +151,8 @@ local function create_handler(conn,remote)
     setmetatable(ios,mt)
   end
   
+  ios:setvbuf('no')
+  
   return ios,function(event)
     assert(not (event.read and event.write))
     
