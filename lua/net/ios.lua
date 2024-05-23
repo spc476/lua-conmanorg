@@ -381,7 +381,6 @@ end
 -- Return       okay (boolean) true if success, false if error
 --              errmsg (string/optional) system error message
 --              err (integer/optional) sytem error code
--- NOTE:        This should be overridden
 -- *******************************************************************
 
 local function flush(ios)
@@ -510,7 +509,6 @@ end
 -- Return:      okay (boolean) true if success, false if error
 --              errmsg (string/optional) system error message
 --              err (integer/optional) system error code
--- NOTE:        This should be overridden
 -- *******************************************************************
 
 local function setvbuf(ios,mode,size)
