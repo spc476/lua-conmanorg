@@ -41,7 +41,12 @@ end
 local function make_ios(conn,remote)
   local state = ios()
   
-  state.close    = function(self) self.__sock:close() return true end
+  state.close = function(self)
+    self:flush()
+    self.__sock:close()
+    return true
+  end
+  
   state._refill  = function(self)
     local _,data = self.__sock:recv()
     if data and #data > 0 then
@@ -50,6 +55,7 @@ local function make_ios(conn,remote)
       return nil
     end
   end
+  
   state._drain   = function(self,buffer) self.__sock:send(nil,buffer) end
   state.__remote = remote
   state.__sock   = conn

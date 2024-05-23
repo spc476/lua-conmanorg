@@ -106,6 +106,7 @@ local function make_ios(ctx,conn)
     setmetatable(state,mt)
   end
   
+  state:setvbuf('no')
   return state
 end
 
