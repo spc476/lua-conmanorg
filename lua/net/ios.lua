@@ -397,7 +397,8 @@ end
 -- Usage:       intf = ios:lines()
 -- Desc:        Interate through lines
 -- Return:      intf (function) interator
--- NOTE:        This function doesn't work in Lua 5.1
+-- NOTE:        This function doesn't work in Lua 5.1 if called from
+--		a coroutine.
 -- *******************************************************************
 
 local function lines(ios)
