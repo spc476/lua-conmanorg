@@ -18,7 +18,6 @@
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- *******************************************************************
--- luacheck: globals accept listena listen connecta connect
 -- luacheck: ignore 611
 --
 -- ===================================================================
