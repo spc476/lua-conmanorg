@@ -39,7 +39,7 @@ tap.plan(7,"timeout test (5 seconds)") do
 	local events,state,var = set:events()
 	tap.assert(events,"events exist")
 	tap.assert(state,"state info")
-	tap.assert(not var,"variable info")	
+	tap.assert(not var,"variable info")
 	tap.done()
 end
 
