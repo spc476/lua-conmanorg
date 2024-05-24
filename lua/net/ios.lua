@@ -435,14 +435,7 @@ local function read(ios,...)
       return data
     end
     
-    local data = ios:_refill()
-    
-    if not data then
-      ios._eof = true
-    else
-      ios._readbuf = ios._readbuf .. data
-    end
-    
+    refill(ios)
     return read_bytes(amount)
   end
   
