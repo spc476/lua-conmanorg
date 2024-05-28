@@ -45,6 +45,7 @@ local string = require "string"
 local table  = require "table"
 local math   = require "math"
 
+local _VERSION  = _VERSION
 local select    = select
 local type      = type
 local error     = error
@@ -544,7 +545,13 @@ local function write(ios,...)
     ios._writebuf = ios._writebuf .. data
   end
   
-  return ios:_mode()
+  if _VERSION == "Lua 5.1" then
+    return ios:_mode()
+  else
+    local okay,errm,err = ios:_mode()
+    okay = okay and ios or nil
+    return okay,errm,err
+  end
 end
 
 -- *******************************************************************
