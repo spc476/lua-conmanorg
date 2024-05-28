@@ -522,12 +522,16 @@ local function setvbuf(ios,mode,size)
 end
 
 -- *******************************************************************
--- Usage:       okay[,errmsg,err] = ios:write([data...])
+-- Usage:       self[,errmsg,err] = ios:write([data...])
 -- Desc:        Write data to TCP connection
 -- Input:       data (string) data to write
--- Return:      okay (boolean) true if success, false if error
+-- Return:      self (object) IOS object (or nil on error)
 --              errmsg (string/optional) system error message
 --              err (integer/optional) system error code
+--
+-- NOTE:	On Lua 5.1, the :write() method returns true.  We're
+--		not doing that here, because a valid object is true
+--		in a boolean context.
 -- *******************************************************************
 
 local function write(ios,...)
@@ -544,7 +548,9 @@ local function write(ios,...)
     ios._writebuf = ios._writebuf .. data
   end
   
-  return ios:_mode()
+  local okay,errm,err = ios:_mode()
+  okay = okay and ios or false
+  return okay,errm,err
 end
 
 -- *******************************************************************
