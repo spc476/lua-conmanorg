@@ -111,14 +111,8 @@ local function create_handler(conn,remote)
     if event.read then
       local _,packet,err = ios.__socket:recv()
       if packet then
-        if #packet == 0 then
-          nfl.SOCKETS:remove(ios.__socket)
-          ios._eof    = true
-          nfl.schedule(ios.__co,false,"disconnect",-1)
-        else
-          ios.__rbytes = ios.__rbytes + #packet
-          nfl.schedule(ios.__co,packet)
-        end
+        ios._eof = #packet == 0
+        nfl.schedule(ios.__co,packet)
       else
         if err ~= errno.EAGAIN then
           syslog('error',"socket:recv() = %s",errno[err])
