@@ -53,6 +53,19 @@ local tonumber  = tonumber
 local tointeger = math.tointeger or function(s) return tonumber(s) end
 
 -- *******************************************************************
+
+local function refill(ios)
+  local data,errm,err = ios:_refill()
+  if not data then
+    if errm then error { errm,err } end
+    ios._eof = true
+  else
+    ios._readbuf = ios._readbuf .. data
+  end
+  return data
+end
+
+-- *******************************************************************
 -- usage:       number = read_number(ios)
 -- desc:        Read a number (in text form) to a number
 -- input:       ios (table) Input/Output object
@@ -134,18 +147,6 @@ end
 
 -- *******************************************************************
 
-local function refill(ios)
-  local data = ios:_refill()
-  
-  if data then
-    ios._readbuf = ios._readbuf .. data
-  else
-    ios._eof = true
-  end
-end
-
--- *******************************************************************
-
 local READER READER =
 {
   ['*n'] = function(ios)
@@ -194,10 +195,7 @@ local READER READER =
     end
     
     repeat
-      data = ios:_refill()
-      if data then
-        ios._readbuf = ios._readbuf .. data
-      end
+      data = refill(ios)
     until not data
     
     data         = ios._readbuf
@@ -291,11 +289,7 @@ local READER READER =
     end
     
     if ios._readbuf == "" then
-      ios._readbuf = ios:_refill()
-      if not ios._readbuf then
-        ios._eof = true
-        return nil
-      end
+      refill(ios)
     end
     
     local data   = ios._readbuf
@@ -409,10 +403,12 @@ local function lines(ios)
 end
 
 -- *******************************************************************
--- Usage:       data... = ios:read([format...])
+-- Usage:       data...[,errmsg,err] = ios:read([format...])
 -- Desc:        Read data from a TCP connection
 -- Input:       format (string/optionsl) format string per file:read()
--- Return:      data (strong number) data returned per format
+-- Return:      data (strong number) data returned per format, nil on error
+--		errmsg (string/optional) system error code
+--		err (integer/optional) system error code
 -- *******************************************************************
 
 local function read(ios,...)
@@ -442,34 +438,43 @@ local function read(ios,...)
   
   -- -----------------------------------------------------
   
-  local maxparam = select('#',...)
-  
-  if maxparam == 0 then
-    return READER['l'](ios)
-  end
-  
-  local res = {}
-  
-  for i = 1 , maxparam do
-    local format = select(i,...)
-    local data
+  local function implementation(...)
+    local maxparam = select('#',...)
     
-    if type(format) == 'number' then
-      data = read_bytes(format)
-    else
-      if READER[format] then
-        data = READER[format](ios)
-      else
-        error(string.format("bad argument #%d to 'read' (invalid format)",i))
-      end
+    if maxparam == 0 then
+      return READER['l'](ios)
     end
     
-    if not data then break end
+    local res = {}
     
-    table.insert(res,data)
+    for i = 1 , maxparam do
+      local format = select(i,...)
+      local data
+      
+      if type(format) == 'number' then
+        data = read_bytes(format)
+      else
+        if READER[format] then
+          data = READER[format](ios)
+        else
+          error(string.format("bad argument #%d to 'read' (invalid format)",i))
+        end
+      end
+      
+      if not data then break end
+      
+      table.insert(res,data)
+    end
+    
+    return res
   end
   
-  return unpack(res)
+  local okay,data = pcall(implementation,...)
+  if okay then
+    return unpack(data)
+  else
+    return nil,data[1],data[2]
+  end
 end
 
 -- *******************************************************************
