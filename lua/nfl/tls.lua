@@ -74,7 +74,7 @@ local function create_handler(conn,remote)
     local str,len = self.__ctx:read(tls.BUFFERSIZE)
     
     if len == tls.ERROR then
-      return nil
+      return nil,self.__ctx:error(),-1
     elseif len == tls.WANT_INPUT then
       coroutine.yield()
       return self:_refill()
@@ -177,7 +177,7 @@ local function create_handler(conn,remote)
         end
         nfl.schedule(ios.__co)
       else
-        syslog('error',"TLS.socket:recv() = %s",errno[err])
+        syslog('error',"TLS.socket:recv() = %s",errno[err],err)
         nfl.SOCKETS:remove(ios.__socket)
         ios._eof    = true
         nfl.schedule(ios.__co,false,errno[err],err)

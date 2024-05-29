@@ -103,7 +103,7 @@ local function create_handler(conn,remote)
       if not ios._eof then
         nfl.SOCKETS:remove(ios.__socket)
         ios._eof = true
-        nfl.schedule(ios.__co,false,"disconnect")
+        nfl.schedule(ios.__co,false,"disconnect",-1)
       end
       return
     end
@@ -114,7 +114,7 @@ local function create_handler(conn,remote)
         if #packet == 0 then
           nfl.SOCKETS:remove(ios.__socket)
           ios._eof    = true
-          nfl.schedule(ios.__co,false,"disconnect")
+          nfl.schedule(ios.__co,false,"disconnect",-1)
         else
           ios.__rbytes = ios.__rbytes + #packet
           nfl.schedule(ios.__co,packet)

@@ -61,7 +61,7 @@ local function make_ios(ctx,conn)
     elseif advise == -1 then
       local msg = self.__ctx:error() or "error"
       syslog('error',"tls:_handshake() = %s",msg)
-      return false,msg
+      return false,msg,-1
     else
       return true
     end
@@ -74,7 +74,7 @@ local function make_ios(ctx,conn)
     elseif size == -1 then
       local msg = self.__ctx:error() or "error"
       syslog('error',"tls:_refill() = %s",msg)
-      return nil,msg
+      return nil,msg,-1
     else
       if #data > 0 then
         return data
