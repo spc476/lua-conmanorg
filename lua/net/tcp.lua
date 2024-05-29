@@ -62,7 +62,7 @@ local function make_ios(conn,remote)
   
   state._drain = function(self,buffer)
     local bytes,err = self.__sock:send(nil,buffer)
-    if byte >= 0
+    if bytes >= 0 then
       return true
     else
       return false,errno[err],err
