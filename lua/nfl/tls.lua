@@ -179,7 +179,6 @@ local function create_handler(conn,remote)
       else
         syslog('error',"TLS.socket:recv() = %s",errno[err],err)
         nfl.SOCKETS:remove(ios.__socket)
-        ios._eof    = true
         nfl.schedule(ios.__co,false,errno[err],err)
       end
     end
