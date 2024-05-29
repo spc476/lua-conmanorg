@@ -93,7 +93,7 @@ local function make_ios(ctx,conn)
       syslog('error',"tls:_drain() = %s",msg)
       return false,msg,-1
     else
-      return size
+      return true
     end
   end
   

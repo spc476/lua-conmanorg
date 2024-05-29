@@ -48,17 +48,25 @@ local function make_ios(conn,remote)
   end
   
   state._refill  = function(self)
-    local _,data = self.__sock:recv()
-    if data and #data > 0 then
-      return data
+    local _,data,err = self.__sock:recv()
+    if data then
+      if #data > 0 then
+        return data
+      else
+        return nil
+      end
     else
-      return nil
+      return nil,errno[err],err
     end
   end
   
   state._drain = function(self,buffer)
     local bytes,err = self.__sock:send(nil,buffer)
-    return bytes >= 0,errno[err],err
+    if byte >= 0
+      return true
+    else
+      return false,errno[err],err
+    end
   end
   
   state.__remote = remote
