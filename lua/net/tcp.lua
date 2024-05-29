@@ -56,7 +56,11 @@ local function make_ios(conn,remote)
     end
   end
   
-  state._drain   = function(self,buffer) return self.__sock:send(nil,buffer) end
+  state._drain = function(self,buffer)
+    local bytes,err = self.__sock:send(nil,buffer)
+    return bytes >= 0,errno[err],err
+  end
+  
   state.__remote = remote
   state.__sock   = conn
   
