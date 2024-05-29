@@ -103,7 +103,7 @@ local function create_handler(conn,remote)
       -- I'm back to returning an error.  Let's hope this works this time.
       -- --------------------------------------------------------------------
       
-      return false,self.__ctx:error()
+      return false,self.__ctx:error(),-1
       
     elseif bytes == tls.WANT_INPUT then
       coroutine.yield()

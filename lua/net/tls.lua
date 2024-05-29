@@ -91,7 +91,7 @@ local function make_ios(ctx,conn)
     elseif size == -1 then
       local msg = self.__ctx:error()
       syslog('error',"tls:_drain() = %s",msg)
-      return false,msg
+      return false,msg,-1
     else
       return size
     end
