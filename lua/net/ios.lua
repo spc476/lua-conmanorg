@@ -478,14 +478,14 @@ local function read(ios,...)
 end
 
 -- *******************************************************************
--- Usage:       okay[,errmsg,err] = ios:seek([whence][,offset])
+-- Usage:       pos[,errmsg,err] = ios:seek([whence][,offset])
 -- Desc:        Seek to an arbitrary position
 -- Input:       whence (enum/optinal)
 --                      * 'set'
 --                      * 'cur' (default value)
 --                      * 'end'
 --              offset (integer/optional) offset to apply (0 default)
--- Return:      okay (boolean) true if success, false if error
+-- Return:      pos (integer) final position, nil on error
 --              errmsg (string/optional) system error message
 --              err (integer/optional) system error code
 --
