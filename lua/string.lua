@@ -283,7 +283,7 @@ function wrapt(s,margin)
     end
   end
   
-  table.insert(res,s:sub(front,i - 1))
+  table.insert(res,remshy:match(s:sub(front,i - 1)))
   return res
 end
 
