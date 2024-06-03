@@ -224,7 +224,6 @@ function wrapt(s,margin)
     elseif ctype == 'hyphen' then
       if cnt < margin then
         breakhere = n
-        resume    = n
         cnt       = cnt + 1
         
       -- ---------------------------------------------
@@ -233,9 +232,9 @@ function wrapt(s,margin)
 
       elseif cnt == margin then
         breakhere = i
-        resume    = n
         cnt       = margin + 1
       end
+      resume = n
     elseif ctype == 'char' then
       cnt  = cnt  + 1
     elseif ctype == 'combining' then -- luacheck: ignore
@@ -270,14 +269,12 @@ function wrapt(s,margin)
         table.insert(res,remshy:match(s:sub(front,breakhere - 1)))
         front     = resume
         i         = resume
-        cnt       = 0
-        breakhere = nil
       else
         table.insert(res,remshy:match(s:sub(front,i - 1)))
         front     = i
-        cnt       = 0
-        breakhere = nil
       end
+      cnt = 0
+      breakhear = nil
     else
       i = n
     end
