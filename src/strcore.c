@@ -533,9 +533,6 @@ static int strcore_wrapt(lua_State *L)
 
 /*************************************************************************/
 
-
-
-
 static char const vsfn[26] =
 {
    1,16,4,16,9,2,4,16,9,2,0,2,2,2,1,4,0,2,4,4,1,0,0,0,8,0
@@ -804,7 +801,7 @@ static void C0(luaL_Buffer *buf,unsigned char c)
 {
   assert(buf != NULL);
   
-  char num[3];
+  char num[4];
   luaL_addchar(buf,'\\');
   
   switch(c)
@@ -836,15 +833,16 @@ static int strcore_safeascii(lua_State *L)
   for ( ; len > 0 ; len--)
   {
     if (*s < ' ')
-      C0(&buf,*s);
+      C0(&buf,*s++);
     else if (*s > '~')
-      C0(&buf,*s);
+      C0(&buf,*s++);
     else
     {
       if (*s == '\\')
         luaL_addlstring(&buf,"\\\\",2);
       else
         luaL_addchar(&buf,*s);
+      s++;
     }
   }
   
@@ -866,21 +864,21 @@ static void UTF8(luaL_Buffer *buf,unsigned char const **ps,size_t *plen)
   
   size_t delta;
   
-  if ((*ps[0] & 0xE0) == 0xC0)
+  if (((*ps)[0] & 0xE0) == 0xC0)
   {
     if (*plen < 2)
       goto bad;
-    if ((*ps[1] & 0xC0) != 0x80)
+    if (((*ps)[1] & 0xC0) != 0x80)
       goto bad;
     delta = 2;
   }
-  else if ((*ps[0] & 0xF0) == 0xE0)
+  else if (((*ps)[0] & 0xF0) == 0xE0)
   {
     if (*plen < 3)
       goto bad;
-    if ((*ps[1] & 0xC0) != 0x80)
+    if (((*ps)[1] & 0xC0) != 0x80)
       goto bad;
-    if ((*ps[2] & 0xC0) != 0x80)
+    if (((*ps)[2] & 0xC0) != 0x80)
       goto bad;
     delta = 3;
   }
@@ -888,11 +886,11 @@ static void UTF8(luaL_Buffer *buf,unsigned char const **ps,size_t *plen)
   {
     if (*plen < 4)
       goto bad;
-    if ((*ps[1] & 0xC0) != 0x80)
+    if (((*ps)[1] & 0xC0) != 0x80)
       goto bad;
-    if ((*ps[2] & 0xC0) != 0x80)
+    if (((*ps)[2] & 0xC0) != 0x80)
       goto bad;
-    if ((*ps[3] & 0xC0) != 0x80)
+    if (((*ps)[3] & 0xC0) != 0x80)
       goto bad;
     delta = 4;
   }
@@ -904,14 +902,9 @@ static void UTF8(luaL_Buffer *buf,unsigned char const **ps,size_t *plen)
   
 bad:
 
-  while (*plen > 0)
-  {
-    if (**ps < 0x80)
-      return;
-    C0(buf,**ps);
-    (*ps)++;
-    (*plen)--;
-  }
+  C0(buf,**ps);
+  (*ps)++;
+  (*plen)--;
 }
 
 /************************************************************************/
