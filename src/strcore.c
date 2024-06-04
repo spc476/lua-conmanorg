@@ -320,9 +320,9 @@ static enum eclass charsmatch(unsigned char const *s,size_t i,size_t *n)
     { 65071 , COMBINING } ,
     { 65123 , HYPHEN    } , /* small hyphen-minus */
     { 65293 , HYPHEN    } , /* fullwidth hyphen-minus */
-    { 65381 , HYPHEN    } , /* halfwidth Katakana middle dot */  
+    { 65381 , HYPHEN    } , /* halfwidth Katakana middle dot */
   };
-
+  
   struct sclass const *ctype;
   wchar_t              c = s[i];
   wchar_t              c2;
@@ -409,7 +409,7 @@ static void remshy(lua_State *L,char const *s,size_t i,size_t e)
 
 static int strcore_wrapt(lua_State *L)
 {
-  
+
   size_t      len;
   char const *s         = luaL_checklstring(L,1,&len);
   size_t      margin    = luaL_optinteger(L,2,78);
@@ -803,7 +803,7 @@ static int strcore_comparei(lua_State *L)
 static void C0(luaL_Buffer *buf,unsigned char c)
 {
   assert(buf != NULL);
-
+  
   char num[3];
   luaL_addchar(buf,'\\');
   
@@ -973,8 +973,8 @@ int luaopen_org_conman_strcore(lua_State *L)
     { "safeutf8"  , strcore_safeutf8      } ,
     { NULL        , NULL                  }
   };
-
-
+  
+  
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.string",strcore_reg);
 #else

@@ -177,7 +177,7 @@ static int hashlua_sum(lua_State *L)
 #else
   ctx = EVP_MD_CTX_new();
 #endif
-  
+
   hashsize = sizeof(hash);
   EVP_DigestInit(ctx,m);
   EVP_DigestUpdate(ctx,data,size);
@@ -188,7 +188,7 @@ static int hashlua_sum(lua_State *L)
 #else
   EVP_MD_CTX_free(ctx);
 #endif
-  
+
   lua_pushlstring(L,(char *)hash,hashsize);
   return 1;
 }
@@ -211,7 +211,7 @@ static int hashlua_sumhexa(lua_State *L)
   char const *data;
   size_t      size;
   int         rc;
-    
+  
   rc = hashlua_sum(L);
   if (!lua_isstring(L,-1))
     return rc;
@@ -291,7 +291,7 @@ int luaopen_org_conman_hash(lua_State *L)
 #else
   luaL_newlib(L,hashlua);
 #endif
-  
+
   return 1;
 }
 

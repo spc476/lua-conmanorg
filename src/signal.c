@@ -1359,7 +1359,7 @@ static int siglua_block(lua_State *L)
   
   for (int top = lua_gettop(L) , i = 1 ; i <= top ; i++)
     sigaddset(&set,slua_tosignal(L,i,NULL));
-  
+    
   sigprocmask(SIG_BLOCK,&set,NULL);
   return 0;
 }
@@ -1658,7 +1658,7 @@ int luaopen_org_conman_signal(lua_State *L)
     { "set"       , siglua_set            } ,
     { NULL        , NULL                  }
   };
-
+  
   static struct luaL_Reg const m_sigset_meta[] =
   {
     { "__tostring", sigsetmeta___tostring } ,

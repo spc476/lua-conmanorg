@@ -19,11 +19,11 @@
 *
 * ---------------------------------------------------------------------
 *
-* This module implements LFSR of 8, 16 and 32 bits.  These have the 
+* This module implements LFSR of 8, 16 and 32 bits.  These have the
 * following features:
 *
-*	All sequence of bits between 1 and 2^bits are generated
-*	It is very fast.
+*       All sequence of bits between 1 and 2^bits are generated
+*       It is very fast.
 *
         lfsr  = require "org.conman.lfsr"
         rnd8  = lfsr( 8[,seed[,taps]])
@@ -32,10 +32,10 @@
         rnd32 = lfsr() -- 32, 0xB4000021
 *
 * NOTE: taps for 8b, 16b and 32bs can be found here:
-*	http://users.ece.cmu.edu/~koopman/lfsr/index.html
+*       http://users.ece.cmu.edu/~koopman/lfsr/index.html
 *
 * ALSO SEE:
-*	https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+*       https://en.wikipedia.org/wiki/Linear-feedback_shift_register
 *********************************************************************/
 
 #include <assert.h>

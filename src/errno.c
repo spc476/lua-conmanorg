@@ -582,7 +582,7 @@ int luaopen_org_conman_errno(lua_State *L)
   {
     { NULL , NULL }
   };
-
+  
   luaL_register(L,"org.conman.errno",reg_errno);
 #else
   lua_createtable(L,0,(sizeof(m_errors) / sizeof(struct strint)) - 1);

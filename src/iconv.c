@@ -158,7 +158,7 @@ static int luametaiconv___gc(lua_State *L)
   {
     iconv_close(*ic);
     *ic = NULL;
-  }    
+  }
   return 0;
 }
 

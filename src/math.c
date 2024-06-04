@@ -232,7 +232,7 @@ static int math_div(lua_State *const L)
   
   lua_pushnumber(L,numer / denom);
   lua_pushnumber(L,fmod(numer,denom));
-
+  
   return 2;
 }
 

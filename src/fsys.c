@@ -158,7 +158,7 @@ static mode_t fsysL_checkmode(lua_State *L,int idx,mode_t def)
   
   if (lua_isnoneornil(L,idx))
     return def;
-  
+    
   mode = 0;
   txt  = luaL_checklstring(L,idx,&len);
   
@@ -255,14 +255,14 @@ static int fsys_lstat(lua_State *L)
 static int fsys_chmod(lua_State *L)
 {
   errno = 0;
-
+  
   if (lua_isstring(L,1))
     chmod(luaL_checkstring(L,1),fsysL_checkmode(L,2,0666));
   else if (luaL_callmeta(L,1,"_tofd"))
     fchmod(luaL_checkinteger(L,-1),fsysL_checkmode(L,2,0664));
   else
     errno = EINVAL;
-  
+    
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
@@ -323,7 +323,7 @@ static int fsys_redirect(lua_State *L)
   }
   else
     errno = EINVAL;
-  
+    
   lua_pushboolean(L,errno == 0);
   lua_pushinteger(L,errno);
   return 2;
@@ -626,7 +626,7 @@ static int fsys_dir(lua_State *L)
     lua_pushcfunction(L,dir_meta_nil);
   else
     lua_pushcfunction(L,dir_meta_next);
-  
+    
   lua_insert(L,-2);
   lua_pushnil(L);      /* no initial value */
   lua_pushvalue(L,-2); /* Lua 5.4 toclose variable, safe to set pre 5.4 */
@@ -710,12 +710,12 @@ static int fsys_dirname(lua_State *L)
 }
 
 /***********************************************************************
-* Usage:	ext = fsys.extension(path)
-* Desc:		Return the extension (if any) of a filename
-* Input:	path (string)
-* Return:	ext (string)
+* Usage:        ext = fsys.extension(path)
+* Desc:         Return the extension (if any) of a filename
+* Input:        path (string)
+* Return:       ext (string)
 *
-* Note:		Returns an empty string if no extension exists.
+* Note:         Returns an empty string if no extension exists.
 **********************************************************************/
 
 static int fsys_extension(lua_State *L)
@@ -728,7 +728,7 @@ static int fsys_extension(lua_State *L)
     lua_pushstring(L,dot + 1);
   else
     lua_pushliteral(L,"");
-  
+    
   return 1;
 }
 
@@ -984,12 +984,12 @@ static int fsys_fnmatch(lua_State *L)
 }
 
 /************************************************************************
-* Usage:	list,err = fsys.expand(glob[,list2])
-* Desc:		Returns a list of filenames according to a file glob
-* Input:	glob (string)	       file specification
-*		list2 (table/optional) existing array of names
-* Return:	list (table)           list of filenames, or list2 with additional filenames
-*		err (inteter)          system error, 0 on success
+* Usage:        list,err = fsys.expand(glob[,list2])
+* Desc:         Returns a list of filenames according to a file glob
+* Input:        glob (string)          file specification
+*               list2 (table/optional) existing array of names
+* Return:       list (table)           list of filenames, or list2 with additional filenames
+*               err (inteter)          system error, 0 on success
 *************************************************************************/
 
 int fsys_expand(lua_State *L)
@@ -1092,7 +1092,7 @@ static int fsys_gexpand(lua_State *L)
   
   if (glob(pattern,0,NULL,&data->gbuf) != 0)
     data->gc = true;
-  
+    
   lua_pushnil(L);
   lua_pushvalue(L,-2);
   return 4;
@@ -1140,7 +1140,7 @@ static int fsys_pathconf(lua_State *L)
     "vdisable",
     NULL
   };
-
+  
   static int const m_pathconfmap[] =
   {
     _PC_LINK_MAX,
@@ -1183,11 +1183,11 @@ static int fsys_pathconf(lua_State *L)
 }
 
 /************************************************************************
-* Usage:	okay,err = fsys._close(fh)
-* Desc:		Low level OS close() system call (when you need it, you need it)
-* Input:	fh (integer) file descriptor to close
-* Return:	okay (boolean) true if okay, false if error
-*		err (integer) system error
+* Usage:        okay,err = fsys._close(fh)
+* Desc:         Low level OS close() system call (when you need it, you need it)
+* Input:        fh (integer) file descriptor to close
+* Return:       okay (boolean) true if okay, false if error
+*               err (integer) system error
 *************************************************************************/
 
 static int fsys__close(lua_State *L)
@@ -1198,11 +1198,11 @@ static int fsys__close(lua_State *L)
 }
 
 /************************************************************************
-* Usage:	okay,err = fsys.fsync(file)
-* Desc:		Syncronize file's in-core state with disk
-* Input:	file (userdata) file
-* Return:	okay (boolean) true if okay, false if error
-*		err (integer) system error
+* Usage:        okay,err = fsys.fsync(file)
+* Desc:         Syncronize file's in-core state with disk
+* Input:        file (userdata) file
+* Return:       okay (boolean) true if okay, false if error
+*               err (integer) system error
 *************************************************************************/
 
 static int fsys_fsync(lua_State *L)
@@ -1226,16 +1226,16 @@ static int fsys_fsync(lua_State *L)
 * Usage:        okay,err = fsys._lock(file[,mode][,nonblock])
 * Desc:         Lock or unlock a file
 * Input:        file (userdata) file
-*		mode (string/enum/optional)
-*			* read (default)
-*			* write
-*			* release
-*		nonblock (boolean/optional) Use nonblocking call
+*               mode (string/enum/optional)
+*                       * read (default)
+*                       * write
+*                       * release
+*               nonblock (boolean/optional) Use nonblocking call
 * Return:       okay (boolean) true if okay, false if error
 *               err (integer) system error
 *
-* Note:		This function uses fcntl() to do the locking, and will
-*		lock the entire contents of the file.
+* Note:         This function uses fcntl() to do the locking, and will
+*               lock the entire contents of the file.
 *************************************************************************/
 
 static int fsys__lock(lua_State *L)
@@ -1437,13 +1437,13 @@ int luaopen_org_conman_fsys(lua_State *L)
   
   luaL_newmetatable(L,TYPE_DIR);
   luaL_setfuncs(L,m_dir_meta,0);
-
+  
   lua_pushvalue(L,-1);
   lua_setfield(L,-2,"__index");
   
   luaL_newmetatable(L,TYPE_EXPAND);
   luaL_setfuncs(L,m_expand_meta,0);
-
+  
 #if LUA_VERSION_NUM == 501
   /*------------------------------------------------------------------------
   ; the Lua io module requires a unique environment.  Let's crib it (we grab

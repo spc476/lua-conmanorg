@@ -442,7 +442,7 @@ static int Ltlsconf_prefer_ciphers_server(lua_State *L)
 *                       * 'tlsv1.0'
 *                       * 'tlsv1.1'
 *                       * 'tlsv1.2'
-*			* 'tlsv1.3'
+*                       * 'tlsv1.3'
 *                       * 'all'
 *                       * 'secure'  (same as 'tlsv1.2,tlsv1.3')
 *                       * 'default' (same as 'secure')
@@ -1033,15 +1033,15 @@ static int Ltls_accept_socket(lua_State *L)
 * Desc:         Close a connection.  If TLS is controlling the socket,
 *               the socket will be closed as well; othersise, you are
 *               still reponsible for closing the socket.
-* Return:	advise (integer)
-*			* 0 - okay
-*			* tls.ERROR
-*			* tls.WANT_INPUT
-*			* tls.WANT_OUTPUT
+* Return:       advise (integer)
+*                       * 0 - okay
+*                       * tls.ERROR
+*                       * tls.WANT_INPUT
+*                       * tls.WANT_OUTPUT
 *
-* Note:		Only upon rc == 0 or tls.ERROR will the reference to the
-*		context be removed.  This way, we can still deal with
-*		closing out the connection with more I/O.
+* Note:         Only upon rc == 0 or tls.ERROR will the reference to the
+*               context be removed.  This way, we can still deal with
+*               closing out the connection with more I/O.
 ***************************************************************************/
 
 static int Ltls_close(lua_State *L)
@@ -1059,7 +1059,7 @@ static int Ltls_close(lua_State *L)
   }
   else
     lua_pushinteger(L,0);
-  
+    
   return 1;
 }
 
@@ -1210,11 +1210,11 @@ static int Ltls_error(lua_State *L)
 /**************************************************************************
 * Usage:        advise = ctx:handshake()
 * Desc:         Check if a TLS handshake has been done
-* Return:	advise (integer)
-*			* 0 - okay
-*			* tls.ERROR
-*			* tls.WANT_INPUT
-*			* tls.WANT_OUTPUT
+* Return:       advise (integer)
+*                       * 0 - okay
+*                       * tls.ERROR
+*                       * tls.WANT_INPUT
+*                       * tls.WANT_OUTPUT
 *
 * Note:         There is no need to call this function unless you
 *               absolutely require to know the handshake has happened.
@@ -1684,7 +1684,7 @@ static int Ltls_conn_cipher_strength(lua_State *L)
   return 1;
 }
 #endif
-          
+
 /**************************************************************************
 *
 *                                  TLS API
@@ -2019,7 +2019,7 @@ int luaopen_org_conman_tls(lua_State *L)
   luaL_newmetatable(L,TYPE_TLS);
   luaL_setfuncs(L,m_tlsmeta,0);
   luaL_newlib(L,m_tlsreg);
-
+  
   for (size_t i = 0 ; m_tls_consts[i].text != NULL ; i++)
   {
     lua_pushinteger(L,m_tls_consts[i].value);

@@ -174,7 +174,7 @@ static int proclua_getpgrp(lua_State *L)
 static int proclua_fork(lua_State *L)
 {
   pid_t child = fork();
-
+  
   if (child < 0)
   {
     lua_pushnil(L);
@@ -711,7 +711,7 @@ static bool limit_valid_suffix(rlim_t *pval,int key,char const *unit)
 static int hlimitlua_meta___index(lua_State *L)
 {
   struct rlimit  limit;
-
+  
   assert(L != NULL);
   
   lua_getuservalue(L,1);
@@ -729,7 +729,7 @@ static int hlimitlua_meta___index(lua_State *L)
   }
   else
     lua_pushnil(L);
-  
+    
   return 1;
 }
 
@@ -739,23 +739,23 @@ static int hlimitlua_meta___newindex(lua_State *L)
 {
   struct rlimit limit;
   int           key;
-
+  
   lua_getuservalue(L,1);
   lua_pushvalue(L,2);
   lua_rawget(L,-2);
-
+  
   if (!lua_isnumber(L,-1))
     return 0;
-
+    
   key = lua_tointeger(L,-1);
-
+  
   if (lua_isnumber(L,3))
     limit.rlim_max = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
     char const *tval;
     char       *unit;
-
+    
     tval           = lua_tostring(L,3);
     limit.rlim_max = strtoul(tval,&unit,10);
     if (!limit_valid_suffix(&limit.rlim_max,key,unit))
@@ -763,7 +763,7 @@ static int hlimitlua_meta___newindex(lua_State *L)
   }
   else
     return luaL_error(L,"Non-supported value for resource");
-
+    
   limit.rlim_cur = limit.rlim_max;
   setrlimit(key,&limit);
   return 0;
@@ -776,7 +776,7 @@ static int hlimitlua_meta___newindex(lua_State *L)
   static int hlimit____next(lua_State *L)
   {
     struct rlimit limit;
-
+    
     lua_getuservalue(L,1);
     lua_pushvalue(L,2);
     if (lua_next(L,-2))
@@ -789,7 +789,7 @@ static int hlimitlua_meta___newindex(lua_State *L)
         return 2;
       }
     }
-
+    
     return 0;
   }
   
@@ -810,11 +810,11 @@ static int hlimitlua_meta___newindex(lua_State *L)
 static int slimitlua_meta___index(lua_State *L)
 {
   struct rlimit limit;
-
+  
   lua_getuservalue(L,1);
   lua_replace(L,1);
   lua_rawget(L,1);
-
+  
   if (lua_isnumber(L,-1))
   {
     getrlimit(lua_tointeger(L,-1),&limit);
@@ -826,7 +826,7 @@ static int slimitlua_meta___index(lua_State *L)
   }
   else
     lua_pushnil(L);
-
+    
   return 1;
 }
 
@@ -836,24 +836,24 @@ static int slimitlua_meta___newindex(lua_State *L)
 {
   struct rlimit limit;
   int           key;
-
+  
   lua_getuservalue(L,1);
   lua_pushvalue(L,2);
   lua_rawget(L,-2);
-
+  
   if (!lua_isnumber(L,-1))
     return 0;
-
+    
   key = lua_tointeger(L,-1);
   getrlimit(key,&limit);
-
+  
   if (lua_isnumber(L,3))
     limit.rlim_cur = lua_tonumber(L,3);
   else if (lua_isstring(L,3))
   {
     char const *tval;
     char       *unit;
-
+    
     tval           = lua_tostring(L,3);
     limit.rlim_cur = strtoul(tval,&unit,10);
     if (!limit_valid_suffix(&limit.rlim_cur,key,unit))
@@ -861,7 +861,7 @@ static int slimitlua_meta___newindex(lua_State *L)
   }
   else
     return luaL_error(L,"Non-supported value for resource");
-
+    
   setrlimit(key,&limit);
   return 0;
 }
@@ -873,7 +873,7 @@ static int slimitlua_meta___newindex(lua_State *L)
   static int slimit____next(lua_State *L)
   {
     struct rlimit limit;
-
+    
     lua_getuservalue(L,1);
     lua_pushvalue(L,2);
     if (lua_next(L,-2))
@@ -886,7 +886,7 @@ static int slimitlua_meta___newindex(lua_State *L)
         return 2;
       }
     }
-
+    
     return 0;
   }
   
@@ -1192,14 +1192,14 @@ int luaopen_org_conman_process(lua_State *L)
     { "setaffinity"       , proclua_setaffinity           } ,
     { NULL                , NULL                          }
   };
-
+  
   static struct luaL_Reg const m_process_meta[] =
   {
     { "__index"           , proclua_meta___index          } ,
     { "__newindex"        , proclua_meta___newindex       } ,
     { NULL                , NULL                          }
   };
-
+  
   static struct luaL_Reg const m_hlimit_meta[] =
   {
     { "__index"           , hlimitlua_meta___index        } ,
@@ -1209,7 +1209,7 @@ int luaopen_org_conman_process(lua_State *L)
   #endif
     { NULL                , NULL                          }
   };
-
+  
   static struct luaL_Reg const m_slimit_meta[] =
   {
     { "__index"           , slimitlua_meta___index        } ,
@@ -1242,7 +1242,7 @@ int luaopen_org_conman_process(lua_State *L)
 #if defined(RLIMIT_RSS) && !defined(__APPLE__)
   lua_pushinteger(L,RLIMIT_RSS);     lua_setfield(L,-2,"pages");
 #endif
-  
+
   lua_createtable(L,0,2);
   
   lua_newuserdata(L,0);
@@ -1264,7 +1264,7 @@ int luaopen_org_conman_process(lua_State *L)
 #else
   luaL_newlib(L,m_process_reg);
 #endif
-  
+
   lua_pushvalue(L,-2);
   lua_setfield(L,-2,"limits");
   

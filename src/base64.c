@@ -61,7 +61,7 @@
 * set to encode as base64.  It is okay to specify both 'base' and 'last' in
 * the same initialization call.  The default set of characters for base64 is:
 *
-*	ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+*       ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
 *
 *********************************************************************/
 

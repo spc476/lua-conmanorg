@@ -56,11 +56,11 @@
 * Input:        clocktype (enum/optional)
 *                       'realtime'  (default) walltime
 *                       'monotonic' time since boot
-*		gfrac (boolean) false - return time as float
-*			* true - return time as seconds,nanoseconds
+*               gfrac (boolean) false - return time as float
+*                       * true - return time as seconds,nanoseconds
 *
 * Return:       now (number) current time or elapsed time since boot
-*		frac (integer/optional) nanosecond part of second
+*               frac (integer/optional) nanosecond part of second
 *
 * =========================================================================
 *

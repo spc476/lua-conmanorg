@@ -63,71 +63,71 @@
 * org.conman.net module indicates which implementation is in use, but as
 * long as you stick to select() type operations, you should be fine.
 *
-*	event	meaning
-*	r	read ready
-*	w	write ready
-*	p	urgent data ready and/or error happened
+*       event   meaning
+*       r       read ready
+*       w       write ready
+*       p       urgent data ready and/or error happened
 *
-* 	event	epoll	poll	select	kqueue
-*	r	x	x	x	x
-*	w	x	x	x	x
-*	p	x	x	x	x
+*       event   epoll   poll    select  kqueue
+*       r       x       x       x       x
+*       w       x       x       x       x
+*       p       x       x       x       x
 *
-* Usage:	set,err = org.conman.pollset()
-* Desc:		Return a file descriptor based event object
-* Return:	set (userdata/set) event object, nil on error
-*		err (integer) system error (0 - no error)
+* Usage:        set,err = org.conman.pollset()
+* Desc:         Return a file descriptor based event object
+* Return:       set (userdata/set) event object, nil on error
+*               err (integer) system error (0 - no error)
 *
-* Usage:	set._implemenation (string) one of:
-*			* 'epoll'
-*			* 'poll'
-*			* 'select'
-*			* 'kqueue'
+* Usage:        set._implemenation (string) one of:
+*                       * 'epoll'
+*                       * 'poll'
+*                       * 'select'
+*                       * 'kqueue'
 *
-* Usage:	err = set:insert(file,events[,obj])
-* Desc:		Insert a file into the event object
-* Input:	file (?) any object that has metatable field _tofd()
-*		events (string) string of single character flag of events
-*			| (see above)
-*		obj (?/optional) value to associate with event
-*			| (defaults to file object passed in)
-* Return:	err (integer) system error (0 if no error)
+* Usage:        err = set:insert(file,events[,obj])
+* Desc:         Insert a file into the event object
+* Input:        file (?) any object that has metatable field _tofd()
+*               events (string) string of single character flag of events
+*                       | (see above)
+*               obj (?/optional) value to associate with event
+*                       | (defaults to file object passed in)
+* Return:       err (integer) system error (0 if no error)
 *
-* Usage:	err = set:update(file,events)
-* Desc:		Update the flags for a file in event object
-* Input:	file (?) any object that reponds to _tofd()
-*		events (string) string of events (see above)
-* Return:	err (integer) system error value
-* Note:		file must have been added with set:insert(); othersise
-*		results are undefined
+* Usage:        err = set:update(file,events)
+* Desc:         Update the flags for a file in event object
+* Input:        file (?) any object that reponds to _tofd()
+*               events (string) string of events (see above)
+* Return:       err (integer) system error value
+* Note:         file must have been added with set:insert(); othersise
+*               results are undefined
 *
-* Usage:	err = set:remove(file)
-* Desc:		Remove a file from the event object
-* Input:	file (?) any object that reponds to _tofd()
-* Return:	err (integer) system error value
-* Note:		file must have been added with set:insert(); otherwise
-*		results are undefined
+* Usage:        err = set:remove(file)
+* Desc:         Remove a file from the event object
+* Input:        file (?) any object that reponds to _tofd()
+* Return:       err (integer) system error value
+* Note:         file must have been added with set:insert(); otherwise
+*               results are undefined
 *
-* Usage:	okay,toerr = set:wait([timeout])
-* Desc:		Wait for events to trigger
-* Input:	timeout (number/optional) timeout in sections, if not given,
-*			| function will block until an event is received
-* Return:	okay (boolean) true if success, false if error
-*		toerr (integer boolean)
-*			| okay = true, err = timedout (boolean)
-*			| okay = false, err = integer (system error)
-* Usage:	for event in set:events() do ... end
-* Desc:		Return an event iterator
-* Return:	events (function) used in "for event in events do ... end"
-* Return:	Each item is a table:
-*			* read (boolean) read event
-*			* write (boolean) write event
-*			* priority (boolean) priority data event
-*			* obj (?) value registered with set:insert()
+* Usage:        okay,toerr = set:wait([timeout])
+* Desc:         Wait for events to trigger
+* Input:        timeout (number/optional) timeout in sections, if not given,
+*                       | function will block until an event is received
+* Return:       okay (boolean) true if success, false if error
+*               toerr (integer boolean)
+*                       | okay = true, err = timedout (boolean)
+*                       | okay = false, err = integer (system error)
+* Usage:        for event in set:events() do ... end
+* Desc:         Return an event iterator
+* Return:       events (function) used in "for event in events do ... end"
+* Return:       Each item is a table:
+*                       * read (boolean) read event
+*                       * write (boolean) write event
+*                       * priority (boolean) priority data event
+*                       * obj (?) value registered with set:insert()
 *
-* Note:		Other events may be reported, such as 'error' or 'hangup'.
-*		There is no exhaustive list, and the types of reports
-*		are implementation dependent.
+* Note:         Other events may be reported, such as 'error' or 'hangup'.
+*               There is no exhaustive list, and the types of reports
+*               are implementation dependent.
 *
 * LINUX implementation of pollset, using epoll()
 *
@@ -385,7 +385,7 @@ static int polllua_wait(lua_State *L)
     timeout = -1;
   else
     timeout = (int)(dtimeout * 1000.0);
-  
+    
   if (set->idx > 0)
   {
     set->list = calloc(set->idx,sizeof(struct epoll_event));
@@ -396,7 +396,7 @@ static int polllua_wait(lua_State *L)
   }
   else
     set->max = 0;
-  
+    
   set->count = 0;
   
   if (set->max < 0)
@@ -416,7 +416,7 @@ static int polllua_wait(lua_State *L)
 }
 
 /**********************************************************************/
-  
+
 static int polllua_events(lua_State *L)
 {
   luaL_checkudata(L,1,TYPE_POLL);
@@ -435,7 +435,7 @@ static int polllua_events(lua_State *L)
 *********************************************************************/
 
 #ifdef POLLSET_IMPL_KQUEUE
-#define POLLSET_IMPL	"kqueue"
+#define POLLSET_IMPL    "kqueue"
 
 #include <math.h>
 #include <stdbool.h>
@@ -597,7 +597,7 @@ static int polllua_insert(lua_State *L)
     lua_pushinteger(L,EINVAL);
     return 1;
   }
-
+  
   set     = luaL_checkudata(L,1,TYPE_POLL);
   fh      = luaL_checkinteger(L,-1);
   backlog = luaL_optinteger(L,5,0);
@@ -631,7 +631,7 @@ static int polllua_insert(lua_State *L)
     lua_pushinteger(L,4);
   else
     lua_pushvalue(L,4);
-  
+    
   lua_settable(L,-3);
   
   set->idx++;
@@ -691,7 +691,7 @@ static int polllua_remove(lua_State *L)
     lua_pushinteger(L,EINVAL);
     return 1;
   }
-
+  
   set = luaL_checkudata(L,1,TYPE_POLL);
   fh  = luaL_checkinteger(L,-1);
   
@@ -744,7 +744,7 @@ static int polllua_wait(lua_State *L)
   }
   else
     ptimeout = NULL;
-  
+    
   if (set->idx > 0)
   {
     set->list = calloc(set->idx,sizeof(struct kevent));
@@ -755,7 +755,7 @@ static int polllua_wait(lua_State *L)
   }
   else
     set->max = 0;
-  
+    
   set->count = 0;
   
   if (set->max < 0)
@@ -1090,7 +1090,7 @@ static int polllua_wait(lua_State *L)
     timeout = -1;
   else
     timeout = (int)(dtimeout * 1000.0);
-  
+    
   set->count = 0;
   events     = poll(set->set,set->idx,timeout);
   if (events == -1)

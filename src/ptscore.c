@@ -424,7 +424,7 @@ static xlua_Const const m_tcflow[] =
 int luaopen_org_conman_ptscore(lua_State *L)
 {
   luaL_newmetatable(L,TYPE_TERMIOS);
-
+  
 #if LUA_VERSION_NUM == 501
   luaL_register(L,"org.conman.ptscore",m_pts_reg);
 #else

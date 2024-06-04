@@ -68,7 +68,7 @@ static bool add_segment(luaL_Buffer *buf,char const *seg,size_t len)
     if (domain.uc != NULL)
     {
       topunysize = 64;
-  
+      
       if (punycode_encode(domainsize,domain.pc,NULL,&topunysize,topuny) == PUNYCODE_SUCCESS)
       {
         luaL_addlstring(buf,"xn--",4);
@@ -107,7 +107,7 @@ static int idn_encode(lua_State *L)
       }
       else
         luaL_addlstring(&buf,&orig[si],di - si);
-      
+        
       luaL_pushresult(&buf);
       return 1;
     }
@@ -121,13 +121,13 @@ static int idn_encode(lua_State *L)
       }
       else
         luaL_addlstring(&buf,&orig[si],di - si);
-      
+        
       luaL_addchar(&buf,'.');
       si    = di + 1;
       utf8  = false;
     }
     else
-      utf8 |= ((unsigned)orig[di]) > 127;      
+      utf8 |= ((unsigned)orig[di]) > 127;
   }
 }
 
@@ -144,7 +144,7 @@ static int idn_decode(lua_State *L)
   {
     char const *p = strchr(orig,'.');
     size_t      len = p == NULL ? strlen(orig) : (size_t)(p - orig);
-
+    
     if (strncmp(orig,"xn--",4) == 0)
     {
       union wstr  frompuny;
@@ -153,9 +153,9 @@ static int idn_decode(lua_State *L)
       
       if (punycode_decode(len-4,&orig[4],&frompunysize,frompuny.pc,NULL) != PUNYCODE_SUCCESS)
         return 0;
-
+        
       result = stringprep_ucs4_to_utf8(frompuny.uc,frompunysize,NULL,NULL);
-
+      
       if (result != NULL)
       {
         luaL_addstring(&buf,result);
@@ -164,7 +164,7 @@ static int idn_decode(lua_State *L)
     }
     else
       luaL_addlstring(&buf,orig,len);
-    
+      
     if (p != NULL)
     {
       luaL_addchar(&buf,'.');

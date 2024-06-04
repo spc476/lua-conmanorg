@@ -146,7 +146,7 @@ static int magicmeta_flags(lua_State *L)
     "error",
     NULL
   };
-
+  
   static int const m_magic_flags[] =
   {
     MAGIC_DEBUG,
