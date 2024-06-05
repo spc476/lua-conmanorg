@@ -23,17 +23,15 @@
 -- luacheck: globals comparei
 -- luacheck: ignore 611
 
-local uchar    = require "org.conman.parsers.utf8"
+local strcore  = require "org.conman.strcore"
 local lpeg     = require "lpeg"
 local string   = require "string"
 local table    = require "table"
 local io       = require "io"
 
 local _VERSION = _VERSION
-local require  = require
 local type     = type
 local tostring = tostring
-local assert   = assert
 
 if _VERSION == "Lua 5.1" then
   module("org.conman.string")
@@ -41,47 +39,13 @@ else
   _ENV = {}
 end
 
-local x   = require "org.conman.strcore"
-metaphone = x.metaphone
-compare   = x.compare
-comparen  = x.comparen
-comparei  = x.comparei
-
--- ********************************************************************
-
-local function escape(s)
-  return s:gsub(".",function(c)
-    return string.format("\\%03d",c:byte())
-  end)
-end
-
--- ********************************************************************
-
-local C0    = lpeg.P"\a" / "\\a"  -- acutally, only the ones with a
-            + lpeg.P"\b" / "\\b"  -- predefined escpae is here.
-            + lpeg.P"\t" / "\\t"
-            + lpeg.P"\n" / "\\n"
-            + lpeg.P"\v" / "\\v"
-            + lpeg.P"\f" / "\\f"
-            + lpeg.P"\r" / "\\r"
-local ascii = lpeg.P"\\" / "\\\\" -- escape the escape
-            + lpeg.R" ~"
-local other = lpeg.P(1) / escape
-
-local make_ascii_safe = lpeg.Cs((ascii         + C0 + other)^0)
-local make_utf8_safe  = lpeg.Cs((ascii + uchar + C0 + other)^0)
-
--- ********************************************************************
-
-function safeascii(s)
-  return make_ascii_safe:match(s)
-end
-
--- ********************************************************************
-
-function safeutf8(s)
-  return make_utf8_safe:match(s)
-end
+metaphone = strcore.metaphone
+compare   = strcore.compare
+comparen  = strcore.comparen
+comparei  = strcore.comparei
+wrapt     = strcore.wrapt
+safeascii = strcore.safeascii
+safeutf8  = strcore.safeutf8
 
 -- ********************************************************************
 
@@ -125,163 +89,6 @@ function filetemplate(temp,callbacks,data)
   local d = f:read("*a")
   f:close()
   return template(d,callbacks,data)
-end
-
--- ********************************************************************
-
-local Cs = lpeg.Cs
-local P  = lpeg.P
-local R  = lpeg.R
-
-local whitespace = P" "
-                 + P"\t"
-                 + P"\225\154\128" -- Ogham
-                 + P"\225\160\142" -- Mongolian vowel separator
-                 + P"\226\128\128" -- en quad
-                 + P"\226\128\129" -- em quad
-                 + P"\226\128\130" -- en
-                 + P"\226\128\131" -- em
-                 + P"\226\128\132" -- three-per-em
-                 + P"\226\128\133" -- four-per-em
-                 + P"\226\128\134" -- six-per-em
-                 + P"\226\128\136" -- punctuation
-                 + P"\226\128\137" -- thin space
-                 + P"\226\128\138" -- hair space
-                 + P"\226\128\139" -- zero width
-                 + P"\226\128\140" -- zero-width nonjoiner
-                 + P"\226\128\141" -- zero-width joiner
-                 + P"\226\129\159" -- medium mathematical
-                 + P"\227\128\128" -- ideographic
-                 
-local combining  = P"\204"     * R"\128\191"
-                 + P"\205"     * R("\128\142","\144\175") -- ignore CGJ
-                 + P"\225\170" * R"\176\190"
-                 + P"\225\183" * R"\128\191"
-                 + P"\226\131" * R"\144\176"
-                 + P"\239\184" * R"\160\175"
-                 
-local ignore     = P"\205\143"
-                 
-local shy        = P"\194\173"     -- shy hyphen
-                 + P"\225\160\134" -- Mongolian TODO soft hyphen
-                 
-local hyphen     = P"-"
-                 + P"\214\138"     -- Armenian
-                 + P"\226\128\144" -- hyphen
-                 + P"\226\128\146" -- figure dash
-                 + P"\226\128\147" -- en-dash
-                 + P"\226\128\148" -- em-dash
-                 + P"\226\184\151" -- double oblique
-                 + P"\227\131\187" -- Katakana middle dot
-                 + P"\239\185\163" -- small hyphen-minus
-                 + P"\239\188\141" -- fullwidth hyphen-minus
-                 + P"\239\189\165" -- halfwidth Katakana middle dot
-                 
-local reset      = P"\194\133"     -- NEL-definitely break here
-                 
-local chars      = whitespace * lpeg.Cp() * lpeg.Cc'space'
-                 + shy        * lpeg.Cp() * lpeg.Cc'shy'
-                 + hyphen     * lpeg.Cp() * lpeg.Cc'hyphen'
-                 + combining  * lpeg.Cp() * lpeg.Cc'combine'
-                 + ignore     * lpeg.Cp() * lpeg.Cc'ignore'
-                 + reset      * lpeg.Cp() * lpeg.Cc'reset'
-                 + uchar      * lpeg.Cp() * lpeg.Cc'char'
-                 +              lpeg.Cp() * lpeg.Cc'bad'
-                 
-local remshy     = Cs((shy * #P(1)/ "" + P(1))^0) -- keep last soft hyphen
-
-function wrapt(s,margin)
-  local res       = {}
-  local front     = 1
-  local i         = 1
-  local cnt       = 0
-  local breakhere
-  local resume
-  margin = margin or 78
-  
-  while i <= #s do
-    local n,ctype = chars:match(s,i)
-    if ctype == 'space' then
-      breakhere = i
-      resume    = n
-      cnt       = cnt + 1
-    -- ---------------------------------------------------------------------
-    -- The difference between soft hyphens and hyphens is that soft hyphens
-    -- are not normally visible unless they're at the end of the line.  So
-    -- soft hyphens don't cound against the glyph count, but do mark a
-    -- potential location for a break.  Regular hyphens do count as a
-    -- character, and also count towards the glyph count.
-    --
-    -- In both cases, we include the character for this line, unlike for
-    -- whitespace.
-    -- ---------------------------------------------------------------------
-    
-    elseif ctype == 'shy' then
-      if cnt < margin then
-        breakhere = n
-        resume    = n
-      end
-    elseif ctype == 'hyphen' then
-      if cnt < margin then
-        breakhere = n
-        cnt       = cnt + 1
-        
-      -- ---------------------------------------------
-      -- This handles the case of a clump of dashes.
-      -- ---------------------------------------------
-
-      elseif cnt == margin then
-        breakhere = i
-        cnt       = margin + 1
-      end
-      resume = n
-    elseif ctype == 'char' then
-      cnt  = cnt  + 1
-    elseif ctype == 'combining' then -- luacheck: ignore
-      -- combining chars don't count
-    elseif ctype == 'ignore' then -- luacheck: ignore
-      -- ignore characters are ignored
-    elseif ctype == 'reset' then
-      -- ----------------------------------------------------------
-      -- the only control character we accept here, the NEL, which
-      -- here means "definitely break here!"
-      -- ----------------------------------------------------------
-      
-      breakhere = i
-      resume    = n
-      cnt       = margin + 1
-    elseif ctype == 'bad' then
-      assert(false,"bad character")
-    end
-    
-    -- ---------------------------------------------------------------------
-    -- If we've past the margin, wrap the line at the previous breakhere
-    -- point.  If there isn't one, just break were we are.  It looks ugly,
-    -- but this line violates our contraints because there are no possible
-    -- breakpoints upon which to break.
-    --
-    -- Soft hypnens are also removed at this point, because they're not
-    -- supposed to be visible unless they're at the end of a line.
-    -- ---------------------------------------------------------------------
-    
-    if cnt > margin then
-      if breakhere then
-        table.insert(res,remshy:match(s:sub(front,breakhere - 1)))
-        front     = resume
-        i         = resume
-      else
-        table.insert(res,remshy:match(s:sub(front,i - 1)))
-        front     = i
-      end
-      cnt = 0
-      breakhear = nil
-    else
-      i = n
-    end
-  end
-  
-  table.insert(res,remshy:match(s:sub(front,i - 1)))
-  return res
 end
 
 -- ********************************************************************
