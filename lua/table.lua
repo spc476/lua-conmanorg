@@ -29,7 +29,6 @@ local ipairs       = ipairs
 local pairs        = pairs
 local tostring     = tostring
 local type         = type
-local print        = print
 local pcall        = pcall
 local getmetatable = getmetatable
 
@@ -231,7 +230,7 @@ end
 -- **********************************************************
 
 function dump(name,value)
-  print(dump_value(name,value))
+  io.stdout:write(dump_value(name,value),'\n')
 end
 
 -- ***********************************************************
