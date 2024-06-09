@@ -18,134 +18,21 @@
 -- Comments, questions and criticisms can be sent to: sean@conman.org
 --
 -- ********************************************************************
--- luacheck: globals EDITOR edit editf hexdump
+-- luacheck: globals hexdump
 -- luacheck: ignore 611
 
-local os       = require "os"
-local debug    = require "debug"
 local io       = require "io"
-local string   = require "string"
 local char     = require "org.conman.parsers.ascii.char"
 local lpeg     = require "lpeg"
-
 local _VERSION = _VERSION
-local dofile   = dofile
-local loadstring
 
 if _VERSION == "Lua 5.1" then
-  loadstring = _G.loadstring
   module("org.conman.debug")
 else
-  loadstring = load
   _ENV       = {}
 end
 
-EDITOR = os.getenv("VISUAL") or os.getenv("EDITOR") or "/bin/vi"
-
 -- *********************************************************************
-
-local function create()
-  local name = os.tmpname()
-  local src
-  local f
-  
-  os.execute(EDITOR .. " " .. name)
-  f = io.open(name,"r")
-  src = f:read("*a")
-  f:close()
-  os.remove(name)
-  local code = loadstring(src)
-  code()
-end
-
--- ********************************************************************
-
-function edit(f)
-  if f == nil then
-    create()
-    return
-  end
-  
-  local info = debug.getinfo(f)
-  local src
-  
-  if info.source:byte(1) == 64 then
-    local fin   = io.open(info.source:sub(2),"r")
-    local count = 0
-    local line
-    
-    repeat
-      line  = fin:read("*l")
-      count = count + 1
-    until count == info.linedefined
-    
-    src = line .. "\n"
-    
-    while count < info.lastlinedefined do
-      src = src .. fin:read("*l") .. "\n"
-      count = count + 1
-    end
-    
-    fin:close()
-  else
-    src = info.source
-  end
-  
-  local name = os.tmpname()
-  local fin  = io.open(name,"w")
-  fin:write(src)
-  fin:close()
-  
-  os.execute(EDITOR .. " " .. name)
-  
-  f = io.open(name,"r")
-  src = f:read("*a")
-  f:close()
-  os.remove(name)
-  
-  local code = loadstring(src)
-  code()
-end
-
--- **********************************************************************
-
-function editf(f)
-  if f == nil then
-    create()
-    return
-  end
-  
-  local info = debug.getinfo(f)
-  
-  if info.source:byte(1) == 64 then
-    local file   = info.source:sub(2)
-    
-    os.execute(string.format("%s +%d %s",
-                EDITOR,
-                info.linedefined,
-                file
-        ))
-    dofile(file)
-  elseif info.source:byte(1) == 61 then
-    print("can't edit---no source")
-  else
-    local name   = os.tmpname()
-    local fin    = io.open(name,"w")
-    
-    fin:write(info.source)
-    fin:close()
-    
-    os.execute(EDITOR .. " " .. name)
-    fin = io.open(name,"r")
-    local src = fin:read("*a")
-    fin:close()
-    os.remove(name)
-    
-    assert(loadstring(src))
-  end
-end
-
--- ********************************************************************
 
 local toascii = lpeg.Cs((char + lpeg.P(1) / ".")^0)
 local tohex   = lpeg.Cs((lpeg.P(1) / function(c)
