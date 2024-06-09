@@ -523,7 +523,11 @@ static int strcore_wrapt(lua_State *L)
       breakhere = 0;
     }
     else
+    {
+      if (n <= i)
+        luaL_error(L,"wrapt(): i=%d n=%d",i,n);
       i = n;
+    }
   }
   
   remshy(L,s,front,i);
