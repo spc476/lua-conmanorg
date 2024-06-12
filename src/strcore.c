@@ -407,7 +407,7 @@ static void remshy(lua_State *L,char const *s,size_t i,size_t e)
     }
     
     if (n <= i)
-      luaL_error("remshy(): i=%I n=%I",(lua_Integer)i,(lua_Integer)n);
+      luaL_error(L,"remshy(): i=%I n=%I",(lua_Integer)i,(lua_Integer)n);
     i = n;
   }
   
