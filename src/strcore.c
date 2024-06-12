@@ -385,20 +385,29 @@ static enum eclass charsmatch(unsigned char const *s,size_t i,size_t *n)
 
 static void remshy(lua_State *L,char const *s,size_t i,size_t e)
 {
-  size_t n;
-  
+  size_t      n;
   luaL_Buffer buff;
   
+  if (i >= e)
+    luaL_error(L,"bad length: i=%I e=%I",(lua_Integer)i,(lua_Integer)e);
+    
   luaL_buffinit(L,&buff);
   while(i < e)
   {
-    if (charsmatch((unsigned char const*)s,i,&n) != SHY)
+    enum eclass cc = charsmatch((unsigned char const *)s,i,&n);
+    if (cc == BAD)
+      luaL_error(L,"bad character (should not happen)");
+      
+    if (cc != SHY)
       luaL_addlstring(&buff,&s[i],n-i);
     else
     {
       if (n >= e)
         luaL_addlstring(&buff,&s[i],n-i);
     }
+    
+    if (n <= i)
+      luaL_error("remshy(): i=%I n=%I",(lua_Integer)i,(lua_Integer)n);
     i = n;
   }
   
@@ -509,12 +518,18 @@ static int strcore_wrapt(lua_State *L)
     {
       if (breakhere > 0)
       {
+        if (breakhere >= len)
+          luaL_error(L,"breadhere=%I len=%I",(lua_Integer)breakhere,(lua_Integer)len);
+          
         remshy(L,s,front,breakhere);
         front = resume;
         i     = resume;
       }
       else
       {
+        if (i >= len)
+          luaL_error(L,"a) i=%I len=%I",(lua_Integer)i,(lua_Integer)len);
+          
         remshy(L,s,front,i);
         front = i;
       }
@@ -525,11 +540,14 @@ static int strcore_wrapt(lua_State *L)
     else
     {
       if (n <= i)
-        luaL_error(L,"wrapt(): i=%d n=%d",i,n);
+        luaL_error(L,"wrapt(): i=%I n=%I",(lua_Integer)i,(lua_Integer)n);
       i = n;
     }
   }
   
+  if (i >= len)
+    luaL_error(L,"b) i=%I len=%I",(lua_Integer)i,(lua_Integer)len);
+    
   remshy(L,s,front,i);
   lua_seti(L,-2,ri);
   return 1;
