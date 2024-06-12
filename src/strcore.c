@@ -541,6 +541,8 @@ static int strcore_wrapt(lua_State *L)
     {
       if (n <= i)
         luaL_error(L,"wrapt(): i=%I n=%I",(lua_Integer)i,(lua_Integer)n);
+      if (n > len)
+        luaL_error(L,"wrapt(): BOUNDS! n=%I len=%I",(lua_Integer)n,(lua_Integer)len);
       i = n;
     }
   }
