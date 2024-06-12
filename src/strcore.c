@@ -518,7 +518,7 @@ static int strcore_wrapt(lua_State *L)
     {
       if (breakhere > 0)
       {
-        if (breakhere >= len)
+        if (breakhere > len)
           luaL_error(L,"breadhere=%I len=%I",(lua_Integer)breakhere,(lua_Integer)len);
           
         remshy(L,s,front,breakhere);
@@ -527,7 +527,7 @@ static int strcore_wrapt(lua_State *L)
       }
       else
       {
-        if (i >= len)
+        if (i > len)
           luaL_error(L,"a) i=%I len=%I",(lua_Integer)i,(lua_Integer)len);
           
         remshy(L,s,front,i);
@@ -545,7 +545,7 @@ static int strcore_wrapt(lua_State *L)
     }
   }
   
-  if (i >= len)
+  if (i > len)
     luaL_error(L,"b) i=%I len=%I",(lua_Integer)i,(lua_Integer)len);
     
   remshy(L,s,front,i);
