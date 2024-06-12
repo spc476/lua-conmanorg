@@ -75,7 +75,7 @@ static int cclasscmp(void const *left,void const *right)
 
 /*************************************************************************/
 
-static enum eclass charsmatch(unsigned char const *s,size_t i,size_t *n)
+static enum eclass charsmatch(unsigned char const *s,size_t i,size_t len,size_t *n)
 {
   static struct sclass const sclass[] =
   {
@@ -328,9 +328,15 @@ static enum eclass charsmatch(unsigned char const *s,size_t i,size_t *n)
   wchar_t              c2;
   
   if (c < 0x7F)
+  {
+    if (i + 1 > len)
+      return BAD;
     *n = i+1;
+  }
   else
   {
+    if (i + 2 > len)
+      return BAD;
     if ((c < 0xC2) || (c > 0xF4))
       return BAD;
     else if ((c & 0xE0) == 0xC0)
@@ -344,6 +350,8 @@ static enum eclass charsmatch(unsigned char const *s,size_t i,size_t *n)
     }
     else if ((c & 0xF0) == 0xE0)
     {
+      if (i + 3 > len)
+        return BAD;
       c = (c & 0x0F) << 12;
       c2 = s[i+1];
       if ((c2 & 0xC0) != 0x80)
@@ -357,6 +365,8 @@ static enum eclass charsmatch(unsigned char const *s,size_t i,size_t *n)
     }
     else
     {
+      if (i + 4 > len)
+        return BAD;
       c = (c & 0xF1) << 18;
       c2 = s[i+1];
       if ((c2 & 0xC0) != 0x80)
@@ -394,7 +404,7 @@ static void remshy(lua_State *L,char const *s,size_t i,size_t e)
   luaL_buffinit(L,&buff);
   while(i < e)
   {
-    enum eclass cc = charsmatch((unsigned char const *)s,i,&n);
+    enum eclass cc = charsmatch((unsigned char const *)s,i,e,&n);
     if (cc == BAD)
       luaL_error(L,"bad character (should not happen)");
       
@@ -434,7 +444,7 @@ static int strcore_wrapt(lua_State *L)
   
   while(i < len)
   {
-    switch(charsmatch((unsigned char const *)s,i,&n))
+    switch(charsmatch((unsigned char const *)s,i,len,&n))
     {
       case BAD:
            luaL_error(L,"bad character");
