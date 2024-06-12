@@ -398,17 +398,10 @@ static void remshy(lua_State *L,char const *s,size_t i,size_t e)
   size_t      n;
   luaL_Buffer buff;
   
-  if (i >= e)
-    luaL_error(L,"bad length: i=%I e=%I",(lua_Integer)i,(lua_Integer)e);
-    
   luaL_buffinit(L,&buff);
   while(i < e)
   {
-    enum eclass cc = charsmatch((unsigned char const *)s,i,e,&n);
-    if (cc == BAD)
-      luaL_error(L,"bad character (should not happen)");
-      
-    if (cc != SHY)
+    if (charsmatch((unsigned char const *)s,i,e,&n) != SHY)
       luaL_addlstring(&buff,&s[i],n-i);
     else
     {
@@ -416,8 +409,6 @@ static void remshy(lua_State *L,char const *s,size_t i,size_t e)
         luaL_addlstring(&buff,&s[i],n-i);
     }
     
-    if (n <= i)
-      luaL_error(L,"remshy(): i=%I n=%I",(lua_Integer)i,(lua_Integer)n);
     i = n;
   }
   
@@ -439,6 +430,7 @@ static int strcore_wrapt(lua_State *L)
   size_t      resume    = 0;
   size_t      n;
   lua_Integer ri        = 1;
+  bool        dobreak   = false; /* because breakhere==0 is valid! */
   
   lua_createtable(L,0,0);
   
@@ -451,6 +443,7 @@ static int strcore_wrapt(lua_State *L)
            break;
            
       case SPACE:
+           dobreak   = true;
            breakhere = i;
            resume    = n;
            cnt++;
@@ -473,6 +466,7 @@ static int strcore_wrapt(lua_State *L)
       case SHY:
            if (cnt < margin)
            {
+             dobreak   = true;
              breakhere = n;
              resume    = n;
            }
@@ -481,6 +475,7 @@ static int strcore_wrapt(lua_State *L)
       case HYPHEN:
            if (cnt < margin)
            {
+             dobreak   = true;
              breakhere = n;
              cnt++;
            }
@@ -491,6 +486,7 @@ static int strcore_wrapt(lua_State *L)
            
            else if (cnt == margin)
            {
+             dobreak   = true;
              breakhere = i;
              cnt       = margin + 1;
            }
@@ -504,6 +500,7 @@ static int strcore_wrapt(lua_State *L)
            ; here means "definitely break here!"
            ;------------------------------------------------------------*/
            
+           dobreak   = true;
            breakhere = i;
            resume    = n;
            cnt       = margin + 1;
@@ -526,40 +523,27 @@ static int strcore_wrapt(lua_State *L)
     
     if (cnt > margin)
     {
-      if (breakhere > 0)
+      if (dobreak)
       {
-        if (breakhere > len)
-          luaL_error(L,"breadhere=%I len=%I",(lua_Integer)breakhere,(lua_Integer)len);
-          
         remshy(L,s,front,breakhere);
         front = resume;
         i     = resume;
       }
       else
       {
-        if (i > len)
-          luaL_error(L,"a) i=%I len=%I",(lua_Integer)i,(lua_Integer)len);
-          
         remshy(L,s,front,i);
         front = i;
       }
+      
       lua_seti(L,-2,ri++);
       cnt       = 0;
       breakhere = 0;
+      dobreak   = false;
     }
     else
-    {
-      if (n <= i)
-        luaL_error(L,"wrapt(): i=%I n=%I",(lua_Integer)i,(lua_Integer)n);
-      if (n > len)
-        luaL_error(L,"wrapt(): BOUNDS! n=%I len=%I",(lua_Integer)n,(lua_Integer)len);
       i = n;
-    }
   }
   
-  if (i > len)
-    luaL_error(L,"b) i=%I len=%I",(lua_Integer)i,(lua_Integer)len);
-    
   remshy(L,s,front,i);
   lua_seti(L,-2,ri);
   return 1;
