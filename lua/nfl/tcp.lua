@@ -70,7 +70,7 @@ local function create_handler(conn,remote)
     
     ios.__wbytes = ios.__wbytes + bytes;
     if bytes < #data then
-      ios._outout = data:sub(bytes,-1)
+      ios._outout = data:sub(bytes + 1,-1)
       nfl.SOCKETS:update(self.__socket,'w')
       return coroutine.yield()
     end
