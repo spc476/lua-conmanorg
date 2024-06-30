@@ -62,9 +62,19 @@ local function create_handler(conn,remote)
   end
   
   ios._drain = function(self,data)
-    ios.__output = data
-    nfl.SOCKETS:update(self.__socket,'w')
-    return coroutine.yield()
+    local bytes,err = ios.__socket:send(nil,data)
+    if err ~= 0 then
+      syslog('error',"socket:send() = %s",errno[err])
+      return false,errno[err],err
+    end
+    
+    ios.__wbytes = ios.__wbytes + bytes;
+    if bytes < #data then
+      ios._outout = data:sub(bytes,-1)
+      nfl.SOCKETS:update(self.__socket,'w')
+      return coroutine.yield()
+    end
+    return true;
   end
   
   ios.close = function(self)
