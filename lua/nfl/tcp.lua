@@ -62,19 +62,20 @@ local function create_handler(conn,remote)
   end
   
   ios._drain = function(self,data)
-    local bytes,err = ios.__socket:send(nil,data)
+    local bytes,err = self.__socket:send(nil,data)
     if err ~= 0 then
       syslog('error',"socket:send() = %s",errno[err])
       return false,errno[err],err
     end
     
-    ios.__wbytes = ios.__wbytes + bytes;
+    ios.__wbytes = self.__wbytes + bytes;
     if bytes < #data then
-      ios._outout = data:sub(bytes + 1,-1)
       nfl.SOCKETS:update(self.__socket,'w')
-      return coroutine.yield()
+      coroutine.yield()
+      data = data:sub(bytes + 1,-1)
+      return self:_drain(data)
     end
-    return true;
+    return true
   end
   
   ios.close = function(self)
@@ -87,7 +88,7 @@ local function create_handler(conn,remote)
     -- TCP sockets, but this doesn't hurt the TCP side in any case.
     -- ---------------------------------------------------------------------
     
-    while self.__socket.sendqueue and ios.__socket.sendqueue > 0 do
+    while self.__socket.sendqueue and self.__socket.sendqueue > 0 do
       nfl.SOCKETS:update(self.__socket,'w')
       coroutine.yield()
     end
@@ -133,22 +134,8 @@ local function create_handler(conn,remote)
     end
     
     if event.write then
-      if #ios.__output > 0 then
-        local bytes,err = ios.__socket:send(nil,ios.__output)
-        if err == 0 then
-          ios.__wbytes = ios.__wbytes + bytes
-          ios.__output = ios.__output:sub(bytes + 1,-1)
-        else
-          syslog('error',"socket:send() = %s",errno[err])
-          nfl.SOCKETS:remove(ios.__socket)
-          nfl.schedule(ios.__co,false,errno[err],err)
-        end
-      end
-      
-      if #ios.__output == 0 then
-        nfl.SOCKETS:update(ios.__socket,'r')
-        nfl.schedule(ios.__co,true)
-      end
+      nfl.SOCKETS:update(ios.__socket,'r')
+      nfl.schedule(ios.__co,true)
     end
   end
 end
