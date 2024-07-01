@@ -80,19 +80,6 @@ local function create_handler(conn,remote)
   
   ios.close = function(self)
     self:flush()
-    -- ---------------------------------------------------------------------
-    -- It might be a bug *somewhere*, but on Linux, this is required to get
-    -- Unix domain sockets to work with the NFL driver.  There's a race
-    -- condition where writting data then calling close() may cause the
-    -- other side to receive no data.  This does NOT appoear to happen with
-    -- TCP sockets, but this doesn't hurt the TCP side in any case.
-    -- ---------------------------------------------------------------------
-    
-    while self.__socket.sendqueue and self.__socket.sendqueue > 0 do
-      nfl.SOCKETS:update(self.__socket,'w')
-      coroutine.yield()
-    end
-    
     nfl.SOCKETS:remove(self.__socket)
     local err = self.__socket:close()
     return err == 0,errno[err],err
