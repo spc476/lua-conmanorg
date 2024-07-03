@@ -127,6 +127,11 @@ local function create_handler(conn,remote)
   end
   
   ios.close = function(self)
+    -- -----------------------------------------------------------------
+    -- XXX - this call to assert() seems to remove a bunch of calls to
+    --       epoll_ctl() that error out under Linux.  Okay.
+    -- -----------------------------------------------------------------
+    assert(self.__socket:_tofd() >= 0)
     local rc = ios.__ctx:close()
     if rc == tls.WANT_INPUT then
       coroutine.yield()
