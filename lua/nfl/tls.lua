@@ -162,10 +162,8 @@ local function create_handler(conn,remote)
     assert(not (event.read and event.write))
     
     if event.hangup then
-      if not ios._eof then
-        ios._eof = true
-        nfl.schedule(ios.__co)
-      end
+      ios._eof = true
+      nfl.schedule(ios.__co,"")
       return
     end
     
