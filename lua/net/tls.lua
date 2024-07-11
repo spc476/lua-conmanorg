@@ -40,16 +40,16 @@ end
 -- *******************************************************************
 
 local function make_ios(ctx,conn)
-  local state  = ios()
-  state.__ctx  = ctx
-  state.__sock = conn
+  local state    = ios()
+  state.__ctx    = ctx
+  state.__socket = conn
   
   function state:close() -- luacheck: ignore
     local advice = self.__ctx:close()
     if advice == tls.WANT_INPUT or advice == tls.WANT_OUTPUT then
       return self:close()
     else
-      local err = self.__sock:close()
+      local err = self.__socket:close()
       return err == 0,errno[err],err
     end
   end

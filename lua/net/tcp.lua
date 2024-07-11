@@ -43,12 +43,12 @@ local function make_ios(conn,remote)
   
   state.close = function(self)
     self:flush()
-    self.__sock:close()
+    self.__socket:close()
     return true
   end
   
   state._refill  = function(self)
-    local _,data,err = self.__sock:recv()
+    local _,data,err = self.__socket:recv()
     if data then
       if #data > 0 then
         return data
@@ -61,7 +61,7 @@ local function make_ios(conn,remote)
   end
   
   state._drain = function(self,buffer)
-    local bytes,err = self.__sock:send(nil,buffer)
+    local bytes,err = self.__socket:send(nil,buffer)
     if bytes >= 0 then
       return true
     else
@@ -70,7 +70,7 @@ local function make_ios(conn,remote)
   end
   
   state.__remote = remote
-  state.__sock   = conn
+  state.__socket = conn
   
   if _VERSION >= "Lua 5.2" then
     local mt = {}
