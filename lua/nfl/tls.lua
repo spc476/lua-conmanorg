@@ -363,7 +363,13 @@ function connecta(addr,hostname,to,conf)
     nfl.SOCKETS:remove(sock)
     return false,err1
   end
-  return ios
+  
+  if ios._eof then
+    ios:close()
+    return nil
+  else
+    return ios
+  end
 end
 
 -- **********************************************************************

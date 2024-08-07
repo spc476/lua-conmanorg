@@ -232,7 +232,13 @@ function connecta(addr,to)
     syslog('error',"sock:connect(%s) = %s",tostring(addr),err1)
     return nil
   end
-  return ios
+  
+  if ios._eof then
+    ios:close()
+    return nil
+  else
+    return ios
+  end
 end
 
 -- **********************************************************************
