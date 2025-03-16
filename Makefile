@@ -89,7 +89,6 @@ all : lib		\
 	lib/net.so	\
 	lib/pollset.so	\
 	lib/process.so	\
-	lib/ptscore.so	\
 	lib/signal.so	\
 	lib/strcore.so	\
 	lib/sys.so	\
@@ -137,7 +136,6 @@ install : all
 	$(INSTALL_PROGRAM) lib/net.so      $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/pollset.so  $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/process.so  $(DESTDIR)$(LIBDIR)/org/conman
-	$(INSTALL_PROGRAM) lib/ptscore.so  $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/signal.so   $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/strcore.so  $(DESTDIR)$(LIBDIR)/org/conman
 	$(INSTALL_PROGRAM) lib/sys.so      $(DESTDIR)$(LIBDIR)/org/conman
