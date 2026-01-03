@@ -235,14 +235,16 @@ end
 -- *******************************************************************
 
 function connect(host,port,conf)
+  local conn,err2
   local addr,err = net.address2(host,'any','tcp',port)
   if addr then
     for _,a in ipairs(addr) do
-      local conn = connecta(a,host,conf)
+      conn,err2 = connecta(a,host,conf)
       if conn then
         return conn
       end
     end
+    return nil,err2
   else
     return nil,net.errno[err]
   end
