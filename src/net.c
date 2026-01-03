@@ -867,7 +867,10 @@ static int socklua___index(lua_State *L)
     case SOPT_FLAG:
          len = sizeof(ivalue);
          if (getsockopt(sock->fh,value->level,value->option,&ivalue,&len) < 0)
+         {
+           syslog(LOG_ERR,"getsockopt(%s) = %s",value->name,strerror(errno));
            lua_pushboolean(L,false);
+         }
          else
            lua_pushboolean(L,ivalue);
          break;
@@ -875,7 +878,10 @@ static int socklua___index(lua_State *L)
     case SOPT_INT:
          len = sizeof(ivalue);
          if (getsockopt(sock->fh,value->level,value->option,&ivalue,&len) < 0)
+         {
+           syslog(LOG_ERR,"getsockopt(%s) = %s",value->name,strerror(errno));
            lua_pushinteger(L,-1);
+         }
          else
            lua_pushinteger(L,ivalue);
          break;
@@ -884,6 +890,7 @@ static int socklua___index(lua_State *L)
          len = sizeof(lvalue);
          if (getsockopt(sock->fh,value->level,value->option,&lvalue,&len) < 0)
          {
+           syslog(LOG_ERR,"getsockopt(%s) = %s",value->name,strerror(errno));
            lua_pushnil(L);
            return 1;
          }
@@ -898,7 +905,10 @@ static int socklua___index(lua_State *L)
     case SOPT_TIMEVAL:
          len = sizeof(tvalue);
          if (getsockopt(sock->fh,value->level,value->option,&tvalue,&len) < 0)
+         {
+           syslog(LOG_ERR,"getsockopt(%s) = %s",value->name,strerror(errno));
            lua_pushnumber(L,-1);
+         }
          else
          {
            dvalue = (double)tvalue.tv_sec
@@ -910,14 +920,20 @@ static int socklua___index(lua_State *L)
     case SOPT_FCNTL:
          ivalue = fcntl(sock->fh,value->level,0);
          if (ivalue == -1)
+         {
+           syslog(LOG_ERR,"fcntl(%s) = %s",value->name,strerror(errno));
            lua_pushboolean(L,false);
+         }
          else
            lua_pushboolean(L,(ivalue & value->option) == value->option);
          break;
          
     case SOPT_IOCTL:
          if (ioctl(sock->fh,value->level,&ivalue) < 0)
+         {
+           syslog(LOG_ERR,"fcntl(%s) = %s",value->name,strerror(errno));
            lua_pushnil(L);
+         }
          else
            lua_pushinteger(L,ivalue);
          break;
@@ -958,13 +974,13 @@ static int socklua___newindex(lua_State *L)
     case SOPT_FLAG:
          ivalue = lua_toboolean(L,3);
          if (setsockopt(sock->fh,value->level,value->option,&ivalue,sizeof(ivalue)) < 0)
-           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+           syslog(LOG_ERR,"setsockopt(%s) = %s",value->name,strerror(errno));
          break;
          
     case SOPT_INT:
          ivalue = lua_tointeger(L,3);
          if (setsockopt(sock->fh,value->level,value->option,&ivalue,sizeof(ivalue)) < 0)
-           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+           syslog(LOG_ERR,"setsockopt(%s) = %s",value->name,strerror(errno));
          break;
          
     case SOPT_LINGER:
@@ -975,7 +991,7 @@ static int socklua___newindex(lua_State *L)
          lvalue.l_onoff = lua_toboolean(L,-2);
          lvalue.l_linger = lua_tointeger(L,-1);
          if (setsockopt(sock->fh,value->level,value->option,&lvalue,sizeof(lvalue)) < 0)
-           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+           syslog(LOG_ERR,"setsockopt(%s) = %s",value->name,strerror(errno));
          break;
          
     case SOPT_TIMEVAL:
@@ -984,7 +1000,7 @@ static int socklua___newindex(lua_State *L)
          tvalue.tv_sec  = (time_t)seconds;
          tvalue.tv_usec = (long)(fract * 1000000.0);
          if (setsockopt(sock->fh,value->level,value->option,&tvalue,sizeof(tvalue)) < 0)
-           syslog(LOG_ERR,"setsockopt() = %s",strerror(errno));
+           syslog(LOG_ERR,"setsockopt(%s) = %s",value->name,strerror(errno));
          break;
          
     case SOPT_FCNTL:
@@ -997,10 +1013,10 @@ static int socklua___newindex(lua_State *L)
              ivalue &= ~value->option;
              
            if (fcntl(sock->fh,value->setlevel,ivalue) < 0)
-             syslog(LOG_ERR,"fcntl() = %s",strerror(errno));
+             syslog(LOG_ERR,"fcntl(%s) = %s",value->name,strerror(errno));
          }
          else
-           syslog(LOG_ERR,"fcntl() = %s",strerror(errno));
+           syslog(LOG_ERR,"fcntl(%s) = %s",value->name,strerror(errno));
          break;
          
     default:
