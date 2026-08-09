@@ -161,12 +161,6 @@ local function create_handler(conn,remote)
   return ios,function(event)
     assert(not (event.read and event.write))
     
-    if coroutine.status(ios.__co) == 'dead' then
-      syslog('error',"coroutine dead")
-      ios:close()
-      return
-    end
-    
     if event.hangup then
       ios._eof = true
       nfl.schedule(ios.__co,"")
