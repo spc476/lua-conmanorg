@@ -141,12 +141,12 @@ function dump_value(name,value,path,level,marked)
   elseif type(value) == "function" then
     local err,func = pcall(string.dump,value)
     if err == false then
-      return string.format("%s%s = C_FUNCTION\n",lead,name)
+      return string.format("%s%s = C_FUNCTION,\n",lead,name)
     else
       return string.format("%s%s = loadstring(%s),\n",lead,name,safestring(func))
     end
   elseif type(value) == "thread" then
-    return string.format("%s%s = THREAD\n",lead,name)
+    return string.format("%s%s = THREAD,\n",lead,name)
   elseif type(value) == "userdata" then
     local mt = getmetatable(value)
     
@@ -167,7 +167,7 @@ function dump_value(name,value,path,level,marked)
       
       return s .. string.format("%s} --USERDATA\n",lead)
     else
-      return string.format("%s%s = %s\n",lead,name,tostring(value))
+      return string.format("%s%s = %s,\n",lead,name,tostring(value))
     end
   else
     error("unsupported data type!")
