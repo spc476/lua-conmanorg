@@ -143,7 +143,7 @@ function dump_value(name,value,path,level,marked)
     if err == false then
       return string.format("%s%s = C_FUNCTION\n",lead,name)
     else
-      return string.format("%s%s = loadstring(%q),\n",lead,name,func)
+      return string.format("%s%s = loadstring(%s),\n",lead,name,safestring(func))
     end
   elseif type(value) == "thread" then
     return string.format("%s%s = THREAD\n",lead,name)
