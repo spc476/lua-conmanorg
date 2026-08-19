@@ -1192,6 +1192,7 @@ static int fsys_pathconf(lua_State *L)
 
 static int fsys__close(lua_State *L)
 {
+  errno = 0;
   lua_pushboolean(L,close(luaL_checkinteger(L,1)) == 0);
   lua_pushinteger(L,errno);
   return 2;
@@ -1251,6 +1252,7 @@ static int fsys__lock(lua_State *L)
 #endif
   int type = luaL_checkoption(L,2,"read",modename);
   int cmd  = lua_toboolean(L,3) ? F_SETLK : F_SETLKW;
+  errno    = 0;
   
   fcntl(
          fh,
